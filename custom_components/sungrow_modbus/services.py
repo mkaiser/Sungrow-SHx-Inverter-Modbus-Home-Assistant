@@ -155,6 +155,13 @@ async def _async_run_capability_test(call: ServiceCall) -> None:
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
     _refuse_on_string_inverter(entry)
     await _async_authorize(call, entry, PERMISSION_CAPABILITY_TEST)
+    # The same gate the button has: a run that writes is read against the
+    # house it ran in, and a script is no more able to say what the house is
+    # than a press is (`testimony.py`). Imported here rather than at the top,
+    # because `testimony` is imported by the entities that import this module.
+    from .testimony import async_refuse_if_unanswered
+
+    async_refuse_if_unanswered(entry)
     _LOGGER.warning(
         "%s: capability test requested through the %s.%s action by %s. It writes to "
         "every control this integration can write to, and puts each one back.",

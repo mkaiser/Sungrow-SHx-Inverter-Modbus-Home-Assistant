@@ -1917,6 +1917,9 @@
     },
     "not_on_wallbox": {
       "message": "{title} is not an inverter. This action works on an inverter; a wallbox, iHomeManager or Logger entry has only its own diagnosis buttons, and nothing in this integration writes to one."
+    },
+    "testimony_missing": {
+      "message": "{title}: answer the diagnosis's questions before an extended test. An extended test writes settings and reads them back, and what it finds can only be understood together with the house it ran in — no register reports any of this. On Settings → Devices & services → Sungrow Modbus → Configure, under \"Contribute a capability diagnosis\", answer: \"How this inverter is connected\", \"Is a Modbus proxy in the path?\" and \"Is there another inverter here that is not a Sungrow?\". Each has an answer for every house — \"not sure\", \"I do not know\", \"no\" — so none of them asks you to guess. A read-only diagnosis runs without them."
     }
   }
 }

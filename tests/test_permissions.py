@@ -38,6 +38,9 @@ from pytest_homeassistant.common import MockConfigEntry, MockUser
 
 from custom_components.sungrow_modbus.const import (
     AUDIENCE_USERS,
+    CONF_DIAGNOSIS_OTHER_INVERTER,
+    CONF_DIAGNOSIS_PROXY,
+    CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
     CONF_PERMISSIONS,
     CONF_UNIT_ID,
@@ -371,6 +374,14 @@ def _second_device_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
 START = "button.sh10rt_diagnosis_start"
 MODE = "select.sh10rt_diagnosis_mode"
 
+#: What the owner answered, so an extended run is not refused for the one
+#: reason these tests are not about.
+ANSWERED: dict[str, str] = {
+    CONF_DIAGNOSIS_TRANSPORT: "direct_lan",
+    CONF_DIAGNOSIS_PROXY: "no",
+    CONF_DIAGNOSIS_OTHER_INVERTER: "no",
+}
+
 
 async def _diagnostics_entry(
     hass: HomeAssistant, unit: MockModbusUnit, audience: str | None = None
@@ -381,10 +392,13 @@ async def _diagnostics_entry(
         data={**ENTRY_DATA, CONF_MODE: MODE_DIAGNOSTICS},
         unique_id=SERIAL,
         title="SH10RT",
+        # The diagnosis's three questions are answered here: an extended run
+        # is refused without them (`testimony.py`), and these tests are about
+        # who may press the button, not about the options form.
         options=(
-            {CONF_PERMISSIONS: {PERMISSION_CAPABILITY_TEST: audience}}
+            {**ANSWERED, CONF_PERMISSIONS: {PERMISSION_CAPABILITY_TEST: audience}}
             if audience
-            else {}
+            else dict(ANSWERED)
         ),
     )
     entry.add_to_hass(hass)

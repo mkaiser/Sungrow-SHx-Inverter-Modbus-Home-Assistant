@@ -32,6 +32,9 @@ from custom_components.sungrow_modbus.const import (
     CONF_CAPABILITY_TEST_EXPORT,
     CONF_CAPABILITY_TEST_PV_CUT,
     CONF_CAPABILITY_TEST_RESTART,
+    CONF_DIAGNOSIS_OTHER_INVERTER,
+    CONF_DIAGNOSIS_PROXY,
+    CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
     CONF_UNIT_ID,
     DOMAIN,
@@ -114,12 +117,22 @@ REFUSED: dict[str, bool] = {
 }
 
 
+#: The three questions an extended run is refused without (`testimony.py`).
+#: Answered here, so that every test below is about the capability test
+#: rather than about the options form.
+ANSWERED: dict[str, str] = {
+    CONF_DIAGNOSIS_TRANSPORT: "direct_lan",
+    CONF_DIAGNOSIS_PROXY: "no",
+    CONF_DIAGNOSIS_OTHER_INVERTER: "no",
+}
+
+
 async def _setup(
     hass: HomeAssistant, unit: MockModbusUnit, **options: Any
 ) -> MockConfigEntry:
     # Every permission refused unless the test grants it: they default to on,
     # and a restart nobody asked for costs a test its whole deadline.
-    options = {**REFUSED, **options}
+    options = {**REFUSED, **ANSWERED, **options}
     entry = MockConfigEntry(
         domain=DOMAIN,
         data={**ENTRY_DATA, CONF_MODE: MODE_DIAGNOSTICS},

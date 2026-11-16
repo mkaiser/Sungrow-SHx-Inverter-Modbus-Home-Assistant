@@ -32,7 +32,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.components import persistent_notification
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.select import SelectEntity
@@ -49,8 +48,6 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 
 from .const import (
-    CONF_DIAGNOSIS_TRANSPORT,
-    CONF_REPORTER,
     DIAGNOSIS_MODE_AUTO_REPEAT,
     DIAGNOSIS_MODE_EXTENDED,
     DIAGNOSIS_MODE_READ_ONLY,
@@ -60,6 +57,7 @@ from .const import (
 )
 from .entity import EnglishEntityId
 from .services import async_authorize
+from .testimony import async_check, async_refuse_if_unanswered
 from .write_owner import holder
 
 if TYPE_CHECKING:
@@ -145,63 +143,6 @@ def _findings(capability_test: dict[str, Any]) -> int | None:
     if readback is None:
         return None
     return sum(1 for row in readback if "decade" in str(row.get("verdict", "")))
-
-
-#: The two answers a document is worth much less without, and the dialog
-#: that holds them. Both are the owner's testimony: the transport is
-#: *measured* as cable or dongle, but whether a dongle is on its Ethernet
-#: socket or its WiFi is something only the owner can say, and an
-#: unattributed reading cannot be asked a follow-up question.
-#:
-#: Everything else in that section stays unasked for here. A warning that
-#: lists seven optional fields is one nobody reads, and an empty field is a
-#: recorded answer ("not answered"), not a defect.
-TESTIMONY_WANTED: tuple[tuple[str, str], ...] = (
-    (CONF_REPORTER, "Your name or handle"),
-    (CONF_DIAGNOSIS_TRANSPORT, "How this inverter is connected"),
-)
-
-
-@callback
-def async_check_testimony(runner: DiagnosisRunner | Any) -> None:
-    """Say, before a run, which of the owner's answers the document will lack.
-
-    A warning and never a refusal: a diagnosis with no testimony is still a
-    reading worth having, and the document records each unanswered question
-    as unanswered rather than guessing. What it cannot do is be compared with
-    other houses or asked a follow-up question, which is what this says while
-    there is still time to answer -- at the moment an extended mode is chosen
-    and again when Start is pressed, rather than in the notification that
-    arrives when a run is over.
-
-    One notification id per entry, so arming a mode and then starting it
-    replaces rather than stacks, and answering the questions dismisses it.
-    """
-    entry = runner.entry
-    missing = [
-        label
-        for key, label in TESTIMONY_WANTED
-        if not str(entry.options.get(key) or "").strip()
-    ]
-    notification_id = f"{DOMAIN}_testimony_{entry.entry_id}"
-    if not missing:
-        persistent_notification.async_dismiss(runner.hass, notification_id)
-        return
-    unanswered = "\n".join(f"- **{label}**" for label in missing)
-    persistent_notification.async_create(
-        runner.hass,
-        "The diagnosis will run and the document will be complete in "
-        "everything it measures. What it will not carry is what no register "
-        f"can answer, and these are unanswered:\n\n{unanswered}\n\n"
-        "A reading with no transport cannot be compared with other houses, "
-        "and an anonymous one cannot be asked a follow-up question. Fill them "
-        "in under **Settings \u2192 Devices & services \u2192 Sungrow Modbus "
-        "\u2192 Configure**, in *Contribute a capability diagnosis*, then "
-        "start again. Saving the options reloads this entry, so answer them "
-        "before a long run rather than during one.",
-        title=f"Diagnosis questions unanswered: {entry.title}",
-        notification_id=notification_id,
-    )
 
 
 class DiagnosisEntity(EnglishEntityId):
@@ -318,7 +259,7 @@ class DiagnosisModeSelect(DiagnosisEntity, SelectEntity, RestoreEntity):
         self._attr_current_option = option
         self._runner.mode = option
         if option != DIAGNOSIS_MODE_READ_ONLY:
-            async_check_testimony(self._runner)
+            async_check(self.hass, self._runner.entry)
         self.async_write_ha_state()
 
 
@@ -359,6 +300,12 @@ class DiagnosisStartButton(DiagnosisEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Start the chosen mode, if the presser may write where it writes."""
         mode = self._runner.mode
+        # The notification first, and whatever the mode: it lists the
+        # questions, and it has to be there to be read *after* the refusal
+        # below closes the dialog. Auto repeat can also run for days, so an
+        # unanswered one is worth saying while somebody is still at the
+        # screen.
+        async_check(self.hass, self._runner.entry)
         if mode != DIAGNOSIS_MODE_READ_ONLY:
             await async_authorize(
                 self.hass,
@@ -366,10 +313,11 @@ class DiagnosisStartButton(DiagnosisEntity, ButtonEntity):
                 self._runner.entry,
                 PERMISSION_CAPABILITY_TEST,
             )
-        # Before anything starts, and whatever the mode: auto repeat can run
-        # for days, and a document that carries no testimony is worth asking
-        # about while the house is still at the terminal.
-        async_check_testimony(self._runner)
+            # Refused, not warned: a capability test's findings are read
+            # against the house they were taken in, and the three questions
+            # it needs each have a truthful answer for every house
+            # (`testimony.py`). A read-only run is never refused.
+            async_refuse_if_unanswered(self._runner.entry)
         if mode == DIAGNOSIS_MODE_AUTO_REPEAT:
             self._runner.async_announce_start(mode)
             self._runner.continuous.async_turn_on()

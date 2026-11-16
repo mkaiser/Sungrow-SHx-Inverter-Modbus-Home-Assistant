@@ -27,6 +27,7 @@ from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 import custom_components.sungrow_modbus as component
 from custom_components.sungrow_modbus.const import (
+    CONF_DIAGNOSIS_OTHER_INVERTER,
     CONF_DIAGNOSIS_PROXY,
     CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
@@ -45,6 +46,7 @@ from custom_components.sungrow_modbus.diagnosis import DiagnosisRunner, Diagnosi
 from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import block_test, diagnosis_document as diagnosis
@@ -672,8 +674,7 @@ async def test_choosing_an_extended_mode_says_the_questions_are_unanswered(
 
     Auto repeat can run for days, and a run whose document carries no
     testimony is one nobody can compare or ask about. So the questions are
-    put before the run rather than after it -- as a notification, never as a
-    refusal: a reading with no testimony is still worth having.
+    put when the mode is chosen, before Start is ever pressed.
     """
     entry = MockConfigEntry(
         domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
@@ -685,26 +686,71 @@ async def test_choosing_an_extended_mode_says_the_questions_are_unanswered(
             return_value=sungrow_unit,
         ),
         patch(
-            "custom_components.sungrow_modbus.diagnosis_entities"
+            "custom_components.sungrow_modbus.testimony"
             ".persistent_notification.async_create"
         ) as warned,
     ):
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-        await hass.services.async_call(
-            "select",
-            "select_option",
-            {
-                "entity_id": "select.sh10rt_diagnosis_mode",
-                "option": DIAGNOSIS_MODE_AUTO_REPEAT,
-            },
-            blocking=True,
-        )
+        await _choose(hass, DIAGNOSIS_MODE_AUTO_REPEAT)
 
     message = warned.call_args.args[1]
-    assert "Your name or handle" in message
     assert "How this inverter is connected" in message
+    assert "Is a Modbus proxy in the path?" in message
+    assert "Is there another inverter here that is not a Sungrow?" in message
+    # The name is in there as a suggestion, not among the refusals: this
+    # project takes anonymous readings on purpose.
+    assert "Your name or handle" in message
+
+
+async def test_an_extended_run_is_refused_until_they_are_answered(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The gate itself: a press that writes, on an entry that cannot say where.
+
+    A capability test's findings are read against the house they ran in, so
+    the three questions no register answers are asked before the first write
+    -- and refused as a `ServiceValidationError`, which is a dialog on a
+    press and a line an automation can see, rather than a traceback.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        await _choose(hass, DIAGNOSIS_MODE_AUTO_REPEAT)
+        with pytest.raises(ServiceValidationError, match="testimony_missing"):
+            await hass.services.async_call(
+                "button",
+                "press",
+                {"entity_id": "button.sh10rt_diagnosis_start"},
+                blocking=True,
+            )
+
+    assert entry.runtime_data.diagnosis.continuous.active is False
+    assert entry.runtime_data.diagnosis.state.running is False
+
+    # Read-only is never refused: it writes nothing, and a reading with no
+    # testimony is still a reading worth having.
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        await _choose(hass, DIAGNOSIS_MODE_READ_ONLY)
+        await hass.services.async_call(
+            "button",
+            "press",
+            {"entity_id": "button.sh10rt_diagnosis_start"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+    assert entry.runtime_data.diagnosis.state.document is not None
 
 
 async def test_an_entry_that_answered_them_gets_no_warning(
@@ -714,7 +760,12 @@ async def test_an_entry_that_answered_them_gets_no_warning(
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=ENTRY_DATA,
-        options={CONF_REPORTER: "gerd", CONF_DIAGNOSIS_TRANSPORT: "direct_lan"},
+        options={
+            CONF_REPORTER: "gerd",
+            CONF_DIAGNOSIS_TRANSPORT: "direct_lan",
+            CONF_DIAGNOSIS_PROXY: "no",
+            CONF_DIAGNOSIS_OTHER_INVERTER: "no",
+        },
         unique_id=SERIAL,
         title="SH10RT",
     )
@@ -725,26 +776,18 @@ async def test_an_entry_that_answered_them_gets_no_warning(
             return_value=sungrow_unit,
         ),
         patch(
-            "custom_components.sungrow_modbus.diagnosis_entities"
+            "custom_components.sungrow_modbus.testimony"
             ".persistent_notification.async_create"
         ) as warned,
         patch(
-            "custom_components.sungrow_modbus.diagnosis_entities"
+            "custom_components.sungrow_modbus.testimony"
             ".persistent_notification.async_dismiss"
         ) as dismissed,
     ):
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-        await hass.services.async_call(
-            "select",
-            "select_option",
-            {
-                "entity_id": "select.sh10rt_diagnosis_mode",
-                "option": DIAGNOSIS_MODE_AUTO_REPEAT,
-            },
-            blocking=True,
-        )
+        await _choose(hass, DIAGNOSIS_MODE_AUTO_REPEAT)
 
     assert not warned.called
     assert dismissed.called

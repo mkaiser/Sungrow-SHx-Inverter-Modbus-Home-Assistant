@@ -1917,6 +1917,9 @@
     },
     "not_on_wallbox": {
       "message": "{title} ist kein Wechselrichter. Diese Aktion arbeitet an einem Wechselrichter; ein Eintrag für eine Wallbox, einen iHomeManager oder einen Logger hat nur seine eigenen Diagnose-Schaltflächen, und nichts in dieser Integration schreibt in eines dieser Geräte."
+    },
+    "testimony_missing": {
+      "message": "{title}: Beantworte die Fragen der Diagnose, bevor ein erweiterter Test läuft. Ein erweiterter Test schreibt Einstellungen und liest sie zurück, und was er findet, lässt sich nur zusammen mit dem Haus verstehen, in dem er lief — kein Register meldet davon etwas. Unter Einstellungen → Geräte & Dienste → Sungrow Modbus → Konfigurieren, im Abschnitt „Eine Funktionsdiagnose beisteuern“, beantworte: „Wie dieser Wechselrichter angebunden ist“, „Ist ein Modbus-Proxy im Pfad?“ und „Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?“. Jede davon hat für jedes Haus eine Antwort — „nicht sicher“, „weiß ich nicht“, „nein“ — keine verlangt also zu raten. Eine rein lesende Diagnose läuft auch ohne sie."
     }
   }
 }
