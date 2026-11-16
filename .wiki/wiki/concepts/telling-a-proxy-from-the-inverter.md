@@ -82,6 +82,10 @@ about the device -- the same rule as
 repository's own dev container is such a place: its whole cache is the Docker
 gateway.
 
+From schema 28 a diagnosis records this about itself, as `on_device_segment`:
+a reading taken off the segment says so, instead of leaving a null vendor
+prefix and an empty mDNS browse to be read as findings about the device.
+
 Read where it is available: `network_names.async_mac_prefix` (`/proc/net/arp`
 on Linux, `arp -a` elsewhere), `wifi_module.is_locally_administered`, and the
 picker's labels in `config_flow_schemas.py`. The diagnosis publishes the

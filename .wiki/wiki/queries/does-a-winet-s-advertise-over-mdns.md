@@ -51,3 +51,12 @@ inverter's own LAN port would need. The first prefix: `AC:19:9F`, for peter-sm's
 own LAN port; one house is not yet a pattern. It is Sungrow's one prefix in the IEEE registry,
 and the integration's DHCP matcher keys on it
 ([the maintainer's house](../sources/mkaiser-network-discovery-2026-11-15-summary.md)).
+
+**`mdns.state` alone cannot answer it**, which is why the section now measures the reader too.
+`nothing_answered` is the same word for "no Sungrow record among the eleven this machine heard"
+-- a finding about the device -- and "this machine heard nothing at all", which is a bridge, a
+VLAN or a firewall. From schema 28 two fields separate them: `mdns.services_heard` counts every
+`_http._tcp` instance that answered, Sungrow or not, and `on_device_segment` says whether the
+machine that ran the diagnosis holds an address on the device's network at all. Only a
+`nothing_answered` with records heard beside it is evidence that an inverter's own LAN port
+advertises nothing. Every reading taken before then is the ambiguous kind.

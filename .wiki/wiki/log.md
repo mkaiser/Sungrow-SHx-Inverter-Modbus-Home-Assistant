@@ -971,3 +971,26 @@ ship an inverter with a VMware port. It stays short -- stale costs a label,
 never a wrong one -- and
 [telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md)
 says why a longer one would be the weaker note's job instead.
+
+## [2026-11-16] decided | the diagnosis measures its reader rather than asking about it
+
+Asked whether the user-data section should record how Home Assistant is
+installed -- virtual machine, container, native -- to explain an empty mDNS
+browse or an absent MAC prefix. It should not. The answer would be testimony
+about Home Assistant while the diagnosis runs wherever it runs, often not on
+Home Assistant at all, and Home Assistant OS is a container with host
+networking, so the answer would predict a blindness that is not there.
+
+Schema 28 measures it instead: `mdns.services_heard`, every `_http._tcp`
+instance that answered rather than only the Sungrow ones, and
+`on_device_segment`, whether the reading machine holds an address on the
+device's own network. That follows
+[identify by what answers](concepts/identify-by-what-answers.md) applied to
+the reader, and costs a contributor nothing where a question costs every one
+of them a prompt. It is what makes
+[does a WiNet-S advertise over mDNS](queries/does-a-winet-s-advertise-over-mdns.md)
+answerable: until now `nothing_answered` has been the same word for the
+device's silence and the reader's.
+
+Install type, where it is wanted for support, belongs in Home Assistant's own
+`diagnostics.py` download, which nothing publishes.

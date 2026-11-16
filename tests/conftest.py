@@ -129,9 +129,14 @@ def _no_network_names(monkeypatch: pytest.MonkeyPatch) -> None:
     patched its own way.
     """
     from custom_components.sungrow_modbus import network_records
+    from sungrow_modbus import network_names
 
-    async def nothing_heard(_hass: object) -> list[object]:
-        return []
+    async def nothing_heard(_hass: object) -> object:
+        return network_names.BrowseResult(adverts=(), heard=0)
+
+    def nowhere(_host: str) -> None:
+        """No adapters to read, which is "not determined", not "off-segment"."""
+        return
 
     async def no_answer(_host: str) -> None:
         return None
@@ -139,3 +144,4 @@ def _no_network_names(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(network_records, "_async_adverts", nothing_heard)
     monkeypatch.setattr(network_records, "async_hostname", no_answer)
     monkeypatch.setattr(network_records, "async_mac_prefix", no_answer)
+    monkeypatch.setattr(network_records, "on_device_segment", nowhere)

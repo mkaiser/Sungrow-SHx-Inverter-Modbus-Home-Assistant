@@ -372,7 +372,7 @@ _STRING_INVERTERS: list[string_inverter_direct.Found] = []
 #: What the run's one mDNS browse heard: `adverts` (None when no browse ran)
 #: and `why` it did not. Module state like `_WALLBOXES`: the browse is about
 #: the network, and every device's document reads it.
-_MDNS: dict[str, object] = {"adverts": None, "why": "not browsed"}
+_MDNS: dict[str, object] = {"adverts": None, "why": "not browsed", "heard": None}
 
 
 async def _browse(echo) -> None:
@@ -387,14 +387,25 @@ async def _browse(echo) -> None:
     echo("")
     echo(f"  listening for mDNS records for {network_names.BROWSE_SECONDS:.0f}s")
     try:
-        adverts = await network_names.async_browse()
+        browsed = await network_names.async_browse_result()
     except (RuntimeError, OSError) as error:
-        _MDNS.update(adverts=None, why=f"{type(error).__name__}: {error}")
+        _MDNS.update(adverts=None, why=f"{type(error).__name__}: {error}", heard=None)
         echo(f"  mDNS not browsed: {error}")
         return
-    _MDNS.update(adverts=adverts, why=None)
+    adverts = list(browsed.adverts)
+    _MDNS.update(adverts=adverts, why=None, heard=browsed.heard)
     if not adverts:
-        echo("  no Sungrow device answered over mDNS here")
+        # Said apart, because they are different findings: nothing Sungrow
+        # among a dozen other records is the device's silence, where nothing
+        # at all is this machine's.
+        echo(
+            "  no Sungrow device answered over mDNS here"
+            + (
+                f" (nor did anything else: {browsed.heard} records heard)"
+                if not browsed.heard
+                else f" ({browsed.heard} other records heard)"
+            )
+        )
     for advert in adverts:
         board = advert.board
         behind = advert.inverter
@@ -411,6 +422,7 @@ async def _network_names(host: str, serials: list[str | None]) -> dict[str, obje
     """
     adverts = _MDNS.get("adverts")
     why = _MDNS.get("why")
+    heard = _MDNS.get("heard")
     return network_names.network_section(
         host=host,
         device_serials=[serial for serial in serials if serial],
@@ -418,6 +430,8 @@ async def _network_names(host: str, serials: list[str | None]) -> dict[str, obje
         browse_error=why if isinstance(why, str) else None,
         hostname=await async_hostname(host),
         mac_prefix=await network_names.async_mac_prefix(host),
+        services_heard=heard if isinstance(heard, int) else None,
+        on_segment=network_names.on_device_segment(host),
     )
 
 

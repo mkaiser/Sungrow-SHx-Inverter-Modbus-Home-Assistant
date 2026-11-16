@@ -984,7 +984,7 @@ async def test_every_document_of_a_run_reads_the_one_browse(monkeypatch) -> None
     )
 
     async def browse(*_args, **_kwargs):
-        return [heard]
+        return sungrow_diagnosis.network_names.BrowseResult(adverts=(heard,), heard=7)
 
     async def no_name(_host):
         return None
@@ -992,19 +992,25 @@ async def test_every_document_of_a_run_reads_the_one_browse(monkeypatch) -> None
     async def no_prefix(_host):
         return None
 
-    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse", browse)
+    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse_result", browse)
+    monkeypatch.setattr(
+        sungrow_diagnosis.network_names, "on_device_segment", lambda _host: None
+    )
     monkeypatch.setattr(sungrow_diagnosis, "async_hostname", no_name)
     monkeypatch.setattr(sungrow_diagnosis.network_names, "async_mac_prefix", no_prefix)
     await sungrow_diagnosis._browse(lambda *_: None)
     section = await sungrow_diagnosis._network_names("192.0.2.10", [None])
     assert section["mdns"]["state"] == "answered"
     assert section["mdns"]["services"][0]["this_device"] is True
+    # Every record heard, not only the Sungrow one: it is what says whether
+    # this machine could have heard anything.
+    assert section["mdns"]["services_heard"] == 7
     assert "B123456789" not in str(section)
 
     async def refused(*_args, **_kwargs):
         raise RuntimeError("zeroconf missing")
 
-    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse", refused)
+    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse_result", refused)
     await sungrow_diagnosis._browse(lambda *_: None)
     section = await sungrow_diagnosis._network_names("192.0.2.10", [])
     assert section["mdns"]["state"] == "not_browsed"

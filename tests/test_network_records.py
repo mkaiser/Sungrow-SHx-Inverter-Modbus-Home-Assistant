@@ -8,7 +8,7 @@ import pytest
 
 from custom_components.sungrow_modbus import network_records
 from homeassistant.core import HomeAssistant
-from sungrow_modbus.network_names import Advert
+from sungrow_modbus.network_names import Advert, BrowseResult
 
 HOST = "192.0.2.10"
 
@@ -35,26 +35,32 @@ async def test_the_browse_goes_through_home_assistant_s_instance(
         ),
         patch.object(
             network_records.network_names,
-            "async_browse",
-            AsyncMock(return_value=heard),
+            "async_browse_result",
+            AsyncMock(return_value=BrowseResult(adverts=tuple(heard), heard=4)),
         ) as browse,
     ):
-        adverts = await REAL_ADVERTS(hass)
-    assert adverts == heard
+        browsed = await REAL_ADVERTS(hass)
+    assert list(browsed.adverts) == heard
+    # Carried through, because it is the half that says whether this machine
+    # could have heard anything at all.
+    assert browsed.heard == 4
     assert browse.await_args.kwargs == {"zeroconf": shared.zeroconf}
 
 
 async def test_the_section_marks_this_device_and_carries_no_serial(
     hass: HomeAssistant, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    async def heard(_hass: object) -> list[Advert]:
-        return [
-            Advert(
-                instance="WiNet-WebServer",
-                addresses=(HOST,),
-                properties={"inverter": "1;3598;A123456789;1;516;SH10RT;1;4;"},
-            )
-        ]
+    async def heard(_hass: object) -> BrowseResult:
+        return BrowseResult(
+            adverts=(
+                Advert(
+                    instance="WiNet-WebServer",
+                    addresses=(HOST,),
+                    properties={"inverter": "1;3598;A123456789;1;516;SH10RT;1;4;"},
+                ),
+            ),
+            heard=3,
+        )
 
     async def prefix(_host: str) -> str:
         return "A4:CF:12"
@@ -65,13 +71,14 @@ async def test_the_section_marks_this_device_and_carries_no_serial(
     assert section["mdns"]["state"] == "answered"
     assert section["mdns"]["services"][0]["this_device"] is True
     assert section["mac_vendor_prefix"] == "A4:CF:12"
+    assert section["mdns"]["services_heard"] == 3
     assert "A123456789" not in str(section)
 
 
 async def test_a_failed_browse_is_recorded_as_not_browsed(
     hass: HomeAssistant, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    async def refused(_hass: object) -> list[Advert]:
+    async def refused(_hass: object) -> BrowseResult:
         raise OSError("no multicast here")
 
     monkeypatch.setattr(network_records, "_async_adverts", refused)

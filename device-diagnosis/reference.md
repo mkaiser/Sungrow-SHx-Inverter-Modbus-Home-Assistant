@@ -287,7 +287,8 @@ instance. The download leaves it out.
     ]
   },
   "reverse_dns_label": "SUNGROWanon-68311414753",
-  "mac_vendor_prefix": "A4:CF:12"
+  "mac_vendor_prefix": "A4:CF:12",
+  "on_device_segment": true
 }
 ```
 
@@ -297,6 +298,11 @@ instance. The download leaves it out.
   surely as an absent dongle. Every Sungrow record heard is listed, and
   `this_device` marks the one heard from this device's address or naming its
   serial.
+- **`mdns.services_heard`** (schema 28) counts every `_http._tcp` instance that
+  answered, Sungrow or not -- a printer, a router, a NAS. It is what tells
+  the two silences apart: `nothing_answered` beside a dozen others is the
+  device saying nothing, and beside `0` it is this machine hearing nothing.
+  `null` means the count was not taken.
 - **Serials** in a record are replaced by their stand-ins; a MAC address, an
   IP address or a serial-like string in a field nobody has explained by
   `<mac>`, `<address>` or `<unexplained>`. No address is published.
@@ -307,6 +313,14 @@ instance. The download leaves it out.
   one device. Both are `null` from behind a router, a VPN or a container
   bridge. They are what a `dhcp` matcher would key on, which an inverter on
   its own LAN port, announcing nothing over mDNS, needs.
+- **`on_device_segment`** (schema 28) says whether the machine that ran this diagnosis
+  holds an address on the device's own network, and it is the only field
+  here about the reader rather than the device. `false` explains the two
+  nulls above and an empty browse at a stroke: a TCP socket never carries
+  the peer's MAC, and multicast does not cross a router or a container
+  bridge, so none of the three is evidence about the device. `null` is "not
+  determined" -- a host that is not an IPv4 address, adapters that could not
+  be read, or a document written before the field existed.
 
 A wallbox's own document carries the same section.
 

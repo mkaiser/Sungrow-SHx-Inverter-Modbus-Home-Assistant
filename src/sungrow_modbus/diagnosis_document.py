@@ -117,7 +117,16 @@ from .const import model_for
 #: no address. They decide whether Home Assistant can discover a device by
 #: itself. Before 27 nothing was asked, and `mdns.state` tells "heard nothing
 #: here" from "not browsed".
-SCHEMA = 27
+#:
+#: 28 measures **the reader** in that section, which is the only thing there
+#: that is not about the device: `mdns.services_heard`, every `_http._tcp`
+#: instance that answered rather than only the Sungrow ones, and
+#: `on_device_segment`, whether this machine holds an address on the device's
+#: own network. Without them an empty browse and an absent `mac_vendor_prefix`
+#: read as findings about the device when they may be findings about where the
+#: diagnosis ran. Both are `null` in a document written before 28, which says
+#: nothing rather than claiming the reader was placed well.
+SCHEMA = 28
 
 #: The key part B's block is under, by schema: `control_test` before 25.
 CAPABILITY_TEST_KEY = "capability_test"

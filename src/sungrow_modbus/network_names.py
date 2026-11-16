@@ -208,6 +208,34 @@ def instance_of(name: str, service_type: str = SERVICE_TYPE) -> str:
     return name[: -len(suffix)] if name.endswith(suffix) else name
 
 
+@dataclass(frozen=True, slots=True)
+class BrowseResult:
+    """What a browse heard: the Sungrow records, and how much answered at all.
+
+    `heard` counts every `_http._tcp` instance that answered, Sungrow or
+    not -- a printer, a router, a NAS. It is about **the reader**, not the
+    device: zero of anything on a home network says this machine could not
+    have heard a Sungrow record either, where a dozen others and no Sungrow
+    one says the device advertised nothing. Without it the two are one
+    `nothing_answered`, which is the whole of the open mDNS question.
+    """
+
+    adverts: tuple[Advert, ...]
+    heard: int
+
+
+async def async_browse_result(
+    seconds: float = BROWSE_SECONDS, *, zeroconf: Any = None
+) -> BrowseResult:
+    """Browse `_http._tcp` and return the Sungrow records with the total heard.
+
+    `async_browse` is this without the count, for a caller that does not
+    publish one.
+    """
+    adverts, heard = await _async_browse(seconds, zeroconf=zeroconf)
+    return BrowseResult(adverts=tuple(adverts), heard=heard)
+
+
 async def async_browse(
     seconds: float = BROWSE_SECONDS, *, zeroconf: Any = None
 ) -> list[Advert]:
@@ -219,8 +247,17 @@ async def async_browse(
     optional `zeroconf` package is missing.
 
     An empty list means nothing Sungrow answered **here**: a container, a
-    VLAN or a firewall keeps multicast out as surely as an absent dongle.
+    VLAN or a firewall keeps multicast out as surely as an absent dongle,
+    which is what `async_browse_result` measures and this drops.
     """
+    adverts, _ = await _async_browse(seconds, zeroconf=zeroconf)
+    return adverts
+
+
+async def _async_browse(
+    seconds: float, *, zeroconf: Any = None
+) -> tuple[list[Advert], int]:
+    """Browse once, returning the Sungrow records and every instance heard."""
     try:
         from zeroconf import ServiceStateChange
         from zeroconf.asyncio import (
@@ -266,7 +303,7 @@ async def async_browse(
             )
             if advert.is_sungrow:
                 adverts.append(advert)
-        return adverts
+        return adverts, len(names)
     finally:
         await browser.async_cancel()
         if azc is not None:
@@ -327,6 +364,61 @@ async def async_mac_prefix(host: str) -> str | None:
     if sys.platform.startswith("linux"):
         return mac_prefix_in(_arp_lines_linux(), host)
     return mac_prefix_in(await _arp_lines_command(host), host)
+
+
+def _own_networks() -> tuple[ipaddress.IPv4Network, ...] | None:
+    """Return the IPv4 networks this machine has an address on, or None.
+
+    None is "could not be read" -- `ifaddr` is zeroconf's dependency and so
+    arrives with the `discovery` extra rather than on its own -- and is never
+    "this machine has no networks".
+    """
+    try:
+        import ifaddr
+    except ModuleNotFoundError:
+        return None
+    try:
+        adapters = ifaddr.get_adapters()
+    except OSError:
+        return None
+    networks: list[ipaddress.IPv4Network] = []
+    for adapter in adapters:
+        for ip in adapter.ips:
+            if not ip.is_IPv4:
+                continue
+            try:
+                networks.append(
+                    ipaddress.IPv4Network(f"{ip.ip}/{ip.network_prefix}", strict=False)
+                )
+            except ValueError:
+                continue
+    return tuple(networks) or None
+
+
+def on_device_segment(
+    host: str, networks: Iterable[ipaddress.IPv4Network] | None = None
+) -> bool | None:
+    """Whether `host` is on a network this machine holds an address on.
+
+    This is about **the reader**, and it is what makes the two nulls beside
+    it legible. Off the segment there is no neighbour entry to read a vendor
+    prefix from -- a TCP socket never carries the peer's MAC -- and multicast
+    does not arrive either, so an empty mDNS browse and an absent
+    `mac_vendor_prefix` say nothing whatever about the device. The
+    repository's own dev container is such a place: it reaches an inverter
+    through the Docker bridge and sees neither.
+
+    Three-valued like every probe here. None is "not determined": a host
+    that is not an IPv4 address, or adapters that could not be read.
+    """
+    try:
+        address = ipaddress.IPv4Address(host)
+    except ValueError:
+        return None
+    found = _own_networks() if networks is None else tuple(networks)
+    if not found:
+        return None
+    return any(address in network for network in found)
 
 
 def _stand_ins(serials: Iterable[str]) -> dict[str, str]:
@@ -395,6 +487,8 @@ def network_section(
     browse_seconds: float = BROWSE_SECONDS,
     hostname: str | None = None,
     mac_prefix: str | None = None,
+    services_heard: int | None = None,
+    on_segment: bool | None = None,
 ) -> dict[str, object]:
     """Return the document's `network_names` section.
 
@@ -406,6 +500,14 @@ def network_section(
 
     `hostname` is published as its first label only, serials replaced: the
     domain is the owner's network, not the device.
+
+    `services_heard` and `on_segment` describe **the reader**, and are the
+    only things in the section that do. Without them an empty browse and an
+    absent `mac_vendor_prefix` read as findings about the device when they
+    may be findings about where the diagnosis ran
+    (`on_device_segment`, `BrowseResult`). Both are optional and both default
+    to None, which is "not determined": a document written before they
+    existed says nothing rather than claiming the reader was placed well.
     """
     adverts = list(adverts) if adverts is not None else None
     all_serials = set(device_serials)
@@ -421,6 +523,9 @@ def network_section(
         mdns = {
             "state": "answered" if adverts else "nothing_answered",
             "browsed_seconds": browse_seconds,
+            # Every instance that answered, Sungrow or not: zero of anything
+            # is a statement about the reader, not about the device.
+            "services_heard": services_heard,
             "services": [
                 advert_entry(
                     advert,
@@ -436,4 +541,5 @@ def network_section(
         "mdns": mdns,
         "reverse_dns_label": anonymised(label, serials) if label else None,
         "mac_vendor_prefix": mac_prefix,
+        "on_device_segment": on_segment,
     }
