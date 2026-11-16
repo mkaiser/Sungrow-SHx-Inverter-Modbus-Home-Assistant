@@ -244,11 +244,21 @@ diagnosis-only entry; how it is handled beyond that is open.
    Modbus) and never on the SH10RT, which the YAML package was polling
    through the same Home Assistant; from the dev container the SH10RT
    accepted six of six connects in under 10 ms. The manual step identified it at once. Not retried slowly
-   (that happens only when nothing answers). Find out whether the inverter
+   (that happens only when nothing answers). A sweep from the dev container,
+   which holds no session, found and identified it in one round, so the port
+   is not deaf to a sweep: what it does under a sweep from the address
+   already polling it is the question. Find out whether the inverter
    refuses a second TCP session from an address that already holds one, and
    if so, have the sweep count a host Home Assistant's `modbus` already
    connects to as a candidate (wiki: why did the search miss the
    maintainer's inverter).
+
+7. **A release before the next diagnoses come in.** `diagnosis.sh` installs
+   the library by the PyPI pin in its own PEP 723 header, so a contributor
+   running it today writes schema 27 whatever is on this branch: schema 28's
+   `mdns.services_heard` and `on_device_segment` reach a real document only
+   through a release (`device-diagnosis/reference.md`). Six commits are
+   unpushed, none of them released.
 
 # Open decisions
 
@@ -465,7 +475,16 @@ diagnosis-only entry; how it is handled beyond that is open.
     - **Other houses, other firmware.** One dongle and one wallbox so far;
       both matchers wait on diagnoses carrying `network_names`, and the DHCP
       matcher on a house whose inverter port takes its address by DHCP (a
-      fixed address is never seen).
+      fixed address is never seen). Two prefix readings so far, both
+      `AC:19:9F`: peter_sm's and the maintainer's, the second taken from the
+      Windows host because the dev container's neighbour cache holds only
+      the Docker gateway (wiki: telling a proxy from the inverter).
+    - **A browse the reader cannot have spoiled.** "The inverter's own port
+      advertises nothing" has so far rested on browses from machines that
+      may have heard nothing at all. Schema 28 records `services_heard` and
+      `on_device_segment` so a document says which it was; for this house,
+      `probe.py mdns` on the Windows host settles it, since the container
+      carries no multicast (open decision 2).
     - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
       which is on WiFi; it may carry the Ethernet details when the dongle is
       wired. Answer it from the corpus: compare `ethinfo` with
