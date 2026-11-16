@@ -416,6 +416,24 @@ def _roles(
     return roles
 
 
+def _address_order(host: str) -> tuple[int, bytes, str]:
+    """Order a host as an address, not as text.
+
+    Sorted as text, `.125` comes before `.35` and `.9` comes last, because
+    the octets are compared character by character. That is stable but
+    arbitrary, and it is not idle: where two cards tie on everything the
+    wire measured -- the proxy-and-inverter pair, which answer one serial
+    over one route -- this is the tiebreak that picks the default offer.
+
+    A hostname has no numeric order, so it sorts after the addresses and
+    among its own kind by name.
+    """
+    try:
+        return (0, ip_address(host).packed, "")
+    except ValueError:
+        return (1, b"", host)
+
+
 def _described(
     found: dict[str, dict[str, Any]], local: Collection[str] = ()
 ) -> dict[str, dict[str, Any]]:
@@ -544,7 +562,8 @@ def _described(
     # the same path and shares the inverter's one Modbus port rather than
     # taking it -- but *within* a route rather than across one, so a proxy in
     # front of a dongle never outranks a cable. Then unit 1 before a slave's
-    # address, then the address, so the order is stable.
+    # address, and last the address itself, read as an address rather than
+    # as text (`_address_order`), so the order is both stable and sensible.
     return dict(
         sorted(
             found.items(),
@@ -552,7 +571,7 @@ def _described(
                 not item[1].get("direct"),
                 not item[1].get("proxy"),
                 item[1][CONF_UNIT_ID] != DEFAULT_UNIT_ID,
-                item[0],
+                _address_order(item[0]),
             ),
         )
     )

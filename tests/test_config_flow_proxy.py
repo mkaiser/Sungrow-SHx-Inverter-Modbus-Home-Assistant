@@ -121,6 +121,39 @@ def test_a_proxy_in_front_of_a_dongle_never_outranks_a_cable() -> None:
     assert list(described) == [CABLE, PROXY]
 
 
+def test_untold_apart_cards_fall_back_to_the_numeric_address() -> None:
+    """The tiebreak that picks the default where nothing else can.
+
+    Measured at the maintainer's house: a proxy at .125 in front of the
+    inverter at .35, Home Assistant somewhere else again, so `local` names
+    neither and no ARP entry exists to read a vendor prefix from. Every
+    key above the address ties, and a text sort then offered .125 -- not
+    because it was the better address but because "1" sorts before "3".
+    """
+    hosts = ["192.168.178.125", "192.168.178.35", "192.168.178.9"]
+    described = _described(
+        {host: _found(host, direct=True, mac=None) for host in hosts}
+    )
+
+    assert list(described) == [
+        "192.168.178.9",
+        "192.168.178.35",
+        "192.168.178.125",
+    ]
+
+
+def test_a_hostname_sorts_after_the_addresses() -> None:
+    """A name has no numeric order, and must not break the sort either."""
+    described = _described(
+        {
+            "inverter.local": _found("inverter.local", direct=True, mac=None),
+            "192.168.178.35": _found("192.168.178.35", direct=True, mac=None),
+        }
+    )
+
+    assert list(described) == ["192.168.178.35", "inverter.local"]
+
+
 def test_nothing_is_a_proxy_when_no_address_is_ours() -> None:
     """The default: `local` empty says nothing rather than guessing."""
     described = _described(
