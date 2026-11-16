@@ -260,6 +260,22 @@ diagnosis-only entry; how it is handled beyond that is open.
    through a release (`device-diagnosis/reference.md`). Six commits are
    unpushed, none of them released.
 
+8. **A copied scene does not work unchanged.** The YAML package carries seven
+   scenes, and `doc/integration_migration.md` tells a migrating user to copy
+   the ones they use, saying they work unchanged with the package's ids. The
+   ids are adopted, so that half holds. The option strings are not: the
+   package's selects take their state as the label (`Forced discharge`,
+   `Self-consumption mode (default)`, `Stop (default)`), the integration's
+   take the option key (`discharge`, `self_consumption`, `stop`;
+   `select_descriptions.py`), and a scene applying a state no option matches
+   does nothing but log. Five of the seven set a select and so break --
+   both *Self-Consumption Mode* scenes, *Battery Bypass Mode*, *Battery
+   Forced Discharge*, *Battery Forced Charge*; *Zero Export Power* and *Max
+   Export Power* set only a switch and a number and still work. Decide
+   between correcting the guide with the new option strings per scene, and
+   shipping the scenes as blueprints so nothing has to be copied; either way
+   the guide's sentence is wrong as it stands.
+
 # Open decisions
 
 1. **Are the entity names final?** They are reviewed and decided, English
