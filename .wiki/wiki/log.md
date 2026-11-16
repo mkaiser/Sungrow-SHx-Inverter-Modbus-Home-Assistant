@@ -1103,3 +1103,42 @@ results to four), [the morning's browse](sources/mkaiser-mdns-2026-11-16-summary
 [the RAK module](entities/device-rak-wifi-module.md),
 [mkaiser](entities/installation-mkaiser.md), `device-diagnosis/reference.md`,
 and the index.
+
+## [2026-11-16] ingested | the firewall browse, run a second time
+
+[The second run](sources/mkaiser-mdns-firewall-run2-2026-11-16-summary.md) of
+the four-browse firewall test at [mkaiser](entities/installation-mkaiser.md),
+three and a half hours after the first, with the script unchanged. Restore
+verified by read-back, exit 0.
+
+**Answered: it is the same eight records every time.** The counts do not
+compare between runs -- more devices were on air in the afternoon, 46 allowed
+against 44 -- so the runs were compared per record. Of the 42 instances heard
+in an allowed browse in both, 33 survived all four degraded browses and the
+**same 8 were lost in all four**: a NAS's three, a door station's three, a
+streaming stick's one and the
+[RAK module](entities/device-rak-wifi-module.md)'s. One `_matter._tcp` was lost
+once per run, in the other state each time. The first run's "why those, and is
+it luck" is half settled: it is not luck.
+
+**And it is the record, not the host.** A TV switched off during run 1 was on
+for run 2 and published four records from one address: `_airplay._tcp` survived
+both degraded browses while `_googlecast`, `_display` and `_ghp` were lost. So
+the mechanism is not reachability, a route or a VLAN. Those three records are
+also the only apparent disagreement between the runs, and only because the TV
+was off the first time. The address family is ruled out too: nearly every
+record on both sides publishes IPv4 and IPv6.
+
+**Still open, and now worth asking**: what separates those eight from the 33.
+The hypothesis to test is unicast against multicast answers, which Windows'
+"allow unicast response to multicast" would split exactly this way. That is a
+packet capture, and nothing the integration ships waits on it.
+
+A sixth, seventh, eighth and ninth browse with no Sungrow record of any kind,
+so "an SH10RT's own LAN port advertises nothing" now rests on nine. Four
+allowed browses across the day heard 44, 44, 46 and 47 and no two were the same
+set.
+
+Updated: [an mDNS browse is a floor](concepts/mdns-browse-is-a-floor.md),
+[the query](queries/does-a-winet-s-advertise-over-mdns.md) (four results to
+five), and the index.

@@ -529,14 +529,21 @@ diagnosis-only entry; how it is handled beyond that is open.
       nothing is measured, and what is left is the dongle's half from a
       reader known not to have been deaf. Schema 28's `services_heard` and
       `on_device_segment` say which a document is, from 0.1.0a43 on.
-    - **Which records a firewall drops, and why those.** A declined Windows
-      prompt degrades a browse rather than silencing it: 37 instances and 3
-      `_http._tcp` against 44 and 4, the baseline reproduced exactly on
-      restore, so `services_heard` stays non-zero and looks healthy while
-      eight records are missing. The same eight went both times; what
-      separates them from the 35 that survived is unexplained. A second run
-      of `.testdata/mdns-firewall-test.ps1` on the Windows host says whether
-      it is the same eight every time.
+    - **Why those eight records and not the other 33.** Which records a
+      firewall drops is settled over two runs of
+      `.testdata/mdns-firewall-test.ps1` (wiki: an mDNS browse is a floor):
+      a declined prompt degrades the browse rather than silencing it, so
+      `services_heard` stays non-zero and looks healthy, and **it is the
+      same eight every time** -- of the 42 instances heard allowed in both
+      runs, 33 survived all four degraded browses and the same 8 were lost
+      in all four, one of them an `_http._tcp`. It is the record and not the
+      host: one TV's `_airplay._tcp` survived while its three other records,
+      from the same address, were lost. Open: what separates the eight. Not
+      the address family. The hypothesis is unicast against multicast
+      answers, which Windows' "allow unicast response to multicast" would
+      split exactly this way -- a packet capture on the Windows host, not a
+      browse. **Nothing the integration ships waits on it**; it would only
+      let the README tell a contributor what declining costs.
     - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
       which is on WiFi; it may carry the Ethernet details when the dongle is
       wired. Answer it from the corpus: compare `ethinfo` with

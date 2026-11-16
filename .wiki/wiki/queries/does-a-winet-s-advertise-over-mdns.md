@@ -4,7 +4,7 @@ title: Does a WiNet-S advertise over mDNS, and can discovery start there?
 tags: [winet-s, wallbox, mdns, discovery]
 created: '2026-11-11'
 query: Does a WiNet-S, and a wallbox at its own address, advertise itself over multicast mDNS, on every firmware, with the TXT record measured at gerd?
-results_count: 4
+results_count: 5
 ---
 
 # Does a WiNet-S advertise over mDNS, and can discovery start there?
@@ -23,10 +23,11 @@ instances, four of them `_http._tcp`, and not one Sungrow record**: no `WiNet-We
 TXT value ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)). The host held an address
 on the inverter's own /24 and the inverter in its ARP cache, so `on_device_segment` was true.
 That is a `nothing_answered` with records heard beside it: the first reading of the unambiguous
-kind. Four further browses the same afternoon, across three firewall states, found no Sungrow
-record either ([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)).
+kind. Eight further browses the same day, across three firewall states and two runs, found no
+Sungrow record either ([run 1](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md),
+[run 2](../sources/mkaiser-mdns-firewall-run2-2026-11-16-summary.md)).
 
-**Five browses with no Sungrow record is strong, and it is not proof.** The same runs caught the
+**Nine browses with no Sungrow record is strong, and it is not proof.** The same runs caught the
 [RAK WiFi module](../entities/device-rak-wifi-module.md) advertising under `_rak47x._tcp` in one
 browse and missing from two others, all three of which counted 44 instances. A browse is a floor,
 not a census ([the concept](../concepts/mdns-browse-is-a-floor.md)), so "no record heard" is
@@ -43,11 +44,18 @@ Still open:
 - **Other firmware, other houses.** Two dongles, one wallbox; a wallbox heard by multicast, none.
 - **A second house with no dongle.** One measured silence from an inverter's own LAN port is one
   house; what is known of the port is that it answers Modbus and is found by the sweep.
-- **Which records a firewall drops, and why those.** Declining the Windows prompt is
-  [answered](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md): it degrades the browse
-  rather than silencing it, so `services_heard` stays non-zero while records go missing. The same
-  eight were lost in both degraded states, and what distinguishes them from the 35 that survived
-  is not explained by anything measured.
+- **Which records a firewall drops.** Answered, over two runs
+  ([run 1](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md),
+  [run 2](../sources/mkaiser-mdns-firewall-run2-2026-11-16-summary.md)): declining the Windows
+  prompt degrades the browse rather than silencing it, so `services_heard` stays non-zero while
+  records go missing, and **it is the same eight records every time** -- 33 of the 42 heard
+  allowed in both runs survived all four degraded browses, the same 8 were lost in all four, and
+  one `_matter._tcp` moved. One of the eight is an `_http._tcp`, the type the matcher browses.
+  It is the record and not the host: one TV's `_airplay._tcp` survived while its three other
+  records, from the same address, were lost.
+- **Why those eight.** Still open, and worth asking now that it reproduces. Not the address
+  family (both sides publish IPv4 and IPv6). The hypothesis to test is unicast against multicast
+  answers, which is a packet capture; nothing the integration ships waits on it.
 - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle
   ([the reading](../sources/gerd-mdns-2026-11-11-summary.md)), which is on WLAN
   ([gerd](../entities/installation-gerd.md)). A wired dongle's record, beside the
