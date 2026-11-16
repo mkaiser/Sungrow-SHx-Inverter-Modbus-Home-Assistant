@@ -15,7 +15,9 @@ An older WiFi stick built on a RAKwireless module, found beside the maintainer's
 - **A web page on port 80**, behind HTTP Basic authentication (realm "RAK LOGIN", server
   `rak_mini_server`).
 - **Named to the router** as `rakmodule-` plus the MAC's last three octets, with RAKwireless's
-  vendor prefix `AC:1F:09`. It announces nothing over mDNS.
+  vendor prefix `AC:1F:09`. **It announces nothing over mDNS**: it was not among the 44 service
+  instances a 15-second browse heard from a machine on its own segment
+  ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)).
 - **The inverter does not report it**: the maintainer's P020 names no communication module, so
   which inverter carries one only its owner can say.
 

@@ -80,7 +80,10 @@ router, a VPN or a container bridge there is **no answer**, which says nothing
 about the device -- the same rule as
 [a failed read is not a refusal](failed-read-is-not-refusal.md). The
 repository's own dev container is such a place: its whole cache is the Docker
-gateway.
+gateway. The same line divides the mDNS browse: from the Windows host, one ARP
+hop from the inverter, a 15-second browse heard 44 records and could say that
+none was Sungrow's ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md));
+from the container the same browse would have heard nothing and proved nothing.
 
 From schema 28 a diagnosis records this about itself, as `on_device_segment`:
 a reading taken off the segment says so, instead of leaving a null vendor

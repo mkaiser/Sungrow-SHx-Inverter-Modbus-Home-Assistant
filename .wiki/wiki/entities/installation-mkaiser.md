@@ -43,7 +43,12 @@ pointed at the proxy cannot measure its route
 house's segment, the cache does separate them: the inverter's own LAN port carries Sungrow's
 `AC:19:9F` and the proxy a locally administered prefix
 ([the prefixes](../sources/mkaiser-mac-prefixes-2026-11-16-summary.md),
-[how](../concepts/telling-a-proxy-from-the-inverter.md)).
+[how](../concepts/telling-a-proxy-from-the-inverter.md)). From the same host a 15-second
+multicast browse heard 44 service instances, four of them `_http._tcp`, and **not one Sungrow
+record** -- the house's inverter is on its own LAN port with no dongle, so this is the measured
+form of the claim that such a port advertises nothing
+([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md),
+[open](../queries/does-a-winet-s-advertise-over-mdns.md)).
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

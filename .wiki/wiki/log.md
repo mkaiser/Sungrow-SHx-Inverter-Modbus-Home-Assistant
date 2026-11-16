@@ -1018,3 +1018,44 @@ Updated: [the wallbox](entities/device-wallbox.md),
 `wallbox/discovery.py`'s note, where unit 4 was reported and is now measured.
 `devices-wanted.md`'s row 5 asks for a third model or a second of either
 instead.
+
+## [2026-11-16] ingested | mkaiser-mdns-2026-11-16
+
+A multicast browse from the maintainer's **Windows host on the house LAN**,
+not the dev container -- the point of the run. `probe.py mdns --seconds 15`,
+read only.
+
+**44 service instances, 35 service types, four of them `_http._tcp`, and not
+one Sungrow record.** No `WiNet-WebServer`, no `SUNGROW*`, and no match for
+`sungrow`, `winet` or `solar` in any instance name, server name or TXT value.
+The host held an address on the inverter's own /24 and the inverter in its ARP
+cache under `AC:19:9F`, so `on_device_segment` was true.
+
+That is the half of the pair schema 28's `mdns.services_heard` was added for:
+a `nothing_answered` **with records heard beside it**. Until now every reading
+of an inverter's own LAN port was the ambiguous kind, where "the device says
+nothing" and "this machine hears nothing" wear the same word. So **an SH10RT's
+own LAN port advertises nothing over mDNS** is now measured, and so is the
+[RAK WiFi module](entities/device-rak-wifi-module.md)'s silence beside it.
+
+The Windows firewall sub-question, which nobody had written down, is answered
+from the rules the firewall holds: a Python process binding UDP 5353 raises the
+Defender Firewall dialog **once per interpreter** -- Windows' own `mDNS (UDP-In)`
+rule is scoped to `svchost.exe`/`dnscache` and does not cover it -- and
+answering it writes a `TCP Query User{...}` and a `UDP Query User{...}` rule
+granting inbound TCP and UDP on **any** local port, Private and Public, to that
+binary. Both were already present here, so this run raised nothing and added
+nothing. Whether *declining* silences the browse is now an explicit open
+sub-question: it would be a third silence, indistinguishable from the
+container's.
+
+Also recorded: `pip install -e ".[discovery]"` is not enough to start
+`probe.py` on a bare interpreter -- `modbus_connection.tmodbus` needs `serialx`,
+which comes only with `modbus-connection[tmodbus]`.
+
+Updated: [the query](queries/does-a-winet-s-advertise-over-mdns.md) (two
+results to three, two new open sub-questions),
+[mkaiser](entities/installation-mkaiser.md), the
+[RAK WiFi module](entities/device-rak-wifi-module.md),
+[telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md),
+and the index.
