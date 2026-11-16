@@ -253,14 +253,7 @@ diagnosis-only entry; how it is handled beyond that is open.
    connects to as a candidate (wiki: why did the search miss the
    maintainer's inverter).
 
-7. **A release before the next diagnoses come in.** `diagnosis.sh` installs
-   the library by the PyPI pin in its own PEP 723 header, so a contributor
-   running it today writes schema 27 whatever is on this branch: schema 28's
-   `mdns.services_heard` and `on_device_segment` reach a real document only
-   through a release (`device-diagnosis/reference.md`). Six commits are
-   unpushed, none of them released.
-
-8. **Revise the scenes and recreate them** (the maintainer, 2026-11-16).
+7. **Revise the scenes and recreate them** (the maintainer, 2026-11-16).
    The YAML package carries seven: *Self-Consumption Mode (max battery
    discharge)*, *Self-Consumption Mode (no battery discharge)*, *Zero Export
    Power*, *Max Export Power*, *Battery Bypass Mode*, *Battery Forced
@@ -512,12 +505,21 @@ diagnosis-only entry; how it is handled beyond that is open.
       `AC:19:9F`: peter_sm's and the maintainer's, the second taken from the
       Windows host because the dev container's neighbour cache holds only
       the Docker gateway (wiki: telling a proxy from the inverter).
-    - **A browse the reader cannot have spoiled.** "The inverter's own port
-      advertises nothing" has so far rested on browses from machines that
-      may have heard nothing at all. Schema 28 records `services_heard` and
-      `on_device_segment` so a document says which it was; for this house,
-      `probe.py mdns` on the Windows host settles it, since the container
-      carries no multicast (open decision 2).
+    - **A browse the reader cannot have spoiled**, at a house with a dongle.
+      Taken at the maintainer's, which has none: 44 records heard and no
+      Sungrow among them, from the Windows host, on the segment (wiki: an
+      mDNS browse is a floor). So an inverter's own LAN port advertising
+      nothing is measured, and what is left is the dongle's half from a
+      reader known not to have been deaf. Schema 28's `services_heard` and
+      `on_device_segment` say which a document is, from 0.1.0a43 on.
+    - **Which records a firewall drops, and why those.** A declined Windows
+      prompt degrades a browse rather than silencing it: 37 instances and 3
+      `_http._tcp` against 44 and 4, the baseline reproduced exactly on
+      restore, so `services_heard` stays non-zero and looks healthy while
+      eight records are missing. The same eight went both times; what
+      separates them from the 35 that survived is unexplained. A second run
+      of `.testdata/mdns-firewall-test.ps1` on the Windows host says whether
+      it is the same eight every time.
     - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
       which is on WiFi; it may carry the Ethernet details when the dongle is
       wired. Answer it from the corpus: compare `ethinfo` with
@@ -528,7 +530,13 @@ diagnosis-only entry; how it is handled beyond that is open.
     - **The fields nothing explains**: the battery's 8423 (0x20E7), the
       inverter's trailing `1;4`, the wallbox's `info=16256` (0x3F80), every
       `;1;`. More houses, compared with what Modbus measured there.
-    - Whether binding port 5353 raises a Windows firewall prompt.
+    - **Should the diagnosis record the Windows firewall state** beside
+      `services_heard`? Open, and a design question rather than a
+      measurement: a non-zero count currently reads as healthy when a
+      declined prompt has thinned it. Binding 5353 does raise the prompt on
+      every fresh interpreter -- Windows' own `mDNS (UDP-In)` rule is scoped
+      to `svchost.exe` and does not cover Python -- and the README now tells
+      a contributor to allow it.
     - A WiNet-S's *Visit* link for a cable entry, found by the inverter
       serial in its TXT (a link on the inverter, or the dongle as its own
       device).
