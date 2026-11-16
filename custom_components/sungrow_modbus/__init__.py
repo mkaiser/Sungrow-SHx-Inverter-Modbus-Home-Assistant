@@ -805,7 +805,18 @@ def _async_register_inverter(
 
 
 async def _async_route(inverter: Any) -> str | None:
-    """Measure the path once, at setup (`route.route_key`)."""
+    """Measure the path once, at setup (`route.route_key`).
+
+    This entry's own answer, and nowhere else's. The config flow measured the
+    same address minutes earlier and can disagree -- through a Modbus proxy it
+    reads 6100 where this does not -- and the flow's answer is deliberately
+    not carried in: it was taken by another session, and an entry that prints
+    a path it never read is stating as fact what it could not confirm. Where
+    6100 says nothing the sensor says unknown, which is true, and nothing is
+    gated on it. Measured, not retried: three attempts through one proxy in an
+    evening got nothing where the cable answered at once
+    (`.wiki/wiki/queries/does-a-modbus-proxy-carry-6100.md`).
+    """
     direct = await async_direct(inverter.async_read(DIRECT_ONLY_PROBE))
     try:
         module = inverter.field("communication_module_firmware_version")

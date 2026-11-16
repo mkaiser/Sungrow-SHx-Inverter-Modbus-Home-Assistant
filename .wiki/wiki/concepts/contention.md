@@ -30,7 +30,13 @@ A Sungrow accepts **very few simultaneous sessions**, and the recovery is
   minutes later with nothing else polling
   ([through the proxy](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-summary.md),
   [direct](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-2-summary.md)).
-  Register 6100 answered through it, so transport detection still sees the cable. The same held
+  Register 6100 answered through it, so transport detection still saw the cable -- but a
+  config entry's own probe of a proxy at [mkaiser](../entities/installation-mkaiser.md) got
+  no answer from 6100 at all, three times, where the same entry read `direct` at the
+  inverter's own LAN port
+  ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)); whether a
+  proxy carries the block for every session is
+  [open](../queries/does-a-modbus-proxy-carry-6100.md). The same held
   **under two other clients**: an anonymous SH10RT-V112 on P023, read through modbus-proxy 1.1.0
   while the YAML package and evcc both polled through it, answered 37 of 37 blocks in both rounds
   with no reconnect and no link drop

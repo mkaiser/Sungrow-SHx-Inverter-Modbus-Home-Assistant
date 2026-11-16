@@ -20,6 +20,12 @@ capability varies by transport as well as by model.
 - **A Logger refuses 6100 too**: two inverters read through a Logger1000A
   ([code-imstillalive](../entities/installation-code-imstillalive.md)) refused it, and the
   verdict is "through a communication module". Which module is the owner's answer.
+- **A Modbus proxy forwards 6100**, so what the probe reports is the path
+  *behind* the proxy, not the hop to it: a proxy in front of a cable reads
+  as a cable. It does not answer for every session, though -- an entry's
+  probe of one got nothing three running
+  ([open](../queries/does-a-modbus-proxy-carry-6100.md),
+  [the reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)).
 - **Not with 13265**, which names the fitted module, not the one in the path.
 - **Not with round-trip time**, which times the reader's path.
 - **WiFi versus Ethernet is not determinable** over Modbus.

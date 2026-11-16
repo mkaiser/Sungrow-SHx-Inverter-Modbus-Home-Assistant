@@ -34,6 +34,12 @@ window and brought the house's first [plausibility](../concepts/capability-test.
 balance, tracker V×I, both meter checks matched; the battery idle, so its V×I could not tell), and
 stored five battery-power settings above their maximum, the bound unenforced
 ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).
+The production Home Assistant polls it **through a modbus-proxy on its own machine**, so the
+house answers as one inverter at two addresses, one serial and one route note at both; the
+search from the dev container found both and could name neither as the proxy
+([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)), and an entry
+pointed at the proxy cannot measure its route
+([open](../queries/does-a-modbus-proxy-carry-6100.md)).
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

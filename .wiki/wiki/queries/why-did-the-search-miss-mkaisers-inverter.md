@@ -4,7 +4,7 @@ title: "Why did the search miss the maintainer's inverter?"
 tags: [discovery, contention, mkaiser, open]
 created: '2026-11-15'
 query: "Does an inverter's own LAN port refuse a second TCP connection from an address that already holds one?"
-results_count: 1
+results_count: 2
 ---
 
 # Why did the search miss the maintainer's inverter?
@@ -16,6 +16,13 @@ the same Home Assistant; the dev container's connects to the inverter all comple
 10 ms, and the manual step identified it at once
 ([the reading](../sources/mkaiser-network-discovery-2026-11-15-summary.md)). The sweep retries
 slowly only when nothing answers, and the RAK module answered.
+
+**Narrowed on 2026-11-16.** A sweep of the same /24 from the dev container -- a machine holding
+no session of its own -- found the inverter's own LAN port and identified it, in the same
+round as the proxy on the production Home Assistant's machine
+([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)). So the port is
+not deaf to a sweep; what it does under a sweep *from the address already polling it* is
+still the question.
 
 One explanation, unmeasured: the inverter's LAN port refuses or stalls a second connection from an
 address that already holds one ([contention](../concepts/contention.md)). What answers it: from

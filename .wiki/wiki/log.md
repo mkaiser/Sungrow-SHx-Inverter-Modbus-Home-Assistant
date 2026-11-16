@@ -914,3 +914,22 @@ The integration stopped offering the diagnostics-only setup: there is one setup,
 entities, and the diagnosis and capability test are on every inverter's device page under
 *Diagnostic*. Updated capability-test, which said auto repeat was a diagnostics-only entry's
 alone.
+
+## [2026-11-16] ingested | a Modbus proxy at the maintainer's house, and what 6100 says through one
+
+The house polls its inverter through a modbus-proxy on the production Home Assistant's machine, so
+the search finds one inverter at two addresses, with one serial and one route note at both. The
+config flow's probe of 6100 answers through the proxy; a config entry's probe of the same address
+does not, three times, while the same entry reads `direct` at the inverter's own LAN port. Neither
+card could be named a proxy: a proxy is named only where the searching Home Assistant is its host,
+and no ARP entry crosses a container bridge. The offer order then fell through to the host string,
+which is fixed to compare addresses. New raw note and source mkaiser-modbus-proxy-2026-11-16, query
+does-a-modbus-proxy-carry-6100; updated contention, transport-detection, register-6100,
+installation-mkaiser, the search query (narrowed), the index.
+
+## [2026-11-16] decided | an entry keeps its own route measurement
+
+Where [register 6100](entities/register-6100.md) says nothing, the entry shows unknown rather
+than carrying the config flow's measurement of the same address or retrying the read. The flow's
+answer is another session's, and three attempts at a proxy in one evening had already got nothing
+where the inverter's own LAN port answered at once. Recorded on the proxy query.

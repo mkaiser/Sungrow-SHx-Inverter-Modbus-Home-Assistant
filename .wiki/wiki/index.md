@@ -206,6 +206,7 @@
 - [wallbox_registers.md](sources/wallbox-registers-summary.md) — The AC wallbox map, with how strongly each row is held #wallbox #registers #ac22e-01
 
 - [mkaiser-network-discovery-2026-11-15.md](sources/mkaiser-network-discovery-2026-11-15-summary.md) — no Sungrow mDNS at the maintainer's house, a RAK WiFi module by DHCP, Sungrow's one vendor prefix, the search missing the inverter #discovery #mdns #dhcp #rak-module #mkaiser
+- [mkaiser-modbus-proxy-2026-11-16.md](sources/mkaiser-modbus-proxy-2026-11-16-summary.md) — a modbus-proxy and the inverter answer as one card each; 6100 answers the flow's probe through the proxy and not the entry's; 195 entities on an ordinary entry #proxy #discovery #transport #register-6100 #mkaiser
 
 - [sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5.json](sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md) — SH10RT, P020, mkaiser, sixth reading on 0.1.0a40: three auto-repeat runs, the house's first plausibility block, five battery-power bounds unenforced #diagnosis #sh10rt #sapphire-h-b001-v000-p020 #mkaiser #direct_lan #capability-test #plausibility
 
@@ -226,4 +227,5 @@
 - [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: the Logger itself unread; two inverters read through one #logger #open #diagnosis-wanted
 - [What do the registers only V1.1.17 lists read?](queries/what-do-the-v1-1-17-only-registers-read.md) — Answered: 31222 is 13074 in 0.01 kW, 13043 is never a DRM state, 13080 is not a heartbeat setting #specification #hybrid #drm #ems #answered
 - [Where are Sungrow's documents?](queries/where-are-sungrows-documents.md) — Answered: where each protocol, manual and community map is, and which searches found nothing #specification #logger #ihomemanager #wallbox #answered
-- [Why did the search miss the maintainer's inverter?](queries/why-did-the-search-miss-mkaisers-inverter.md) — Open: port 502 never answered the sweep from the Home Assistant that polls it #discovery #contention #mkaiser #open
+- [Does a Modbus proxy carry register 6100?](queries/does-a-modbus-proxy-carry-6100.md) — Open: it answered a diagnosis and the flow's probe, and never the entry's, at one address in one hour #proxy #transport #register-6100 #mkaiser #open
+- [Why did the search miss the maintainer's inverter?](queries/why-did-the-search-miss-mkaisers-inverter.md) — Open: port 502 never answered the sweep from the Home Assistant that polls it #discovery #contention #mkaiser #open (narrowed: a sweep from a machine holding no session found it)
