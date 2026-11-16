@@ -253,35 +253,21 @@ diagnosis-only entry; how it is handled beyond that is open.
    connects to as a candidate (wiki: why did the search miss the
    maintainer's inverter).
 
-7. **Revise the scenes and recreate them** (the maintainer, 2026-11-16).
-   The YAML package carries seven: *Self-Consumption Mode (max battery
-   discharge)*, *Self-Consumption Mode (no battery discharge)*, *Zero Export
-   Power*, *Max Export Power*, *Battery Bypass Mode*, *Battery Forced
-   Discharge*, *Battery Forced Charge*, two of them leaning on an automation
-   because a scene renders no template. They are not entities of the
-   integration and go when the package goes
-   (`doc/integration_migration.md`, `doc/entity_names.md`).
-   1. **Backward compatibility is the first question, and it is not free.**
-      The guide tells a user to copy the ones they use and says they work
-      unchanged with the package's ids. The ids half holds, since the
-      integration adopts them. The option strings do not: the package's
-      selects take their state as the label (`Forced discharge`,
-      `Self-consumption mode (default)`, `Stop (default)`), the
-      integration's take the option key (`discharge`, `self_consumption`,
-      `stop`; `select_descriptions.py`), and a scene applying a state no
-      option matches does nothing but log. Five of the seven set a select
-      and so break; *Zero Export Power* and *Max Export Power* set only a
-      switch and a number and still work. Whether a copied scene can be made
-      to work at all decides the rest.
-   2. **If it cannot, start fresh**: recreate the seven against the
-      integration's entities and option keys, and write the user guide that
-      replaces the copy instruction -- what each scene does, what it leaves
-      alone, and what to do with the old one. Blueprints are the form to
-      weigh against plain YAML in the guide: a blueprint is installed rather
-      than pasted, and carries its own inputs where the package needed an
-      automation to resolve a secret.
-   3. **Correct the guide either way.** Its present sentence is wrong as it
-      stands, and it is the first thing a migrating user acts on.
+7. **The new scenes on hardware.** `doc/scenes.md` has the YAML package's
+   seven rewritten against the integration's option keys, with the two
+   automations that need a limit reading it from the entity
+   (`state_attr(..., 'max')`) instead of from a secrets file, and
+   `tests/test_scenes_doc.py` holds every id, option and range in it to the
+   descriptions. Nothing in it has been activated on a device. Left:
+   - **Press one, at the maintainer's SH10RT.** *Battery Forced Charge*
+     above all: both of its entities are selects, which is precisely what a
+     pasted scene could not set, so it is the one that proves the rewrite.
+     Forced mode, then back to self-consumption.
+   - **Watch what `max` reads.** Both numbers the automations write carry
+     `native_max_value = 0`, so the ceiling arrives from the device at
+     runtime -- the inverter's own feed-in maximum, and `battery.ceiling`
+     for the battery. That the template reads that figure rather than 0 has
+     not been seen on hardware, and a 0 would set the limit to nothing.
 
 8. **Range checks: which bound is measured, and which is a judgement.** A
    write entity's bound is the only guard there is, because the inverter does
