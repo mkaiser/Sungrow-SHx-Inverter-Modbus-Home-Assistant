@@ -958,3 +958,16 @@ overturn. A merely foreign registered prefix stays a note: a
 tells somebody their inverter is a proxy.
 `wifi_module.is_locally_administered` and the picker in
 `config_flow_schemas.py`.
+
+## [2026-11-16] decided | a short list of hypervisor prefixes ranks a card too
+
+The U/L bit misses a hypervisor that holds an IEEE block, and the common ones
+do -- Proxmox's `BC:24:11` has been registered since June 2023, which is the
+maintainer's own stack, where only the machine's age put its address on the
+invented side of the test. `wifi_module.VIRTUAL_MAC_PREFIXES` names Proxmox,
+Hyper-V, VMware, VirtualBox, Xen and Parallels, and ranks a card like an
+invented address: the claim is positive, so being wrong would need Sungrow to
+ship an inverter with a VMware port. It stays short -- stale costs a label,
+never a wrong one -- and
+[telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md)
+says why a longer one would be the weaker note's job instead.

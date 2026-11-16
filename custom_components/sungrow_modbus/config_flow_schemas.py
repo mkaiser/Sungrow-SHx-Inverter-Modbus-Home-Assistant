@@ -58,7 +58,7 @@ from .const import (
     ROLE_MASTER,
     ROLE_SLAVE,
 )
-from .wifi_module import is_locally_administered, is_sungrow_mac
+from .wifi_module import is_locally_administered, is_sungrow_mac, virtual_nic_vendor
 
 STEP_USER_DATA_SCHEMA = probatio.Schema(
     {
@@ -490,10 +490,12 @@ def _described(
     their inverter is a proxy; the cost of a missing note is only that two
     cards read alike, which is where this started.
 
-    A **locally administered** prefix is the exception, and does rank. It
-    says no manufacturer issued the port, which no inverter and no dongle
-    can be, and which no future registration can overturn -- IEEE issues
-    none with that bit set.
+    Two prefixes are the exception, and do rank. A **locally administered**
+    one says no manufacturer issued the port, which no inverter and no
+    dongle can be, and which no future registration can overturn -- IEEE
+    issues none with that bit set. A **hypervisor's** one says the same
+    thing positively, for the hypervisors that hold a registered block and
+    so pass that test (`VIRTUAL_MAC_PREFIXES`).
     """
     by_serial: dict[str, list[str]] = {}
     for host, entry in found.items():
@@ -522,7 +524,15 @@ def _described(
                 entry["proxy"] = True
                 notes.append("Home Assistant's own address, so a Modbus proxy")
             prefix = entry.get("mac_prefix")
-            if prefix and is_locally_administered(prefix):
+            hypervisor = virtual_nic_vendor(prefix) if prefix else None
+            if hypervisor:
+                entry["proxy"] = True
+                notes.append(
+                    f"{prefix} is {hypervisor}'s, which issues it to a port it "
+                    "invented, so what answers here is a host relaying: a "
+                    "Modbus proxy"
+                )
+            elif prefix and is_locally_administered(prefix):
                 entry["proxy"] = True
                 notes.append(
                     f"{prefix} is a locally administered prefix -- software "

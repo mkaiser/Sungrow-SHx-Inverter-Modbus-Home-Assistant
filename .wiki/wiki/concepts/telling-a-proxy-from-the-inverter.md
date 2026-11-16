@@ -18,6 +18,7 @@ is never a verdict.
 | --- | --- | --- |
 | the address is Home Assistant's own | a proxy runs here | certain, but only where the searching Home Assistant *is* the host |
 | the MAC prefix is locally administered | software invented this port, so a host is relaying | certain, and from any machine on the segment |
+| the MAC prefix is a known hypervisor's | the same, said positively | certain for the hypervisors on the list |
 | the MAC prefix is registered but not `AC:19:9F` | something is relaying | a note only |
 
 ## The U/L bit is the one that decides
@@ -36,6 +37,26 @@ inverter nor a communication module can be. Measured at
 That is why the picker ranks a card on this and merely annotates one on a
 foreign registered prefix: being wrong the second way tells somebody their
 inverter is a proxy.
+
+## Hypervisors with a registered block
+
+The bit misses a hypervisor that holds an IEEE block of its own, and the
+common ones do: Proxmox has `BC:24:11` (registered June 2023), Hyper-V
+`00:15:5D`, VMware `00:0C:29` and `00:50:56`, VirtualBox `08:00:27`, Xen
+`00:16:3E`, Parallels `00:1C:42`. A virtual machine made on a current Proxmox
+therefore carries a prefix no different in shape from a maker's -- which is
+the maintainer's own stack, where only the machine's age put it on the other
+side of the test.
+
+Those prefixes are named in a short list (`wifi_module.VIRTUAL_MAC_PREFIXES`)
+and rank a card like an invented address, because the claim is positive: a
+port answering as an inverter from a VMware block is a relay, and Sungrow
+would have to ship an inverter with one for it to be wrong. The list stays
+short deliberately. Going stale costs a label and never a wrong one -- an
+unlisted hypervisor falls through to the note -- while a list that grew to
+Raspberry Pi and Intel would be an attempt to enumerate "not an appliance",
+which is the note's job. QEMU's `52:54:00` and Docker's `02:42` are not on
+it: they are locally administered and caught a step earlier.
 
 ## A registered foreign prefix needs the route
 

@@ -25,7 +25,10 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     MODE_DEVICES,
 )
-from custom_components.sungrow_modbus.wifi_module import is_locally_administered
+from custom_components.sungrow_modbus.wifi_module import (
+    is_locally_administered,
+    virtual_nic_vendor,
+)
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
@@ -305,6 +308,46 @@ def test_an_invented_mac_in_front_of_a_dongle_is_still_a_proxy() -> None:
 
     assert described[PROXY]["proxy"] is True
     assert list(described) == [CABLE, PROXY]
+
+
+@pytest.mark.parametrize(
+    ("prefix", "vendor"),
+    [
+        ("BC:24:11", "Proxmox"),  # registered to Proxmox in June 2023
+        ("bc-24-11", "Proxmox"),  # however the platform's arp spells it
+        ("00:15:5D", "Hyper-V"),
+        ("00:50:56", "VMware"),
+        ("AC:19:9F", None),  # the inverter's own port
+        ("AC:1F:09", None),  # a RAK module: hardware, and one digit away
+        ("B8:27:EB", None),  # a Raspberry Pi is real hardware too
+        ("", None),
+    ],
+)
+def test_a_hypervisors_registered_prefix_is_named(
+    prefix: str, vendor: str | None
+) -> None:
+    """The half the U/L bit misses, because these blocks are issued.
+
+    Proxmox holds `BC:24:11`, so a virtual machine created on a current one
+    carries a prefix with the U/L bit clear -- indistinguishable by that
+    test from a maker's. None here means "not one this knows", never "real
+    hardware": an unlisted hypervisor falls through to the weaker note.
+    """
+    assert virtual_nic_vendor(prefix) == vendor
+
+
+def test_a_hypervisors_prefix_ranks_like_an_invented_one() -> None:
+    """Both say a host is relaying; only the evidence differs."""
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=True, mac="BC:24:11"),
+        }
+    )
+
+    assert described[PROXY]["proxy"] is True
+    assert "Proxmox" in described[PROXY]["label"]
+    assert list(described) == [PROXY, CABLE]
 
 
 def test_a_registered_foreign_mac_stays_a_note() -> None:
