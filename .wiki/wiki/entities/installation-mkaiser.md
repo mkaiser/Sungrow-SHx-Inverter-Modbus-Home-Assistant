@@ -39,7 +39,11 @@ house answers as one inverter at two addresses, one serial and one route note at
 search from the dev container found both and could name neither as the proxy
 ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)), and an entry
 pointed at the proxy cannot measure its route
-([open](../queries/does-a-modbus-proxy-carry-6100.md)).
+([open](../queries/does-a-modbus-proxy-carry-6100.md)). From the Windows host, which is on the
+house's segment, the cache does separate them: the inverter's own LAN port carries Sungrow's
+`AC:19:9F` and the proxy a locally administered prefix
+([the prefixes](../sources/mkaiser-mac-prefixes-2026-11-16-summary.md),
+[how](../concepts/telling-a-proxy-from-the-inverter.md)).
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

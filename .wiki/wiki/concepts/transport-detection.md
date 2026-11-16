@@ -25,7 +25,9 @@ capability varies by transport as well as by model.
   as a cable. It does not answer for every session, though -- an entry's
   probe of one got nothing three running
   ([open](../queries/does-a-modbus-proxy-carry-6100.md),
-  [the reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)).
+  [the reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)). What
+  tells a proxy from the inverter is its MAC, not a register:
+  [telling a proxy from the inverter](telling-a-proxy-from-the-inverter.md).
 - **Not with 13265**, which names the fitted module, not the one in the path.
 - **Not with round-trip time**, which times the reader's path.
 - **WiFi versus Ethernet is not determinable** over Modbus.

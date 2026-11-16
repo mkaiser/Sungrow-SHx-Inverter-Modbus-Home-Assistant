@@ -933,3 +933,28 @@ Where [register 6100](entities/register-6100.md) says nothing, the entry shows u
 than carrying the config flow's measurement of the same address or retrying the read. The flow's
 answer is another session's, and three attempts at a proxy in one evening had already got nothing
 where the inverter's own LAN port answered at once. Recorded on the proxy query.
+
+## [2026-11-16] ingested | mkaiser-mac-prefixes-2026-11-16
+
+Two neighbour-cache lookups from the Windows host that carries the dev
+container, on the house's own segment: the inverter's own LAN port answers
+Sungrow's `AC:19:9F` -- the second reading of one, after peter_sm's
+eighteenth diagnosis -- and the proxy beside it answers a locally
+administered prefix, because that Home Assistant runs on a virtual machine.
+New: [telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md),
+gathering the three tests and the 2x2 with
+[register 6100](entities/register-6100.md). Updated:
+[installation-mkaiser](entities/installation-mkaiser.md),
+[transport detection](concepts/transport-detection.md).
+
+## [2026-11-16] decided | a locally administered MAC ranks a card, a foreign one only notes it
+
+IEEE's U/L bit is clear in every registered prefix, so a prefix with it set
+says no manufacturer issued the port -- which neither an inverter nor a
+communication module can be, and which no future Sungrow registration can
+overturn. A merely foreign registered prefix stays a note: a
+[RAK module](entities/device-rak-wifi-module.md) carries RAKwireless's
+`AC:1F:09`, so hardware says "not Sungrow" too, and being wrong that way
+tells somebody their inverter is a proxy.
+`wifi_module.is_locally_administered` and the picker in
+`config_flow_schemas.py`.

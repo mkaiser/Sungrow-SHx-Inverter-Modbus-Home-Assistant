@@ -54,6 +54,27 @@ def is_sungrow_mac(mac: str) -> bool:
     return _bare(mac).startswith(SUNGROW_MAC_PREFIX)
 
 
+def is_locally_administered(mac: str) -> bool:
+    """Return whether a MAC address was made up by software rather than issued.
+
+    Bit 1 of the first octet is IEEE's U/L bit, and every registered vendor
+    prefix has it clear -- a hypervisor, a bridge or a bond sets it when it
+    invents an address. So it does not merely say "not Sungrow", which a
+    second registration could undo tomorrow and which a communication module
+    says too (a RAK stick carries RAKwireless's `AC:1F:09`): it says no
+    manufacturer issued this port at all, which no inverter's own port and no
+    dongle can be. Measured at the maintainer's house, where the inverter
+    answered `AC:19:9F` and the proxy beside it a locally administered prefix
+    (`.wiki/wiki/entities/installation-mkaiser.md`).
+    """
+    bare = _bare(mac)
+    try:
+        first = int(bare[:2], 16)
+    except ValueError:
+        return False
+    return bool(first & 0b10)
+
+
 def is_rak_module(hostname: str | None) -> bool:
     """Return whether a DHCP hostname is a RAK WiFi module's."""
     return (hostname or "").lower().startswith(RAK_HOSTNAME_PREFIX)

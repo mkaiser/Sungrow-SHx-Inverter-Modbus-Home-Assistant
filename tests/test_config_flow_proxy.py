@@ -25,6 +25,7 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     MODE_DEVICES,
 )
+from custom_components.sungrow_modbus.wifi_module import is_locally_administered
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
@@ -238,6 +239,88 @@ def test_a_foreign_mac_says_something_is_relaying() -> None:
     assert "B8:27:EB" in described[PROXY]["label"]
     assert "relaying" in described[PROXY]["label"]
     assert "relaying" not in described[CABLE]["label"]
+
+
+@pytest.mark.parametrize(
+    ("prefix", "invented"),
+    [
+        ("AC:19:9F", False),  # Sungrow, measured at an inverter's own LAN port
+        ("AC:1F:09", False),  # RAKwireless, a communication module's own port
+        ("B8:27:EB", False),  # Raspberry Pi, a real maker of real hardware
+        ("02:42:AC", True),  # Docker's bridge
+        ("02:D2:D3", True),  # the shape the maintainer's proxy answered with
+        ("", False),  # no answer is not an accusation
+        ("not a mac", False),
+    ],
+)
+def test_the_u_l_bit_tells_an_issued_port_from_an_invented_one(
+    prefix: str, invented: bool
+) -> None:
+    """Bit 1 of the first octet, and nothing else.
+
+    `AC` and `B8` are even; `02` is not. The point of reading the bit rather
+    than keeping a list of hypervisor prefixes is that IEEE issues no prefix
+    with it set, so the rule cannot go stale.
+    """
+    assert is_locally_administered(prefix) is invented
+
+
+def test_an_invented_mac_is_decided_and_not_merely_noted() -> None:
+    """The one prefix test strong enough to rank a card.
+
+    Measured at the maintainer's house: the inverter at its own LAN port
+    answered Sungrow's `AC:19:9F`, and the proxy beside it a locally
+    administered prefix -- its Home Assistant runs on a virtual machine, as
+    most do, and a hypervisor invents its NIC's address. Nothing a
+    manufacturer ships can answer this way, so unlike a foreign registered
+    prefix there is no second reading to wait for.
+    """
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=True, mac="02:42:AC"),
+        }
+    )
+
+    assert described[PROXY]["proxy"] is True
+    assert "Modbus proxy" in described[PROXY]["label"]
+    # And it ranks, which is the whole difference from the note below.
+    assert list(described) == [PROXY, CABLE]
+
+
+def test_an_invented_mac_in_front_of_a_dongle_is_still_a_proxy() -> None:
+    """A dongle has a maker, so the two cannot be confused.
+
+    A WiNet-S or a RAK stick is hardware with an issued prefix; a proxy in
+    front of one is a host with an invented one. Which is why this test
+    needs no help from the route -- and the route still decides first, so
+    the proxied dongle stays below a cable.
+    """
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=False, mac="02:42:AC"),
+        }
+    )
+
+    assert described[PROXY]["proxy"] is True
+    assert list(described) == [CABLE, PROXY]
+
+
+def test_a_registered_foreign_mac_stays_a_note() -> None:
+    """The weaker half, held where it was: said, never ranked.
+
+    A second Sungrow registration would make this wrong, and a card that
+    only reads oddly costs less than a card that ranks wrongly.
+    """
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=True, mac="B8:27:EB"),
+        }
+    )
+
+    assert not described[PROXY].get("proxy")
 
 
 def test_no_arp_entry_accuses_nobody() -> None:
