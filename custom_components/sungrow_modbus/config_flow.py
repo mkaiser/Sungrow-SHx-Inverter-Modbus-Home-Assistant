@@ -118,7 +118,6 @@ from .const import (
     CONF_NETWORK,
     CONF_PERMISSIONS,
     CONF_PUBLISH_ADDRESS,
-    CONF_REGISTER_DUMP,
     CONF_REPORTER,
     CONF_TLS,
     CONF_UNIT_ID,
@@ -1130,11 +1129,26 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         unit_247_candidates = sorted(
             (h, p) for h, p in candidates if p in UNIT_247_PORTS
         )
+        # Every port that answered at an address, for the stage line: the
+        # identification itself only asks 502 and 503, but what the dialog
+        # reports is what this address has open, which is what somebody
+        # looking at their own network wants to compare against.
+        open_ports: dict[str, list[int]] = {}
+        for host, port in candidates:
+            open_ports.setdefault(host, []).append(port)
         candidates = [(h, p) for h, p in candidates if p in SCAN_PORTS]
 
         def _identifying(host: str, index: int, of: int) -> None:
             self.async_update_progress(sweeping + (1 - sweeping) * (index - 1) / of)
-            self._set_stage(texts("search_asking", host=host, index=index, of=of))
+            self._set_stage(
+                texts(
+                    "search_asking",
+                    host=host,
+                    index=index,
+                    of=of,
+                    ports=", ".join(str(p) for p in sorted(set(open_ports[host]))),
+                )
+            )
 
         self._found = await self._async_identify(candidates, on_candidate=_identifying)
         self._wallboxes = {}
@@ -1309,6 +1323,43 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             SelectOptionDict(value=NOT_LISTED, label="None of these — let me choose")
         )
         texts = await _flow_texts(self)
+        # **Devices, not rows.** Inverters are counted by serial, because one
+        # inverter on a cable and a dongle -- or beside a Modbus proxy --
+        # answers at two addresses and is one device; the list below still
+        # shows a row per address, which `pick_addresses` says where the two
+        # numbers differ. Told apart by kind, because "2 devices" when one is
+        # a wallbox answers none of the questions somebody has here.
+        inverters = len({entry["serial"] for entry in self._found.values()})
+        ihomemanagers = sum(
+            1
+            for device in self._unit_247.values()
+            if device[CONF_KIND] == KIND_IHOMEMANAGER
+        )
+        # Spelled out rather than built from the kind, so every sentence the
+        # dialog can show is greppable from the table (`tests/test_flow_texts.py`).
+        counted = (
+            ("pick_inverter_one", "pick_inverter_many", inverters),
+            ("pick_wallbox_one", "pick_wallbox_many", len(self._wallboxes)),
+            ("pick_ihomemanager_one", "pick_ihomemanager_many", ihomemanagers),
+            (
+                "pick_logger_one",
+                "pick_logger_many",
+                len(self._unit_247) - ihomemanagers,
+            ),
+        )
+        breakdown = ", ".join(
+            texts(one if number == 1 else many, count=number)
+            for one, many, number in counted
+            if number
+        )
+        count = sum(number for *_, number in counted)
+        summary = texts(
+            "pick_found_one" if count == 1 else "pick_found_many",
+            count=count,
+            breakdown=breakdown,
+        )
+        if len(options) - 1 != count:
+            summary += " " + texts("pick_addresses", rows=len(options) - 1)
         return self.async_show_form(
             step_id="pick",
             data_schema=probatio.Schema(
@@ -1323,9 +1374,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             description_placeholders={
-                "count": str(
-                    len(self._found) + len(self._wallboxes) + len(self._unit_247)
-                ),
+                "summary": summary,
+                "count": str(count),
                 "note": (
                     "\n\n" + texts("search_same_dongle")
                     if any(entry.get("same_dongle") for entry in self._found.values())
@@ -2104,7 +2154,15 @@ class SungrowOptionsFlow(OptionsFlow):
         )
 
     def _advanced_section(self) -> Any:
-        """Return the settings that change what the entities *are*, not how often."""
+        """Return the battery ceiling, the one setting that changes what a number *is*.
+
+        The raw register dump used to sit here, which put a switch about
+        *Download diagnostics* under a heading about the battery. It is a
+        diagnosis setting, so it is asked beside the diagnosis's own dump
+        (`_testimony_schema`); the option key is unchanged, and a section is
+        flattened into the options on save, so an entry that stored it keeps
+        its value.
+        """
         options = self.config_entry.options
         return section(
             probatio.Schema(
@@ -2124,10 +2182,6 @@ class SungrowOptionsFlow(OptionsFlow):
                         ),
                         probatio.Coerce(int),
                     ),
-                    probatio.Required(
-                        CONF_REGISTER_DUMP,
-                        default=options.get(CONF_REGISTER_DUMP, False),
-                    ): BooleanSelector(),
                 }
             ),
             {"collapsed": True},

@@ -33,6 +33,8 @@ from custom_components.sungrow_modbus.const import (
     CONF_REPORTER,
     CONF_UNIT_ID,
     DIAGNOSIS_ISSUE_URL,
+    DIAGNOSIS_MODE_AUTO_REPEAT,
+    DIAGNOSIS_MODE_READ_ONLY,
     DOMAIN,
     LINK_VALID,
     MODE_DEVICES,
@@ -229,12 +231,28 @@ async def test_every_diagnosis_entity_is_a_diagnostic_one(
 # --- the runner, which is what the entities show ---------------------------
 
 
+async def _choose(hass: HomeAssistant, mode: str) -> None:
+    """Put *Diagnosis: mode* on one mode before Start is pressed.
+
+    Explicit since the default became auto repeat (2026-11-16): a press with
+    the mode untouched now arms the repeating extended test, so a test that
+    means "one read-only run" has to say so.
+    """
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.sh10rt_diagnosis_mode", "option": mode},
+        blocking=True,
+    )
+
+
 async def test_the_button_runs_a_diagnosis_and_the_sensors_follow(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     """Press it, and the progress and step sensors report what happened."""
     entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
 
+    await _choose(hass, DIAGNOSIS_MODE_READ_ONLY)
     await hass.services.async_call(
         "button",
         "press",
@@ -271,6 +289,7 @@ async def test_the_button_runs_the_block_read_test_first(
                 seen.append(new.state)
 
     hass.bus.async_listen("state_changed", _watch)
+    await _choose(hass, DIAGNOSIS_MODE_READ_ONLY)
     await hass.services.async_call(
         "button",
         "press",
@@ -644,3 +663,88 @@ async def test_the_retired_diagnosis_controls_are_removed(
         ("switch", "continuous_capability_test"),
     ):
         assert registry.async_get_entity_id(domain, DOMAIN, f"{SERIAL}_{key}") is None
+
+
+async def test_choosing_an_extended_mode_says_the_questions_are_unanswered(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The warning a maintainer asked for, at the moment the mode is armed.
+
+    Auto repeat can run for days, and a run whose document carries no
+    testimony is one nobody can compare or ask about. So the questions are
+    put before the run rather than after it -- as a notification, never as a
+    refusal: a reading with no testimony is still worth having.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.sungrow_modbus.async_get_unit",
+            return_value=sungrow_unit,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.diagnosis_entities"
+            ".persistent_notification.async_create"
+        ) as warned,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {
+                "entity_id": "select.sh10rt_diagnosis_mode",
+                "option": DIAGNOSIS_MODE_AUTO_REPEAT,
+            },
+            blocking=True,
+        )
+
+    message = warned.call_args.args[1]
+    assert "Your name or handle" in message
+    assert "How this inverter is connected" in message
+
+
+async def test_an_entry_that_answered_them_gets_no_warning(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Answered is answered: the check is silent, and clears a stale warning."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data=ENTRY_DATA,
+        options={CONF_REPORTER: "gerd", CONF_DIAGNOSIS_TRANSPORT: "direct_lan"},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.sungrow_modbus.async_get_unit",
+            return_value=sungrow_unit,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.diagnosis_entities"
+            ".persistent_notification.async_create"
+        ) as warned,
+        patch(
+            "custom_components.sungrow_modbus.diagnosis_entities"
+            ".persistent_notification.async_dismiss"
+        ) as dismissed,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {
+                "entity_id": "select.sh10rt_diagnosis_mode",
+                "option": DIAGNOSIS_MODE_AUTO_REPEAT,
+            },
+            blocking=True,
+        )
+
+    assert not warned.called
+    assert dismissed.called

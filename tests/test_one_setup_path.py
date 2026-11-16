@@ -199,6 +199,11 @@ async def test_every_mode_is_offered(
         DIAGNOSIS_MODE_EXTENDED,
         DIAGNOSIS_MODE_AUTO_REPEAT,
     }
+    # Auto repeat is where a new entry sits (maintainer, 2026-11-16): one
+    # read-only pass settles almost nothing still open, and the ledger is
+    # built from a collection over a day and a night. So a press of Start on
+    # an untouched entry arms the repeating extended test, which writes.
+    assert state.state == DIAGNOSIS_MODE_AUTO_REPEAT
 
 
 # -- the entries made while the other mode was offered -------------------------

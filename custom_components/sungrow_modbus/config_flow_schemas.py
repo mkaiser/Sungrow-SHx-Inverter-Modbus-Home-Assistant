@@ -47,6 +47,7 @@ from .const import (
     CONF_ENTITY_IDS,
     CONF_NETWORK,
     CONF_PUBLISH_ADDRESS,
+    CONF_REGISTER_DUMP,
     CONF_REPORTER,
     CONF_UNIT_ID,
     DEFAULT_DIAGNOSIS_DUMP,
@@ -332,6 +333,14 @@ def _testimony_schema(
             probatio.Required(
                 CONF_DIAGNOSIS_DUMP,
                 default=options.get(CONF_DIAGNOSIS_DUMP, DEFAULT_DIAGNOSIS_DUMP),
+            ): BooleanSelector(),
+            # The other raw dump: not the diagnosis's sweep, but every mapped
+            # register's raw value added to *Download diagnostics*. Here
+            # because the two are asked about together or not at all -- it sat
+            # under the battery heading until 2026-11-16. Off by default.
+            probatio.Required(
+                CONF_REGISTER_DUMP,
+                default=options.get(CONF_REGISTER_DUMP, False),
             ): BooleanSelector(),
         }
     )

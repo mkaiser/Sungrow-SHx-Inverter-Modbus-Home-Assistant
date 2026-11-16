@@ -1,6 +1,6 @@
 # The texts, for review
 
-**324 texts**: everything in `strings.json` that is not an entity name, by its
+**335 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -341,25 +341,13 @@ and bold are kept.
 
 ### `config.step.pick.description`
 
-> **EN** {count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.
+> **EN** {summary}
 >
-> A **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.
->
-> Where there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.
->
-> Pick one here. Every other device in this list is offered afterwards under **Discovered**, to add with one click; you do not need to search again.
->
-> If none of these is the device you meant, choose the last option and you can enter its address yourself.{note}
+> **Pick the first device you want to add to Home Assistant.** The others then wait for you on **Settings → Devices & services**, as *Discovered* cards: one click each, and no second search. If none of these is the device you meant, choose the last option and type its address yourself.{note}
 
-> **DE** {count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.
+> **DE** {summary}
 >
-> Eine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.
->
-> Gibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.
->
-> Wähle hier eines. Jedes andere Gerät dieser Liste wird danach unter **Entdeckt** angeboten und lässt sich mit einem Klick hinzufügen; eine neue Suche ist nicht nötig.
->
-> Ist keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}
+> **Wähle das erste Gerät, das du zu Home Assistant hinzufügen möchtest.** Die übrigen warten danach unter **Einstellungen → Geräte & Dienste** als *Entdeckt*-Karten: je ein Klick, und keine zweite Suche. Ist keines davon das gemeinte Gerät, wähle die letzte Option und gib seine Adresse selbst ein.{note}
 
 ### `config.step.pick.data.host`
 
@@ -547,13 +535,13 @@ and bold are kept.
 >
 > {stage}
 >
-> Ports 502 and 503 are both tried, so you do not have to know which one your equipment uses.
+> Ports 502, 503, 504, 505 and 516 are all tried, so you do not have to know which one your equipment uses. This can take several minutes, depending on how many devices (Sungrow and others) have to be tested.
 
 > **DE** {network} wird durchsucht.
 >
 > {stage}
 >
-> Die Ports 502 und 503 werden beide probiert, du musst also nicht wissen, welchen deine Geräte verwenden.
+> Die Ports 502, 503, 504, 505 und 516 werden alle versucht, du musst also nicht wissen, welchen deine Geräte verwenden. Das kann einige Minuten dauern, je nachdem, wie viele Geräte (Sungrow und andere) geprüft werden müssen.
 
 ### `config.create_entry.default`
 
@@ -705,7 +693,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (71)
+## Selector options (82)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -897,9 +885,75 @@ and bold are kept.
 
 ### `selector.flow_text.options.search_asking`
 
-> **EN** Asking {host} what it is ({index} of {of}). Anything that is not a Sungrow has to time out on every unit id before it can be ruled out, which is the slowest part of this.
+> **EN** Testing {host} for Sungrow devices ({index} of {of}). Open ports there: {ports}.
 
-> **DE** {host} wird gefragt, was es ist ({index} von {of}). Alles, was kein Sungrow ist, muss auf jeder Unit-ID in eine Zeitüberschreitung laufen, bevor es ausgeschlossen werden kann, und das ist der langsamste Teil davon.
+> **DE** {host} wird auf Sungrow-Geräte geprüft ({index} von {of}). Offene Ports dort: {ports}.
+
+### `selector.flow_text.options.pick_found_one`
+
+> **EN** **One Sungrow device has been found**: {breakdown}.
+
+> **DE** **Ein Sungrow-Gerät wurde gefunden**: {breakdown}.
+
+### `selector.flow_text.options.pick_found_many`
+
+> **EN** **{count} Sungrow devices have been found**: {breakdown}.
+
+> **DE** **{count} Sungrow-Geräte wurden gefunden**: {breakdown}.
+
+### `selector.flow_text.options.pick_addresses`
+
+> **EN** {rows} addresses are listed below, because one device can answer at more than one address.
+
+> **DE** Unten stehen {rows} Adressen, weil ein Gerät unter mehr als einer Adresse antworten kann.
+
+### `selector.flow_text.options.pick_inverter_one`
+
+> **EN** 1 inverter
+
+> **DE** 1 Wechselrichter
+
+### `selector.flow_text.options.pick_inverter_many`
+
+> **EN** {count} inverters
+
+> **DE** {count} Wechselrichter
+
+### `selector.flow_text.options.pick_wallbox_one`
+
+> **EN** 1 wallbox
+
+> **DE** 1 Wallbox
+
+### `selector.flow_text.options.pick_wallbox_many`
+
+> **EN** {count} wallboxes
+
+> **DE** {count} Wallboxen
+
+### `selector.flow_text.options.pick_ihomemanager_one`
+
+> **EN** 1 iHomeManager
+
+> **DE** 1 iHomeManager
+
+### `selector.flow_text.options.pick_ihomemanager_many`
+
+> **EN** {count} iHomeManagers
+
+> **DE** {count} iHomeManager
+
+### `selector.flow_text.options.pick_logger_one`
+
+> **EN** 1 Sungrow Logger
+
+> **DE** 1 Sungrow Logger
+
+### `selector.flow_text.options.pick_logger_many`
+
+> **EN** {count} Sungrow Loggers
+
+> **DE** {count} Sungrow Logger
 
 ### `selector.flow_text.options.model_unidentified`
 
@@ -1477,15 +1531,15 @@ and bold are kept.
 
 ### `options.step.init.sections.advanced.name`
 
-> **EN** Battery and diagnostics
+> **EN** Battery
 
-> **DE** Batterie und Diagnose
+> **DE** Batterie
 
 ### `options.step.init.sections.advanced.description`
 
-> **EN** Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down. Download diagnostics on the device page describes this setup, with the serial number and address removed.
+> **EN** Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down.
 
-> **DE** Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab. Diagnose herunterladen auf der Geräteseite beschreibt diese Einrichtung, ohne Seriennummer und Adresse.
+> **DE** Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab.
 
 ### `options.step.init.sections.advanced.data.battery_max_power`
 
@@ -1493,23 +1547,11 @@ and bold are kept.
 
 > **DE** Maximale Batterie-Ladeleistung (W)
 
-### `options.step.init.sections.advanced.data.register_dump`
-
-> **EN** Include a raw register dump in diagnostics
-
-> **DE** Rohen Registerauszug in die Diagnose aufnehmen
-
 ### `options.step.init.sections.advanced.data_description.battery_max_power`
 
 > **EN** 0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.
 
 > **DE** 0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben.
-
-### `options.step.init.sections.advanced.data_description.register_dump`
-
-> **EN** Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.
-
-> **DE** Fügt den Rohwert jedes abgebildeten Registers hinzu. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.
 
 ### `options.step.init.sections.diagnosis.name`
 
@@ -1577,6 +1619,12 @@ and bold are kept.
 
 > **DE** Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)
 
+### `options.step.init.sections.diagnosis.data.register_dump`
+
+> **EN** Include a raw register dump in diagnostics
+
+> **DE** Rohen Registerauszug in die Diagnose aufnehmen
+
 ### `options.step.init.sections.diagnosis.data_description.reporter`
 
 > **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
@@ -1630,6 +1678,12 @@ and bold are kept.
 > **EN** On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is.
 
 > **DE** An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt.
+
+### `options.step.init.sections.diagnosis.data_description.register_dump`
+
+> **EN** Not the sweep above: this one adds every mapped register's raw value to Download diagnostics on the device page, which describes this setup with the serial number and address removed. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.
+
+> **DE** Nicht der Durchlauf darüber: Dies fügt den Rohwert jedes abgebildeten Registers zu „Diagnose herunterladen“ auf der Geräteseite hinzu, die diese Einrichtung ohne Seriennummer und Adresse beschreibt. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.
 
 ### `options.step.init.sections.capability_test.name`
 

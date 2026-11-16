@@ -80,7 +80,7 @@
       },
       "pick": {
         "title": "Geräte gefunden",
-        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nEine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nWähle hier eines. Jedes andere Gerät dieser Liste wird danach unter **Entdeckt** angeboten und lässt sich mit einem Klick hinzufügen; eine neue Suche ist nicht nötig.\n\nIst keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
+        "description": "{summary}\n\n**Wähle das erste Gerät, das du zu Home Assistant hinzufügen möchtest.** Die übrigen warten danach unter **Einstellungen → Geräte & Dienste** als *Entdeckt*-Karten: je ein Klick, und keine zweite Suche. Ist keines davon das gemeinte Gerät, wähle die letzte Option und gib seine Adresse selbst ein.{note}",
         "data": {
           "host": "Gerät"
         }
@@ -134,7 +134,7 @@
       }
     },
     "progress": {
-      "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502 und 503 werden beide probiert, du musst also nicht wissen, welchen deine Geräte verwenden."
+      "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502, 503, 504, 505 und 516 werden alle versucht, du musst also nicht wissen, welchen deine Geräte verwenden. Das kann einige Minuten dauern, je nachdem, wie viele Geräte (Sungrow und andere) geprüft werden müssen."
     },
     "create_entry": {
       "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
@@ -1510,7 +1510,18 @@
         "search_already_tried": "Schon durchsucht, und nichts hat als Wechselrichter geantwortet: **{tried}**. Wähle unten einen anderen Bereich oder gib einen ein. Wenn du ihn nicht kennst, verrät ihn dir die Adresse eines beliebigen Computers im selben Netz wie der Wechselrichter -- ersetze die letzte Zahl durch 0 und hänge `/24` an.",
         "search_checked": "{settled} von {total} Adressen geprüft; bisher haben {answered} geantwortet.",
         "search_retry": "Nichts hat geantwortet. Es wird langsamer noch einmal versucht, weil ein Gerät, das da ist, in einem geschäftigen Moment beim Durchsuchen übersehen werden kann.",
-        "search_asking": "{host} wird gefragt, was es ist ({index} von {of}). Alles, was kein Sungrow ist, muss auf jeder Unit-ID in eine Zeitüberschreitung laufen, bevor es ausgeschlossen werden kann, und das ist der langsamste Teil davon.",
+        "search_asking": "{host} wird auf Sungrow-Geräte geprüft ({index} von {of}). Offene Ports dort: {ports}.",
+        "pick_found_one": "**Ein Sungrow-Gerät wurde gefunden**: {breakdown}.",
+        "pick_found_many": "**{count} Sungrow-Geräte wurden gefunden**: {breakdown}.",
+        "pick_addresses": "Unten stehen {rows} Adressen, weil ein Gerät unter mehr als einer Adresse antworten kann.",
+        "pick_inverter_one": "1 Wechselrichter",
+        "pick_inverter_many": "{count} Wechselrichter",
+        "pick_wallbox_one": "1 Wallbox",
+        "pick_wallbox_many": "{count} Wallboxen",
+        "pick_ihomemanager_one": "1 iHomeManager",
+        "pick_ihomemanager_many": "{count} iHomeManager",
+        "pick_logger_one": "1 Sungrow Logger",
+        "pick_logger_many": "{count} Sungrow Logger",
         "model_unidentified": "ein nicht erkanntes Modell",
         "load_offline": "Der Wechselrichter ist nicht verbunden, deshalb lässt sich sein Lastwert nicht anzeigen.",
         "load_none": "Der Wechselrichter hat noch keinen Lastwert gemeldet.",
@@ -1657,15 +1668,13 @@
             }
           },
           "advanced": {
-            "name": "Batterie und Diagnose",
-            "description": "Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab. Diagnose herunterladen auf der Geräteseite beschreibt diese Einrichtung, ohne Seriennummer und Adresse.",
+            "name": "Batterie",
+            "description": "Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab.",
             "data": {
-              "battery_max_power": "Maximale Batterie-Ladeleistung (W)",
-              "register_dump": "Rohen Registerauszug in die Diagnose aufnehmen"
+              "battery_max_power": "Maximale Batterie-Ladeleistung (W)"
             },
             "data_description": {
-              "battery_max_power": "0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben.",
-              "register_dump": "Fügt den Rohwert jedes abgebildeten Registers hinzu. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt."
+              "battery_max_power": "0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben."
             }
           },
           "diagnosis": {
@@ -1680,7 +1689,8 @@
               "diagnosis_battery": "Hersteller und Modell der Batterie",
               "diagnosis_comment": "Sonst noch etwas Wissenswertes",
               "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
-              "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+              "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)",
+              "register_dump": "Rohen Registerauszug in die Diagnose aufnehmen"
             },
             "data_description": {
               "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
@@ -1691,7 +1701,8 @@
               "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
               "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
               "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
-              "diagnosis_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+              "diagnosis_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt.",
+              "register_dump": "Nicht der Durchlauf darüber: Dies fügt den Rohwert jedes abgebildeten Registers zu „Diagnose herunterladen“ auf der Geräteseite hinzu, die diese Einrichtung ohne Seriennummer und Adresse beschreibt. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt."
             }
           },
           "capability_test": {

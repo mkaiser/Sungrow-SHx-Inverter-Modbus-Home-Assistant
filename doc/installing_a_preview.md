@@ -91,6 +91,9 @@ device):
 ![Device page with the diagnosis mode, Start and Stop](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
 
 Choose what to run in **Diagnosis: mode**, then press **Diagnosis: start**.
+A new entry sits at *Extended test (auto repeat)*, the mode a reading is
+worth most in, so a press writes settings and puts them back unless you
+choose *Read-only* first.
 The run is in the background: you can leave the page, a notification says
 when it has finished, and **Download diagnostics** then carries the document.
 Please do not restart Home Assistant while a run is going.
