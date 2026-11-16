@@ -108,9 +108,15 @@ Does a WiNet-S advertise itself over mDNS? It needs a house with a dongle,
 and a run **on the host**, not in the container:
 
 ```bash
-pip install "sungrow-modbus[discovery]"     # zeroconf, for this check only
+pip install "sungrow-modbus[discovery]"       # zeroconf, for the browse
+pip install "modbus-connection[tmodbus]"      # probe.py imports it to start
 python device-diagnosis/scripts/python/probe.py mdns
 ```
+
+The second line is not optional on a fresh interpreter, even though the browse
+never speaks Modbus: `probe.py` imports `modbus_connection.tmodbus` at module
+level, and its `serialx` arrives only with that extra, so without it the probe
+stops at `ModuleNotFoundError` before it reaches the mDNS command.
 
 If the dongle advertises its serial and model, host discovery becomes free and
 exact. A negative answer is just as useful — it settles the question. An

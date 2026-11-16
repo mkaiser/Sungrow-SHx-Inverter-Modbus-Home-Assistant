@@ -173,7 +173,11 @@ real_hardware:
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
       bridge does not carry it, and host networking on Docker Desktop does not
       either (host_networking below). Run `device-diagnosis/scripts/python/probe.py mdns` on the
-      host instead (it needs `pip install sungrow-modbus[discovery]`).
+      host instead. On a fresh interpreter it needs two installs, not one:
+      `pip install sungrow-modbus[discovery]` for the browse and
+      `pip install "modbus-connection[tmodbus]"` because probe.py imports
+      `modbus_connection.tmodbus` at module level, whose serialx comes only
+      with that extra -- without it the probe stops before the mDNS command.
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
       the web_gui section below, and needs work on the Windows side.
