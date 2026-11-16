@@ -156,3 +156,18 @@ and 151 while charging, and input 21322 read 161 beside it, so 21322 is not the 
 echoed. Nothing is written to a wallbox outside a capability test with leave.
 With a car charging on 2026-11-14 it read 316 against a draw of 16.0 A, which rules out 0.01 A
 per count before any write ([the session](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md)).
+The map that reads 21203 as 0.01 A is AC011E-based, so the disagreement stood until an
+**AC011E-01** was read: one at unit 4 behind a WiNet-S, idle, reads 6.0 A at 0.1 A per count --
+the minimum a wallbox offers, where 0.01 A would make it 0.6 A
+([the diagnosis](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet-summary.md)).
+
+## The first AC011E-01
+
+Read 2026-11-16 at unit **4** behind a WiNet-S, 16 A over three phases, `AC011K-AE-25_V1.7.18`
+where 21216 says `AC011E-01` -- the part number an owner buys against the name the register
+holds, so identity keeps to the type code (`0x20DA`) and the `AC` prefix. Its 21272 reads
+4140 W and its 21273 11040 W, which are 6 A and 16 A over three 230 V phases: the 4.14 kW
+minimum the 2023 EV Power Guide names, now read from a wallbox
+([the sources](../sources/wallbox-phase-switching-sources-2026-11-14-summary.md)). It also
+settles [which unit a WiNet-S gives a wallbox](../queries/which-unit-does-a-winet-s-give-a-wallbox.md):
+not always 3.

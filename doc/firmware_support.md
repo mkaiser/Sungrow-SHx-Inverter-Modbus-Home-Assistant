@@ -105,6 +105,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3`
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4`
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5`
+- `sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan`
@@ -483,6 +484,7 @@ Left out, with a battery firmware but no pack reading, or no battery firmware:
 - `sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan`
 - `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan`
 - `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet`
+- `sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan`
 - `sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger`
 - `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan`

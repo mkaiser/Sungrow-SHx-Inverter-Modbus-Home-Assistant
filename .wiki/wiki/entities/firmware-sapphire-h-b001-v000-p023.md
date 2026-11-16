@@ -84,3 +84,4 @@ The most-measured firmware in the corpus.
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)
 - [SH8.0RT-V112, B001.V000.P023, tristangrichard, the inverter's own LAN port](../sources/sh80rt-v112-b001v000p023-3p-tristangrichard-anon-04477133025-battery-sbr096-meter-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, anonymous, through a Modbus proxy under load, SBR128](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-33455145473-battery-sbr128-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, anonymous, through a WiNet-S, with an AC011E-01 at unit 4](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet-summary.md)

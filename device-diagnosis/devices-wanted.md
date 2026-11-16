@@ -16,7 +16,7 @@ details are under [Why each one](#why-each-one).
 | 2 | **A second iHomeManager** (unit 247, port 502, 503 or 504), on firmware other than `SV930.001.00.P020` above all | One unit has been read; a second tells the device's behaviour from that unit's. Its Modbus TCP must be opened in the app first, see [item 2](#2-a-second-ihomemanager) |
 | 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does |
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the diagnosis also reads the Logger itself |
-| 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
+| 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
 | 8 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
@@ -48,7 +48,7 @@ apart, or a **battery size** nobody has read.
 
 Generated from [`results/`](results/) by `scripts/generate/generate_devices_wanted.py`; edit that, not this.
 
-32 inverters, each counted once by its stand-in serial however many times it was read: 29 hybrids and 3 SG string inverters. Beside them 2 wallboxes read, each at its own address, and an iHomeManager.
+33 inverters, each counted once by its stand-in serial however many times it was read: 30 hybrids and 3 SG string inverters. Beside them 3 wallboxes read, 2 at their own address and 1 on an inverter's bus, and an iHomeManager.
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
@@ -61,9 +61,9 @@ Generated from [`results/`](results/) by `scripts/generate/generate_devices_want
 | Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P031, P032, P033 | any other |
 | Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
 | Third-party battery | 3 inverters | other packs |
-| Transport | Logger, WiNet-S, WiNet-S over WiFi, WiNet-S wired, direct LAN; 4 inverters through a Modbus proxy | any route not listed |
-| Capability test | 14 of 29 hybrid inverters | every other model and firmware |
-| Wallbox | AC22E-01 | AC011E-01, AC007-00 |
+| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 4 inverters through a Modbus proxy | any route not listed |
+| Capability test | 14 of 30 hybrid inverters | every other model and firmware |
+| Wallbox | AC011E-01, AC22E-01 | AC007-00 |
 | iHomeManager | read | a second unit |
 | Sungrow Logger | the Logger itself unread; 2 inverters read through one | the Logger's own registers |
 
@@ -114,11 +114,15 @@ diagnosis tries that too, so no setting needs changing. In Home Assistant,
 *Search my network* offers it too; add it and press *Diagnosis: start*. See
 [Logger](../.wiki/wiki/entities/device-logger.md).
 
-### 5. A wallbox other than the AC22E-01
+### 5. A third wallbox model
 
-Sungrow publishes no register document. An AC011E-01 would settle the output
-current setting's scale, 0.1 A here against 0.01 A in another source's
-AC011E-based map ([wallbox_registers.md](../doc/wallbox_registers.md)). The
+Sungrow publishes no register document, so every name in the map comes from
+reading. An AC011E-01 read on 2026-11-16 settled the output current setting's
+scale -- 0.1 A per count, against 0.01 A in another source's AC011E-based map
+([wallbox_registers.md](../doc/wallbox_registers.md)) -- and found a wallbox
+at unit 4 behind a WiNet-S, where the only one measured before answered at 3.
+What is left is telling one unit's values from a model's constants, which
+needs a second of either model, and the AC007-00, which is unread. The
 diagnosis finds one behind a WiNet-S, or at its own address on port 516.
 
 ### 6. A charging car

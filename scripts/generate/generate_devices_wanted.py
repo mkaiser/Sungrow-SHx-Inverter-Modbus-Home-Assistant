@@ -147,15 +147,35 @@ def inverters() -> dict[str, Inverter]:
     return found
 
 
-def wallboxes() -> dict[str, str]:
-    """Return every wallbox read at its own address, model by stand-in serial."""
-    found: dict[str, str] = {}
-    for document in _documents("wallbox"):
-        section = document.get("wallbox") or {}
-        serial = section.get("serial_anonymized_hashed")
-        model = ((section.get("readings") or {}).get("model_name") or {}).get("value")
-        if serial:
-            found[serial] = str(model or "unknown model")
+#: Every Sungrow AC wallbox model this project knows a name for, so the
+#: coverage row can say what is missing by subtraction rather than by a
+#: hand-kept list that goes stale the moment one is read.
+WALLBOX_MODELS: tuple[str, ...] = ("AC22E-01", "AC011E-01", "AC007-00")
+
+
+def wallboxes() -> dict[str, tuple[str, bool]]:
+    """Return every wallbox read, by stand-in serial: its model, and how reached.
+
+    A wallbox reached through an inverter's bus is carried in that inverter's
+    document, not in one of its own, so counting only `wallbox/` undercounts
+    and -- worse -- reports a model as unread after it has been read.
+    """
+    found: dict[str, tuple[str, bool]] = {}
+    for folder in sorted(path.name for path in RESULTS.iterdir() if path.is_dir()):
+        for document in _documents(folder):
+            section = document.get("wallbox") or {}
+            serial = section.get("serial_anonymized_hashed")
+            if not serial:
+                continue
+            model = ((section.get("readings") or {}).get("model_name") or {}).get(
+                "value"
+            )
+            own = folder == "wallbox"
+            # Its own document wins: it reaches the wallbox directly and reads
+            # every register, where an inverter's bus reads what the dongle
+            # forwards.
+            if serial not in found or own:
+                found[serial] = (str(model or "unknown model"), own)
     return found
 
 
@@ -289,8 +309,13 @@ def render_section() -> str:
         ),
         (
             "Wallbox",
-            _list(boxes.values()) if boxes else "none",
-            "AC011E-01, AC007-00" if boxes else "any",
+            _list(model for model, _ in boxes.values()) if boxes else "none",
+            _list(
+                model
+                for model in WALLBOX_MODELS
+                if model not in {read for read, _ in boxes.values()}
+            )
+            or "none",
         ),
         (
             "iHomeManager",
@@ -313,8 +338,11 @@ def render_section() -> str:
         f"{len(found)} inverters, each counted once by its stand-in serial "
         f"however many times it was read: {len(hybrids)} hybrids and "
         f"{len(strings)} SG string inverters. Beside them "
-        f"{len(boxes)} {'wallbox' if len(boxes) == 1 else 'wallboxes'} read, each at "
-        "its own address"
+        f"{len(boxes)} {'wallbox' if len(boxes) == 1 else 'wallboxes'} read, "
+        f"{sum(1 for _, own in boxes.values() if own)} at "
+        f"{'its' if sum(1 for _, own in boxes.values() if own) == 1 else 'their'}"
+        " own address and "
+        f"{sum(1 for _, own in boxes.values() if not own)} on an inverter's bus"
         f"{', and an iHomeManager' if ihomemanagers else ''}"
         f"{', and a Logger' if loggers else ''}."
     )

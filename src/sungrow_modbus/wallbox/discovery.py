@@ -23,9 +23,9 @@ from ..addresses import field_address, read
 #:
 #: Behind a plain Modbus TCP endpoint. A WiNet-S forwards a wallbox on its
 #: RS485 bus at a unit of its own choosing: 3 first, as measured here (an
-#: AC22E-01); then 2 and 4, reported elsewhere and not measured here (2 and 3
-#: in the ioBroker thread and evcc discussion #7104, 2 in ha-modbus-manager
-#: issue #127, 4 for an AC011E-01 in this repository's issue #786). 248 last,
+#: AC22E-01); then 2, reported elsewhere and never measured here (2 and 3 in
+#: the ioBroker thread and evcc discussion #7104, 2 in ha-modbus-manager
+#: issue #127), and 4, measured here on an AC011E-01 (issue #786). 248 last,
 #: for an RS485-to-TCP adapter wired straight to the wallbox -- reported, not
 #: measured. The wallbox's own address over TLS is probed at 248 alone, by its
 #: caller.

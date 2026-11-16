@@ -994,3 +994,27 @@ device's silence and the reader's.
 
 Install type, where it is wanted for support, belongs in Home Assistant's own
 `diagnostics.py` download, which nothing publishes.
+
+## [2026-11-16] ingested | sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet
+
+A Home Assistant diagnostics download posted to issue #786: an SH10RT-V112 on
+P023 through a WiNet-S, with a wallbox behind the dongle. The diagnosis
+section alone, so no register dump and no block read test. The inverter reads
+as a dongle throughout -- 6100, 5741 and 5744 refused, 2612 and 2628
+unanswered.
+
+The wallbox is the news. It is the third read anywhere and the first that is
+not an AC22E-01: an **AC011E-01 at unit 4**, 16 A over three phases,
+`AC011K-AE-25_V1.7.18` where 21216 says `AC011E-01`. It answers
+[which unit a WiNet-S gives a wallbox](queries/which-unit-does-a-winet-s-give-a-wallbox.md)
+-- not always 3, and the unit is a property of the installation -- and
+confirms 21203 at 0.1 A per count on the very model whose other map reads it
+as 0.01 A: 6.0 A idle, where 0.01 A would make it 0.6 A. Its 21272 and 21273
+read 4140 W and 11040 W, 6 A and 16 A over three 230 V phases, so the 2023 EV
+Power Guide's 4.14 kW minimum is now read from a wallbox.
+
+Updated: [the wallbox](entities/device-wallbox.md),
+[P023](entities/firmware-sapphire-h-b001-v000-p023.md), the index, and
+`wallbox/discovery.py`'s note, where unit 4 was reported and is now measured.
+`devices-wanted.md`'s row 5 asks for a third model or a second of either
+instead.

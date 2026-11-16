@@ -260,21 +260,35 @@ diagnosis-only entry; how it is handled beyond that is open.
    through a release (`device-diagnosis/reference.md`). Six commits are
    unpushed, none of them released.
 
-8. **A copied scene does not work unchanged.** The YAML package carries seven
-   scenes, and `doc/integration_migration.md` tells a migrating user to copy
-   the ones they use, saying they work unchanged with the package's ids. The
-   ids are adopted, so that half holds. The option strings are not: the
-   package's selects take their state as the label (`Forced discharge`,
-   `Self-consumption mode (default)`, `Stop (default)`), the integration's
-   take the option key (`discharge`, `self_consumption`, `stop`;
-   `select_descriptions.py`), and a scene applying a state no option matches
-   does nothing but log. Five of the seven set a select and so break --
-   both *Self-Consumption Mode* scenes, *Battery Bypass Mode*, *Battery
-   Forced Discharge*, *Battery Forced Charge*; *Zero Export Power* and *Max
-   Export Power* set only a switch and a number and still work. Decide
-   between correcting the guide with the new option strings per scene, and
-   shipping the scenes as blueprints so nothing has to be copied; either way
-   the guide's sentence is wrong as it stands.
+8. **Revise the scenes and recreate them** (the maintainer, 2026-11-16).
+   The YAML package carries seven: *Self-Consumption Mode (max battery
+   discharge)*, *Self-Consumption Mode (no battery discharge)*, *Zero Export
+   Power*, *Max Export Power*, *Battery Bypass Mode*, *Battery Forced
+   Discharge*, *Battery Forced Charge*, two of them leaning on an automation
+   because a scene renders no template. They are not entities of the
+   integration and go when the package goes
+   (`doc/integration_migration.md`, `doc/entity_names.md`).
+   1. **Backward compatibility is the first question, and it is not free.**
+      The guide tells a user to copy the ones they use and says they work
+      unchanged with the package's ids. The ids half holds, since the
+      integration adopts them. The option strings do not: the package's
+      selects take their state as the label (`Forced discharge`,
+      `Self-consumption mode (default)`, `Stop (default)`), the
+      integration's take the option key (`discharge`, `self_consumption`,
+      `stop`; `select_descriptions.py`), and a scene applying a state no
+      option matches does nothing but log. Five of the seven set a select
+      and so break; *Zero Export Power* and *Max Export Power* set only a
+      switch and a number and still work. Whether a copied scene can be made
+      to work at all decides the rest.
+   2. **If it cannot, start fresh**: recreate the seven against the
+      integration's entities and option keys, and write the user guide that
+      replaces the copy instruction -- what each scene does, what it leaves
+      alone, and what to do with the old one. Blueprints are the form to
+      weigh against plain YAML in the guide: a blueprint is installed rather
+      than pasted, and carries its own inputs where the package needed an
+      automation to resolve a secret.
+   3. **Correct the guide either way.** Its present sentence is wrong as it
+      stands, and it is the first thing a migrating user acts on.
 
 # Open decisions
 
@@ -433,10 +447,13 @@ diagnosis-only entry; how it is handled beyond that is open.
     #786), but both documents publish these blocks as `null` with no
     stand-in per block, so they cannot be compared: settling it needs the
     masking to publish a stand-in for each masked block (a hash compares
-    without revealing), and a third reading. The open lead is cyablo's
-    **AC011E-01 behind a WiNet-S at unit 4** (#786), asked on 2026-11-15 to
-    retry on 0.1.0a40, which tries units 2 and 4 behind a dongle; it would
-    be the first of that model.
+    without revealing), and a third reading. The AC011E-01 at unit 4
+    arrived on 2026-11-16 (#786) and is ingested, but as a Home Assistant
+    diagnostics download, whose wallbox section carries none of the three
+    blocks: 21211 and 21212 appear in it as the charger's enable and
+    start/stop, not as the short code. So this still waits on the masking
+    change plus a reading that carries the blocks -- a terminal diagnosis of
+    that wallbox would do it.
 
 ## Logger
 
@@ -810,18 +827,19 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-15T09:00:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-15T09:00:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-16T10:00:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-16T10:00:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-15 09:00 UTC**: #786 brought peter_sm's twentieth
-reading (posted by Korsberg, 0.1.0a40, capability test), ingested: the first
-`network_names` from a house (blocker 18). cyablo's question (2026-11-12)
-about an AC011E-01 behind a WiNet-S at unit 4 is answered (posted
-2026-11-15 10:43 UTC): the wallbox search tries units 2 and 4 behind a
-dongle since 0.1.0a40 (`ae83be0`), and they were asked to retry. Their
-answer is blocker 15's lead.
+Last checked: **2026-11-16 10:00 UTC**: #786 brought the retry that was
+asked for -- a diagnostics download with an **AC011E-01 at unit 4 behind a
+WiNet-S**, ingested, anonymous in the document and so unnamed. It is the
+third wallbox read and the first that is not an AC22E-01: it answers which
+unit a WiNet-S gives a wallbox (not always 3) and confirms 21203 at 0.1 A
+per count on the model whose other map reads it as 0.01 A. It carries none
+of blocker 15's three masked blocks. Only the general diagnosis thread was
+read, by the comment the maintainer named; the issue sweep was not run.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
