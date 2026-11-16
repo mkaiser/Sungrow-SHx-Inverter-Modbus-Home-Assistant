@@ -15,9 +15,17 @@ An older WiFi stick built on a RAKwireless module, found beside the maintainer's
 - **A web page on port 80**, behind HTTP Basic authentication (realm "RAK LOGIN", server
   `rak_mini_server`).
 - **Named to the router** as `rakmodule-` plus the MAC's last three octets, with RAKwireless's
-  vendor prefix `AC:1F:09`. **It announces nothing over mDNS**: it was not among the 44 service
-  instances a 15-second browse heard from a machine on its own segment
-  ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)).
+  vendor prefix `AC:1F:09`.
+- **It advertises over mDNS**, under a service type of its own: instance
+  `rak475_service_` plus the same six hex digits, type `_rak47x._tcp`, port 5000, with `VER`
+  `1.9.0.10.12-2.13.4`, a `TEST` field reading `Let's go`, and a `MAC` field giving the whole
+  address in clear ([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)).
+  It is **intermittent**: heard in one browse and missed in two others the same afternoon, all
+  three of which counted 44 instances
+  ([an mDNS browse is a floor](../concepts/mdns-browse-is-a-floor.md)). Two earlier readings
+  recorded that it announced nothing ([2026-11-15](../sources/mkaiser-network-discovery-2026-11-15-summary.md),
+  [the first browse](../sources/mkaiser-mdns-2026-11-16-summary.md)); both were browses that
+  missed it, not devices that were silent.
 - **The inverter does not report it**: the maintainer's P020 names no communication module, so
   which inverter carries one only its owner can say.
 

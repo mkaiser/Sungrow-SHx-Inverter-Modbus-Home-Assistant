@@ -75,6 +75,7 @@
 - [Protocol addresses and register numbers](concepts/protocol-addresses.md) — Addresses are one below register numbers; maps use reg(), no literal addresses #addresses #registers #convention
 - [A remote site's link drops](concepts/remote-link-loss.md) — The provider cut gerd's line overnight; the tunnel did not recover until restarted; an up interface says nothing #remote #vpn #polling #evidence
 - [Serial anonymization](concepts/serial-anonymization.md) — Stand-ins in every published document, transcripts never tracked, the tree checked by shape #privacy #serial #diagnosis
+- [An mDNS browse is a floor, not a census](concepts/mdns-browse-is-a-floor.md) — A record heard is a fact, a record missing is not; a declined firewall prompt leaves services_heard non-zero and the browse short #mdns #discovery #firewall
 - [Telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md) — A proxy forwards every register; the MAC's U/L bit is what decides, and only on the segment #proxy #discovery #mac #transport
 - [Transport detection](concepts/transport-detection.md) — 6100 decides cable versus dongle; what differs by transport #transport #winet-s #capabilities
 - [Zero and empty mean absent](concepts/zero-means-absent.md) — A dongle's 0 and a NUL-filled string are not evidence of a capability #capabilities #winet-s #decoding
@@ -211,6 +212,7 @@
 - [mkaiser-modbus-proxy-2026-11-16.md](sources/mkaiser-modbus-proxy-2026-11-16-summary.md) — a modbus-proxy and the inverter answer as one card each; 6100 answers the flow's probe through the proxy and not the entry's; 195 entities on an ordinary entry #proxy #discovery #transport #register-6100 #mkaiser
 - [mkaiser-mac-prefixes-2026-11-16.md](sources/mkaiser-mac-prefixes-2026-11-16-summary.md) — the inverter's own LAN port carries AC:19:9F and the proxy a locally administered prefix; the neighbour cache separates them, from the segment #proxy #discovery #mac #mkaiser
 - [mkaiser-mdns-2026-11-16.md](sources/mkaiser-mdns-2026-11-16-summary.md) — 44 mDNS records heard from the house LAN and not one Sungrow: an inverter's own LAN port advertises nothing, measured from its own segment; what the Windows firewall prompt grants #mdns #discovery #firewall #mkaiser
+- [mkaiser-mdns-firewall-2026-11-16.md](sources/mkaiser-mdns-firewall-2026-11-16-summary.md) — a declined firewall prompt degrades the browse instead of silencing it, 37 against 44 with services_heard still non-zero; the RAK module advertises under _rak47x._tcp after all #mdns #discovery #firewall #rak-module #mkaiser
 
 - [sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5.json](sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md) — SH10RT, P020, mkaiser, sixth reading on 0.1.0a40: three auto-repeat runs, the house's first plausibility block, five battery-power bounds unenforced #diagnosis #sh10rt #sapphire-h-b001-v000-p020 #mkaiser #direct_lan #capability-test #plausibility
 

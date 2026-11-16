@@ -48,7 +48,13 @@ multicast browse heard 44 service instances, four of them `_http._tcp`, and **no
 record** -- the house's inverter is on its own LAN port with no dongle, so this is the measured
 form of the claim that such a port advertises nothing
 ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md),
-[open](../queries/does-a-winet-s-advertise-over-mdns.md)).
+[open](../queries/does-a-winet-s-advertise-over-mdns.md)). Four more browses that afternoon,
+across three Windows firewall states, found no Sungrow record either, and showed what a declined
+firewall prompt costs: 37 instances against 44, with `services_heard` still non-zero
+([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)). They also caught
+the [RAK WiFi module](device-rak-wifi-module.md) advertising under `_rak47x._tcp`, which two
+earlier readings had recorded as silent
+([a browse is a floor](../concepts/mdns-browse-is-a-floor.md)).
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

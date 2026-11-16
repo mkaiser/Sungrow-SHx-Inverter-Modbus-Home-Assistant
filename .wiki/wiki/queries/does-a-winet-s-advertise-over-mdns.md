@@ -4,7 +4,7 @@ title: Does a WiNet-S advertise over mDNS, and can discovery start there?
 tags: [winet-s, wallbox, mdns, discovery]
 created: '2026-11-11'
 query: Does a WiNet-S, and a wallbox at its own address, advertise itself over multicast mDNS, on every firmware, with the TXT record measured at gerd?
-results_count: 3
+results_count: 4
 ---
 
 # Does a WiNet-S advertise over mDNS, and can discovery start there?
@@ -23,8 +23,14 @@ instances, four of them `_http._tcp`, and not one Sungrow record**: no `WiNet-We
 TXT value ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)). The host held an address
 on the inverter's own /24 and the inverter in its ARP cache, so `on_device_segment` was true.
 That is a `nothing_answered` with records heard beside it: the first reading of the unambiguous
-kind. The [RAK WiFi module](../entities/device-rak-wifi-module.md) beside it was not among the 44
-either.
+kind. Four further browses the same afternoon, across three firewall states, found no Sungrow
+record either ([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)).
+
+**Five browses with no Sungrow record is strong, and it is not proof.** The same runs caught the
+[RAK WiFi module](../entities/device-rak-wifi-module.md) advertising under `_rak47x._tcp` in one
+browse and missing from two others, all three of which counted 44 instances. A browse is a floor,
+not a census ([the concept](../concepts/mdns-browse-is-a-floor.md)), so "no record heard" is
+evidence against a device advertising, never a demonstration that it does not.
 
 **A multicast browse on a LAN answered** at [peter-sm](../entities/installation-peter-sm.md):
 Home Assistant's own zeroconf, browsing `_http._tcp` for 2 s, heard the WiNet-S fitted to the
@@ -37,13 +43,11 @@ Still open:
 - **Other firmware, other houses.** Two dongles, one wallbox; a wallbox heard by multicast, none.
 - **A second house with no dongle.** One measured silence from an inverter's own LAN port is one
   house; what is known of the port is that it answers Modbus and is found by the sweep.
-- **Does a declined firewall prompt look the same?** On Windows a Python process binding UDP 5353
-  raises the Defender Firewall dialog once per interpreter -- Windows' own `mDNS (UDP-In)` rule is
-  scoped to `svchost.exe`/`dnscache` and does not cover it -- and answering it grants inbound TCP
-  and UDP on any local port, Private and Public, to that binary
-  ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)). Whether declining silences the
-  browse outright is untested. If it does, it is a **third** silence that `services_heard: 0`
-  cannot tell from a container's.
+- **Which records a firewall drops, and why those.** Declining the Windows prompt is
+  [answered](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md): it degrades the browse
+  rather than silencing it, so `services_heard` stays non-zero while records go missing. The same
+  eight were lost in both degraded states, and what distinguishes them from the 35 that survived
+  is not explained by anything measured.
 - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle
   ([the reading](../sources/gerd-mdns-2026-11-11-summary.md)), which is on WLAN
   ([gerd](../entities/installation-gerd.md)). A wired dongle's record, beside the
@@ -81,3 +85,7 @@ machine that ran the diagnosis holds an address on the device's network at all. 
 advertises nothing. Every reading taken before then is the ambiguous kind; the browse from the
 maintainer's Windows host is the first of the other
 ([the browse](../sources/mkaiser-mdns-2026-11-16-summary.md)).
+
+**The field answers less than it looks.** A firewall leaves `services_heard` non-zero and the
+browse short, so the count says only that the machine was not deaf -- never that the browse was
+complete ([a browse is a floor](../concepts/mdns-browse-is-a-floor.md)).

@@ -49,12 +49,22 @@ So this is the unambiguous half of the pair the schema-28 fields were added
 for: `nothing_answered` **with four records heard beside it**, from a machine
 on the device's own segment.
 
-- **An SH10RT's own LAN port advertises nothing over mDNS.** Measured, not
-  inferred from a silent browse.
-- **The RAK WiFi module advertises nothing over mDNS.** It was not among the
-  44, under `rakmodule-` or any other name, which the
-  [module's page](../entities/device-rak-wifi-module.md) had from a browse
-  through Home Assistant and now has from a browse that counts what it heard.
+- **No Sungrow record answered**, from a machine on the device's own segment
+  with 44 records to prove it was listening. Four further browses the same
+  afternoon, across three firewall states, found none either
+  ([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)).
+  Five browses with no Sungrow record is strong evidence that an SH10RT's own
+  LAN port advertises nothing; it is not proof, because a browse is a floor and
+  this one missed a device that was advertising
+  ([a browse is a floor](../concepts/mdns-browse-is-a-floor.md)).
+- **The RAK WiFi module was not among the 44** -- which this page first read as
+  its advertising nothing. **That was wrong.** It advertises under
+  `_rak47x._tcp`, a type nothing else on the network uses, and a browse hears
+  it only sometimes
+  ([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md),
+  [the module](../entities/device-rak-wifi-module.md)). A record missing from
+  one browse is not a device that is silent
+  ([a browse is a floor](../concepts/mdns-browse-is-a-floor.md)).
 
 ## The Windows Defender Firewall prompt
 
@@ -79,10 +89,13 @@ Edge and WebView2 carry their own. So every fresh interpreter that binds 5353
 raises the dialog once, and a diagnosis run by double-clicking a new Python on
 Windows will raise it.
 
-**Open:** whether *declining* it silences the browse. If it does, a declined
-prompt yields `nothing_answered` with `services_heard: 0` on a machine that is
-on the right segment -- a third silence, which looks like the container's.
-Testing it means disabling those two rules and re-running, which was not done.
+**Answered, and badly.** Declining does **not** silence the browse: it degrades
+it. Four browses differing only in firewall state put a declined prompt at 37
+instances and 3 `_http._tcp` against a baseline of 44 and 4, with the baseline
+reproduced exactly after restoring
+([the firewall runs](../sources/mkaiser-mdns-firewall-2026-11-16-summary.md)).
+`services_heard` would have read 3 -- non-zero and healthy looking -- eight
+records short ([a browse is a floor](../concepts/mdns-browse-is-a-floor.md)).
 
 ## An install note
 

@@ -303,6 +303,12 @@ instance. The download leaves it out.
   the two silences apart: `nothing_answered` beside a dozen others is the
   device saying nothing, and beside `0` it is this machine hearing nothing.
   `null` means the count was not taken.
+  **It says the machine was not deaf, never that the browse was complete.**
+  A declined Windows firewall prompt leaves the count non-zero and the browse
+  short -- measured at 37 instances and 3 `_http._tcp` against a baseline of
+  44 and 4 -- and two browses of one network minutes apart can both count 44
+  and disagree about which devices they heard. Read a missing record as "not
+  heard", never as "not there".
 - **Serials** in a record are replaced by their stand-ins; a MAC address, an
   IP address or a serial-like string in a field nobody has explained by
   `<mac>`, `<address>` or `<unexplained>`. No address is published.

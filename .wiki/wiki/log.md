@@ -1059,3 +1059,47 @@ results to three, two new open sub-questions),
 [RAK WiFi module](entities/device-rak-wifi-module.md),
 [telling a proxy from the inverter](concepts/telling-a-proxy-from-the-inverter.md),
 and the index.
+
+## [2026-11-16] ingested | mkaiser-mdns-firewall-2026-11-16
+
+Four 15-second browses from the maintainer's Windows host, changing only the
+Windows Defender Firewall state. **A declined prompt does not silence the
+browse. It degrades it**: 37 instances and 3 `_http._tcp` where the baseline
+had 44 and 4, with the baseline reproduced exactly after restoring, so the
+drop is the firewall and not a quiet network.
+
+That is the bad answer to the sub-question the morning's browse left open.
+`services_heard` would have read 3 -- non-zero, healthy looking, eight records
+short. The field tells a deaf machine from a silent device and **nothing
+more**, which `device-diagnosis/reference.md` now says and the new concept
+page [a browse is a floor](concepts/mdns-browse-is-a-floor.md) holds.
+
+**Two corrections, both to claims committed earlier today.**
+
+The [RAK WiFi module](entities/device-rak-wifi-module.md) **does** advertise
+over mDNS, under `_rak47x._tcp` on port 5000, with its firmware version and
+its whole MAC address in the TXT record. It is intermittent: heard in one
+browse, missed in two others the same afternoon, all three counting 44
+instances. The morning's page said it announced nothing; so did the
+2026-11-15 reading. Both were browses that missed it.
+
+And the headline is restated. "An SH10RT's own LAN port advertises nothing"
+rested on one browse that heard everything; it now rests on five browses with
+no Sungrow record, which is strong and is not proof -- those same browses
+missed a device that was advertising.
+
+Also fixed, and found by the run crashing: `probe.py mdns` died with
+`UnicodeEncodeError` on a legacy Windows console, because a TXT value that is
+not text becomes U+FFFD and cp1252 cannot encode it. Records print sorted by
+instance name, so everything after the offender was lost -- `SUNGROW*` and
+`WiNet-WebServer` sort after the Thread border router that triggered it. A
+contributor would have seen a short list with no Sungrow in it and no reason
+to doubt it. `main` now forces UTF-8 on stdout and stderr
+(`device-diagnosis/scripts/python/probe.py`), verified under
+`PYTHONIOENCODING=cp1252`.
+
+Updated: [the query](queries/does-a-winet-s-advertise-over-mdns.md) (three
+results to four), [the morning's browse](sources/mkaiser-mdns-2026-11-16-summary.md),
+[the RAK module](entities/device-rak-wifi-module.md),
+[mkaiser](entities/installation-mkaiser.md), `device-diagnosis/reference.md`,
+and the index.
