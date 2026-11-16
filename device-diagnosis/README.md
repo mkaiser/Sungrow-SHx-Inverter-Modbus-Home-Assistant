@@ -81,6 +81,12 @@ nothing. It finds the devices, a wallbox on its own address included, asks a
 few questions no register can answer, reads for 5 to 40 minutes, and prints
 which file to send.
 
+**On Windows, choose *Allow access* if the firewall asks.** The diagnosis
+listens for the announcements your devices make on the network, and Windows
+asks the first time a program does that. Declining does not stop the run; it
+quietly thins what the diagnosis hears, so a device that is there can come out
+missing.
+
 **Stop anything else polling the inverter first**, if you can: a Sungrow
 accepts very few connections, and a second reader makes registers look
 broken. Dropped connections in the output are normal; the diagnosis reconnects.

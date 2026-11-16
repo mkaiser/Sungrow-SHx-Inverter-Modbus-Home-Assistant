@@ -1911,30 +1911,44 @@ def run[T](main: Coroutine[Any, Any, T]) -> T:
     return asyncio.run(quiet())
 
 
-def main() -> int:
-    """Parse arguments and run the requested probe."""
-    # Rendering must never be able to fail on data already read.
-    #
-    # A device name, an mDNS TXT value or a register dump can hold bytes that
-    # are not text, which the library renders as U+FFFD (it decodes with
-    # `errors="replace"`). A legacy Windows console codepage has no mapping for
-    # U+FFFD, so `print` raises `UnicodeEncodeError` **part way through the
-    # listing** -- measured on Windows PowerShell 5.1, where a Thread border
-    # router's binary `_meshcop` record killed the browse.
-    #
-    # That is worse than it sounds. `cmd_mdns` prints sorted by instance name,
-    # so what is lost is everything sorting after the offender -- `SUNGROW*`
-    # and `WiNet-WebServer` among them. The reader sees a short list with no
-    # Sungrow in it, the traceback on stderr where a scrollback hides it, and
-    # no reason to doubt the result: exactly the false negative that
-    # `mdns.services_heard` exists to prevent.
-    #
-    # Forcing UTF-8 on a cp1252 console renders those few binary fields as
-    # mojibake. Mojibake in a field nobody can read anyway is the right price
-    # for never losing a record.
+def use_utf8_console() -> None:
+    """Make this process's console encode anything, so printing cannot fail.
+
+    Rendering must never be able to fail on data already read.
+
+    A device name, an mDNS TXT value or a register dump can hold bytes that
+    are not text, which the library renders as U+FFFD (it decodes with
+    `errors="replace"`). A legacy Windows console codepage has no mapping for
+    U+FFFD, so `print` raises `UnicodeEncodeError` **part way through the
+    listing** -- measured on Windows PowerShell 5.1, where a Thread border
+    router's binary `_meshcop` record killed the browse.
+
+    That is worse than it sounds. `cmd_mdns` prints sorted by instance name,
+    so what is lost is everything sorting after the offender -- `SUNGROW*`
+    and `WiNet-WebServer` among them. The reader sees a short list with no
+    Sungrow in it, the traceback on stderr where a scrollback hides it, and
+    no reason to doubt the result: exactly the false negative that
+    `mdns.services_heard` exists to prevent.
+
+    Forcing UTF-8 on a cp1252 console renders those few binary fields as
+    mojibake. Mojibake in a field nobody can read anyway is the right price
+    for never losing a record.
+
+    Every entry point in this folder calls this first, from one place so the
+    reasoning cannot drift between copies, and **before** anything replaces
+    `sys.stdout` -- `sungrow_diagnosis.run` wraps it in a `Tee`, which has no
+    `reconfigure` and whose console write is the one write it does not guard.
+    Idempotent, so a launcher that dispatches into another entry point may
+    call it twice.
+    """
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(AttributeError, OSError, ValueError):
             stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
+def main() -> int:
+    """Parse arguments and run the requested probe."""
+    use_utf8_console()
 
     parser = argparse.ArgumentParser(
         description=__doc__,

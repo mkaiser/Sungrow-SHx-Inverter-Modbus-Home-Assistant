@@ -1036,6 +1036,7 @@ def _window_leave(args: argparse.Namespace) -> dict[str, bool]:
 
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run."""
+    probe.use_utf8_console()
     args = _parser().parse_args(argv)
     if not _resolve_paths(args):
         return 2

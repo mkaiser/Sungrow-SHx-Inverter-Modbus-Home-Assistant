@@ -1883,6 +1883,13 @@ def main(argv: list[str] | None = None) -> int:
     launcher reaches every mode of it -- the restore above all, which is the
     way out of exit 5 for somebody who has only this folder.
     """
+    # First of all, and above the dispatch below: a console that cannot
+    # encode U+FFFD kills a run part way through, and `Tee.write` returns the
+    # console's write unguarded where it suppresses the transcript's. The
+    # register this reaches here is 13265's module name, read raw from the
+    # device. `probe.use_utf8_console` says what it costs and why.
+    probe.use_utf8_console()
+
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["tests"]:
         return sungrow_capability_test.main(argv[1:])

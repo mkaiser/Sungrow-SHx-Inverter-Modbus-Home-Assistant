@@ -395,6 +395,7 @@ async def _run(args: argparse.Namespace, blocks: list[Block]) -> Outcome:
 
 def main() -> int:
     """Test each block, bisect the ones that fail, and say what to do about it."""
+    probe.use_utf8_console()
     args = _parser().parse_args()
     blocks = _ranges(args.range) if args.range else _blocks_of(args.component)
     print(f"Reading {args.host}:{args.port}, unit {args.unit}. This only reads.")

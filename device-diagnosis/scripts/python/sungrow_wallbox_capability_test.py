@@ -90,6 +90,7 @@ except ImportError:  # pragma: no cover -- the pinned wheel predates the module
     )
     raise SystemExit(2) from None
 
+import probe
 import wallbox_direct
 
 #: Why `--leave` alone writes nothing. Measured at gerd's on 2026-11-14.
@@ -476,6 +477,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """Parse the arguments and run."""
+    probe.use_utf8_console()
     args = _parser().parse_args(argv)
     if not args.host:
         _parser().error("the wallbox's address is required")
