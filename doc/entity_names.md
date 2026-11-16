@@ -561,7 +561,8 @@ with its modern-mode id.
 Entities of the YAML package that the integration does not create. Why, and
 what replaces each, is in [integration_migration.md](integration_migration.md),
 which also covers the package's scenes and automations: they are not entities
-of the integration, and go when the file goes.
+of the integration, and go when the file goes. [scenes.md](scenes.md) has the
+seven scenes rewritten against the names below.
 
 | Legacy entity id | Legacy name |
 | --- | --- |

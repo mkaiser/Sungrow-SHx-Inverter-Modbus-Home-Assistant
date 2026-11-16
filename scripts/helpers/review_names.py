@@ -588,7 +588,9 @@ def _render(markdown: bool) -> str:
             "create. Why, and\nwhat replaces each, is in "
             "[integration_migration.md](integration_migration.md),\nwhich "
             "also covers the package's scenes and automations: they are not "
-            "entities\nof the integration, and go when the file goes.\n"
+            "entities\nof the integration, and go when the file goes. "
+            "[scenes.md](scenes.md) has the\nseven scenes rewritten against "
+            "the names below.\n"
         )
         print("| Legacy entity id | Legacy name |")
         print("| --- | --- |")

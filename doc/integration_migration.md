@@ -39,8 +39,14 @@ already there.
 2. **Keep what you use from the package that is not an entity.** It carries
    seven scenes (`Zero Export Power`, `Battery Forced Charge`, ...) and three
    automations, and they go when the file goes. Copy the ones you use into
-   your own configuration first. With the YAML package's IDs they work
-   unchanged.
+   your own configuration first.
+
+   **The automations work unchanged; the scenes do not.** Five of the seven
+   set a dropdown, and the integration's dropdowns hold a short code where
+   the package's held its text, so those five are skipped on activation —
+   with a line in the log, and the rest of the scene applied around them.
+   [scenes.md](scenes.md) has all seven rewritten, and the two automations
+   that go with them.
 3. **Remove the YAML package.** Delete or rename `modbus_sungrow.yaml` (rename
    the extension to `.yaml.bak` — the deprecated `!include_dir_named`
    directive picks up anything ending in `.yaml`), then restart Home
@@ -232,5 +238,6 @@ months included, because both wrote the same units to the same IDs.
   remove each.
 
 Either way, the scenes, automations and danger-mode switch you copied out of
-the package come back with it, so remove your copies to avoid duplicates. A
+the package come back with it, so remove your copies to avoid duplicates —
+including anything you took from [scenes.md](scenes.md). A
 dashboard or automation you pointed at device-scoped IDs needs pointing back.
