@@ -43,7 +43,7 @@ stays unique.
    | Case | What it settles | How, where |
    | --- | --- | --- |
    | PV above the load, battery part full, a forced charge above the surplus | whether the cap is on the grid's share alone, PV counted | the engine's `--import-limit` check, daylight |
-   | 13017 left on | whether the inverter flips `0xAA` back by itself or on PV (#444 reports ~20 min; not at bar12 after 23) | a watched run, after dark |
+   | 13017 left on, on **other firmware** | whether the inverter flips `0xAA` back by itself or on PV. **Answered on P020 2026-11-17: it does not** -- 13017 held `0xAA` for 90 min 48 s, through dawn and 31 min of PV, read back from the register (wiki: register-13017, the watch). #444's ~20 min is not reproduced; other firmware, or an iSolarCloud-connected house, is what is left | a watched run, after dark, reading the register back |
    | 13017 on P022 and other firmware | whether it is a switch there too | a watched run, after dark |
 
    Not worth a run: a full battery at night, a forced charge into a full
@@ -59,10 +59,15 @@ stays unique.
    battery - export - load, shown as a one-minute time-weighted mean, no
    legacy id: #626 never shipped). The battery term is 5214 where it
    answers, else 13022 signed by 13001's bits (as evcc), so the sensor
-   exists where 5214 is refused (#655). Left: look at it on the
-   maintainer's SH10RT by day and night, whether the mean is steady enough
-   and plausible (tens of watts at night); the 13022 path on a house that
-   refuses 5214; its energy counterpart.
+   exists where 5214 is refused (#655). **At night in Standby it reads about
+   -1.9 W** (the maintainer's SH10RT, 2026-11-16, 23:00, battery empty), not
+   the tens of watts expected: in Standby the inverter reports 0 for PV,
+   battery, export and AC power, so every term but the load's noise is zero
+   and the estimate collapses. So the sensor says nothing about the standby
+   draw, and whether it should read `unknown` there rather than a number near
+   zero is the question to settle. Left besides: the daytime look, whether
+   the mean is steady enough and plausible while the inverter works; the
+   13022 path on a house that refuses 5214; its energy counterpart.
 
 ## Battery
 
@@ -182,12 +187,16 @@ diagnosis-only entry; how it is handled beyond that is open.
    in every document (schema 25), and the forced startup mode
    (`diagnosis.sh tests <host> --forced-startup`). What each capability can
    be tested with is `doc/capability_tests.md`. Left:
-   1. **A first run of the forced startup mode on hardware.** The start is
-      watched by one-off scripts on P020 and P023 (wiki: register-13017);
-      the engine's own mode (`--forced-startup`, or the action's
-      `forced_startup: true`) has not run on an inverter yet: one in
-      low-SoC standby, after dark. The SH-RT's factory 0 goes back as
-      0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
+   1. **The forced startup mode on other firmware.** The engine's own mode
+      (`--forced-startup`, or the action's `forced_startup: true`) **ran on
+      hardware 2026-11-16** at the maintainer's SH10RT on P020, from Home
+      Assistant, in low-SoC standby after dark: left standby after 123 s,
+      Running after 208 s, back in standby 16 s after 0x55, no finding, and
+      the restore had nothing to put back (wiki: register-13017, the engine
+      run). The mode itself is settled; what is left is **P022, P023 and the
+      SH-T's 0x55 firmware**, each needing a house in low-SoC standby after
+      dark, and the SH-RT's factory 0 going back as 0x55, the one
+      `RESTORE_EQUIVALENT` (AGENTS.md), on a house that has never run it.
    2. **The new checks on hardware** (`doc/capability_tests.md`). First
       run 2026-11-08 to 11-10 at peter_sm (P023, cable, five runs) and
       ra1k_0 (P071, WiNet-S, one run), ingested; what each took is on their
@@ -200,7 +209,16 @@ diagnosis-only entry; how it is handled beyond that is open.
         first block from hardware came from the maintainer's production Home
         Assistant on 2026-11-15 (0.1.0a40, three runs, 26 of 53 checks
         settled, 0 failed); its diagnostics download is kept locally and is
-        **still to ingest**, and the history was cleared for a fresh start;
+        **still to ingest**, and the history was cleared for a fresh start.
+        The dev instance's collection has five plausibility checks matched
+        (power balance, both meter checks, daily_imported_energy and
+        total_imported_energy against power). After the stopped run of
+        2026-11-17 the ledger shows **15 of 52** established, the rest split
+        between checks the stopped run never reached ("not run, the run ran
+        out of time"), checks "the house was in no state for it", and the
+        plausibility ones waiting on PV, battery movement or export. So a
+        re-armed auto repeat **will** want writing runs again -- the stopped
+        run left real work behind, which is worth knowing before parking it;
       - **anything on a WiNet-S beyond one run**, and any T-series cable.
       The night re-check and the plausibility checks need one auto-repeat
       collection at the maintainer's SH10RT over a day and a night, which
@@ -218,9 +236,20 @@ diagnosis-only entry; how it is handled beyond that is open.
       (`--replace` puts it in their place). Left:
       1. **The slot schedule on hardware**: one night at the maintainer's
          SH10RT, to see that low-SoC Standby starts no run and *Diagnosis: next
-         start* names the next slot. Runs are kept with no cap, so a long
-         collection grows the stored ledger and the diagnostics download
-         (19 runs were 265 kB); clear the history between collections.
+         start* names the next slot. **Half seen over the night of 2026-11-16
+         to 11-17**: auto repeat ran from 21:16 to 06:37, **9 h 20 min of
+         low-SoC Standby**, and started **zero** runs
+         (`continuous_runs_started` 0 throughout), with the status line
+         reading *waiting for changed test conditions: waiting for the
+         inverter to run*. The inverter stirred once by itself at 22:48 for
+         fifteen seconds and that was not enough to open a slot either. The other half did not show: *Diagnosis: next
+         attempt* stayed `unknown` with the reason only in its `waiting_for`
+         attribute, because what it waits on is a condition and not a slot.
+         Decide whether that sensor should name a time at all when nothing is
+         scheduled, or say what it is waiting for in its state. Runs are kept
+         with no cap, so a long collection grows the stored ledger and the
+         diagnostics download (19 runs were 265 kB); clear the history
+         between collections.
       2. **The charge window with no room to charge**: the headroom under
          `snapshot.battery_ceiling` is now looked at before the window is
          written (2026-11-09); the 300 W floor after it still skips a battery
@@ -228,10 +257,20 @@ diagnosis-only entry; how it is handled beyond that is open.
          bracket confirms the start first.
       3. **Translate** the status line, the step sensor's states (*waiting
          for changed test conditions*, *stopped*) and the notifications once
-         their wording settles; English for now.
-      4. **Diagnosis: stop on hardware**, mid part B: that the restore reads
-         every word back and no restart starts. Only the simulator has seen
-         it.
+         their wording settles; English for now. One wording to settle first:
+         for about half a minute after a run ends the status line reads
+         *waiting for changed test conditions: a run is in progress*, which
+         contradicts itself -- the run is finished, progress is 100 and the
+         controls are released, but the continuous state has not caught up
+         (seen 2026-11-16, 23:20:11 to 23:20:41).
+      4. **Diagnosis: stop on hardware** -- **done 2026-11-17**, at the
+         maintainer's SH10RT. Pressed 60 s into part B, after six settings had
+         been written and during the forced charge probe: the restore ran to
+         completion in ~50 s, all seventeen touched settings read back at their
+         pre-run values with zero mismatches, the snapshot store was dropped,
+         the owner's controls were released and **no restart started** (wiki:
+         the stop). Nothing is left here; a stop through a WiNet-S is covered
+         by blocker 19, not by this item.
       5. **The *Diagnosis:* names on a real device page**, in English and
          German, once released: that the *Diagnostic* card keeps them
          together in the order `doc/entity_names.md` shows (the frontend's
@@ -247,11 +286,20 @@ diagnosis-only entry; how it is handled beyond that is open.
    (that happens only when nothing answers). A sweep from the dev container,
    which holds no session, found and identified it in one round, so the port
    is not deaf to a sweep: what it does under a sweep from the address
-   already polling it is the question. Find out whether the inverter
-   refuses a second TCP session from an address that already holds one, and
-   if so, have the sweep count a host Home Assistant's `modbus` already
-   connects to as a candidate (wiki: why did the search miss the
-   maintainer's inverter).
+   already polling it was the question. **Answered 2026-11-17, and the
+   hypothesis is wrong**: with the dev container's own Home Assistant polling
+   the inverter without a break, 12 of 12 connects from that same container
+   were accepted in 7.6-21.8 ms and both full /24 sweeps found it, costing the
+   poller no lost connection (wiki: why did the search miss the maintainer's
+   inverter, the run). So contention does not explain the miss, and nothing
+   needs to count an already-connected host as a candidate.
+
+   **What is left is one measurement**: the production Home Assistant reaches
+   this inverter through a **modbus-proxy on its own machine**, so the session
+   held from that address is the proxy's, not Home Assistant's. Run the same
+   sweep from the production machine with the proxy running. If it finds the
+   inverter there too, the miss was never about sessions and the sweep's own
+   behaviour on that host is what to look at.
 
 7. **The new scenes on hardware.** `doc/scenes.md` has the YAML package's
    seven rewritten against the integration's option keys, with the two
@@ -259,15 +307,26 @@ diagnosis-only entry; how it is handled beyond that is open.
    (`state_attr(..., 'max')`) instead of from a secrets file, and
    `tests/test_scenes_doc.py` holds every id, option and range in it to the
    descriptions. Nothing in it has been activated on a device. Left:
-   - **Press one, at the maintainer's SH10RT.** *Battery Forced Charge*
-     above all: both of its entities are selects, which is precisely what a
-     pasted scene could not set, so it is the one that proves the rewrite.
-     Forced mode, then back to self-consumption.
-   - **Watch what `max` reads.** Both numbers the automations write carry
-     `native_max_value = 0`, so the ceiling arrives from the device at
-     runtime -- the inverter's own feed-in maximum, and `battery.ceiling`
-     for the battery. That the template reads that figure rather than 0 has
-     not been seen on hardware, and a 0 would set the limit to nothing.
+   - **Press one, at the maintainer's SH10RT.** **Done 2026-11-17**:
+     *Battery Forced Charge*, installed from `doc/scenes.md` into the dev
+     instance's `scenes.yaml`, set **both selects** -- EMS mode to forced and
+     the battery command to charge -- and the inverter reported "Running in
+     compulsory (forced) mode". The rewrite does what a pasted scene could
+     not. What it did **not** do is move any energy: see item 11.
+   - **Watch what `max` reads.** **Done 2026-11-17.** The attribute is there
+     on hardware (*Feed-in limit* `max` = 10000.0 W, the battery numbers from
+     `battery.ceiling`), and the automation itself ran: activating
+     *Self-Consumption Mode (max battery discharge)* had
+     `state_attr(number..., 'max')` render **7420.0 W** and write it, not
+     `None` and not 0. The pattern in `doc/scenes.md` works.
+
+     Worth keeping: **the ceiling moves with the battery's state** -- the same
+     `max` read 7148 W with the pack empty, 7420 W at ~25 % and 7318 W a
+     minute later, because the pack's limit falls back to what the BMS will
+     take at that moment (`src/sungrow_modbus/battery/power.py`). That is the
+     argument for the automation over a figure stored in the scene, and it
+     belongs in `doc/scenes.md` where it tells a reader why the automation
+     exists (wiki: the charge).
 
 8. **Range checks: which bound is measured, and which is a judgement.** A
    write entity's bound is the only guard there is, because the inverter does
@@ -291,6 +350,24 @@ diagnosis-only entry; how it is handled beyond that is open.
      asked to be told about. What would settle it: set a threshold above a
      battery's maximum charging power and watch charging never start, which
      is the behaviour the comment already predicts.
+
+   **Measured 2026-11-17** at the maintainer's SH10RT (P020, battery ~22 %,
+   auto repeat's own run 3; wiki: which write bounds the inverter enforces).
+   Each upper-bound check wrote one value just above the maximum we offer and
+   read the register back raw over the cable:
+
+   | Control | Maximum | Written | Stored | |
+   | --- | --- | --- | --- | --- |
+   | `battery_max_soc` | 100 % | 101 % | -- | **refused**, exception 0x04 |
+   | `battery_max_charge_power` | 7274 W | 7374 W | 7374 W | not enforced |
+   | `battery_max_discharge_power` | 7274 W | 7374 W | 7374 W | not enforced |
+   | `battery_forced_charge_discharge_power` | 7274 W | 7374 W | 7370 W | not enforced (see below) |
+   | `battery_charging_start_power` | 1000 W | 1010 W | 1010 W | not enforced |
+   | `battery_discharging_start_power` | 1000 W | 1010 W | 1010 W | not enforced |
+
+   **Only the SoC bound is the device's.** Every battery power bound is ours,
+   so the entity's maximum really is the only guard -- the premise of this
+   whole item, now measured rather than inferred from five stored settings.
    - **Not derived, though the device states it.** The wallbox's user-defined
      current is capped at a flat 32 A, the largest Sungrow wallbox's rating,
      while a wallbox reports its own at 21263 -- **16.0 A** on the AC011E-01
@@ -299,6 +376,169 @@ diagnosis-only entry; how it is handled beyond that is open.
      from the reading where there is one, keeping 32 A only where nothing
      reports a rating. The wallbox's own entry has 21263; an inverter entry
      that manages a wallbox needs to reach the same figure.
+
+9. **A deprecated core API in the actions.** Every call of
+   `sungrow_modbus.run_capability_test` (and of the other three actions)
+   logs a core warning: `DeviceEntry.config_entries` is deprecated because a
+   device belongs to a single config entry, and it **stops working in Home
+   Assistant 2027.10**. One use, `custom_components/sungrow_modbus/services.py`
+   line 308, looping `device.config_entries` to find the entry a device
+   belongs to; `DeviceEntry.config_entry_id` replaces it. The loop also picks
+   the first entry whose domain is ours, which with one entry per device is
+   the same answer. Cheap to fix, and it keeps the log clean for whoever
+   reads it during a diagnosis.
+
+10. **A safe pattern for ad-hoc hardware watches.** A one-off watcher that
+    writes to the house and restores in a `finally` block left the
+    maintainer's 13017 on for 50 minutes past its window on 2026-11-17: it
+    held a Home Assistant access token from the start, the token expired 29
+    minutes in, and all five restore attempts returned HTTP 401. The
+    measurement survived, the house did not go back when it should have, and
+    only a person noticing put it right (wiki: 13017 left on). The shipped
+    capability test is not affected -- it restores over its own Modbus
+    connection, with no credential to expire. What is wanted is a small
+    helper for these one-off scripts under `scripts/dev/`: mint the
+    credential **at the moment of restoring**, never hold one from the start,
+    retry the restore until the register reads back, and fail loudly where a
+    person will see it rather than in a background log.
+
+11. **`doc/scenes.md` is wrong in three ways, found by installing it**
+    (2026-11-17, the maintainer's SH10RT, dev instance on this tree). The page
+    is held to the descriptions by `tests/test_scenes_doc.py`, which checks
+    ids, options and ranges -- none of these three.
+
+    1. **"One substitution" is false on new-style entity ids.** The page says
+       an install with the newer ids just adds the device name, "one
+       substitution, the same everywhere below". Three of its five ids are
+       renamed, not prefixed: `number.battery_max_discharge_power` is
+       `..._max_dischargi**ng**_power`, and `switch.export_power_limit` and
+       `number.export_power_limit` are `switch...feed_in_limit_mode` and
+       `number...feed_in_limit`. A reader following the page gets entities
+       that do not exist.
+    2. **Two of the seven scenes do not load at all.** *Zero Export Power* and
+       *Self-Consumption Mode (no battery discharge)* give a number's state
+       unquoted (`number...: 0`, `number...: 10`). Home Assistant 2026.11
+       rejects those as "State ... should be a string" and **drops the scene**,
+       leaving only a warning in the log: five of seven scene entities
+       appeared. The values need quoting.
+    3. **Battery Forced Charge moves no energy by itself.** It sets EMS mode
+       and the battery command, both selects, and the inverter does report
+       "Running in compulsory (forced) mode" -- but the charge *power* is a
+       separate number, and where it sits at 0 (its factory value, and what a
+       capability test's restore leaves) the battery stays at 0 W. Measured
+       flat for a minute before the power was set by hand. *Battery Forced
+       Discharge* has the same shape. This is exactly the "looks like it
+       worked" failure the page's own opening warns about.
+
+    What to decide: whether the scenes carry the power (a fixed watt figure a
+    scene can hold, or an automation reading the entity's `max` as the two
+    existing ones do), and whether the page should publish both id styles
+    rather than promise a substitution. `tests/test_scenes_doc.py` should grow
+    a check that every id in the page exists under both styles, and that a
+    number's state is quoted.
+
+12. **The plausibility checks only observe while auto repeat is on.**
+    `DiagnosisRunner.async_observe` is called from one place,
+    `custom_components/sungrow_modbus/continuous.py`'s tick, so the polled
+    readings reach `capability_test/plausibility.py` only while *Extended test
+    (auto repeat)* is running. Measured 2026-11-17 at the maintainer's SH10RT:
+    thirty minutes of a 4.5 kW forced charge -- the rarest condition of the
+    day -- added **no** observations at all, *battery voltage times current*
+    staying at "4 of 20" throughout, because auto repeat had been switched off
+    for another test and did not survive a restart.
+
+    **Measured both ways.** Across the whole charge the counters did not
+    move (*battery voltage times current* 4 of 20 at 08:46 and still 4 of 20
+    at 09:09); ten minutes after auto repeat was switched back on they read
+    **15 of 20**, with *phase voltage times current* the same and *tracker
+    voltage times current* off 0 as well. So the readings were there all
+    along and nothing was watching them.
+
+    The cost is concrete: *battery level follows its power* wants "1 kWh into
+    or out of the battery" and still reads **0 of 2 events** after a 3.5 kWh
+    charge, because the charge happened while nothing observed. That check
+    would otherwise have been half settled by this morning's work, and the
+    condition is not a cheap one to arrange again.
+
+    Two consequences. A house whose owner never turns auto repeat on never
+    accumulates these observations, so its plausibility checks can never
+    settle -- although they **write nothing** and need only readings the
+    coordinator already has. And any session that parks auto repeat for
+    another test silently loses whatever the house did meanwhile.
+
+    To decide: whether observing should be fed from the coordinator instead,
+    independent of the owner's leave to write, since the leave is about
+    writing and this does none. If it stays as it is, the wording that
+    explains auto repeat should say that switching it off stops the watching
+    too, which today it does not.
+
+13. **A step quantisation is recorded as a clamp.** In
+    `src/sungrow_modbus/capability_test/writepath.py` the upper-bound check
+    returns `CLAMPED` whenever the readback word is below the written word:
+
+    ```text
+    if raw is not None and raw < word:
+        return [row(check, CLAMPED, f"took {value:g} {probe.unit} and stored the word {raw}", ...)]
+    ```
+
+    It never asks whether the stored value is inside the bound. Measured
+    2026-11-17 at the maintainer's SH10RT:
+    `battery_forced_charge_discharge_power` was written 7374 W and stored
+    7370 W -- the register rounding to its own 10 W step -- against a maximum
+    of 7274 W. The check recorded "the device clamped it", and `CLAMPED` maps
+    to established in `capability_test/ledger.py`, so a bound the device does
+    **not** enforce is now marked settled and will never be asked again.
+
+    The fix: a clamp requires the stored value to be at or below the bound.
+    Otherwise the verdict is the "took and stored ..., above the maximum ...:
+    the bound is not enforced" one the other four registers got. Any ledger
+    carrying the wrong verdict needs that check cleared so it runs again.
+
+14. **Confirm on hardware that a run honours the owner's battery ceiling.**
+    The fix is in the tree: `Options.configured_battery_w` carries the entry's
+    `battery_max_power` into `preflight._battery_ceiling()`, so the capability
+    test and the number entities now read one ceiling
+    (`tests/test_capability_test.py::test_the_owners_battery_ceiling_bounds_the_run`).
+    Before it, the entity capped at the owner's figure while a run computed
+    the unconstrained one and could write up to it -- and that figure also
+    bounds `_forced_power()`, so it is what stops a run manufacturing a charge
+    or discharge bigger than the owner allows.
+
+    What is left is one reading. At the maintainer's the option is now 5000 W
+    and both sliders cap there, but the ledger's last two runs recorded
+    `battery_ceiling_w` of **7274** and **7166** -- the BMS-derived figure,
+    taken before the fix loaded. **The next auto-repeat run should record
+    5000.** Check that, then this is done.
+
+15. **The start-threshold checks may never settle at a lived-in house.**
+    A behavioural check refuses to attribute a change when the house drifted
+    more than `max(DRIFT_ABS_W, DRIFT_FRACTION x before)` across the
+    measurement -- 150 W, or 15 % once the quantity exceeds 1000 W
+    (`src/sungrow_modbus/capability_test/effects.py`,
+    `src/sungrow_modbus/capability_test/procedure.py`). Refusing is right; an
+    unattributable change is not evidence.
+
+    Measured 2026-11-17 at the maintainer's SH10RT (wiki: what a lived-in
+    house costs the capability test). Run 4 finally caught the **discharging
+    start threshold** with the battery inside its 200-800 W window, and lost
+    it: the signal was about 206 W, so the tolerance was the 150 W floor --
+    about three quarters of the signal -- and 216 W of household drift ended
+    it. Run 3 lost the **export power limit** the same way at the other end,
+    to 2126 W.
+
+    The deeper problem is that the conditions exclude each other. Both start
+    thresholds need the battery moving 200 to 800 W **all of it through the
+    battery**, and a battery moves that gently when PV is weak -- which is
+    when household load dominates the meter and staying inside 150 W is
+    hardest. So these two are not waiting on one condition that has not come
+    but on two that tend not to co-occur.
+
+    Worth considering, none chosen: judge these two from the battery's own
+    power rather than the house's, since the note already measures "all of it
+    through the battery"; retry within a run until a quiet window appears
+    rather than spending the one attempt; or accept that they settle only at
+    houses quiet enough and say so in `doc/capability_tests.md`, so nobody
+    reads a years-old "not run yet" as a defect.
 
 # Open decisions
 
@@ -742,6 +982,38 @@ scale error), so a drift of a few percent comes out `MATCH` or
 
 Nothing generates one yet. Open: generate a Lovelace dashboard (asking
 first), or rely on entity metadata and document the auto-generated view.
+
+**The question to settle first: one default dashboard over houses that
+differ.** An entry can carry an inverter alone, or an inverter with an SBR,
+a wallbox and an external generator; a wallbox or an iHomeManager entry
+carries neither. An entity exists only where its capability answered
+(`Capability`, measured at setup), so a dashboard written for the richest
+house reads *not available* on every other one, and one written for the
+poorest shows almost nothing. The routes, none chosen:
+
+- **Generated per entry, from the capabilities that answered.** One
+  dashboard, built for the house it is built in, with no empty card by
+  construction. It has to be rebuilt when a capability appears later (a
+  battery added, a wallbox found), which wants a repair or an action rather
+  than a silent rewrite, and it must never overwrite what the owner has
+  edited since.
+- **One shipped dashboard of conditional cards.** A card per device behind a
+  condition on an entity of that device, so a device that is not there
+  leaves no gap. Nothing to generate and nothing to keep per house, but a
+  condition on `unavailable` also hides a device that is merely offline,
+  which is the state an owner most wants to see; the condition has to be on
+  the capability (the entity existing at all), not on its state.
+- **A dashboard per device, linked from one view.** Follows the device
+  pages, so nothing is ever empty, but it is several dashboards and not the
+  one asked for.
+- **Nothing of our own**: document Home Assistant's auto-generated view,
+  which is what an install gets today.
+
+Whatever is chosen is asked for and never installed by itself: a dashboard
+that appears unbidden is a change to the owner's sidebar.
+`legacy/doc/dashboard.md` is the YAML package's, and the material to port
+(Release item 5); `doc/energy_dashboard.md` stays what it is, the Energy
+dashboard being core's and not ours.
 
 ## Helping users set up the Energy dashboard
 

@@ -1142,3 +1142,192 @@ set.
 Updated: [an mDNS browse is a floor](concepts/mdns-browse-is-a-floor.md),
 [the query](queries/does-a-winet-s-advertise-over-mdns.md) (four results to
 five), and the index.
+
+## [2026-11-16] ingested | the forced startup mode's first run on hardware, mkaiser
+
+The capability test engine's own `forced_startup` mode had never run on an
+inverter; it ran at [mkaiser](entities/installation-mkaiser.md)'s SH10RT on
+P020, over the cable, from Home Assistant's `run_capability_test` action, with
+the battery at 0.0 % against its 10 % minimum and no PV
+([the run](sources/mkaiser-forced-startup-2026-11-16-summary.md)).
+
+It did what the simulator said it would: 0xAA, left standby after 123 s,
+Running after 208 s, 0x55, back in standby 16 s later, verdict "the inverter
+did as it was told", outcome 0 and no finding. The guard admitted low-SoC
+standby without argument, part B wrote that one probe and nothing else, and
+the restore had nothing to put back -- 13017 already held the 0x55 the
+2026-11-08 run left there.
+
+Two things worth keeping beyond the verdict. **The timing repeats**: 123 s and
+208 s against 121 s and 215 s eight days earlier, same inverter, firmware and
+cable. And **a state change is not evidence of a register change**: the same
+evening, with 13017 off and nothing written, the inverter took a
+fifteen-second running window by itself at 22:48, so the report of 0xAA being
+flipped back (issue #444) has to be settled by reading the register, not by
+watching the running state.
+
+The same run's part A brought the house's plausibility checks to five matched
+of 24 established six.
+
+Updated: [register 13017](entities/register-13017.md) (the mode has run; a
+0x55 on B001 firmware says a write has happened there, not that the firmware
+differs), [installation mkaiser](entities/installation-mkaiser.md), and the
+index.
+
+## [2026-11-17] ingested | an inverter takes a second session from the polling address, mkaiser
+
+The one explanation
+[why did the search miss the maintainer's inverter](queries/why-did-the-search-miss-mkaisers-inverter.md)
+carried -- that an inverter's own LAN port refuses or stalls a second TCP
+connection from an address that already holds one -- is measured and **wrong**
+([the run](sources/mkaiser-second-session-2026-11-17-summary.md)).
+
+The dev container swept its own /24 twice while its own Home Assistant had
+been polling the inverter without a break since the previous evening: 12 of 12
+connects accepted in 7.6 to 21.8 ms, the inverter found by both sweeps, and
+the poller lost no connection over either. So [contention](concepts/contention.md)
+does not explain the miss.
+
+What is left is narrower and worth saying plainly: the production Home
+Assistant reaches this inverter **through a modbus-proxy on its own machine**,
+so the session held from that address is the proxy's, not Home Assistant's.
+The sweep that would settle it is the same one from the production machine
+with the proxy running.
+
+Updated: [the query](queries/why-did-the-search-miss-mkaisers-inverter.md)
+(its question is now the open one, two results to three),
+[installation mkaiser](entities/installation-mkaiser.md), and the index.
+
+## [2026-11-17] ingested | 13017 left on for 90 minutes, mkaiser
+
+The open half of [register 13017](entities/register-13017.md) -- whether an
+inverter flips `0xAA` back by itself or when PV arrives (issue #444 reports
+~20 minutes) -- answered at mkaiser's SH10RT on P020, read back from the
+register rather than judged by the running state
+([the watch](sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)).
+
+**It does not flip back.** 13017 held `0xAA` for 90 minutes 48 seconds, the
+longest watch on record against bar12's 23 minutes, and dawn did not undo it
+either: PV rose above 0 W at 59 minutes and the register still read `0xAA`
+31 minutes later. The inverter ran 56 minutes in the dark on `0xAA` alone with
+the battery at 0 %. So #444 is not reproduced on P020; other firmware, or
+iSolarCloud rewriting the register, are what is left to explain it.
+
+The wake timing is now three runs over nine days by three methods at one
+house: `Starting` at 121, 123 and 122 s, `Running` at 215, 208 and 207 s.
+
+The restore was late and the page says so: the watcher's Home Assistant token
+expired 29 minutes in, so its `finally` block could not write, and the
+register was put back by hand 50 minutes after the intended end. The lesson is
+on the source page -- a restore that depends on a credential which can expire
+mid-run is not a restore.
+
+Updated: [register 13017](entities/register-13017.md),
+[installation mkaiser](entities/installation-mkaiser.md), and the index.
+
+## [2026-11-17] ingested | Diagnosis: stop mid part B, on hardware, mkaiser
+
+Only the simulator had seen *Diagnosis: stop* pressed while a capability test
+was writing. It was pressed on hardware at mkaiser's SH10RT on P020, 60
+seconds into part B, after six settings had been written and during the forced
+charge probe ([the run](sources/mkaiser-stop-mid-run-2026-11-17-summary.md)).
+
+[The restore](concepts/capability-test-restore.md) ran to completion in about
+50 seconds: all seventeen touched settings read back at their pre-run values
+with **zero mismatches**, the snapshot store was dropped, the owner's controls
+were released, and the running state read `Running` before and after -- **no
+restart started**. The run reported "ran, but checks were skipped or
+inconclusive", 0 findings, no error, which is what a deliberately interrupted
+run should say.
+
+Updated: [the restore](concepts/capability-test-restore.md),
+[installation mkaiser](entities/installation-mkaiser.md), and the index.
+
+## [2026-11-17] ingested | a forced charge from the grid, mkaiser
+
+A 48-minute forced charge at mkaiser's SH10RT on P020, 0.0 % to 25.5 % at a
+steady 4501 W, run from the scenes in `doc/scenes.md`
+([the charge](sources/mkaiser-forced-charge-2026-11-17-summary.md)).
+
+What it settles about the scenes: a scene **does** set both selects, which is
+what the rewrite was for; it moves **no energy** by itself, because the charge
+power is a separate number sitting at its factory 0; and the companion
+automation's `state_attr(number..., 'max')` renders a real figure on hardware,
+7420 W. That last one matters more than it looks: the same `max` read 7148 W
+with the pack empty and 7318 W a minute later, because the pack's limit falls
+back to what the BMS will take at that moment
+(`src/sungrow_modbus/battery/power.py`). A scene storing a fixed watt figure
+would be wrong at almost every moment; reading the entity's `max` at
+activation is right.
+
+About the battery: the state of charge advances in steps of about **1.1
+percentage points**, not the 0.1 its register's scale suggests -- roughly
+160 Wh per step on this pack -- so anything comparing an SoC delta with an
+energy figure has to allow for it. SoC and energy otherwise agree: 2.25 kWh
+delivered against 2.07 kWh implied.
+
+And a caution for whoever reads a counter during a test: register 13040 sits
+on the 600 s tier, so it read 0.00 kWh nine minutes into a 4.5 kW charge and
+then moved in 0.5-0.8 kWh steps.
+
+Updated: [installation mkaiser](entities/installation-mkaiser.md) and the
+index.
+
+## [2026-11-17] ingested | which write bounds the inverter enforces, mkaiser
+
+Run 3 of auto repeat at mkaiser's SH10RT on P020 ran the upper-bound checks
+with the battery at ~22 %, and they answer the range-check question directly
+([the run](sources/mkaiser-range-checks-2026-11-17-summary.md)).
+
+**Only the state-of-charge bound is the device's.** 13057 refused 101 % with
+exception 0x04. Every battery *power* bound was taken and stored above its
+maximum: 7374 W against 7274 for max charge and max discharge power, 1010 W
+against 1000 for both start-power thresholds. So the entity's maximum is the
+only guard there is, which is the measured form of the claim the range-check
+work rests on.
+
+The forced charge/discharge power looked like an exception -- 7374 W written,
+7370 W stored -- and is not: 7370 W is still above the 7274 W maximum, and the
+difference is the register rounding to 10 W. The capability test recorded it
+as "the device clamped it" all the same, because
+`capability_test/writepath.py` treats any readback word below the written word
+as a clamp without asking whether the stored value is inside the bound, and
+`CLAMPED` maps to established in `capability_test/ledger.py`. A register that
+rounds to its own step is therefore recorded as enforcing a maximum it does
+not enforce, and the check is never asked again. Logged here because the fix
+is a code change, tracked in `Todo.md`.
+
+Also kept, because they say what a day's testing needs: the charge ceiling
+wants the battery charging above 55 %; both start-power thresholds want
+battery power between 200 and 800 W; and the pack's own limit moves mid-check
+-- a manufactured discharge asked 4823 W and the pack took 4820 W.
+
+Updated: the index.
+
+## [2026-11-17] ingested | what a lived-in house costs the capability test, mkaiser
+
+Runs 3 and 4 of auto repeat each lost a behavioural check to the drift gate,
+and the reason is about houses rather than about this inverter
+([the runs](sources/mkaiser-drift-gate-2026-11-17-summary.md)).
+
+A behavioural check refuses to attribute a change when the house drifted more
+than `max(150 W, 15 %)` across the measurement. That is the right answer -- an
+unattributable change is not evidence -- but run 4 shows when it bites: the
+quantity under test was a battery flow of about 206 W, so the tolerance was
+the 150 W floor, roughly three quarters of the signal, and one appliance
+switching on lost the check. Run 3 lost the export power limit the same way,
+at the other end of the scale, to 2126 W of drift.
+
+**The conditions fight each other.** Both start-threshold checks need the
+battery moving 200 to 800 W with all of it through the battery, and a battery
+moves that gently when PV is weak -- which is when household load dominates
+the meter and staying inside 150 W is hardest. So they wait not on one
+condition but on two that tend to exclude each other: a quiet house with a
+gently moving battery.
+
+Also kept, because they say what a day's testing needs: the forced discharge
+wants a battery above its minimum, the charge ceiling wants it high enough for
+`battery_max_soc` (floor 50 %) to be put under it, and the export limit wants
+something to spend on making an export. The forced charge passed.
+
+Updated: the index.

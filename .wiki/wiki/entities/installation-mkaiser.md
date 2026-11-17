@@ -22,6 +22,23 @@ PV above the load it left export alone ([the export run](../sources/mkaiser-impo
 discharge limit below the load it did not draw on the battery past it ([the discharge run](../sources/mkaiser-import-limit-discharge-2026-11-08-summary.md)).
 [Register 13017](register-13017.md)'s 0xAA woke it from low-SoC Standby and 0x55 sent it back; 13017
 is left at 0x55 ([the forced startup run](../sources/mkaiser-forced-startup-2026-11-08-summary.md)).
+The capability test engine's own forced startup mode had its **first run on hardware** here on
+2026-11-16, from Home Assistant: left standby after 123 s, Running after 208 s, back in standby
+16 s after 0x55, no finding, and the restore had nothing to put back -- within seconds of the
+script's figures eight days earlier. The same evening, with 13017 off and nothing written, the
+inverter took a fifteen-second running window by itself at 22:48
+([the engine run](../sources/mkaiser-forced-startup-2026-11-16-summary.md)). Left at 0xAA the next
+morning it held for **90 minutes**, through dawn, and ran 56 minutes in the dark before any PV, so
+this inverter undoes neither by itself nor on PV
+([the watch](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)). *Diagnosis: stop*
+pressed 60 s into part B here put all seventeen touched settings back with zero mismatches and
+started no restart, the first stop on hardware
+([the stop](../sources/mkaiser-stop-mid-run-2026-11-17-summary.md)). A 48-minute forced charge
+from the grid the same morning, run from the `doc/scenes.md` scenes, took the pack from 0.0 % to
+25.5 % at a steady 4501 W, showed its state of charge advancing in ~1.1 point steps, and had the
+companion automation render `state_attr(..., 'max')` as 7420 W -- a ceiling that read 7148 W with
+the pack empty and 7318 W a minute later, because it falls back to what the BMS will take at that
+moment ([the charge](../sources/mkaiser-forced-charge-2026-11-17-summary.md)).
 The forced-charging window took charging from -633 W to 4499 W and back, did as it was told
 ([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)).
 A night of *Extended test (auto repeat)*, 19 runs, did it seven times more, held the site import
@@ -39,7 +56,12 @@ house answers as one inverter at two addresses, one serial and one route note at
 search from the dev container found both and could name neither as the proxy
 ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)), and an entry
 pointed at the proxy cannot measure its route
-([open](../queries/does-a-modbus-proxy-carry-6100.md)). From the Windows host, which is on the
+([open](../queries/does-a-modbus-proxy-carry-6100.md)). Its own LAN port **takes a second TCP
+session from the address already polling it**: with the dev container's Home Assistant polling it
+without a break, 12 of 12 connects were accepted and two full sweeps from that same container
+found it ([the run](../sources/mkaiser-second-session-2026-11-17-summary.md)), so contention does
+not explain why the production instance's sweep missed it
+([open](../queries/why-did-the-search-miss-mkaisers-inverter.md)). From the Windows host, which is on the
 house's segment, the cache does separate them: the inverter's own LAN port carries Sungrow's
 `AC:19:9F` and the proxy a locally administered prefix
 ([the prefixes](../sources/mkaiser-mac-prefixes-2026-11-16-summary.md),

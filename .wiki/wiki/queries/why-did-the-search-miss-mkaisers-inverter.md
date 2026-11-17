@@ -3,8 +3,8 @@ type: query
 title: "Why did the search miss the maintainer's inverter?"
 tags: [discovery, contention, mkaiser, open]
 created: '2026-11-15'
-query: "Does an inverter's own LAN port refuse a second TCP connection from an address that already holds one?"
-results_count: 2
+query: "Why did a sweep from the production Home Assistant not find the inverter's own LAN port?"
+results_count: 3
 ---
 
 # Why did the search miss the maintainer's inverter?
@@ -24,7 +24,18 @@ round as the proxy on the production Home Assistant's machine
 not deaf to a sweep; what it does under a sweep *from the address already polling it* is
 still the question.
 
-One explanation, unmeasured: the inverter's LAN port refuses or stalls a second connection from an
-address that already holds one ([contention](../concepts/contention.md)). What answers it: from
-one machine, hold a Modbus session open and time a second connect, then the same from two
-machines.
+**That explanation is now measured, and it is wrong.** On 2026-11-17 the dev container swept the
+same /24 while its *own* Home Assistant had been polling the inverter without a break since the
+previous evening: 12 of 12 connects accepted in 7.6 to 21.8 ms, both full sweeps found the
+inverter, and the poller lost no connection over either
+([the run](../sources/mkaiser-second-session-2026-11-17-summary.md)). An inverter's own LAN port
+does **not** refuse a second TCP session from an address that already holds one, so
+[contention](../concepts/contention.md) does not explain the miss.
+
+**What is left.** The production Home Assistant does not poll this inverter directly: it goes
+through a **modbus-proxy on its own machine**
+([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)), so the session held
+from that address is the proxy's, and the sweep there runs beside a proxy rather than beside a
+direct session. The measurement that would settle it is the same sweep **from the production
+machine**, with the proxy running: if the inverter is found there too, the miss was never about
+sessions at all and the sweep's own result on that host is what to look at.

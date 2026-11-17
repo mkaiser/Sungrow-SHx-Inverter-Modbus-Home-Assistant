@@ -235,6 +235,32 @@ tree.
 
 Each of these is verified in a container or against hardware.
 
+- **`ruff format` reformats Python inside Markdown.** A fenced ```python
+  block in any tracked `.md` -- a wiki page, a note, `Todo.md` -- is formatted
+  like a source file, so a snippet with an elision (`...` standing for omitted
+  arguments) fails `make quick` with "File would be reformatted" pointing at
+  the Markdown file. Either paste a snippet that is genuinely formatted, or
+  fence it as ```text when it is an extract rather than code.
+- **A dev instance runs in UTC unless you say otherwise.** `config/configuration.yaml`
+  sets no `homeassistant: time_zone:`, so Home Assistant reports `UTC` while
+  the container and the house are on local time. Every time the integration
+  displays is then offset: *Diagnosis: test summary* said "the next run not
+  before 08:37" when the quiet window ended at 09:37 CET. Nothing is written
+  wrongly -- the inverter's schedule registers carry raw hour and minute -- but
+  a clock read off a dev instance is not the house's clock, and the slot
+  schedule looks broken when it is not. Add `homeassistant: time_zone: ...`
+  when testing anything that shows a time.
+- **`homeassistant.restart` kills a `make dev` instance for good.** The action
+  makes Home Assistant exit with a restart code and waits for a supervisor to
+  start it again; `scripts/dev/develop.sh` runs `hass` in the foreground with
+  nothing supervising it, so the process simply ends and the port goes quiet.
+  Verified on `make dev-real` 2026-11-17. Restart by stopping the script and
+  running it again. This matters because a few things need a real restart
+  rather than a reload -- adding a component to `configuration.yaml`
+  (`scene:`, `automation:`) is one -- and because **auto repeat never survives
+  a restart**: it is the owner's leave to write, and it is deliberately never
+  restored on, so press *Diagnosis: start* again afterwards.
+
 - **A clone made on Windows and opened in the devcontainer** has CRLF line
   endings: Git for Windows' `core.autocrlf=true` writes them on checkout.
   In the container every file then shows as modified, a shell script's first

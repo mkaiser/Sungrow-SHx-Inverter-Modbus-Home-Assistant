@@ -26,6 +26,11 @@ From the committed diagnoses under `device-diagnosis/results/inverter/`, **never
 | `0x55` | every [SH-T](device-sh-t.md) (SH15T, SH20T, P071) |
 | unavailable (`0xFFFF`) | every [SH-RS](device-sh-rs.md), and the SH-RT on [01011.95.03](firmware-sapphire-h-01011-95-03.md) |
 
+A house that has run the forced startup check reads `0x55` afterwards and not the factory 0, which
+the register refuses: the restore writes `0x55` in its place
+([the restore](../concepts/capability-test-restore.md)). So a `0x55` on B001 firmware says a write
+has happened there, not that the firmware differs.
+
 Sungrow's document says the same of it
 ([hybrid protocol V1.1.17](../sources/hybrid-protocol-v1-1-17-summary.md)): only `0xAA` is a value,
 and "this function is only active when the inverter is in grid-connected mode ... and does not work
@@ -53,6 +58,22 @@ refused ([the run](../sources/mkaiser-forced-startup-2026-11-08-summary.md)):
 One owner reports the inverter flipping `0xAA` to `0x55` by itself ~20 minutes after the write
 (issue #444, firmware not stated); at bar12 it had not after 23 minutes.
 
+**A running state that changes is not on its own evidence that it did.** At
+[mkaiser](installation-mkaiser.md) on P020, with 13017 at `0x55` and nothing written that evening,
+the inverter went `Starting` → `Stop` → `Running` → `Standby` by itself inside six minutes, a
+fifteen-second running window, on a November night with the battery empty
+([the engine run](../sources/mkaiser-forced-startup-2026-11-16-summary.md)). An inverter in
+low-SoC standby stirs on its own, so the #444 question has to be answered by reading the register
+back, not by watching the state.
+
+**Read back that way, P020 does not flip it.** 13017 was left at `0xAA` at mkaiser's and read back
+for **90 minutes 48 seconds** without changing -- the longest watch on record, against #444's
+~20 minutes and bar12's 23. Dawn did not undo it either: PV first rose above 0 W at 59 minutes and
+the register still read `0xAA` 31 minutes after that. The inverter ran for 56 minutes in the dark
+on `0xAA` alone, with the battery at 0 %, before any PV
+([the watch](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)). What could still
+explain #444: other firmware, or iSolarCloud rewriting the register at a house connected to it.
+
 ## In the capability test
 
 `diagnosis.sh tests <host> --forced-startup` is a mode of its own, because it needs the one state
@@ -61,7 +82,20 @@ writes `0xAA`, waits up to 10 minutes for Running, writes `0x55`, waits up to 2 
 Standby, and restores the register, the factory 0 as `0x55`
 ([the restore](../concepts/capability-test-restore.md)). Its row is the check *forced startup
 under low SoC*, judged by the running state alone. In Home Assistant it is the
-`run_capability_test` action with `forced_startup: true`. No run is on record yet.
+`run_capability_test` action with `forced_startup: true`.
+
+**It has run on hardware**, at [mkaiser](installation-mkaiser.md) on P020 over the cable, from
+Home Assistant, with the battery at 0.0 % against its 10 % minimum and no PV: left standby after
+123 s, Running after 208 s, back in standby 16 s after `0x55`, verdict "the inverter did as it was
+told", outcome 0 and no finding
+([the engine run](../sources/mkaiser-forced-startup-2026-11-16-summary.md)). The guard admitted
+low-SoC standby without argument, part B wrote that one probe and nothing else, and the restore
+had nothing to do: the snapshot held `0x55` already, which is what the earlier run left. The
+timing repeats: across nine days and three methods at this house, `Starting` came at 121, 123 and
+122 s and `Running` at 215, 208 and 207 s
+([2026-11-08](../sources/mkaiser-forced-startup-2026-11-08-summary.md),
+[2026-11-16](../sources/mkaiser-forced-startup-2026-11-16-summary.md),
+[2026-11-17](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)).
 
 ## In the integration
 

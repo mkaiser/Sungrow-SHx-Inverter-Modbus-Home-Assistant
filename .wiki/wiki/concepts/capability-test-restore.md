@@ -11,7 +11,12 @@ What the [capability test](capability-test.md) changes, it puts back. These rule
 exist so that a house is never left changed without anyone knowing.
 
 - **The restore is never budgeted, never deadlined and never skipped.** Every
-  early exit goes through it.
+  early exit goes through it. **Seen on hardware**: *Diagnosis: stop* pressed
+  60 s into part B, after six settings had been written and during the forced
+  charge probe, put all seventeen back with zero mismatches in about 50 s,
+  dropped the snapshot store, released the owner's controls and started no
+  restart ([the run](../sources/mkaiser-stop-mid-run-2026-11-17-summary.md)).
+  Before that only the simulator had seen a stop.
 - **The snapshot is flushed before the first write**: beside the script from
   the CLI, and in Home Assistant's own store from the integration. Both
   drivers remove it only once everything is back **and read back**. A dry run
