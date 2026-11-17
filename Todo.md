@@ -103,33 +103,36 @@ Nothing can start now (blocker 13).
 
    Left, in order:
 
-   1. **The EV charger controls with a car charging, from Home Assistant**,
-      at gerd's. The words themselves were watched with a car charging on
-      2026-11-17, by script (wiki: `gerd-wallbox-night-2026-11-16-summary.md`):
-      charging on while on and the mode it already has change nothing, a
-      change to or from user defined ends the session (charging on restarts
-      it), and 21203 follows the user current in that mode. What is left is
-      the select and the number doing it from Home Assistant, with the
-      select writing charging on after a mode change; firmware beyond P022
-      is added only from a watched write there. The night of 2026-11-14 with
-      no car took every write and put the house back
-      (`gerd-wallbox-ha-controls-2026-11-14-summary.md`). Discussion #571
-      (rudolf992: a current set over Modbus went back to iSolarCloud's
-      within seconds) is the same thing seen from the wallbox side.
-   2. **The managed capability test from Home Assistant**, at gerd's, with a
-      car charging. From a terminal it ran on 2026-11-16 and passed (6, 8,
-      10 A followed, 5 A refused, stop and start timed), but its restore wrote
-      the mode back from user defined to fast, read the house back at once,
-      and the inverter ended the session 28 s later: the restore must wait
-      for the inverter to settle after a mode change and check the car again). Left: the same through the managing inverter
-      entry (`managing_entry`), whose controls refuse while it runs
-      (`write_owner.py`, released in 0.1.0a41, never run on hardware): that
-      rollout is its first test. Open question for it, and for the
-      select: what ends a session with nothing written
-      (wiki: `why-does-a-managed-wallbox-stop-charging.md`); the car suspended
-      its own charge at 02:19 on 2026-11-17, had not resumed at 06:05, and
-      reached 100 % by the morning; it says its Internet connection is not
-      established, so its app could not give the reason.
+   1. **The mode select's timing.** The four controls ran from Home Assistant
+      at gerd's with a car charging on 2026-11-17 and each did what it says
+      (wiki: `gerd-wallbox-2026-11-17-afternoon-summary.md`); the number
+      refuses outside user-defined mode before writing. Left: a mode change
+      to or from user defined ended the session on the night of 2026-11-16
+      (battery at its minimum, no PV) but not that afternoon (battery 2.8 %,
+      some PV), so whether the select's charging-on, written straight after
+      the mode, survives the inverter's delayed off is still unprovoked.
+      Decide when a session that ends on a mode change is seen from Home
+      Assistant. Firmware beyond P022 is added only from a watched write.
+      Discussion #571 (rudolf992: a current set over Modbus went back to
+      iSolarCloud's within seconds) is the same thing seen from the wallbox
+      side.
+   2. **The managed capability test from Home Assistant: link the entries.**
+      From the terminal it passed twice (2026-11-16, 2026-11-17), and the
+      restore that waits for the inverter and watches the car held on
+      2026-11-17. From Home Assistant it cannot run at gerd's: the wallbox
+      entry's `managing_entry` comes only from the inverter entry's dongle
+      probe (`wallbox_elsewhere`), and an inverter entry on the LAN cable
+      never sees the wallbox, so the run took the standalone path and wrote
+      nothing. Needs another way to pair a TLS wallbox entry with the
+      inverter that manages it (an inverter entry with `EV_CHARGER` at the
+      same site, or the owner choosing it), then the write-owner refusal
+      (`write_owner.py`) on hardware. Also: a leftover snapshot from a
+      standalone run is put back through the wallbox's own registers even
+      when an inverter now manages it; refuse that and say so instead. Open
+      for both: what ends a session with nothing written (wiki:
+      `why-does-a-managed-wallbox-stop-charging.md`; on 2026-11-17 the car
+      was also cut to 6-8 A four times after house load spikes, within one
+      session).
    3. **A standalone wallbox** (evcc's case): none measured. Idle and with
       no car, gerd's setting reads 0 (160 and 151 while charging), so an
       idle wallbox cannot separate the two scales and the meaning of 0 is

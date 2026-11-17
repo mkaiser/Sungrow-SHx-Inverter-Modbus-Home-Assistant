@@ -144,10 +144,10 @@ Three runners:
 
 | Question | Covered by | Status |
 | --- | --- | --- |
-| User current 6, 8, 10 A followed by the car (managed) | managed test, *user current* | built; **passed at gerd's from a terminal, 2026-11-16** |
+| User current 6, 8, 10 A followed by the car (managed) | managed test, *user current* | built; **passed at gerd's from a terminal, 2026-11-16 and 2026-11-17** |
 | 5 A refused, 6 A taken (managed) | managed test, *floor* | built; matches gerd's by hand |
-| Charging off and on, timed, no replug (managed) | managed test, *start/stop* (15 s pause) | built; passed at gerd's 2026-11-16 (stop 4 s, start 10 s) |
-| The house back after the run (managed) | managed test, the restore | **wrong at gerd's 2026-11-16**: it wrote the mode back 163 → 160, read the house back at once and reported it restored; the inverter ended the session 28 s later. Needs a settle wait after a mode change and a second look at the car |
+| Charging off and on, timed, no replug (managed) | managed test, *start/stop* (15 s pause) | built; passed at gerd's 2026-11-16 (stop 4 s, start 10 s) and 2026-11-17 (4 s, 7 s) |
+| The house back after the run (managed) | managed test, the restore | fixed (settle 20 s, then the car watched 60 s); **held at gerd's 2026-11-17**, from a terminal. It was wrong on 2026-11-16: it read the house back at once and the inverter ended the session 28 s later |
 | Output current 6, 8, 10 A, its scale (standalone) | standalone test, *output current* | built; no standalone wallbox yet |
 | Current follow across the range, with timings | standalone test, *current follow* | built; no standalone wallbox yet |
 | Available current (21322) against the setting | standalone test, *available current* | built; no standalone wallbox yet |
@@ -249,8 +249,9 @@ In order; 1 to 4 need the owner at the app.
 6. **PV surplus on a sunny day**, battery well above its minimum, grid surplus off then on: how the
    inverter modulates the current and what 33550 does.
 7. **Unplug and replug**: the block and the wallbox at a session's end and start.
-8. **The managed test end to end**, from the terminal and then from the dev Home Assistant with
-   gerd's inverter and wallbox entries side by side, watched live before auto repeat is left alone.
+8. **The managed test end to end**: from the terminal, done twice (2026-11-16, 2026-11-17). From the dev
+   Home Assistant it cannot run at gerd's until a TLS wallbox entry can be paired with an inverter entry on
+   the cable (section 7); then watched live before auto repeat is left alone.
 9. **An hour of the block polled every 10 s through the WiNet-S** beside normal polling: stable
    enough for entities.
 
@@ -275,13 +276,20 @@ In order; 1 to 4 need the owner at the app.
   settled status and 5 s more before writing 21204.
 - **A write through the dongle** (unit 3), leg C only, if a standalone wallbox behind a dongle turns
   up.
-- **The managed test's restore after a mode change** (2026-11-16): wait for the inverter's charging
-  word to settle (it went off 1-16 s after a mode change), then check the car charges and stays
-  charging for a minute before declaring the house back; write charging on once more if not.
+- ~~The managed test's restore after a mode change~~: built 2026-11-17 (settle, then watch the car a
+  minute), held at gerd's that afternoon.
+- **Pair a TLS wallbox entry with its managing inverter** in Home Assistant: `managing_entry` comes only
+  from the inverter entry's dongle probe, so an inverter entry on the cable never manages one, and the
+  managed test from Home Assistant took the standalone path at gerd's (2026-11-17), writing nothing.
+- **A standalone run's leftover on a managed wallbox** goes back through the wallbox's own registers;
+  refuse it and raise the repair instead (a 2026-11-13 snapshot was found in the dev Home Assistant and
+  discarded by hand, 2026-11-17).
 - **The mode select** (`ev_charger.mode_writes`, `EvChargerModeSelect`): 160 → 163 while charging ended
   the session, though the code expects 163 to switch charging on, and the charging-on it writes
   after a mode change goes out at once, before the inverter's own off (up to 16 s later) can
-  overwrite it. To decide from a watched run in Home Assistant before changing it.
+  overwrite it. Watched from Home Assistant on 2026-11-17: neither direction ended the session that
+  afternoon, so the question could not be provoked. Still to decide, when a session that ends on a mode
+  change is seen from Home Assistant.
 - **The managed test's open checks**: writing what is already set (by hand: harmless), and a longer
   stop for a sleeping car.
 - **Ingest**: a wiki source page for `.wiki/raw/gerd-wallbox-capability-test-2026-11-13.md`.

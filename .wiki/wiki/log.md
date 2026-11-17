@@ -1418,6 +1418,7 @@ What changed:
 
 The raw notes keep what they said, being sources; the pages state what is
 true now.
+
 ## [2026-11-17] ingested | gerd-wallbox-night-2026-11-16
 
 A VPN night at [gerd](entities/installation-gerd.md)'s, with a car charging
@@ -1454,3 +1455,20 @@ which makes the car app's statuses that night suspect, its "done at 47 %" includ
 
 Updated: [why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md),
 [gerd](entities/installation-gerd.md), [the wallbox](entities/device-wallbox.md), and the index.
+
+## [2026-11-17] ingested | gerd-wallbox-2026-11-17-afternoon
+
+A VPN afternoon at [gerd](entities/installation-gerd.md)'s with the car charging from 80 % to 92 %
+([the source](sources/gerd-wallbox-2026-11-17-afternoon-summary.md), raw
+`raw/gerd-wallbox-2026-11-17-afternoon.md`). The four EV charger controls were written from Home Assistant,
+and each did what it says. Two mode changes while charging (fast to user defined and back) **did not** end the
+session, where the night before both did. 21203 follows a user-current change 4-5 minutes late. The car was cut
+back four times with nothing written, after house load spikes. The managed test passed again from the terminal,
+and the restore that settles and then watches the car held on its first hardware run. From Home Assistant the
+managed test took the standalone path and wrote nothing: an inverter entry on the cable never links to the
+wallbox entry. Two integration faults were found and fixed in the same change (the extended-test guard on a
+wallbox entry, and a standalone snapshot that would have gone back through a managed wallbox).
+
+Updated: [the wallbox](entities/device-wallbox.md) (21203 lags; a mode change does not always end a session),
+[gerd](entities/installation-gerd.md), [why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md)
+(three results to four), and the index.

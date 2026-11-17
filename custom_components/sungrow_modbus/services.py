@@ -161,7 +161,7 @@ async def _async_run_capability_test(call: ServiceCall) -> None:
     # because `testimony` is imported by the entities that import this module.
     from .testimony import async_refuse_if_unanswered
 
-    async_refuse_if_unanswered(entry)
+    async_refuse_if_unanswered(call.hass, entry)
     _LOGGER.warning(
         "%s: capability test requested through the %s.%s action by %s. It writes to "
         "every control this integration can write to, and puts each one back.",

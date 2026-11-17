@@ -16,6 +16,12 @@ say, and an empty box would then be a true answer indistinguishable from an
 unopened form. The name is not required either: contributing anonymously is
 a choice this project offers on purpose.
 
+**A wallbox entry answers through its inverter.** The three are about an
+inverter, and a wallbox entry's options have none of them: a managed
+wallbox's run is read against the house of the inverter entry that manages
+it, so that entry's answers are the ones asked for; a wallbox no inverter
+entry manages has no inverter to describe, and is asked none.
+
 **Only an extended run.** A read-only diagnosis writes nothing, and a
 reading with no testimony is still a reading worth having -- refusing it
 would turn the easiest contribution into a form to fill in first. It gets
@@ -34,8 +40,10 @@ from .const import (
     CONF_DIAGNOSIS_OTHER_INVERTER,
     CONF_DIAGNOSIS_PROXY,
     CONF_DIAGNOSIS_TRANSPORT,
+    CONF_KIND,
     CONF_REPORTER,
     DOMAIN,
+    KIND_WALLBOX,
 )
 
 if TYPE_CHECKING:
@@ -59,29 +67,51 @@ REQUIRED: tuple[tuple[str, str], ...] = (
 SUGGESTED: tuple[tuple[str, str], ...] = ((CONF_REPORTER, "Your name or handle"),)
 
 
+def answering_entry(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> SungrowConfigEntry | None:
+    """Return the entry whose options answer `REQUIRED` for `entry`, or None.
+
+    The entry itself, but for a wallbox entry the inverter entry that manages
+    it, and None when no inverter entry does: its options have no inverter
+    questions, and there is no inverter to describe.
+    """
+    if entry.data.get(CONF_KIND) != KIND_WALLBOX:
+        return entry
+    from .wallbox_capability_test import managing_entry
+
+    return managing_entry(hass, entry)
+
+
 def unanswered(
-    entry: SungrowConfigEntry, questions: tuple[tuple[str, str], ...] = REQUIRED
+    hass: HomeAssistant,
+    entry: SungrowConfigEntry,
+    questions: tuple[tuple[str, str], ...] = REQUIRED,
 ) -> list[str]:
     """Return the labels of `questions` this entry has no answer for."""
+    answering = answering_entry(hass, entry) if questions is REQUIRED else entry
+    if answering is None:
+        return []
     return [
         label
         for key, label in questions
-        if not str(entry.options.get(key) or "").strip()
+        if not str(answering.options.get(key) or "").strip()
     ]
 
 
 @callback
-def async_refuse_if_unanswered(entry: SungrowConfigEntry) -> None:
+def async_refuse_if_unanswered(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     """Raise rather than start an extended run on an unanswered entry.
 
     `ServiceValidationError`, so the dialog a button press raises and an
     automation's error log say the same thing, and neither is a traceback.
     """
-    if unanswered(entry):
+    if unanswered(hass, entry):
+        answering = answering_entry(hass, entry) or entry
         raise ServiceValidationError(
             translation_domain=DOMAIN,
             translation_key="testimony_missing",
-            translation_placeholders={"title": entry.title},
+            translation_placeholders={"title": answering.title},
         )
 
 
@@ -95,8 +125,8 @@ def async_check(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     then starting it replaces rather than stacks, and answering dismisses it.
     """
     notification_id = f"{DOMAIN}_testimony_{entry.entry_id}"
-    required = unanswered(entry)
-    suggested = unanswered(entry, SUGGESTED)
+    required = unanswered(hass, entry)
+    suggested = unanswered(hass, entry, SUGGESTED)
     if not required and not suggested:
         persistent_notification.async_dismiss(hass, notification_id)
         return
@@ -132,6 +162,7 @@ def async_check(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
         "Sungrow Modbus → Configure**, in *Contribute a capability "
         "diagnosis*. Saving the options reloads this entry, so answer them "
         "before a long run rather than during one.",
-        title=f"Diagnosis questions unanswered: {entry.title}",
+        title="Diagnosis questions unanswered: "
+        f"{(answering_entry(hass, entry) or entry).title}",
         notification_id=notification_id,
     )

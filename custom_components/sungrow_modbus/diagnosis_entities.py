@@ -317,7 +317,7 @@ class DiagnosisStartButton(DiagnosisEntity, ButtonEntity):
             # against the house they were taken in, and the three questions
             # it needs each have a truthful answer for every house
             # (`testimony.py`). A read-only run is never refused.
-            async_refuse_if_unanswered(self._runner.entry)
+            async_refuse_if_unanswered(self.hass, self._runner.entry)
         if mode == DIAGNOSIS_MODE_AUTO_REPEAT:
             self._runner.async_announce_start(mode)
             self._runner.continuous.async_turn_on()

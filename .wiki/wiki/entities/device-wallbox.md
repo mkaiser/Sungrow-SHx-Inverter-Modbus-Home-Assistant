@@ -34,16 +34,25 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   from Home Assistant at gerd's, each took its write
   ([the controls](../sources/gerd-wallbox-ha-controls-2026-11-14-summary.md)).
 - **What the night of 2026-11-16/17 added** ([the night](../sources/gerd-wallbox-night-2026-11-16-summary.md)):
-  in user-defined mode **21203 is the user current exactly**, in 0.1 A, and the car draws about 0.7 A
-  less; in fast mode it is the inverter's *offer* (24-28 A) above the 16 A a phase the car takes, so it is
-  not the car's current there. **A change of mode to or from user defined while charging ends the session
-  within 6 s** and charging on restarts it (about 6 s, full power in about 40 s); a user-defined mode
+  in user-defined mode 21203 settles at the user current, in 0.1 A, and the car draws about 0.7 A
+  less, **but it follows a change 4-5 minutes late** while the car follows within seconds
+  ([the afternoon](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md)); in fast mode it is the inverter's *offer* (24-28 A) above the 16 A a phase the car takes, so it is
+  not the car's current there. **A change of mode to or from user defined while charging ended the session
+  within 6 s** that night, and charging on restarts it; the afternoon after, with the battery off its minimum
+  and a little PV, the same changes in both directions did not end it
+  ([the afternoon](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md)), so a writer must expect either (about 6 s, full power in about 40 s); a user-defined mode
   entered with charging off turns charging on by itself and starts at 6 A. Writing charging on while on,
   or the mode it already has, changes nothing. The inverter does not end a fast charge at the home battery's
   minimum (a charge ran for hours at 0.2-0.5 %), and a car can suspend a charge for hours with the inverter's
   word on (`suspended by the vehicle`), and finish the charge later by itself
   ([the morning](../sources/gerd-car-morning-2026-11-17-summary.md)); what ends a session without a write is open
   ([why a managed wallbox stops charging](../queries/why-does-a-managed-wallbox-stop-charging.md)).
+- **The afternoon of 2026-11-17** ([the afternoon](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md)):
+  the four controls from Home Assistant with a car charging each did what they say; the managed test passed
+  again from the terminal and its restore (settle, then watch the car) held. With nothing written, the car
+  was cut to 6-8 A and ramped back four times right after house load spikes, within one session. The managed
+  test cannot run from Home Assistant where the inverter entry is on the LAN cable: the link between the
+  wallbox entry and its inverter entry is made only through the dongle probe.
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.
