@@ -14,7 +14,8 @@ thresholds settling at [mkaiser](../entities/installation-mkaiser.md)'s
 [SH10RT](../entities/device-sh-rt.md) on
 [P020](../entities/firmware-sapphire-h-b001-v000-p020.md), an hour after
 [the charging one](mkaiser-charging-threshold-2026-11-17-summary.md), in a run auto repeat
-started by itself.
+started by itself, with the battery reading 11 % of its usable window
+([register 13023](../entities/register-13023.md)) and discharging a couple of hundred watts.
 
 | Claim | Evidence | Status |
 | --- | --- | --- |

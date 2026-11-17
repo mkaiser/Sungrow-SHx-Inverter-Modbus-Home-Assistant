@@ -1388,3 +1388,33 @@ reached the capability test.
 Updated: [the drift gate](sources/mkaiser-drift-gate-2026-11-17-summary.md),
 whose conclusion is now marked wrong while its reasoning about why these
 checks are slow stands, and the index.
+
+## [2026-11-17] corrected | today's pages read the battery level as the pack's
+
+Three pages written today took [register 13023](entities/register-13023.md)
+for the pack's absolute state of charge. It is not, and this wiki already
+said so: the level is the charge **within the minimum-maximum SoC window**,
+0 % being the minimum, established on 2026-11-14 from gerd's reading. Today's
+pages were written against an established page by accident, not from new
+evidence.
+
+Confirmed again at the maintainer's while correcting: level 3.7 % with the
+window at 10-90 % gives a nominal 13.0 %, exactly what
+`Derived.battery_level_nominal` computes from the two limits.
+
+What changed:
+
+- **The forced charge page claimed the level and the energy agreed.** They do
+  not. With the window at 10-100 %, 14.4 points of level is 13.0 points of
+  pack -- about 1.87 kWh against 2.25 kWh delivered, a 17 % shortfall.
+  Charging losses and a nameplate capacity that is the owner's configured
+  figure both land in that, so nothing is concluded from it yet; it wants a
+  longer charge to measure properly. The step size goes with it: ~1.1 points
+  of window is ~1.0 point of pack, roughly 143 Wh here rather than 160.
+- **The charging threshold page** said the battery was "at its 10 % floor".
+  It read 10 % of the window, about 19 % of the pack, and was not at the
+  floor.
+- **The discharging threshold page** now says which scale its 11 % is.
+
+The raw notes keep what they said, being sources; the pages state what is
+true now.

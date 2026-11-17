@@ -13,7 +13,9 @@ tags: [capability-test, battery, sh10rt, sapphire-h-b001-v000-p020, mkaiser, wri
 threshold check has run anywhere, at [mkaiser](../entities/installation-mkaiser.md)'s
 [SH10RT](../entities/device-sh-rt.md) on
 [P020](../entities/firmware-sapphire-h-b001-v000-p020.md), in a run auto repeat started by itself
-with the battery at its 10 % floor taking a trickle from a brightening sky.
+with the battery low and taking a trickle from a brightening sky. Its level read 10 %, which is
+10 % of the **usable window** and about 19 % of the pack
+([register 13023](../entities/register-13023.md)), not 10 % of the pack and not the floor.
 
 | Claim | Evidence | Status |
 | --- | --- | --- |
