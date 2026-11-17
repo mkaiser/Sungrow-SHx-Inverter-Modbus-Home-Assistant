@@ -26,6 +26,7 @@ Start with `plans/wallbox_tests.md` (facts, rules, coverage, next tests at gerd'
 - **Found wrong**: the managed test's restore reported the house back 28 s before the inverter ended the
   session (it changed the mode back and read at once). Fix before its Home Assistant run
   (`plans/wallbox_tests.md`, section 7).
-- **gerd's house**: on, fast, 16.0 A; the car at about 89 %, suspended by the vehicle since 02:19, not
-  resumed at 06:05. Needs the owner (car app, or a replug). The tunnel is down.
+- **gerd's house**: on, fast, 16.0 A; the car suspended by the vehicle at about 89 % from 02:19, then
+  charged to 100 % by the morning. The car says its Internet connection is not established, so its app
+  could not give the suspension's reason. The tunnel is down.
 

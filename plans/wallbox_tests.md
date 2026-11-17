@@ -74,8 +74,10 @@ moves with nothing written.
   was not stopped, so the battery's minimum does not end one. Of that night's endings, the mode
   changes were the inverter's (163 ↔ 160 ends a session), and from 02:19 the **car** suspended its
   own charge for hours (`suspended by the vehicle`, the inverter's word on, offering current); the
-  inverter's word then went off at 03:50, and one charging on did not wake the car. Next: the car
-  app's reason for the suspension, and whether the inverter's 03:50 off is a timeout. The wiki
+  inverter's word then went off at 03:50, and one charging on did not wake the car. The car still
+  reached 100 % by the morning, and says its Internet connection is not established, so the app
+  could not tell why. Next: the reason for the suspension (from the car itself, or the app once the
+  car is back online), and whether the inverter's 03:50 off is a timeout. The wiki
   keeps the table: `.wiki/wiki/queries/why-does-a-managed-wallbox-stop-charging.md`.
 - **What 162 (quantity and time) writes**, and what the three always-zero words between the mode and
   the user current are.
@@ -212,8 +214,9 @@ For the user current and the mode use the managed test (section 4), which restor
 - The inverter: charging **on**, mode **fast**, user current 16.0 A, grid purchase off; the time pair
   33546-33549 at 2026-11-17 / 2026-11-18 00:00 UTC. Nothing of ours to put back.
 - The car at about 89 %, `suspended by the vehicle` since 02:19 (the inverter's word went off by
-  itself at 03:50, one charging on written at 03:51 was taken, the car still declined). It needs the
-  owner: the car app's reason, or a replug.
+  itself at 03:50, one charging on written at 03:51 was taken, the car still declined). Later that
+  morning it reached **100 %**; it says its Internet connection is not established
+  (`.wiki/raw/gerd-car-morning-2026-11-17.md`).
 - The night's notes and test logs: `.wiki/raw/gerd-wallbox-night-2026-11-16.md`.
 
 ## 6. Next at gerd's (on site, a car plugged in)

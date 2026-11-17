@@ -22,8 +22,10 @@ draws at most 16 A on three phases; the installation allows 22 kW (32 A).
 
 **The night of 2026-11-16/17**: the managed capability test's first run passed, a mode change to or
 from user defined ends a session, 21203 is the user current in that mode and the inverter's offer
-in fast mode, and the car suspended its own charge for hours at about 89 %
+in fast mode, and the car suspended its own charge for hours at about 89 %, then reached 100 % by the
+morning, reporting its Internet connection not established
 ([the night](../sources/gerd-wallbox-night-2026-11-16-summary.md),
+[the morning](../sources/gerd-car-morning-2026-11-17-summary.md),
 [why a managed wallbox stops charging](../queries/why-does-a-managed-wallbox-stop-charging.md)).
 
 ## Diagnoses

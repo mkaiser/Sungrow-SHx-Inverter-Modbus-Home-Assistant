@@ -41,7 +41,8 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   entered with charging off turns charging on by itself and starts at 6 A. Writing charging on while on,
   or the mode it already has, changes nothing. The inverter does not end a fast charge at the home battery's
   minimum (a charge ran for hours at 0.2-0.5 %), and a car can suspend a charge for hours with the inverter's
-  word on (`suspended by the vehicle`); what ends a session without a write is open
+  word on (`suspended by the vehicle`), and finish the charge later by itself
+  ([the morning](../sources/gerd-car-morning-2026-11-17-summary.md)); what ends a session without a write is open
   ([why a managed wallbox stops charging](../queries/why-does-a-managed-wallbox-stop-charging.md)).
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to

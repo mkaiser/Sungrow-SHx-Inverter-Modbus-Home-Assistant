@@ -1444,3 +1444,13 @@ adds anything: the iHomeManager file is byte for byte the `test.1` copy already 
 hybrid V1.1.4 (2024-08-20) predates V1.1.11, this project's base. Both are recorded in
 [where Sungrow's documents are](queries/where-are-sungrows-documents.md), whose `tmp/manuals/` is now a
 bind mount of a folder outside the repository.
+
+## [2026-11-17] ingested | gerd-car-morning-2026-11-17
+
+The owner's report the morning after the wallbox night ([the source](sources/gerd-car-morning-2026-11-17-summary.md),
+raw `raw/gerd-car-morning-2026-11-17.md`): the car reached 100 % after sitting `suspended by the vehicle`
+from 02:19, so the suspension was a pause; and the car says its Internet connection is not established,
+which makes the car app's statuses that night suspect, its "done at 47 %" included.
+
+Updated: [why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md),
+[gerd](entities/installation-gerd.md), [the wallbox](entities/device-wallbox.md), and the index.

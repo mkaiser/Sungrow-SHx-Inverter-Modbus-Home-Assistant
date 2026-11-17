@@ -127,7 +127,9 @@ Nothing can start now (blocker 13).
       rollout is its first test. Open question for it, and for the
       select: what ends a session with nothing written
       (wiki: `why-does-a-managed-wallbox-stop-charging.md`); the car suspended
-      its own charge at 02:19 on 2026-11-17 and had not resumed at 06:05.
+      its own charge at 02:19 on 2026-11-17, had not resumed at 06:05, and
+      reached 100 % by the morning; it says its Internet connection is not
+      established, so its app could not give the reason.
    3. **A standalone wallbox** (evcc's case): none measured. Idle and with
       no car, gerd's setting reads 0 (160 and 151 while charging), so an
       idle wallbox cannot separate the two scales and the meaning of 0 is
