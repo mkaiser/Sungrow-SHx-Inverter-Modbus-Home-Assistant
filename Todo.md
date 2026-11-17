@@ -484,6 +484,33 @@ diagnosis-only entry; how it is handled beyond that is open.
     verdict needs its revision raised in the same commit**, which the table's
     own docstring says and the first fix did not do.
 
+14. **The midnight-reset check judges by the wrong clock.**
+    Found on hardware 2026-11-17, the readings checks' first failure anywhere,
+    and the inverter did nothing wrong
+    ([the note](.wiki/wiki/sources/mkaiser-midnight-reset-2026-11-17-summary.md)).
+    `daily counters reset at midnight` recorded `daily_pv_generation fell from
+    4.4 to 0 at 23:04`. The development instance keeps UTC, the inverter keeps
+    German local time -- an hour ahead, measured in run 2's `inverter_clock` --
+    so the counter reset at **00:04 on the inverter's own clock**, to a clean
+    zero, and was judged against Home Assistant's midnight instead.
+
+    A daily counter resets on the **inverter's** clock, and nothing makes a
+    Home Assistant share its inverter's timezone. The observation is stamped
+    `dt_util.as_local(now)` in
+    `custom_components/sungrow_modbus/diagnosis.py`, and `_near_midnight` in
+    `src/sungrow_modbus/capability_test/plausibility.py` spans 23:30 to 00:30
+    of that clock.
+
+    **The clock is already collected** -- `inverter_clock` sits in every run's
+    `conditions` -- so the fix is to judge the fall against it, and to say so
+    when the two disagree: an inverter whose clock is set wrong is a real
+    condition, worth reporting as itself rather than as a counter that
+    misbehaves. Raise the check's revision in the same commit, per item 13.
+
+    Until then it is the maintainer's house's one failing row, and it is
+    **sticky**: a failed readings check counts as answered, so auto repeat
+    will not wait for a second midnight to overturn it.
+
 # Open decisions
 
 1. **Are the entity names final?** They are reviewed and decided, English

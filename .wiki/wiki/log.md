@@ -1418,3 +1418,28 @@ What changed:
 
 The raw notes keep what they said, being sources; the pages state what is
 true now.
+
+## [2026-11-17] ingested | the midnight-reset check fails on a clock at the maintainer's
+
+The readings checks have been observing between runs at
+[mkaiser](entities/installation-mkaiser.md)'s SH10RT since the evening of 2026-11-16. After 932
+observations one of them has **failed** -- their first failure on hardware -- and the inverter
+did nothing wrong
+([the midnight reset](sources/mkaiser-midnight-reset-2026-11-17-summary.md)).
+
+`daily counters reset at midnight` recorded `daily_pv_generation fell from 4.4 to 0 at 23:04`.
+The development instance keeps UTC; the inverter keeps German local time, measured an hour ahead
+of it in run 2's `inverter_clock`. So the fall happened at **00:04 on the inverter's clock**, to a
+clean zero: a textbook pass, judged against the wrong midnight. The observation is stamped with
+`dt_util.as_local(now)` and `_near_midnight` spans 23:30 to 00:30 of *that* clock.
+
+The clock that would settle it is already collected, in every run's `conditions`. A failed
+readings check counts as answered, so auto repeat will not wait for a second midnight: the row
+stands as the house's one failure until the ledger is cleared or the check's revision is raised.
+
+What changed:
+
+- **`concepts/capability-test.md`** said the readings checks were not measured on hardware yet.
+  They have been, at mkaiser's, and the page now carries both the passes and this failure.
+- **`entities/installation-mkaiser.md`** gains the failure and the 926 passes of
+  `lifetime counters never fall`, still short of its day of polls.

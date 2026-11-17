@@ -50,6 +50,13 @@ thresholds settled for the first time anywhere, the forced startup mode had its
 first run, and *Diagnosis: stop* mid part B was watched on hardware. Everything
 measured is in the wiki; everything still to do is in `Todo.md`.
 
+The readings checks kept observing afterwards -- 932 observations by 14:40 UTC --
+and turned up **their first failure anywhere**, which is ours, not the
+inverter's: `daily counters reset at midnight` judges the fall by Home
+Assistant's midnight, and this instance keeps UTC while the inverter keeps
+German local time (`Todo.md` item 14). It is the house's one failing row, and it
+will not clear by itself.
+
 ## Things that cost time, so they are written down
 
 - **`CronCreate` jobs are session-only.** The 30-minute write-up loop does not
