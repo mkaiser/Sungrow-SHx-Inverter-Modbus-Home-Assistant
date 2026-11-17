@@ -57,6 +57,14 @@ Assistant's midnight, and this instance keeps UTC while the inverter keeps
 German local time (`Todo.md` item 14). It is the house's one failing row, and it
 will not clear by itself.
 
+**The night of 17-18 Nov repeated it to the minute**, so the inverter's counters
+are sound (measured twice) and the defect fires once a night, every night, while
+the clocks disagree. By 00:09 CET the store held 1440 observations: `lifetime
+counters never fall` at 1434 passes with no failure, `running states` with its
+day of polls seen. Both settle within minutes of that, which should take the
+ledger to **39 of 54** -- read it from the store, not the entities, since this
+instance predates the `async_notify()` fix and its sensors lag badly.
+
 ## Things that cost time, so they are written down
 
 - **`CronCreate` jobs are session-only.** The 30-minute write-up loop does not

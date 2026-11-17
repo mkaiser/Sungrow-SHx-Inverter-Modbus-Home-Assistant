@@ -507,9 +507,21 @@ diagnosis-only entry; how it is handled beyond that is open.
     condition, worth reporting as itself rather than as a counter that
     misbehaves. Raise the check's revision in the same commit, per item 13.
 
-    Until then it is the maintainer's house's one failing row, and it is
-    **sticky**: a failed readings check counts as answered, so auto repeat
-    will not wait for a second midnight to overturn it.
+    **It is one failure a night, not one failure.** The next night repeated it
+    to the minute -- `daily_pv_generation fell from 1.6 to 0 at 23:03` beside
+    the previous `4.4 to 0 at 23:04`, both 00:03 and 00:04 on the inverter's
+    own clock, both to a clean zero
+    ([the second night](.wiki/wiki/sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+    So the inverter's counters are sound, measured twice, and the defect is
+    systematic: it fires every night a Home Assistant's timezone differs from
+    its inverter's.
+
+    It is also **sticky, and it grows**. `EventCheck.observe` keeps judging
+    after a failure and appends each *distinct* sentence, keeping the last
+    five, while `verdict()` returns the failure for as long as any is held,
+    whatever `passes` reaches. Each night's sentence carries that day's kWh
+    figure, so it is distinct and is appended rather than folded in. Raising
+    the revision clears the row; only the clock fix keeps it clear.
 
 # Open decisions
 

@@ -83,8 +83,12 @@ hardware**, and the inverter is not at fault: `daily counters reset at midnight`
 development instance being on UTC while the inverter keeps German local time. The counter reset on
 time and to zero; the check judges the fall by Home Assistant's midnight, not the inverter's
 ([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). It is the house's
-one failing row. Beside it, after 932 observations, `lifetime counters never fall` stands at 926
-passes with no failure, short of the day of polls it waits for.
+one failing row, and **the next night repeated it to the minute**: 1.6 to 0 at 00:03 on the
+inverter's clock, against 4.4 to 0 at 00:04 the night before. So this inverter's daily counters
+reset on time and to zero, measured twice, while the check fails once a night for as long as the
+two clocks disagree ([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+Beside it, after 1440 observations, `lifetime counters never fall` stands at 1434 passes with no
+failure, and `running states` has seen 1440 polls: Standby 983, Running 452, Stop 4, Starting 1.
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

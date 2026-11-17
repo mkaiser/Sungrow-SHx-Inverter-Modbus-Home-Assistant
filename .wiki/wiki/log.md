@@ -1443,3 +1443,26 @@ What changed:
   They have been, at mkaiser's, and the page now carries both the passes and this failure.
 - **`entities/installation-mkaiser.md`** gains the failure and the 926 passes of
   `lifetime counters never fall`, still short of its day of polls.
+
+## [2026-11-18] ingested | the midnight reset repeats, to the minute
+
+A second night of observing at [mkaiser](entities/installation-mkaiser.md)'s SH10RT, read at 1440
+observations ([the second night](sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+
+The inverter reset `daily_pv_generation` from 1.6 to a clean 0 at 00:03 on its own clock, against
+4.4 to 0 at 00:04 the night before: different days, different totals, the same minute. **Its
+counters are sound, measured twice.** What repeats with them is the false failure, because the
+development instance still keeps UTC while the inverter keeps German local time.
+
+That changes the defect's status rather than its diagnosis. It is not an occasional artefact but
+one failure a night, for as long as the two clocks disagree. Each night's sentence carries that
+day's kWh figure, so it is distinct and is appended: the row grows until five are kept.
+
+What changed:
+
+- **`concepts/capability-test.md`** said a failed readings check "counts as answered". True of the
+  verdict, but it understated the behaviour: the check keeps judging and accumulating distinct
+  failures, and `verdict()` cannot recover while any is held. The page now says so.
+- **`entities/installation-mkaiser.md`** carries the second night and the counts at 1440
+  observations: `lifetime counters never fall` at 1434 passes with no failure, `running states`
+  with its day of polls seen.

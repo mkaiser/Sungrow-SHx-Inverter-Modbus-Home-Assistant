@@ -238,9 +238,15 @@ inverter. A daily counter resets on the **inverter's** clock, while the observat
 and judged with Home Assistant's local time (`dt_util.as_local`), so an hour of timezone
 difference between the two records a clean reset at the inverter's 00:04 as a fall "at 23:04"
 ([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). The clock that
-would settle it is already read into each run's `conditions` as `inverter_clock`. A failed
-readings check counts as answered, so auto repeat does not wait for a second midnight to
-overturn it.
+would settle it is already read into each run's `conditions` as `inverter_clock`.
+
+**A failed readings check keeps judging, and cannot recover.** `EventCheck.observe` appends each
+*distinct* failure sentence and keeps the last five, while `verdict()` returns the failure for as
+long as any is held, whatever `passes` reaches. The midnight check at mkaiser's shows what that
+costs when the cause recurs: a second night added a second sentence, because each carries that
+day's kWh figure, and the row will take one more every night
+([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)). Raising a
+check's revision clears the row; only fixing the cause keeps it clear.
 
 ## Drivers
 
