@@ -4,14 +4,15 @@ title: "Where are Sungrow's documents?"
 tags: [specification, logger, ihomemanager, wallbox, answered]
 created: '2026-11-06'
 query: "Where can each Sungrow protocol document and community register map be read, and which searches came up empty?"
-results_count: 25
+results_count: 26
 ---
 
 # Where are Sungrow's documents?
 
 **Answered for every device this project reads, as searched on 2026-11-05
 and 2026-11-06.** Look here before searching again. Copies are kept in the
-maintainer's gitignored `tmp/manuals/`, never committed: the iHomeManager
+maintainer's gitignored `tmp/manuals/` (a bind mount of a folder outside the
+repository, `.devcontainer/devcontainer.json`), never committed: the iHomeManager
 protocol forbids redistribution, and the rest are Sungrow's.
 
 ## Protocol documents
@@ -23,8 +24,9 @@ protocol forbids redistribution, and the rest are Sungrow's.
 | Logger protocol 1.0.2.7 | Scribd (login), Studocu (garbled), an sps-forum.de attachment (403 to scripts) | **not read**, and not needed: 1.0.2.5 and 1.0.2.9 bracket it |
 | *Logger Modbus Protocol Data Forwarding Guide* | **found nowhere**; the Logger manuals cover it | — |
 | iHomeManager protocol V1.0.1 and *Modbus Transfer User Guide* | GitHub attachments `files/22764216` and `files/22764134` under `github.com/user-attachments/files/`; also in Jam3s97/sungrow_ihomemanager's `Modbus Information` folder | PDF |
-| iHomeManager protocol V1.0.2 (2026-01-21, marked test) | GitHub attachment `files/26009392`, `iHM.Communication.Protocol-20260121-test.1.pdf`; also TCzerny/ha-modbus-manager's `docs/` folder | PDF; no redistribution |
+| iHomeManager protocol V1.0.2 (2026-01-21, marked test) | GitHub attachment `files/26009392`, `iHM.Communication.Protocol-20260121-test.1.pdf`; also TCzerny/ha-modbus-manager's `docs/` folder. The copy posted in discussion #795 as `iHM.Communication.Protocol-20260121-v1.0.2.pdf` (`files/34941375`) is the same file, byte for byte | PDF; no redistribution |
 | Hybrid protocol **V1.1.17** (2026-09-30), the newest; V1.1.16 itself was not found and differs from it in device types only | `info-support.sungrowpower.com/general-material/2d6b9595-3579-4124-a82c-68482d545d8c.pdf`, found through episensor.com/devices/sungrow-sh10rt; "no distribution" on its cover | PDF; [summary](../sources/hybrid-protocol-v1-1-17-summary.md) |
+| Hybrid protocol V1.1.4 (2024-08-20; its cover still says V1.1.2) | GitHub attachment `files/34941367`, posted in discussion #795. Older than V1.1.11, the base here: V1.1.3 makes 5726 S32, V1.1.4 adds MPPT4 voltage and current | PDF; nothing V1.1.11 lacks |
 | Hybrid protocol V1.1.9 | openHAB's forum upload (community-openhab-org S3); bohdan-s/Sungrow-Inverter's `Modbus Information` folder | PDF |
 | SG protocol V1.1.53 | shop.kpenergy.fi product sheets | PDF |
 | SG protocol V1.1.2 | photovoltaicsolar.in, `Sungrow_Manual/Modbus RS485 RTU Protocol.pdf` | PDF |

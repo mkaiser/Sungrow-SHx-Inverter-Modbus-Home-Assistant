@@ -43,8 +43,16 @@
   // first login, so the host needs no folder made by hand. It is the
   // container's own login, not the host's (gh on Windows keeps that in
   // %AppData%\GitHub CLI).
+  //
+  // The second bind is the manufacturers' documents (protocol PDFs, manuals,
+  // datasheets) the wiki cites: Sungrow's forbid redistribution, so they are
+  // never committed, and a folder outside the repo (a synced one, say) keeps
+  // them across machines. It lands on the gitignored tmp/manuals/, the path
+  // the wiki names. Point the source at your own folder; it must exist on the
+  // host, or the container does not start.
   "mounts": [
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/sungrow-manuals,target=${containerWorkspaceFolder}/tmp/manuals,type=bind"
   ],
 
   // VS Code copies the host ~/.gitconfig in when it attaches, after

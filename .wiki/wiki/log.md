@@ -1436,3 +1436,11 @@ reconnect, about 3.5 min, ridden out by the tunnel watchdog.
 Updated: [the wallbox](entities/device-wallbox.md) (what the night added),
 [gerd](entities/installation-gerd.md), a new query
 [why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md), and the index.
+
+## [2026-11-17] query | two protocol PDFs from discussion #795
+
+Discussion #795 posted Sungrow's hybrid protocol V1.1.4 and the iHomeManager protocol V1.0.2. Neither
+adds anything: the iHomeManager file is byte for byte the `test.1` copy already read (same SHA-256), and
+hybrid V1.1.4 (2024-08-20) predates V1.1.11, this project's base. Both are recorded in
+[where Sungrow's documents are](queries/where-are-sungrows-documents.md), whose `tmp/manuals/` is now a
+bind mount of a folder outside the repository.
