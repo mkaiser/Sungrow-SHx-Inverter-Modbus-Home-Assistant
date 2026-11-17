@@ -180,9 +180,9 @@ class ContinuousCapabilityTest:
         if self.runner.state.running:
             self._say("a run is in progress")
             return
-        # The readings' checks are fed every tick between runs: they cost no
-        # Modbus read and need days, not moments.
-        self.runner.async_observe(now)
+        # The readings' checks are fed by the runner's own timer, at the same
+        # cadence, whether or not auto repeat is on: they write nothing, so
+        # they are not the leave's to give (`DiagnosisRunner.OBSERVE_EVERY`).
         folded = self.runner.state.capability_test
         # A wallbox at its own address has no inverter checks to wait for.
         inverter = self.runner.inverter_tests

@@ -584,6 +584,11 @@ async def test_the_summary_says_how_long_an_extended_run_is_running(
     """Counted from the press, moved on every minute, and gone when it ends.
 
     A read-only run is not a test run: the summary does not time it.
+
+    The summary now carries the readings' checks from setup rather than "no
+    runs kept", because observing no longer waits on auto repeat: there is
+    something being collected from the first minute, and saying so is the
+    point of the change. Only the timing is asserted here.
     """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
@@ -595,22 +600,25 @@ async def test_the_summary_says_how_long_an_extended_run_is_running(
     runner._set(running=True, extended=True, started=dt_util.now())
     await hass.async_block_till_done()
     state = hass.states.get(STATUS)
-    assert state.state == "running <1 min · no runs kept"
+    assert state.state.startswith("running <1 min · ")
     assert state.attributes["running_since"] == runner.state.started.isoformat()
 
     freezer.tick(timedelta(minutes=12))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert hass.states.get(STATUS).state == "running 12 min · no runs kept"
+    assert hass.states.get(STATUS).state.startswith("running 12 min · ")
 
     runner._set(running=False)
     await hass.async_block_till_done()
-    assert hass.states.get(STATUS).state == "no runs kept"
+    assert not hass.states.get(STATUS).state.startswith("running")
     assert hass.states.get(STATUS).attributes["running_since"] is None
+    # The counters carry the readings' checks from setup now, so they are no
+    # longer "unknown" before a first run: observing does not wait on auto
+    # repeat, and a count of what is still unsettled is what they are for.
     for bucket in COUNTS:
-        assert hass.states.get(f"sensor.sh10rt_diagnosis_tests_{bucket}").state == (
-            "unknown"
-        )
+        counter = hass.states.get(f"sensor.sh10rt_diagnosis_tests_{bucket}")
+        assert counter.state != "unavailable"
+        assert "/" in counter.state
 
 
 async def test_a_read_only_run_carries_the_kept_runs_forward(
@@ -662,6 +670,45 @@ async def _auto_repeat(hass: HomeAssistant, on: bool) -> None:
     if task is not None:
         await task
     await hass.async_block_till_done()
+
+
+async def test_the_readings_are_observed_whether_or_not_auto_repeat_is_on(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Observing writes nothing, so it is not auto repeat's leave to give.
+
+    It used to be fed only from auto repeat's tick. A house whose owner never
+    switched auto repeat on therefore never accumulated a single observation,
+    though the checks write nothing and need only readings the coordinator
+    already has -- and parking auto repeat for another test silently lost
+    whatever the house did meanwhile. Measured on 2026-11-17, where a 4.5 kW
+    forced charge, an expensive condition to arrange, produced none at all.
+    """
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    assert not runner.continuous.active
+
+    before = runner.plausibility.observations
+    runner._async_observe_tick(dt_util.utcnow())
+
+    assert runner.plausibility.observations > before, (
+        "a reading with auto repeat off must still reach the checks"
+    )
+
+
+async def test_observing_stands_back_while_a_run_has_the_link(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A run's own writes are not the undisturbed house these checks are about."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    # `DiagnosisState` is frozen, as a run's state should be.
+    runner.state = dataclasses.replace(runner.state, running=True)
+
+    before = runner.plausibility.observations
+    runner._async_observe_tick(dt_util.utcnow())
+
+    assert runner.plausibility.observations == before
 
 
 async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
@@ -817,14 +864,18 @@ async def test_auto_repeat_keeps_watching_the_readings(
 async def test_the_tick_feeds_the_readings_and_the_counters_count_them(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """Each tick is an observation; its checks join the test counters."""
+    """Each tick is an observation; its checks join the test counters.
+
+    The tick is the runner's own, not auto repeat's: observing writes nothing,
+    so it does not wait on the leave to write.
+    """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
-    await _auto_repeat(hass, True)
+    runner._async_observe_tick(dt_util.utcnow())
     observed = runner.plausibility.observations
     assert observed >= 1
 
-    runner.continuous._async_tick(dt_util.utcnow())
+    runner._async_observe_tick(dt_util.utcnow())
     await hass.async_block_till_done()
     assert runner.plausibility.observations == observed + 1
 
@@ -842,10 +893,15 @@ async def test_the_tick_feeds_the_readings_and_the_counters_count_them(
 async def test_clearing_the_history_forgets_the_readings_too(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """One button starts a collection afresh, readings included."""
+    """One button starts a collection afresh, readings included.
+
+    This is also why the button is blunter than it looks: the readings and the
+    runs share one clear, so retracting a single wrong verdict is not on offer
+    without discarding observations that took days to gather.
+    """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
-    await _auto_repeat(hass, True)
+    runner._async_observe_tick(dt_util.utcnow())
     assert runner.plausibility.observations
     await runner.async_clear_ledger()
     assert runner.plausibility.observations == 0

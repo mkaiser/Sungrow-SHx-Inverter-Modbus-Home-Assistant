@@ -305,25 +305,26 @@ def _async_entry_for(hass: HomeAssistant, device_id: str) -> SungrowConfigEntry:
             translation_placeholders={"device_id": device_id},
         )
 
-    for entry_id in device.config_entries:
-        entry = hass.config_entries.async_get_entry(entry_id)
-        if entry is not None and entry.domain == DOMAIN:
-            if not hasattr(entry, "runtime_data"):
-                raise ServiceValidationError(
-                    translation_domain=DOMAIN,
-                    translation_key="entry_not_loaded",
-                    translation_placeholders={"title": entry.title},
-                )
-            if entry.runtime_data.is_wallbox_only or entry.runtime_data.is_device_only:
-                raise ServiceValidationError(
-                    translation_domain=DOMAIN,
-                    translation_key="not_on_wallbox",
-                    translation_placeholders={"title": entry.title},
-                )
-            return entry
-
-    raise ServiceValidationError(
-        translation_domain=DOMAIN,
-        translation_key="not_a_sungrow_device",
-        translation_placeholders={"name": device.name or device_id},
-    )
+    # `config_entry_id`, not `config_entries`: a device belongs to one entry,
+    # and the set is a deprecated property over this attribute that core
+    # removes in 2027.10. Iterating it logged a warning on every action call.
+    entry = hass.config_entries.async_get_entry(device.config_entry_id)
+    if entry is None or entry.domain != DOMAIN:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="not_a_sungrow_device",
+            translation_placeholders={"name": device.name or device_id},
+        )
+    if not hasattr(entry, "runtime_data"):
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="entry_not_loaded",
+            translation_placeholders={"title": entry.title},
+        )
+    if entry.runtime_data.is_wallbox_only or entry.runtime_data.is_device_only:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="not_on_wallbox",
+            translation_placeholders={"title": entry.title},
+        )
+    return entry
