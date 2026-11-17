@@ -1,6 +1,6 @@
 # The texts, for review
 
-**335 texts**: everything in `strings.json` that is not an entity name, by its
+**336 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -2159,7 +2159,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (23)
+## Error messages (24)
 
 ### `exceptions.device_not_found.message`
 
@@ -2298,3 +2298,9 @@ and bold are kept.
 > **EN** {title} is not an inverter. This action works on an inverter; a wallbox, iHomeManager or Logger entry has only its own diagnosis buttons, and nothing in this integration writes to one.
 
 > **DE** {title} ist kein Wechselrichter. Diese Aktion arbeitet an einem Wechselrichter; ein Eintrag für eine Wallbox, einen iHomeManager oder einen Logger hat nur seine eigenen Diagnose-Schaltflächen, und nichts in dieser Integration schreibt in eines dieser Geräte.
+
+### `exceptions.testimony_missing.message`
+
+> **EN** {title}: answer the diagnosis's questions before an extended test. An extended test writes settings and reads them back, and what it finds can only be understood together with the house it ran in — no register reports any of this. On Settings → Devices & services → Sungrow Modbus → Configure, under "Contribute a capability diagnosis", answer: "How this inverter is connected", "Is a Modbus proxy in the path?" and "Is there another inverter here that is not a Sungrow?". Each has an answer for every house — "not sure", "I do not know", "no" — so none of them asks you to guess. A read-only diagnosis runs without them.
+
+> **DE** {title}: Beantworte die Fragen der Diagnose, bevor ein erweiterter Test läuft. Ein erweiterter Test schreibt Einstellungen und liest sie zurück, und was er findet, lässt sich nur zusammen mit dem Haus verstehen, in dem er lief — kein Register meldet davon etwas. Unter Einstellungen → Geräte & Dienste → Sungrow Modbus → Konfigurieren, im Abschnitt „Eine Funktionsdiagnose beisteuern“, beantworte: „Wie dieser Wechselrichter angebunden ist“, „Ist ein Modbus-Proxy im Pfad?“ und „Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?“. Jede davon hat für jedes Haus eine Antwort — „nicht sicher“, „weiß ich nicht“, „nein“ — keine verlangt also zu raten. Eine rein lesende Diagnose läuft auch ohne sie.

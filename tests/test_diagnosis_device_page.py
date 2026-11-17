@@ -725,13 +725,18 @@ async def test_an_extended_run_is_refused_until_they_are_answered(
         await hass.async_block_till_done()
 
         await _choose(hass, DIAGNOSIS_MODE_AUTO_REPEAT)
-        with pytest.raises(ServiceValidationError, match="testimony_missing"):
+        # Asserted on the translation key rather than the rendered text: once
+        # `exceptions.testimony_missing.message` existed, the error rendered
+        # into English and a `match=` on the key stopped matching, though the
+        # refusal itself was never in doubt. The key is the stable fact.
+        with pytest.raises(ServiceValidationError) as refusal:
             await hass.services.async_call(
                 "button",
                 "press",
                 {"entity_id": "button.sh10rt_diagnosis_start"},
                 blocking=True,
             )
+        assert refusal.value.translation_key == "testimony_missing"
 
     assert entry.runtime_data.diagnosis.continuous.active is False
     assert entry.runtime_data.diagnosis.state.running is False
