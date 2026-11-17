@@ -249,9 +249,12 @@ class DiagnosisRunner:
         #: the checks that want "a day of polls" count ticks and a day is
         #: 1440 of them; the coordinator's own interval would reach that in
         #: two hours and mean something else. Bounded by `MAX_RATIOS`.
-        self._observing: CALLBACK_TYPE = async_track_time_interval(
-            hass, self._async_observe_tick, OBSERVE_EVERY
-        )
+        #: Started by `_async_start_observing` once the kept readings are
+        #: loaded, and cancelled on shutdown. Not started in the constructor:
+        #: a timer begun there outlives any runner built without a matching
+        #: shutdown, which Home Assistant's harness reports as a lingering
+        #: timer and which would be a real leak in a failed setup.
+        self._observing: CALLBACK_TYPE | None = None
 
     @property
     def tests(self) -> dict[str, Any] | None:
@@ -871,13 +874,9 @@ class DiagnosisRunner:
                 )
             )
             await self._async_warn_wallbox_leftover()
-        # One reading now that the kept ones are loaded. Auto repeat decides
-        # whether anything is still worth watching from
-        # `plausibility.unsettled()`, which is empty while nothing has been
-        # observed -- empty for the wrong reason, and it would switch itself
-        # off on its first tick. Priming any earlier is pointless: the load
-        # above replaces the object.
-        self._async_observe_tick(dt_util.utcnow())
+        # Now that the kept readings are loaded -- starting any earlier is
+        # pointless, because the load above replaces the object.
+        self._async_start_observing()
         self._set(capability_test=self._folded)
 
     async def _async_warn_wallbox_leftover(self) -> None:
@@ -1091,8 +1090,28 @@ class DiagnosisRunner:
         what Home Assistant's own test harness calls a lingering timer.
         """
         self._async_cancel_lapse()
-        self._observing()
+        if self._observing is not None:
+            self._observing()
+            self._observing = None
         self.continuous.async_turn_off("the entry was unloaded")
+
+    @callback
+    def _async_start_observing(self) -> None:
+        """Begin feeding the readings, once the kept ones are loaded.
+
+        Called from `async_load_ledger` rather than the constructor, so the
+        timer is created exactly where the entry registers the shutdown that
+        cancels it, and so a runner built without one never starts it. The
+        first reading is taken at once: auto repeat reads "nothing left to
+        watch" from an `unsettled()` that is empty while nothing has been
+        observed, and would switch itself off on its first tick.
+        """
+        if self._observing is not None:
+            return
+        self._observing = async_track_time_interval(
+            self.hass, self._async_observe_tick, OBSERVE_EVERY
+        )
+        self._async_observe_tick(dt_util.utcnow())
 
     @callback
     def _async_observe_tick(self, now: datetime) -> None:
@@ -1105,6 +1124,13 @@ class DiagnosisRunner:
         if self.state.running:
             return
         self.async_observe(now)
+        # Tell the entities. The counters and the test summary are computed
+        # from the collection, so without this they show whatever they showed
+        # when something else last changed -- which, now that observing no
+        # longer rides on auto repeat's tick, can be hours. Measured at the
+        # maintainer's on 2026-11-17: the store held 811 observations while
+        # the summary still said 745.
+        self.async_notify()
 
     @callback
     def _async_cancel_lapse(self) -> None:

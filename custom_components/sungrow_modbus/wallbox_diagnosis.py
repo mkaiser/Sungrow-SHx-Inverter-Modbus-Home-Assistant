@@ -267,6 +267,13 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
             await async_plausibility_load(self.hass, self.entry, firmware)
         )
         await self._async_warn_wallbox_leftover()
+        # The wallbox's readings are watched on the same always-on timer as an
+        # inverter's, and for the same reason: observing writes nothing, so it
+        # does not wait on the leave to write. `continuous.py` is shared, and
+        # it no longer observes on its tick, so without this a wallbox entry
+        # would accumulate nothing and its auto repeat would conclude there
+        # was nothing left to answer.
+        self._async_start_observing()
         self.async_notify()
 
     async def async_clear_ledger(self) -> None:

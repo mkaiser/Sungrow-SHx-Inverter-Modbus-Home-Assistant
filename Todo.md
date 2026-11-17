@@ -434,40 +434,30 @@ diagnosis-only entry; how it is handled beyond that is open.
     something in it. None of them is urgent, and the forced-charge press
     already proved the mechanism the rewrite was for.
 
-12. **The plausibility checks only observe while auto repeat is on.**
-    `DiagnosisRunner.async_observe` is called from one place,
-    `custom_components/sungrow_modbus/continuous.py`'s tick, so the polled
-    readings reach `capability_test/plausibility.py` only while *Extended test
-    (auto repeat)* is running. Measured 2026-11-17 at the maintainer's SH10RT:
-    thirty minutes of a 4.5 kW forced charge -- the rarest condition of the
-    day -- added **no** observations at all, *battery voltage times current*
-    staying at "4 of 20" throughout, because auto repeat had been switched off
-    for another test and did not survive a restart.
+12. **Watching the readings, after decoupling it from auto repeat.**
+    Done 2026-11-17: `DiagnosisRunner` feeds the checks on its own one-minute
+    timer, started where the entry registers the shutdown that cancels it, and
+    `continuous.py`'s tick no longer observes. Three traps it set on the way,
+    all now commented where they bite and worth remembering before touching
+    this again:
 
-    **Measured both ways.** Across the whole charge the counters did not
-    move (*battery voltage times current* 4 of 20 at 08:46 and still 4 of 20
-    at 09:09); ten minutes after auto repeat was switched back on they read
-    **15 of 20**, with *phase voltage times current* the same and *tracker
-    voltage times current* off 0 as well. So the readings were there all
-    along and nothing was watching them.
+    - **Priming in `__init__` is useless**: the kept readings are loaded
+      afterwards and the load replaces the object.
+    - **Without a reading before auto repeat's first tick it switches itself
+      off**, having read "nothing left to watch" from an `unsettled()` that is
+      empty only because nothing has been observed.
+    - **`continuous.py` is shared with the wallbox runner.** Removing the
+      observe call from its tick left a wallbox entry accumulating nothing;
+      `WallboxDiagnosisRunner` starts the same timer now. This reached a push
+      before CI caught it.
 
-    The cost is concrete: *battery level follows its power* wants "1 kWh into
-    or out of the battery" and still reads **0 of 2 events** after a 3.5 kWh
-    charge, because the charge happened while nothing observed. That check
-    would otherwise have been half settled by this morning's work, and the
-    condition is not a cheap one to arrange again.
-
-    Two consequences. A house whose owner never turns auto repeat on never
-    accumulates these observations, so its plausibility checks can never
-    settle -- although they **write nothing** and need only readings the
-    coordinator already has. And any session that parks auto repeat for
-    another test silently loses whatever the house did meanwhile.
-
-    To decide: whether observing should be fed from the coordinator instead,
-    independent of the owner's leave to write, since the leave is about
-    writing and this does none. If it stays as it is, the wording that
-    explains auto repeat should say that switching it off stops the watching
-    too, which today it does not.
+    Left: **the visible wording.** A fresh entry now says "0/23 established -
+    waiting for: ..." where it said "no runs kept", and the counters carry the
+    readings' checks instead of reading "unknown". That is the intended
+    consequence -- there really is something being collected from the first
+    minute -- but it has not been seen on a real device page, and it is the
+    maintainer's call whether a house that never runs a capability test should
+    show it.
 
 13. **A step quantisation is recorded as a clamp.** In
     `src/sungrow_modbus/capability_test/writepath.py` the upper-bound check
