@@ -37,6 +37,7 @@ from sungrow_modbus.capability_test.ledger import fold_key
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
+    CONF_BATTERY_MAX_POWER,
     CONF_CAPABILITY_TEST_CHARGE_WINDOW,
     CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
     CONF_CAPABILITY_TEST_EXPORT,
@@ -258,6 +259,10 @@ class CapabilityTestRunner:
             allow_dark=True,
             forced_startup=self.forced_startup,
             skip=self.skip,
+            # The same figure the number entities take. Without it this run
+            # would compute the unconstrained ceiling and could ask the pack
+            # for more than its owner has said it should ever be asked for.
+            configured_battery_w=options.get(CONF_BATTERY_MAX_POWER) or None,
             restart=bool(
                 options.get(
                     CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT

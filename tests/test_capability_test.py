@@ -846,6 +846,40 @@ async def test_the_forced_power_is_the_stated_constant(
     assert run.snapshot.battery_ceiling == 5000
 
 
+async def test_the_owners_battery_ceiling_bounds_the_run(
+    full_unit: MockModbusUnit,
+) -> None:
+    """An owner's configured battery power bounds the run, not just the slider.
+
+    `battery.ceiling` is shared between the number entities and this test so
+    that the two cannot disagree -- its docstring says a disagreement "would
+    show up as the test writing a value the entity would have refused". The
+    entity feeds it the owner's `battery_max_power`; before this was fixed the
+    preflight did not, so an owner who capped their pack's power got a capped
+    slider and an uncapped run.
+
+    That figure is also the only thing bounding a manufactured charge or
+    discharge, so a pack whose owner asked for gentle treatment could still be
+    worked at the full BMS ceiling by a run nobody was watching.
+    """
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+
+    unbounded = CapabilityTest(inverter, clock=FakeClock())
+    await unbounded._preflight()
+
+    bounded = CapabilityTest(
+        inverter,
+        clock=FakeClock(),
+        options=Options(configured_battery_w=1200),
+    )
+    await bounded._preflight()
+
+    assert unbounded.snapshot.battery_ceiling == 5000
+    assert bounded.snapshot.battery_ceiling == 1200
+    assert bounded._forced_power() <= 1200
+
+
 async def test_the_commanded_power_is_clamped_to_what_the_pack_can_take(
     full_unit: MockModbusUnit,
 ) -> None:

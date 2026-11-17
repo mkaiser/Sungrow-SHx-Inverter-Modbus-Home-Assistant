@@ -1294,6 +1294,16 @@ class Options:
     the restore are never skipped, and neither is the export limit's write
     scale while anything here still writes 13074."""
 
+    configured_battery_w: float | None = None
+    """The owner's own ceiling for battery power, in watts, or None.
+
+    The same figure the number entities take, so that `battery.ceiling` gives
+    this run and those entities one answer. Without it a run computes the
+    unconstrained ceiling and may ask a pack for more than its owner has said
+    it should ever be asked for -- the disagreement `battery.ceiling` exists
+    to prevent, and the only thing that bounds a manufactured charge or
+    discharge on a battery whose owner wants it treated gently."""
+
     run_budget: float = RUN_BUDGET
 
 

@@ -40,6 +40,7 @@ class PreflightSteps(RestoreSteps):
         if Capability.SUNGROW_BATTERY in self.capabilities:
             capacity = self._value("battery_capacity_high_precision")
         return battery_ceiling(
+            configured_w=self.options.configured_battery_w,
             sungrow_capacity_kwh=capacity,
             bms_max_charging_current_a=self._value("bms_max_charging_current"),
             battery_voltage_v=self._value("battery_voltage"),
