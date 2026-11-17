@@ -87,8 +87,12 @@ one failing row, and **the next night repeated it to the minute**: 1.6 to 0 at 0
 inverter's clock, against 4.4 to 0 at 00:04 the night before. So this inverter's daily counters
 reset on time and to zero, measured twice, while the check fails once a night for as long as the
 two clocks disagree ([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
-Beside it, after 1440 observations, `lifetime counters never fall` stands at 1434 passes with no
-failure, and `running states` has seen 1440 polls: Standby 983, Running 452, Stop 4, Starting 1.
+Beside it, the two checks that wait for **a day of polls** reached their minimum here, the first
+time either has anywhere: over 1470 observations spanning 30 hours, `lifetime counters never fall`
+passed on 1464 judged steps with none going backwards, and `running states` passed on four codes,
+all in the decode table -- Standby 1013, Running 452, Stop 4, **Starting 1**, that last a reminder
+that a one-minute cadence catches a transient state by luck. Together they take the house to
+**39 of 54** ([the day of polls](../sources/mkaiser-day-of-polls-2026-11-18-summary.md)).
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses

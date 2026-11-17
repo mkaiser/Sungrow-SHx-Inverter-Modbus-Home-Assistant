@@ -1466,3 +1466,22 @@ What changed:
 - **`entities/installation-mkaiser.md`** carries the second night and the counts at 1440
   observations: `lifetime counters never fall` at 1434 passes with no failure, `running states`
   with its day of polls seen.
+
+## [2026-11-18] ingested | the first day of polls anywhere
+
+The two readings checks that wait for **a day of polls** reached their minimum at
+[mkaiser](entities/installation-mkaiser.md)'s SH10RT, the first time either has anywhere
+([the day of polls](sources/mkaiser-day-of-polls-2026-11-18-summary.md)). Over 1470 observations
+spanning 30 hours -- a day, a night, a forced charge from the grid, five hours of low-SoC standby
+and a six-minute burst of lost connections -- `lifetime counters never fall` passed on 1464 judged
+steps with none going backwards, and `running states` passed on four codes, all in the decode
+table. The house stands at **39 of 54**.
+
+The running-state counts carry a sampling lesson worth keeping: `Starting` was caught **once** in
+1470 polls, so a code's absence from such a listing is not evidence the inverter never entered it.
+
+What changed:
+
+- **`entities/register-13000.md`** gains what a day of polling actually produces, and the warning
+  that a one-minute cadence samples a transient state by luck.
+- **`entities/installation-mkaiser.md`** carries the settle and the new count.

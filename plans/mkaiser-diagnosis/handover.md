@@ -59,11 +59,17 @@ will not clear by itself.
 
 **The night of 17-18 Nov repeated it to the minute**, so the inverter's counters
 are sound (measured twice) and the defect fires once a night, every night, while
-the clocks disagree. By 00:09 CET the store held 1440 observations: `lifetime
-counters never fall` at 1434 passes with no failure, `running states` with its
-day of polls seen. Both settle within minutes of that, which should take the
-ledger to **39 of 54** -- read it from the store, not the entities, since this
-instance predates the `async_notify()` fix and its sensors lag badly.
+the clocks disagree.
+
+**Both day-of-polls checks then settled**, the first time either has anywhere:
+at 1470 observations `lifetime counters never fall` passed on 1464 judged steps
+with none going backwards, and `running states` passed on four codes, all known
+(Standby 1013, Running 452, Stop 4, Starting 1). **The house is at 39 of 54.**
+
+Read that from the store, not the entities. This instance predates the
+`async_notify()` fix, so its summary sensor last reported at 16:00 UTC and still
+says `37/54` with `lifetime counters never fall: 1006 of 1440`. It is wrong, not
+stale-by-a-minute, and it will stay wrong until a run or a restart.
 
 ## Things that cost time, so they are written down
 
