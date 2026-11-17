@@ -1362,3 +1362,29 @@ voltage times current -- the tracker's having waited at 4 of 20 for PV above
 
 Updated: [the drift gate](sources/mkaiser-drift-gate-2026-11-17-summary.md)
 and the index.
+
+## [2026-11-17] ingested | the discharging start threshold settles too, mkaiser
+
+An hour after the charging one, the discharging start threshold settled at
+mkaiser's SH10RT on P020, in a run auto repeat started by itself: 1000 W
+commanded against 205 W of discharge, the discharge stopped, and it came back
+at 221 W ([the run](sources/mkaiser-discharging-threshold-2026-11-17-summary.md)).
+Both start thresholds are now established on this firmware.
+
+**This finishes a correction made twice in one day.** The morning's note
+reasoned that these two checks might never settle at a house with people in
+it, because a gently moving battery and a quiet house tend not to co-occur.
+Both settled within three hours of each other, on the day the note was
+written. The decisive evidence is the same check failing and then passing --
+same register, same commanded value, same inverter, starting from 216.5 W and
+205.0 W, differing only in whether the house stayed put. So the drift gate at
+low power costs **attempts, not outcomes**, and what settles these checks is
+leaving auto repeat running so it keeps trying.
+
+The same run recorded `battery_ceiling_w = 5000` for the third consecutive
+run, the owner's configured figure, against 7096-7274 before that option
+reached the capability test.
+
+Updated: [the drift gate](sources/mkaiser-drift-gate-2026-11-17-summary.md),
+whose conclusion is now marked wrong while its reasoning about why these
+checks are slow stands, and the index.

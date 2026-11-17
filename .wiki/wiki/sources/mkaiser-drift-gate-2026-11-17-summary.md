@@ -27,10 +27,13 @@ is not a defect in the rule. What it says is **when** the rule bites: the quanti
 run 4 was about 206 W, so the tolerance was roughly three quarters of the signal, and one
 household appliance switching on inside the window was enough.
 
-**Corrected the same afternoon**: the **charging** start threshold did settle, at 230 W before
-and 309 W after, inside the gate
-([the run](mkaiser-charging-threshold-2026-11-17-summary.md)). So the window is reachable and
-this is a matter of catching it, not a wall. The discharging one is still open.
+**Corrected the same afternoon, twice over**: the **charging** start threshold settled at 230 W
+before and 309 W after ([the run](mkaiser-charging-threshold-2026-11-17-summary.md)), and the
+**discharging** one settled an hour later at 205 W before and 221 W after
+([the run](mkaiser-discharging-threshold-2026-11-17-summary.md)) -- the same check that failed
+here at 09:40. So the gate at low power costs attempts, not outcomes, and the reasoning below
+about conditions that exclude each other is wrong as a conclusion, though right about why these
+checks are slow to settle.
 
 **The conditions fight each other at a lived-in house.** A battery moves 200-800 W when PV is
 weak, which is when household load is the largest thing on the meter and staying inside 150 W is
