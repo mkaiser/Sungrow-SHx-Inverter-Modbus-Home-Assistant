@@ -1331,3 +1331,34 @@ wants a battery above its minimum, the charge ceiling wants it high enough for
 something to spend on making an export. The forced charge passed.
 
 Updated: the index.
+
+## [2026-11-17] ingested | the charging start threshold settles, mkaiser
+
+The charging start threshold check had never run anywhere: it wants a battery
+charging 200 to 800 W, which a forced charge cannot give because it charges at
+kilowatts. It settled at mkaiser's SH10RT on P020, in a run auto repeat
+started by itself, with the battery at its floor taking a trickle from a
+brightening sky
+([the run](sources/mkaiser-charging-threshold-2026-11-17-summary.md)).
+
+Commanded 1000 W against 230 W of charging: charging stopped, and came back at
+309 W when the threshold went back. "The inverter did as it was told" -- the
+behaviour the YAML package's author predicted in a comment and labelled a
+guess.
+
+**It corrects this morning's reading.**
+[What a lived-in house costs the capability test](sources/mkaiser-drift-gate-2026-11-17-summary.md)
+reasoned that the start thresholds might never settle at a house with people
+in it, since a gently moving battery and a quiet house tend not to co-occur.
+One of the two has now settled, with before and after of 230 W and 309 W
+staying inside the gate, where the discharging one failed on 216 W of drift
+from a measurement of the same shape and size. So the gate at low power is a
+matter of catching the window, not a wall. That page now says so; the
+discharging threshold is still open.
+
+Three plausibility checks settled the same hour -- battery, phase and tracker
+voltage times current -- the tracker's having waited at 4 of 20 for PV above
+300 W, which reached 772 W. The ledger stands at 36 of 54.
+
+Updated: [the drift gate](sources/mkaiser-drift-gate-2026-11-17-summary.md)
+and the index.

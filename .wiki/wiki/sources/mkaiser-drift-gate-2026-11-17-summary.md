@@ -27,6 +27,11 @@ is not a defect in the rule. What it says is **when** the rule bites: the quanti
 run 4 was about 206 W, so the tolerance was roughly three quarters of the signal, and one
 household appliance switching on inside the window was enough.
 
+**Corrected the same afternoon**: the **charging** start threshold did settle, at 230 W before
+and 309 W after, inside the gate
+([the run](mkaiser-charging-threshold-2026-11-17-summary.md)). So the window is reachable and
+this is a matter of catching it, not a wall. The discharging one is still open.
+
 **The conditions fight each other at a lived-in house.** A battery moves 200-800 W when PV is
 weak, which is when household load is the largest thing on the meter and staying inside 150 W is
 hardest. These two checks are therefore not waiting for one condition that has not come, but for

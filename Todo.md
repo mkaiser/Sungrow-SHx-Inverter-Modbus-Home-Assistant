@@ -201,8 +201,10 @@ diagnosis-only entry; how it is handled beyond that is open.
       run 2026-11-08 to 11-10 at peter_sm (P023, cable, five runs) and
       ra1k_0 (P071, WiNet-S, one run), ingested; what each took is on their
       installation pages. Not yet seen on hardware:
-      - **the charging start threshold**: needs a battery charging a few
-        hundred watts from PV;
+      - **the charging start threshold**: **done 2026-11-17** at the
+        maintainer's, the first run of it anywhere -- 1000 W commanded against
+        230 W of PV charging, charging stopped and came back at 309 W (wiki:
+        the charging start threshold). The discharging one is item 14;
       - **`ledger.TWO_MOMENTS`**: a check established by day measured again
         at night, on one firmware; needs auto repeat across a dusk;
       - **the plausibility checks** (`capability_test/plausibility.py`): the
@@ -402,6 +404,16 @@ diagnosis-only entry; how it is handled beyond that is open.
     retry the restore until the register reads back, and fail loudly where a
     person will see it rather than in a background log.
 
+    It should also **look before it presses**. On 2026-11-17 a script pressed
+    *Diagnosis: stop* 21 seconds after auto repeat had started a run of its
+    own, interrupting it, and the capability test it then asked for was
+    refused ("a diagnosis is already running on this inverter") -- which left
+    the script's `finally` unable to re-arm auto repeat, so it stayed off
+    until a person noticed. The run's restore completed and nothing was left
+    changed, but the lesson is cheap: read `running_since` on *Diagnosis: test
+    summary* first, and treat a run in flight as a reason to wait rather than
+    something to press through.
+
 11. **`doc/scenes.md` is wrong in three ways, found by installing it**
     (2026-11-17, the maintainer's SH10RT, dev instance on this tree). The page
     is held to the descriptions by `tests/test_scenes_doc.py`, which checks
@@ -494,23 +506,7 @@ diagnosis-only entry; how it is handled beyond that is open.
     the bound is not enforced" one the other four registers got. Any ledger
     carrying the wrong verdict needs that check cleared so it runs again.
 
-14. **Confirm on hardware that a run honours the owner's battery ceiling.**
-    The fix is in the tree: `Options.configured_battery_w` carries the entry's
-    `battery_max_power` into `preflight._battery_ceiling()`, so the capability
-    test and the number entities now read one ceiling
-    (`tests/test_capability_test.py::test_the_owners_battery_ceiling_bounds_the_run`).
-    Before it, the entity capped at the owner's figure while a run computed
-    the unconstrained one and could write up to it -- and that figure also
-    bounds `_forced_power()`, so it is what stops a run manufacturing a charge
-    or discharge bigger than the owner allows.
-
-    What is left is one reading. At the maintainer's the option is now 5000 W
-    and both sliders cap there, but the ledger's last two runs recorded
-    `battery_ceiling_w` of **7274** and **7166** -- the BMS-derived figure,
-    taken before the fix loaded. **The next auto-repeat run should record
-    5000.** Check that, then this is done.
-
-15. **The start-threshold checks may never settle at a lived-in house.**
+14. **The discharging start threshold still has not settled.**
     A behavioural check refuses to attribute a change when the house drifted
     more than `max(DRIFT_ABS_W, DRIFT_FRACTION x before)` across the
     measurement -- 150 W, or 15 % once the quantity exceeds 1000 W
@@ -518,27 +514,37 @@ diagnosis-only entry; how it is handled beyond that is open.
     `src/sungrow_modbus/capability_test/procedure.py`). Refusing is right; an
     unattributable change is not evidence.
 
-    Measured 2026-11-17 at the maintainer's SH10RT (wiki: what a lived-in
-    house costs the capability test). Run 4 finally caught the **discharging
-    start threshold** with the battery inside its 200-800 W window, and lost
-    it: the signal was about 206 W, so the tolerance was the 150 W floor --
-    about three quarters of the signal -- and 216 W of household drift ended
-    it. Run 3 lost the **export power limit** the same way at the other end,
-    to 2126 W.
+    **The charging one settled 2026-11-17** -- the first run of that check
+    anywhere -- so this is about the other half (wiki: the charging start
+    threshold). Commanded 1000 W against 230 W of charging from PV: charging
+    stopped and came back at 309 W, "the inverter did as it was told", which
+    is the behaviour the YAML package's author predicted and labelled a guess.
+    It needs **PV**, not a forced charge: the window is 200 to 800 W through
+    the battery and a forced charge supplies kilowatts.
 
-    The deeper problem is that the conditions exclude each other. Both start
-    thresholds need the battery moving 200 to 800 W **all of it through the
-    battery**, and a battery moves that gently when PV is weak -- which is
-    when household load dominates the meter and staying inside 150 W is
-    hardest. So these two are not waiting on one condition that has not come
-    but on two that tend not to co-occur.
+    The discharging one has now been attempted and lost twice, both times on
+    drift. A behavioural check refuses to attribute a change when the house
+    moved more than `max(DRIFT_ABS_W, DRIFT_FRACTION x before)` -- 150 W, or
+    15 % once the quantity exceeds 1000 W
+    (`src/sungrow_modbus/capability_test/effects.py`,
+    `src/sungrow_modbus/capability_test/procedure.py`). Refusing is right; an
+    unattributable change is not evidence.
 
-    Worth considering, none chosen: judge these two from the battery's own
-    power rather than the house's, since the note already measures "all of it
+    | Run | Check | before | during | after | Outcome |
+    | --- | --- | --- | --- | --- | --- |
+    | 09:40 | discharging start threshold | 216.5 W | 0.0 W | 0.0 W | drifted |
+    | 11:37 | charging start threshold | 230.0 W | -0.0 W | 309.0 W | passed |
+
+    Two measurements of the same shape and size; the difference was what the
+    house did meanwhile. **So the gate at low power is luck rather than a
+    wall** -- the window is reachable and has to be caught. Run 3 lost the
+    **export power limit** the same way at the other end, to 2126 W of drift.
+
+    Worth considering, none chosen: judge these from the battery's own power
+    rather than the house's, since the skip reason already measures "all of it
     through the battery"; retry within a run until a quiet window appears
-    rather than spending the one attempt; or accept that they settle only at
-    houses quiet enough and say so in `doc/capability_tests.md`, so nobody
-    reads a years-old "not run yet" as a defect.
+    rather than spending the one attempt; or leave it, now that one of the two
+    has shown the window is catchable.
 
 # Open decisions
 
