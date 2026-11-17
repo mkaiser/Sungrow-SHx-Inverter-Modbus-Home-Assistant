@@ -20,6 +20,12 @@ the inverter, and the wallbox's own current setting is the inverter's to drive
 ([the session](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md)). The car on it
 draws at most 16 A on three phases; the installation allows 22 kW (32 A).
 
+**The night of 2026-11-16/17**: the managed capability test's first run passed, a mode change to or
+from user defined ends a session, 21203 is the user current in that mode and the inverter's offer
+in fast mode, and the car suspended its own charge for hours at about 89 %
+([the night](../sources/gerd-wallbox-night-2026-11-16-summary.md),
+[why a managed wallbox stops charging](../queries/why-does-a-managed-wallbox-stop-charging.md)).
+
 ## Diagnoses
 
 - [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30

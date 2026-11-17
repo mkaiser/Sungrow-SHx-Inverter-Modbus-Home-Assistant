@@ -338,7 +338,13 @@ class WallboxSettings(Component):
     register_space = "holding"
 
     output_current_setting = gauge(reg(21203), 0.1, signed=False, unit="A")
-    """Current the charge point is set to offer. Two sources."""
+    """Current the charge point is set to offer. Two sources.
+
+    Under an inverter's management the inverter writes it (gerd's,
+    2026-11-17): in user-defined mode it is the user current exactly, and the
+    car draws about 0.7 A less; in fast charge it is the inverter's offer,
+    24-28 A on a car that took 16 A, so it is not the car's current there.
+    """
 
     phase_mode_setpoint_raw = integer(reg(21204), signed=False)
     """Single or three phase, as configured. Three sources."""

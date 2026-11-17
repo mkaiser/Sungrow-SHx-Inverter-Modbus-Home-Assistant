@@ -36,10 +36,10 @@ moves with nothing written.
 | Charging on/off | inverter holding 33540, 0xAA / 0x55 | off stops the car in < 1 s; on starts it in 7-15 s with no replug, unless the car has fallen asleep (a 7-minute stop needed a replug) |
 | Charging mode | inverter holding 33541: 160 fast, 161 PV surplus, 163 user defined | written and followed; 162 (quantity and time) never seen |
 | User current | inverter holding 33545, 0.1 A | **only in mode 163** (0x04 otherwise); 5 A refused, 6 A to 33 A taken on a 32 A unit |
-| Mode side effects | — | to 163 turns charging on; 163 → 160 and 160 → 161 **end the session**; charging on starts it again |
+| Mode side effects | — | to 163 **from off** turns charging on (the car starts at 6 A, ramps 1.4 A / 5 s); **160 → 163 while charging, 163 → 160 and 160 → 161 end the session** (the inverter's word goes off within 1-16 s); charging on starts it again (about 6 s, full power in about 40 s); writing the mode already set, or charging on while on, changes nothing (2026-11-17) |
 | Two times | inverter 33546-33549, two u32, low word first, Unix time | changed when the app saved; probably the quantity-and-time window |
 | Grid surplus | inverter holding 33550, 0x55 / 0xAA | **the app's energy purchase (*Netzbezug*)**: followed the app both ways (2026-11-14 19:34); written, no effect seen at 1.7 kW PV and an empty battery |
-| The wallbox's own current | wallbox holding 21203, 0.1 A | **driven by the inverter**: writes overwritten in seconds; the car follows the inverter's ramp (about 1.4 A every 5 s) |
+| The wallbox's own current | wallbox holding 21203, 0.1 A | **driven by the inverter**: writes overwritten in seconds; the car follows the inverter's ramp (about 1.4 A every 5 s). **In user-defined mode it is the user current exactly** (16.0, 10.0 A; the car draws ~0.7 A less); **in fast mode it is the inverter's offer**, 24-28 A on a car that takes 16 A, not the car's current (2026-11-17) |
 | The app's enable / Start | wallbox holding 21211 / 21212 | 21211 1 = enabled, 0 = disabled (status 21317 then reads **8**, *disabled*); 21212 0 = start |
 | The app's other system parameters | wallbox holding 21298 Plug&Play (1/0), 21299 offline current (0.1 A), 21313 power limit (0.1 kW, shown only while disabled) | each changed in the app and back, 2026-11-14 19:36-19:58, seen in the registers within a minute; the offline current does not follow the limit |
 | Mileage per kWh | wallbox holding 21232, 0.1 km/kWh | read **55552 = the app's 5555.2** after the capability test of 2026-11-13 (50 before; its restore of 21232 failed); set back to 5.0 in the app at 20:16, read 50 |
@@ -70,11 +70,13 @@ moves with nothing written.
   removed.
 - **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
   ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
-  from the app). The second time the inverter's on/off word went to off first, the wallbox
-  followed, and the battery read at its minimum SoC (13023 0.8 %, no PV). But charging switched
-  on over Modbus at 16:51 ran 5 minutes at 10.5 kW with the battery still at 0.8 % and was not
-  stopped, so the battery's minimum alone is not the cause (or it acts only after longer). Next:
-  the app's reason for a stop, and a longer watched session.
+  from the app). On 2026-11-16/17 a fast charge ran for hours with the battery at 0.2-0.5 % and
+  was not stopped, so the battery's minimum does not end one. Of that night's endings, the mode
+  changes were the inverter's (163 ↔ 160 ends a session), and from 02:19 the **car** suspended its
+  own charge for hours (`suspended by the vehicle`, the inverter's word on, offering current); the
+  inverter's word then went off at 03:50, and one charging on did not wake the car. Next: the car
+  app's reason for the suspension, and whether the inverter's 03:50 off is a timeout. The wiki
+  keeps the table: `.wiki/wiki/queries/why-does-a-managed-wallbox-stop-charging.md`.
 - **What 162 (quantity and time) writes**, and what the three always-zero words between the mode and
   the user current are.
 
@@ -140,9 +142,10 @@ Three runners:
 
 | Question | Covered by | Status |
 | --- | --- | --- |
-| User current 6, 8, 10 A followed by the car (managed) | managed test, *user current* | built; the hand-run equivalent passed at gerd's |
+| User current 6, 8, 10 A followed by the car (managed) | managed test, *user current* | built; **passed at gerd's from a terminal, 2026-11-16** |
 | 5 A refused, 6 A taken (managed) | managed test, *floor* | built; matches gerd's by hand |
-| Charging off and on, timed, no replug (managed) | managed test, *start/stop* (15 s pause) | built; matches gerd's by hand |
+| Charging off and on, timed, no replug (managed) | managed test, *start/stop* (15 s pause) | built; passed at gerd's 2026-11-16 (stop 4 s, start 10 s) |
+| The house back after the run (managed) | managed test, the restore | **wrong at gerd's 2026-11-16**: it wrote the mode back 163 → 160, read the house back at once and reported it restored; the inverter ended the session 28 s later. Needs a settle wait after a mode change and a second look at the car |
 | Output current 6, 8, 10 A, its scale (standalone) | standalone test, *output current* | built; no standalone wallbox yet |
 | Current follow across the range, with timings | standalone test, *current follow* | built; no standalone wallbox yet |
 | Available current (21322) against the setting | standalone test, *available current* | built; no standalone wallbox yet |
@@ -157,7 +160,7 @@ Three runners:
 | Power, energy, pilot voltage, counters, the inverter's load against the wallbox | plausibility | built, read only; no committed document carries a block yet |
 | 21313, unnamed | plausibility log | logged for a person to read |
 | Quantity and time mode (162) | — | on site: the owner sets it in the app |
-| Writing what is already set (charging on while on, the same mode) | — | not built; could join the managed test |
+| Writing what is already set (charging on while on, the same mode) | — | measured by hand 2026-11-17: harmless; not built into the managed test |
 | Starting a car asleep (stopped over 10 min) by charging on | — | not built; the managed test's pause is 15 s |
 | A mode change from the app: does it end the session too | — | on site |
 | One/three phase on a managed wallbox | — | read only on a sunny day (the field tool's `phase`), and the app's setting on site; 21204 did nothing at gerd's |
@@ -204,14 +207,23 @@ Run it from `tmp/`: its logs and scans go to the current directory.
 For the user current and the mode use the managed test (section 4), which restores the house.
 2026-11-14's one-off scripts stay in the maintainer's `tmp/gerd-wallbox-2026-11-14/`.
 
+## 5a. gerd's: how it was left (2026-11-17, 06:05)
+
+- The inverter: charging **on**, mode **fast**, user current 16.0 A, grid purchase off; the time pair
+  33546-33549 at 2026-11-17 / 2026-11-18 00:00 UTC. Nothing of ours to put back.
+- The car at about 89 %, `suspended by the vehicle` since 02:19 (the inverter's word went off by
+  itself at 03:50, one charging on written at 03:51 was taken, the car still declined). It needs the
+  owner: the car app's reason, or a replug.
+- The night's notes and test logs: `.wiki/raw/gerd-wallbox-night-2026-11-16.md`.
+
 ## 6. Next at gerd's (on site, a car plugged in)
 
 In order; 1 to 4 need the owner at the app.
 
 1. **Quantity and time** in the app: which words change (the time pair, the three zero words).
    Decides whether a mode select offers 162.
-2. **Writing what is already set**: charging on while on, the mode it has. Must be harmless, because
-   a mode select writes charging on after every mode change.
+2. ~~**Writing what is already set**~~: done 2026-11-17 by script, harmless. Still to see from
+   Home Assistant's select, which writes charging on right after the mode.
 3. **Starting a car asleep** (stopped over 10 minutes) by charging on over Modbus.
 4. **The same mode change from the app**: does user defined → fast end the session there too?
 5. **Phase switching.** On a managed wallbox the inverter switches phases itself: gerd's charged on
@@ -260,8 +272,15 @@ In order; 1 to 4 need the owner at the app.
   settled status and 5 s more before writing 21204.
 - **A write through the dongle** (unit 3), leg C only, if a standalone wallbox behind a dongle turns
   up.
-- **The managed test's open checks**: writing what is already set, and a longer stop for a sleeping
-  car, once tests 2 and 3 above have been done by hand.
+- **The managed test's restore after a mode change** (2026-11-16): wait for the inverter's charging
+  word to settle (it went off 1-16 s after a mode change), then check the car charges and stays
+  charging for a minute before declaring the house back; write charging on once more if not.
+- **The mode select** (`ev_charger.mode_writes`, `EvChargerModeSelect`): 160 → 163 while charging ended
+  the session, though the code expects 163 to switch charging on, and the charging-on it writes
+  after a mode change goes out at once, before the inverter's own off (up to 16 s later) can
+  overwrite it. To decide from a watched run in Home Assistant before changing it.
+- **The managed test's open checks**: writing what is already set (by hand: harmless), and a longer
+  stop for a sleeping car.
 - **Ingest**: a wiki source page for `.wiki/raw/gerd-wallbox-capability-test-2026-11-13.md`.
 
 ## Verification

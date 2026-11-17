@@ -8,6 +8,9 @@
 * switching to user-defined mode switches charging on; leaving it for fast
   charge, or fast charge for PV surplus, ends the session;
 * charging on starts a session again, unless the car has fallen asleep;
+* with `off_delay`, the session a mode change ends goes off only that many
+  seconds later, as on 2026-11-16/17 (within 1 s to 16 s): a charging on
+  written before then is overwritten;
 * the car draws about 0.5 A under what it is offered, up to its own limit.
 """
 
@@ -42,6 +45,8 @@ class FakeHouse:
         sleeps_after_stop: bool = False,
         restore_refused: bool = False,
         lose_inverter_after: int | None = None,
+        off_delay: float | None = None,
+        clock: FakeClock | None = None,
     ) -> None:
         """Set the house up; every argument is a way for it to be different."""
         self.block = {
@@ -60,6 +65,15 @@ class FakeHouse:
         self.restore_refused = restore_refused
         self.lose_inverter_after = lose_inverter_after
         self.writes: list[tuple[int, int]] = []
+        self.off_delay = off_delay
+        self.clock = clock or FakeClock()
+        self.pending_off: float | None = None
+
+    def _settle(self) -> None:
+        if self.pending_off is not None and self.clock.now >= self.pending_off:
+            self.pending_off = None
+            self.block[ev.CHARGING] = ev.OFF
+            self.session = False
 
     # -- the car -------------------------------------------------------------
 
@@ -69,6 +83,7 @@ class FakeHouse:
         return self.rated * 0.1
 
     def _live(self) -> tuple[int, float]:
+        self._settle()
         if not self.session:
             return (5 if self.asleep else 6), 0.0
         return 3, max(0.0, min(self._offer_a(), self.car_max_a) - 0.5)
@@ -77,6 +92,7 @@ class FakeHouse:
 
     async def read(self, address: int, count: int) -> list[int]:
         """Read the inverter's holding block."""
+        self._settle()
         return [self.block.get(address + i, 0) for i in range(count)]
 
     async def write(self, address: int, word: int) -> None:
@@ -99,8 +115,11 @@ class FakeHouse:
             if word == ev.USER_DEFINED:
                 self._on()
             elif (old, word) in ((ev.USER_DEFINED, ev.FAST), (ev.FAST, ev.PV_SURPLUS)):
-                self.block[ev.CHARGING] = ev.OFF
-                self.session = False
+                if self.off_delay is None:
+                    self.block[ev.CHARGING] = ev.OFF
+                    self.session = False
+                else:
+                    self.pending_off = self.clock.now + self.off_delay
         elif address == ev.CHARGING:
             if word == ev.ON:
                 self._on()
@@ -149,7 +168,7 @@ async def _run(
         house,
         WallboxSide(house),
         mt.Options(**options),
-        clock=FakeClock(),
+        clock=house.clock,
         on_snapshot=on_snapshot if snapshot else None,
     )
     return await run.async_run(), events
@@ -389,3 +408,35 @@ async def test_a_cancelled_run_still_puts_the_house_back() -> None:
     with pytest.raises(asyncio.CancelledError):
         await task
     assert house.block == house.original
+
+
+@pytest.mark.parametrize("delay", [1.0, 16.0])
+async def test_the_restore_waits_for_a_mode_change_to_end_the_session(
+    delay: float,
+) -> None:
+    """gerd's, 2026-11-16: a restore that read at once saw the house back.
+
+    The inverter ended the session 28 s later. Waiting `MODE_SETTLE` after the
+    mode, the restore sees the word off and writes charging on after it.
+    """
+    house = FakeHouse(off_delay=delay)
+    outcome, _ = await _run(house, floor=False)
+
+    assert outcome.code == 0, outcome
+    assert outcome.restored
+    assert house.pending_off is None
+    assert house.session
+    assert house.block == house.original
+    mode_back = house.writes.index((ev.MODE, ev.FAST))
+    assert (ev.CHARGING, ev.ON) in house.writes[mode_back + 1 :]
+
+
+async def test_a_session_that_ends_after_the_restore_read_is_started_again() -> None:
+    """An off later than the settle wait is caught by watching the car."""
+    house = FakeHouse(off_delay=mt.MODE_SETTLE + 10.0)
+    outcome, _ = await _run(house, floor=False)
+
+    assert outcome.restored
+    assert house.session
+    assert house.block == house.original
+    assert house.writes[-1] == (ev.CHARGING, ev.ON)

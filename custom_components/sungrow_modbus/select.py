@@ -107,8 +107,10 @@ class EvChargerModeSelect(SungrowSelect):
 
     A mode change has side effects, measured at gerd's: leaving user defined,
     and fast charge to PV surplus, end the session; to user defined switches
-    charging on by itself. So the charging word is written after the mode,
-    back to what it was (`ev_charger.mode_writes`).
+    charging on by itself from off, and ended a session while charging. So
+    the charging word is written after the mode, back to what it was
+    (`ev_charger.mode_writes`); its timing against the inverter's own delayed
+    off is still to be watched from Home Assistant.
     """
 
     async def async_select_option(self, option: str) -> None:

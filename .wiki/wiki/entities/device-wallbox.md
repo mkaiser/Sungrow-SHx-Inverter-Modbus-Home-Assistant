@@ -33,6 +33,16 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   watched (`CONFIRMED_ON_FIRMWARE` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`); run
   from Home Assistant at gerd's, each took its write
   ([the controls](../sources/gerd-wallbox-ha-controls-2026-11-14-summary.md)).
+- **What the night of 2026-11-16/17 added** ([the night](../sources/gerd-wallbox-night-2026-11-16-summary.md)):
+  in user-defined mode **21203 is the user current exactly**, in 0.1 A, and the car draws about 0.7 A
+  less; in fast mode it is the inverter's *offer* (24-28 A) above the 16 A a phase the car takes, so it is
+  not the car's current there. **A change of mode to or from user defined while charging ends the session
+  within 6 s** and charging on restarts it (about 6 s, full power in about 40 s); a user-defined mode
+  entered with charging off turns charging on by itself and starts at 6 A. Writing charging on while on,
+  or the mode it already has, changes nothing. The inverter does not end a fast charge at the home battery's
+  minimum (a charge ran for hours at 0.2-0.5 %), and a car can suspend a charge for hours with the inverter's
+  word on (`suspended by the vehicle`); what ends a session without a write is open
+  ([why a managed wallbox stops charging](../queries/why-does-a-managed-wallbox-stop-charging.md)).
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.

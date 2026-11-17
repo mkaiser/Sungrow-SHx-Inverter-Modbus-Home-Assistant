@@ -24,9 +24,14 @@ medium tier. The four words are writable; the integration's write table
   ramped up from 6 A as the inverter raises the wallbox's offer.
 * 33541, charging mode: 160 fast charge, 161 PV surplus, 163 user defined
   (162 quantity and time, by the ioBroker thread, not seen). Switching has
-  side effects: **to user defined switches charging on**; **from user defined
-  to fast charge, and from fast charge to PV surplus, end the session**. A
-  controller that switches mode and wants a charge writes charging on after.
+  side effects: **to user defined from off switches charging on** (the car
+  starts at 6 A); **while charging, to user defined, from user defined to
+  fast charge, and from fast charge to PV surplus, end the session**. The
+  inverter turns its charging word off only after a delay, within a second
+  from user defined to fast and 16 s from fast to user defined (gerd's,
+  2026-11-17). Writing the mode already set, or charging on while on, changes
+  nothing. A controller that switches mode and wants a charge writes charging
+  on after the session has ended, or the inverter's own off overwrites it.
 * 33545, the user-defined current, 0.1 A per count. **Written only while the
   mode is user defined**: in fast charge every write was refused with
   exception 0x04. 6.0 A is the lowest the inverter takes (5.0 A refused); it
@@ -145,8 +150,14 @@ def mode_writes(mode: int, *, charge: bool) -> list[tuple[int, int]]:
 
     Leaving user-defined mode or entering PV surplus ends a session, so a
     caller that wants a charge afterwards gets charging switched on after the
-    mode. User-defined mode switches charging on by itself, even from off, so
-    a caller that had it off gets it switched off again after the mode.
+    mode. User-defined mode switches charging on by itself from off, so a
+    caller that had it off gets it switched off again after the mode.
+
+    Not yet matched to the measurement of 2026-11-17 (gerd's): entering
+    user-defined mode while charging ended the session too, and the inverter
+    switched its word off up to 16 s after a mode change, so charging on
+    written straight after the mode can be overwritten. A watched run from
+    Home Assistant decides the change (`plans/wallbox_tests.md`, section 7).
     """
     if mode not in MODES:
         raise ValueError(f"{mode} is not a charging mode")

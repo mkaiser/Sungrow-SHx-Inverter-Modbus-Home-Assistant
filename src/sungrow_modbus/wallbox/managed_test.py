@@ -26,8 +26,12 @@ The checks, as measured at gerd's on 2026-11-14:
 never deadlined and never skipped: the user current while still in user-
 defined mode (it is writable only there), then the mode, then charging on if
 it was on and a mode change ended the session. Each by a raw read of the
-block, then the car: if a car was charging, it must be charging again. A
-house left changed is code 5, with what to do on site.
+block, then the car: if a car was charging, it must be charging again, and
+still charging a minute later. A mode change ends a session only after a
+delay (`MODE_SETTLE`), so the restore waits that long before it reads the
+charging word: on 2026-11-16 a restore that read at once saw the house back,
+and the inverter ended the session 28 s later. A house left changed is code
+5, with what to do on site.
 
 Nothing here talks to Home Assistant, opens a file or prints.
 """
@@ -75,6 +79,16 @@ SAMPLE_INTERVAL = 3.0
 #: How long the car is left stopped. A 2.5-minute stop resumed without a
 #: replug, a 7-minute one did not.
 PAUSE_SECONDS = 15.0
+
+#: A mode change can end the session, and the inverter's charging word goes
+#: off only then: within a second from user defined to fast, 16 s from fast
+#: to user defined (gerd's, 2026-11-17). The restore waits this long after a
+#: mode change before it reads the word.
+MODE_SETTLE = 20.0
+
+#: Once the car charges again, the restore watches it this long: a restored
+#: session ended 28 s after the restore read it back (gerd's, 2026-11-16).
+HOLD_SECONDS = 60.0
 
 #: The restore keeps trying; between attempts it waits this long.
 RESTORE_PAUSE = 5.0
@@ -490,6 +504,7 @@ class ManagedWallboxTest:
             block = await self._block()
         if block.mode != raw[ev.MODE]:
             await self.inverter.write(ev.MODE, raw[ev.MODE])
+            await self.clock.sleep(MODE_SETTLE)
             block = await self._block()
         if block.charging != raw[ev.CHARGING]:
             await self.inverter.write(ev.CHARGING, raw[ev.CHARGING])
@@ -503,12 +518,30 @@ class ManagedWallboxTest:
         return now == raw
 
     async def _charge_is_back(self) -> bool:
-        """Return whether a car that was charging charges again; write on once."""
+        """Return whether a car that was charging charges, and keeps charging.
+
+        Charging on is written once more if it does not: a session the
+        inverter ended after the restore read it is started again.
+        """
         if not self.snapshot.get("charging_at_start"):
             return True
-        seconds, _ = await self._until(lambda s: s.status == CHARGING, START_TIMEOUT)
-        if seconds is not None:
-            return True
-        await self.inverter.write(ev.CHARGING, ev.ON)
-        seconds, _ = await self._until(lambda s: s.status == CHARGING, START_TIMEOUT)
-        return seconds is not None
+        for attempt in range(2):
+            if attempt:
+                await self.inverter.write(ev.CHARGING, ev.ON)
+            seconds, _ = await self._until(
+                lambda s: s.status == CHARGING, START_TIMEOUT
+            )
+            if seconds is not None and await self._holds(
+                lambda s: s.status == CHARGING, HOLD_SECONDS
+            ):
+                return True
+        return False
+
+    async def _holds(self, test: Callable[[wct.Sample], bool], seconds: float) -> bool:
+        """Sample for `seconds`; return whether `test` held in every sample."""
+        start = self.clock.monotonic()
+        while self.clock.monotonic() - start < seconds:
+            await self.clock.sleep(SAMPLE_INTERVAL)
+            if not test(await self._sample()):
+                return False
+        return True

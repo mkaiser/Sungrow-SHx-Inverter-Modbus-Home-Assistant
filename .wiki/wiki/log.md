@@ -1418,3 +1418,21 @@ What changed:
 
 The raw notes keep what they said, being sources; the pages state what is
 true now.
+## [2026-11-17] ingested | gerd-wallbox-night-2026-11-16
+
+A VPN night at [gerd](entities/installation-gerd.md)'s, with a car charging
+([the source](sources/gerd-wallbox-night-2026-11-16-summary.md), raw
+`raw/gerd-wallbox-night-2026-11-16.md`). The managed capability test passed on its first run on hardware
+(6, 8, 10 A followed, 5 A refused, stop and start timed). Writing charging on while on, or the mode it
+already has, changes nothing; a change of mode to or from user defined while charging ends the session
+within 6 s and charging on restarts it; **21203 is the user current exactly in user-defined mode and the
+inverter's offer (24-28 A) in fast mode**, above the 16 A a phase the car takes. The managed test's restore changed the mode
+back to fast and declared the house back before the inverter ended the session (28 s later): the restore has to
+wait for the inverter to settle. A fast charge ran for hours at 0.2-0.5 % without ending, so the battery's
+minimum alone does not end one. From 02:19 the car suspended its own charge
+for hours with the inverter and the wallbox willing, and the inverter's word went off at 03:50. One ISP
+reconnect, about 3.5 min, ridden out by the tunnel watchdog.
+
+Updated: [the wallbox](entities/device-wallbox.md) (what the night added),
+[gerd](entities/installation-gerd.md), a new query
+[why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md), and the index.
