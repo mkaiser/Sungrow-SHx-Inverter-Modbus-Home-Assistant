@@ -15,6 +15,7 @@ from sungrow_modbus.capability_test.coverage import (
     READBACK,
 )
 from sungrow_modbus.capability_test.procedure import (
+    CLAMPED,
     CODES,
     CONFIRMED,
     EFFECT_SCALED,
@@ -26,6 +27,7 @@ from sungrow_modbus.capability_test.procedure import (
     STALE_READBACK,
     STOPPED,
     UNCHANGED,
+    bound_check,
 )
 
 EFFECTS = Path(ledger.__file__).with_name("effects.py")
@@ -375,6 +377,30 @@ def test_a_restart_measured_once_is_established() -> None:
 def test_every_check_has_a_revision() -> None:
     """A check missing from the table would never be measured again."""
     assert set(CHECK_REVISIONS) == {READBACK, ledger.RESTART, *EFFECT_FIELDS}
+
+
+def test_a_bound_clamped_under_the_old_rule_is_asked_again() -> None:
+    """The fix to the clamp rule reaches ledgers that already recorded it.
+
+    The upper-bound check used to call any readback word below the one
+    written a clamp, without asking whether the stored value was inside the
+    bound -- so a register that rounds to its own step was recorded as
+    enforcing a maximum it does not enforce, and `CLAMPED` counts as
+    established. Fixing the rule is not enough by itself: the wrong verdict
+    sits in every ledger that took it, and would never be asked again.
+
+    Raising the check's revision is what reaches those houses, with no
+    clearing and nothing for anyone to do. This holds the two together, so
+    the bump cannot be dropped while the rule stays changed.
+    """
+    check = bound_check("battery_forced_charge_discharge_power")
+    old = _block(effects=[_effect(check, CLAMPED)])
+    old["revisions"] = {check: 1}
+
+    folded = ledger.fold([_run("2026-11-17T08:51Z", old)])
+
+    assert check not in ledger.established(folded)
+    assert folded["summary"][check]["outdated"]
 
 
 def test_a_check_whose_logic_changed_is_measured_again(

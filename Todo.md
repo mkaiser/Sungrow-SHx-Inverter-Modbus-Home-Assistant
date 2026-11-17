@@ -459,40 +459,26 @@ diagnosis-only entry; how it is handled beyond that is open.
     maintainer's call whether a house that never runs a capability test should
     show it.
 
-13. **A step quantisation is recorded as a clamp.** In
-    `src/sungrow_modbus/capability_test/writepath.py` the upper-bound check
-    returns `CLAMPED` whenever the readback word is below the written word:
+13. **Clearing a ledger is all or nothing.**
+    `DiagnosisRunner.async_clear_ledger` clears the capability ledger **and**
+    removes the plausibility store with it, so an owner who wants the runs
+    afresh loses every reading the checks have gathered too -- at the
+    maintainer's on 2026-11-17 that would have been a day of polls and three
+    settled V x I checks. Worth separating, or offering per check.
 
-    ```text
-    if raw is not None and raw < word:
-        return [row(check, CLAMPED, f"took {value:g} {probe.unit} and stored the word {raw}", ...)]
-    ```
+    **Not urgent, and no longer the remedy for a wrong verdict.** That is
+    what `CHECK_REVISIONS` is for (`capability_test/coverage.py`): each check
+    carries a revision, a run records the revisions it was measured with, and
+    `ledger.py` keeps only rows measured at the current one, so raising a
+    number makes every ledger ask that check again -- and only that one -- on
+    update, with no clearing and nothing for a user to do. The step-as-clamp
+    fix of 2026-11-17 raised the seven bound checks to 2 accordingly, and
+    `tests/test_capability_ledger.py::test_a_bound_clamped_under_the_old_rule_is_asked_again`
+    holds the rule and the bump together.
 
-    It never asks whether the stored value is inside the bound. Measured
-    2026-11-17 at the maintainer's SH10RT:
-    `battery_forced_charge_discharge_power` was written 7374 W and stored
-    7370 W -- the register rounding to its own 10 W step -- against a maximum
-    of 7274 W. The check recorded "the device clamped it", and `CLAMPED` maps
-    to established in `capability_test/ledger.py`, so a bound the device does
-    **not** enforce is now marked settled and will never be asked again.
-
-    **Fixed**: a clamp now requires the stored value to be at or below the
-    bound, and a register that merely rounded to its own step gets the "the
-    bound is not enforced" verdict the other four got
-    (`tests/test_capability_test_writepath.py::test_rounding_to_the_registers_step_is_not_a_clamp`).
-
-    **What is left is the stale verdict already in a ledger**, and it has no
-    cheap remedy. `DiagnosisRunner.async_clear_ledger` clears the capability
-    ledger **and** removes the plausibility store with it, so a user told to
-    clear history to re-ask one check loses every plausibility observation
-    too -- at the maintainer's that would be a day of polls and three settled
-    V x I checks. It is all or nothing, and the maintainer's own ledger still
-    carries `upper bound of battery_forced_charge_discharge_power` as
-    "the device clamped it" because clearing it is not worth that price.
-
-    To decide: whether clearing should be per check, or at least separate the
-    ledger from the plausibility store, so a wrong verdict can be retracted
-    without discarding observations that took days to gather.
+    The lesson, since it was nearly missed: **a change that could change a
+    verdict needs its revision raised in the same commit**, which the table's
+    own docstring says and the first fix did not do.
 
 # Open decisions
 
