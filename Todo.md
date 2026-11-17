@@ -7,6 +7,10 @@ forward looking, reordering it, taking in new issues -- follows
 (`/revise-todo`). It has more than one writer: read it from disk and change
 only your part (`AGENTS.md`).
 
+Where the last hardware session at the maintainer's SH10RT left off, and what
+a fresh session needs that is written nowhere else:
+[`plans/mkaiser-diagnosis/handover.md`](plans/mkaiser-diagnosis/handover.md).
+
 Structure:
 
 1. **Next steps** -- work that can start now, in order of priority.
