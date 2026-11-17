@@ -31,10 +31,28 @@ rewritten rather than patched.
 The IDs below are the ones the YAML package used, which is what you have if
 you migrated and kept them.
 
-If you installed fresh, or chose the newer IDs during setup, yours carry the
-device name — `select.sh10rt_ems_mode` rather than `select.ems_mode`. Open
-**Developer tools → States**, type `ems_mode`, and use what you see there.
-One substitution, the same everywhere below.
+If you installed fresh, or chose the newer IDs during setup, yours are
+different — and **not simply the same name with your device in front of it**.
+Three of them are named differently as well, because the newer IDs follow the
+entity's name rather than the YAML package's variable:
+
+| The ID below | Yours, if you have the newer IDs |
+| --- | --- |
+| `select.ems_mode` | `select.<device>_ems_mode` |
+| `select.battery_forced_charge_discharge` | `select.<device>_battery_forced_charge_discharge` |
+| `number.battery_forced_charge_discharge_power` | `number.<device>_battery_forced_charge_discharge_power` |
+| `number.battery_max_charge_power` | `number.<device>_battery_max_chargi**ng**_power` |
+| `number.battery_max_discharge_power` | `number.<device>_battery_max_dischargi**ng**_power` |
+| `number.export_power_limit` | `number.<device>_feed_in_limit` |
+| `switch.export_power_limit` | `switch.<device>_feed_in_limit_mode` |
+
+`<device>` is your inverter's name, slugified — `sh10rt` for a device called
+"SH10RT". The surest way is **Developer tools → States**: type part of the
+name and use what you see.
+
+**Getting one wrong is silent.** Home Assistant applies the rest of a scene
+around an entity it cannot find, so a scene with a stale ID looks like it
+worked and does less than you asked.
 
 ## The scenes
 
@@ -50,7 +68,7 @@ reload scenes (**Developer tools → YAML → Scenes**).
     # highest it accepts, as the number's "max" attribute. Or leave this
     # line out and use the automation below, which reads it from the
     # inverter.
-    number.battery_max_discharge_power: 5000
+    number.battery_max_discharge_power: "5000"
 
 - name: Self-Consumption Mode (no battery discharge)
   entities:
@@ -58,12 +76,12 @@ reload scenes (**Developer tools → YAML → Scenes**).
     select.battery_forced_charge_discharge: stop
     # 10 W is the lowest the inverter accepts, and is as close to "stop
     # discharging" as this setting goes.
-    number.battery_max_discharge_power: 10
+    number.battery_max_discharge_power: "10"
 
 - name: Zero Export Power
   entities:
     switch.export_power_limit: "on"
-    number.export_power_limit: 0
+    number.export_power_limit: "0"
 
 - name: Max Export Power
   entities:
@@ -80,12 +98,24 @@ reload scenes (**Developer tools → YAML → Scenes**).
   entities:
     select.ems_mode: forced
     select.battery_forced_charge_discharge: discharge
+    # How hard to discharge, in watts. Without this the inverter reports
+    # forced mode and moves nothing, because the power is a separate setting
+    # and it is 0 from the factory. Set it to what you want; your battery's
+    # ceiling is the number's "max" attribute.
+    number.battery_forced_charge_discharge_power: "2000"
 
 - name: Battery Forced Charge
   entities:
     select.ems_mode: forced
     select.battery_forced_charge_discharge: charge
+    # As above: without a power the scene looks like it worked and charges
+    # nothing.
+    number.battery_forced_charge_discharge_power: "2000"
 ```
+
+**Forced mode does not end by itself.** The battery stays charging or
+discharging at that power until something sets it back -- use
+*Self-Consumption Mode* when you are done.
 
 ## The two automations
 

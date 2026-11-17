@@ -418,40 +418,21 @@ diagnosis-only entry; how it is handled beyond that is open.
     summary* first, and treat a run in flight as a reason to wait rather than
     something to press through.
 
-11. **`doc/scenes.md` is wrong in three ways, found by installing it**
-    (2026-11-17, the maintainer's SH10RT, dev instance on this tree). The page
-    is held to the descriptions by `tests/test_scenes_doc.py`, which checks
-    ids, options and ranges -- none of these three.
+11. **The new scenes, on hardware beyond the one press.** `doc/scenes.md`'s
+    three faults are fixed (2026-11-17): the newer entity ids are given as a
+    table rather than promised as "one substitution" -- three of them are
+    named differently, not just prefixed; every scene state is quoted, since
+    Home Assistant drops a whole scene whose state is a bare number, which
+    cost two of the seven on a real instance; and the two forced scenes now
+    carry a power, without which the inverter reports forced mode and moves
+    nothing. `tests/test_scenes_doc.py` holds all three to the descriptions.
 
-    1. **"One substitution" is false on new-style entity ids.** The page says
-       an install with the newer ids just adds the device name, "one
-       substitution, the same everywhere below". Three of its five ids are
-       renamed, not prefixed: `number.battery_max_discharge_power` is
-       `..._max_dischargi**ng**_power`, and `switch.export_power_limit` and
-       `number.export_power_limit` are `switch...feed_in_limit_mode` and
-       `number...feed_in_limit`. A reader following the page gets entities
-       that do not exist.
-    2. **Two of the seven scenes do not load at all.** *Zero Export Power* and
-       *Self-Consumption Mode (no battery discharge)* give a number's state
-       unquoted (`number...: 0`, `number...: 10`). Home Assistant 2026.11
-       rejects those as "State ... should be a string" and **drops the scene**,
-       leaving only a warning in the log: five of seven scene entities
-       appeared. The values need quoting.
-    3. **Battery Forced Charge moves no energy by itself.** It sets EMS mode
-       and the battery command, both selects, and the inverter does report
-       "Running in compulsory (forced) mode" -- but the charge *power* is a
-       separate number, and where it sits at 0 (its factory value, and what a
-       capability test's restore leaves) the battery stays at 0 W. Measured
-       flat for a minute before the power was set by hand. *Battery Forced
-       Discharge* has the same shape. This is exactly the "looks like it
-       worked" failure the page's own opening warns about.
-
-    What to decide: whether the scenes carry the power (a fixed watt figure a
-    scene can hold, or an automation reading the entity's `max` as the two
-    existing ones do), and whether the page should publish both id styles
-    rather than promise a substitution. `tests/test_scenes_doc.py` should grow
-    a check that every id in the page exists under both styles, and that a
-    number's state is quoted.
+    Left: the scenes other than *Battery Forced Charge* have still never been
+    activated on a device. *Zero Export Power* and *Max Export Power* need a
+    house that is exporting, so they wait for sun with a battery that is not
+    empty; *Battery Bypass* and *Battery Forced Discharge* need a battery with
+    something in it. None of them is urgent, and the forced-charge press
+    already proved the mechanism the rewrite was for.
 
 12. **The plausibility checks only observe while auto repeat is on.**
     `DiagnosisRunner.async_observe` is called from one place,
@@ -505,10 +486,23 @@ diagnosis-only entry; how it is handled beyond that is open.
     to established in `capability_test/ledger.py`, so a bound the device does
     **not** enforce is now marked settled and will never be asked again.
 
-    The fix: a clamp requires the stored value to be at or below the bound.
-    Otherwise the verdict is the "took and stored ..., above the maximum ...:
-    the bound is not enforced" one the other four registers got. Any ledger
-    carrying the wrong verdict needs that check cleared so it runs again.
+    **Fixed**: a clamp now requires the stored value to be at or below the
+    bound, and a register that merely rounded to its own step gets the "the
+    bound is not enforced" verdict the other four got
+    (`tests/test_capability_test_writepath.py::test_rounding_to_the_registers_step_is_not_a_clamp`).
+
+    **What is left is the stale verdict already in a ledger**, and it has no
+    cheap remedy. `DiagnosisRunner.async_clear_ledger` clears the capability
+    ledger **and** removes the plausibility store with it, so a user told to
+    clear history to re-ask one check loses every plausibility observation
+    too -- at the maintainer's that would be a day of polls and three settled
+    V x I checks. It is all or nothing, and the maintainer's own ledger still
+    carries `upper bound of battery_forced_charge_discharge_power` as
+    "the device clamped it" because clearing it is not worth that price.
+
+    To decide: whether clearing should be per check, or at least separate the
+    ledger from the plausibility store, so a wrong verdict can be retracted
+    without discarding observations that took days to gather.
 
 # Open decisions
 

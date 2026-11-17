@@ -250,6 +250,36 @@ async def test_a_bound_clamped_is_recorded(house: MockModbusUnit) -> None:
     assert row.verdict == CLAMPED
 
 
+async def test_rounding_to_the_registers_step_is_not_a_clamp(
+    house: MockModbusUnit,
+) -> None:
+    """A stored word below the written one, still above the bound, is no clamp.
+
+    Measured at a real house: `battery_forced_charge_discharge_power` was
+    written 7374 W and read back 7370 -- the register rounding to its own
+    10 W step -- against a maximum of 7274. The old rule made any readback
+    below the written word a clamp, so a bound the device does **not** enforce
+    was recorded as enforced; and `CLAMPED` counts as established, so the
+    check was never asked again and the real behaviour stayed invisible.
+
+    Only a stored value at or under the maximum is the device holding a line.
+    """
+
+    def round_down(event: Any) -> None:
+        if event.address == MAX_SOC and event.values[0] > 1000:
+            # Lower than written, and still above the 100 % maximum.
+            house.holding[MAX_SOC] = 1005
+
+    house.on_write(round_down)
+    run = await _run(house)
+    row = _by_check(await run._write_paths())[bound_check("battery_max_soc")]
+
+    assert row.verdict == NO_EFFECT
+    assert "not enforced" in row.detail
+    assert "rounded to its own step" in row.detail
+    assert house.holding[MAX_SOC] == 1000
+
+
 async def test_a_floor_is_raised_past_its_maximum_only_under_a_full_battery(
     house: MockModbusUnit,
 ) -> None:

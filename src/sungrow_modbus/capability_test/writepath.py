@@ -286,11 +286,33 @@ class WritePathSteps(EffectSteps):
                 )
             ]
         if raw is not None and raw < word:
+            # A word below the one written is not a clamp by itself. A register
+            # that rounds to its own step stores less than it was given and
+            # still lands above the maximum, and reporting that as a clamp
+            # records a bound the device does not enforce -- `CLAMPED` counts
+            # as established, so the check is never asked again. Only a stored
+            # value at or under the maximum is the device holding the line.
+            stored = raw * probe.spec_units_per_count
+            if stored <= high:
+                return [
+                    row(
+                        check,
+                        CLAMPED,
+                        f"took {value:g} {probe.unit} and stored "
+                        f"{stored:g} {probe.unit}, at or under the maximum "
+                        f"{high:g}",
+                        commanded=value,
+                        unit=probe.unit,
+                    )
+                ]
             return [
                 row(
                     check,
-                    CLAMPED,
-                    f"took {value:g} {probe.unit} and stored the word {raw}",
+                    NO_EFFECT,
+                    f"took {value:g} {probe.unit} and stored "
+                    f"{stored:g} {probe.unit}, still above the maximum "
+                    f"{high:g}: the bound is not enforced, the register only "
+                    "rounded to its own step",
                     commanded=value,
                     unit=probe.unit,
                 )

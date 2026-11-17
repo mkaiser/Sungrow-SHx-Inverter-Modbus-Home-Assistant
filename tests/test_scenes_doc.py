@@ -84,19 +84,81 @@ def test_every_value_is_one_the_entity_accepts(scene: dict[str, Any]) -> None:
     A select takes an option key; a switch takes on or off; a number takes a
     value inside its own range, where that range is fixed rather than read
     from the device (`native_max_value` 0 means the device decides).
+
+    **Every state here must be a string**, numbers included. Home Assistant
+    validates a scene's states as strings and **drops the whole scene** when
+    one is a bare number, leaving a warning in the log and no scene entity --
+    measured on 2026-11-17, where `number...: 0` and `number...: 10` cost two
+    of the seven scenes on a real instance. So the quoting is part of what
+    this page has to get right, not a style choice.
     """
     for entity_id, value in scene["entities"].items():
         description = BY_LEGACY_ID[entity_id]
         platform = entity_id.split(".", 1)[0]
+        assert isinstance(value, str), (
+            f"{entity_id}: {value!r} must be quoted, or Home Assistant drops "
+            "the whole scene"
+        )
         if platform == "select":
             assert value in description.options, f"{entity_id}: {value}"
         elif platform == "switch":
             assert value in ("on", "off"), f"{entity_id}: {value}"
         else:
-            assert isinstance(value, int | float), f"{entity_id}: {value}"
-            assert value >= description.native_min_value, f"{entity_id}: {value}"
+            number = float(value)
+            assert number >= description.native_min_value, f"{entity_id}: {value}"
             if description.native_max_value:
-                assert value <= description.native_max_value, f"{entity_id}: {value}"
+                assert number <= description.native_max_value, f"{entity_id}: {value}"
+
+
+def test_the_new_id_table_matches_what_the_integration_would_create() -> None:
+    """The page promises a mapping, and three of the names genuinely differ.
+
+    The newer entity ids follow the entity's **name**, not the YAML package's
+    variable, so `number.export_power_limit` becomes `..._feed_in_limit` and
+    the two battery power limits gain an "ing". The page used to say the
+    newer ids were the same name with the device in front, which sent a
+    reader looking for entities that do not exist -- and a scene naming one
+    is applied around it in silence.
+    """
+    import json
+
+    strings = json.loads(
+        (
+            Path(__file__).resolve().parents[1]
+            / "custom_components/sungrow_modbus/strings.json"
+        ).read_text()
+    )
+    expected: dict[str, str] = {}
+    for platform, table in (
+        ("select", SELECT_DESCRIPTIONS),
+        ("number", NUMBER_DESCRIPTIONS),
+        ("switch", SWITCH_DESCRIPTIONS),
+    ):
+        for description in table:
+            legacy = legacy_entity_id(platform, description)
+            name = (
+                strings.get("entity", {})
+                .get(platform, {})
+                .get(getattr(description, "translation_key", None), {})
+                .get("name")
+            )
+            if legacy and name:
+                expected[legacy] = f"{platform}.<device>_{slugify(name)}"
+
+    page = PAGE.read_text()
+    named = {entity for scene in _scenes() for entity in scene["entities"]}
+    for legacy in sorted(named):
+        row = [
+            line for line in page.splitlines() if line.startswith("| `" + legacy + "`")
+        ]
+        assert row, f"{legacy} is used in a scene but missing from the ID table"
+        # The table marks the changed parts with ** ** for the reader; compare
+        # on the bare text so the emphasis is free to move.
+        bare = row[0].replace("*", "")
+        assert expected[legacy] in bare, (
+            f"{legacy}: the table says {bare.strip()}, "
+            f"the integration creates {expected[legacy]}"
+        )
 
 
 def test_the_automations_fire_on_scenes_the_page_defines() -> None:
