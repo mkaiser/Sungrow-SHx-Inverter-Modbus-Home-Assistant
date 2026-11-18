@@ -1133,12 +1133,12 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-18T07:00:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-18T07:00:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-18T14:00:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-18T14:00:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-18 07:00 UTC**: four contributors on #786, seven
+Last checked: **2026-11-18 14:00 UTC**: four contributors on #786, seven
 documents ingested. **bigz2012** settled the PV cut on
 [P067](.wiki/wiki/entities/firmware-sunstone-h-b000-v002-p067.md) (3467 W,
 0 W, 3641 W) and their outcome 4 was discarded as the dongle echoing a
@@ -1156,6 +1156,16 @@ wallbox-only entry's diagnostics report never asked for its diagnosis
 document, so three downloads of it held two rows and nothing to read. Fixed
 in the same batch (`diagnostics.py`), with the test. **Worth asking that
 house again** -- it is still the second AC22E-01 item 5 wants.
+
+At 13:52 Korsberg reported, with a screenshot, that the capability test died
+on the first press: `Options.__init__() got an unexpected keyword argument
+'configured_battery_w'`. Not a diagnosis, so nothing to ingest -- a shipped
+defect, released as **0.1.0a44**. The preview channel mirrors the branch
+head against the *pinned* wheel, so one commit touching the library and the
+integration together broke part B for every preview user for a day.
+`check_pinned_library.py` now asks about constructor keywords as well, which
+is the only reason the next one gets caught; `make pin-check` had reported
+that pin clean.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
