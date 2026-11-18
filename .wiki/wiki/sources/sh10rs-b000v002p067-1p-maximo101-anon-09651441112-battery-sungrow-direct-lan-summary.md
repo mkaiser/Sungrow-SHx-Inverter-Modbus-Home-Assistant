@@ -50,9 +50,13 @@ Version 1 reads `SUNSTONE-H_01011.02.69` and version 2 `SUNSTONE-H_03021.01.16`,
 `.03021.01.15` on 2026-11-05 with the same inverter firmware string
 ([that reading](sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md)).
 So **both version strings moved under an unchanged P067** in the twelve days between the two
-readings, and the inverter firmware string alone does not identify what is running. Whether this
-machine was ever on `.02.67` is not on record -- it is its first reading -- so the pair may equally
-be what P067 shipped with here.
+readings, and the inverter firmware string alone does not identify what is running.
+[bigz2012](../entities/installation-bigz2012.md)'s SH10RS, read the same day in another part of
+the world, carries the same `.02.69` and `.01.16`
+([that reading](sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)),
+and that owner watched version 1 move from `.02.67` to `.02.69` on their own machine between
+2026-09-08 and 2026-10-18 with the inverter firmware string unchanged. So it is an update, not
+two production batches.
 
 ## The owner's route and the measurement disagree
 

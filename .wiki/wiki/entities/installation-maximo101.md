@@ -19,7 +19,8 @@ Stand-in `anon-09651441112`.
 
 - **Version 1 is `SUNSTONE-H_01011.02.69` and version 2 `SUNSTONE-H_03021.01.16`** under an
   unchanged `SUNSTONE-H_B000.V002.P067`, where the first P067 read had `.02.67` and `.01.15`
-  twelve days earlier.
+  twelve days earlier. [bigz2012](installation-bigz2012.md)'s SH10RS, read the same day on the
+  other side of the world, has the same newer pair.
 - **The owner's route and the measurement disagree.** They answer "the inverter's own LAN port,
   through a Modbus proxy", and 6100 is refused with a WiNet-S2 firmware string reading: the proxy
   stands in front of the dongle, not the inverter's own port.

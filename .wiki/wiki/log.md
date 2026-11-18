@@ -1628,3 +1628,43 @@ What changed:
 - **`entities/register-13023.md`** gains what a battery-less slave answers: 0xFFFF on P023, 0 here.
 - **`queries/is-battery-power-firmware-dependent.md`** gains the S32 sentinel and a real BYD pack
   answering 5214, which bears on #770.
+
+## [2026-11-18] ingested | bigz2012's SH10RS: the PV cut works on P067 (#786)
+
+A read-only run after dark on 2026-11-16 with a **daylight capability test merged into the same
+document** on 2026-11-17, through a wired WiNet-S2, the inverter restart deliberately left out --
+the owner has servers on the backup circuit
+([the reading](sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)).
+
+**[Register 31211](entities/register-31211.md) cuts PV on
+[P067](entities/firmware-sunstone-h-b000-v002-p067.md)**: 3467 W before, 0 W during, 3641 W
+after, `established: true`. The behavioural leg is the whole evidence through a dongle, and it is
+the kind a dongle cannot spoil. `CONFIRMED_ON_FIRMWARE` gains the firmware, so the switch now
+ships on P065 and P067 (`src/sungrow_modbus/hybrid_inverter/capabilities.py`).
+
+**The run's outcome 4 is not a device finding**, and the owner's reading of it is right: 13074 was
+written divided by ten because the scale could not be asked with feed-in limitation off, and the
+60 that came back is the dongle's cache echoing the word it forwarded. The write scale on P067 is
+unmeasured, not wrong. That **narrows the P071 lead** at
+[ra1k-0](entities/installation-ra1k-0.md), where the same pattern was kept open as possible
+evidence of a 1:1 firmware: two dongles on two firmware families now produce it, which a cache
+explains and "the register took it" does not.
+
+**The dongle's mDNS record names both SBR224**, `battery1` at units 2 and 200 and `battery2` at
+**3 and 201**, each with its own serial. Unit 3 behind a dongle is a
+[wallbox](entities/device-wallbox.md) at every other house measured -- here it is a battery, which
+is why devices are identified by
+[what answers](concepts/identify-by-what-answers.md). The first real reverse-DNS label in the
+corpus comes with it: **`espressif`**, not a Sungrow name.
+
+What changed:
+
+- **`entities/installation-bigz2012.md`** is new.
+- **`entities/firmware-sunstone-h-b000-v002-p067.md`** leads with the confirmed cut, and carries
+  the 13974 W battery ceiling and the absent start-power registers.
+- **`entities/register-31211.md`**, **`entities/device-sh-rs.md`**: P067 in the table and in the
+  confirmed list.
+- **`entities/register-13074.md`**: the second echoed word, and what it does to the P071 lead.
+- **`entities/device-sbr-battery.md`** gains "a second pack has units of its own".
+- **`queries/does-a-winet-s-advertise-over-mdns.md`** gains the WiNet-S2's record and the label.
+- **`device-diagnosis/devices-wanted.md`**: item 8 drops P067.

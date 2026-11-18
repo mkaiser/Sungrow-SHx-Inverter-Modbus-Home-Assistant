@@ -7,8 +7,8 @@ created: '2026-10-31'
 
 # SH-RS hybrid inverters
 
-The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Eight diagnoses in
-the corpus, six through a [WiNet-S](device-winet-s.md): an anonymous
+The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Nine diagnoses in
+the corpus, seven through a [WiNet-S](device-winet-s.md): an anonymous
 [SH10RS](../sources/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md) on
 [`SUNSTONE-H_B000.V002.P059`](firmware-sunstone-h-b000-v002-p059.md) with an SBR, an
 [SH6.0RS](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)
@@ -23,7 +23,9 @@ on [`SUNSTONE-H_B000.V002.P065`](firmware-sunstone-h-b000-v002-p065.md) with an
 [`SUNSTONE-H_B000.V002.P067`](firmware-sunstone-h-b000-v002-p067.md) with two SBR224, and
 [Maximo101](installation-maximo101.md)'s
 [SH10RS](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)
-on the same firmware with two SBR192. And
+on the same firmware with two SBR192, and [bigz2012](installation-bigz2012.md)'s
+[SH10RS](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)
+on the same firmware again with two SBR224 and the PV cut confirmed. And
 [icefest](installation-icefest.md)'s SH6.0RS on
 [`SUNSTONE-H_B000.V001.P066`](firmware-sunstone-h-b000-v001-p066.md) with an SBR192, read twice
 in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md) and
@@ -35,11 +37,19 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
   battery firmware, sub-controller and history included, as on an SH-RT's cable.
 - [31211](register-31211.md) answers 0x55; the forced-charging schedule and the discharge
   schedules answer with the SH-RT's layout.
-- Version 1 reads `SUNSTONE-H_01011.03.68` on P068, `SUNSTONE-H_01011.03.66` on P066, `SUNSTONE-H_01011.02.67` on P067 and `SUNSTONE-H_01011.02.65` on P065 and `SUNSTONE-H_01011.02.61` on P059: its own series, like the T's `PEARL-H_01011.01.45`
+- Version 1 reads `SUNSTONE-H_01011.03.68` on P068, `SUNSTONE-H_01011.03.66` on P066,
+  `SUNSTONE-H_01011.02.67` and then `SUNSTONE-H_01011.02.69` on P067 -- it moved under an
+  unchanged firmware string, see [P067](firmware-sunstone-h-b000-v002-p067.md) -- and
+  `SUNSTONE-H_01011.02.65` on P065 and `SUNSTONE-H_01011.02.61` on P059: its own series, like the T's `PEARL-H_01011.01.45`
   (see [SH-T](device-sh-t.md)), never compared numerically with SH-RT's `.95.xx`.
-- **Two capability tests**, both through the dongle. On P065 the PV cut did as it was told (3465 W,
-  0 W, 3092 W) and the stop was refused with an exception. On P057 the restart took 4 s to stop
-  and 291 s to run again; the forced checks moved the battery but the house moved more.
+- **Three capability tests**, all through the dongle. On P065 the PV cut did as it was told
+  (3465 W, 0 W, 3092 W) and the stop was refused with an exception. On
+  [P067](firmware-sunstone-h-b000-v002-p067.md) it did as well, at
+  [bigz2012](installation-bigz2012.md)'s (3467 W, 0 W, 3641 W), with the forced charge and
+  discharge acting beside it (1234 W and 1256 W against 1250 W). On P057 the restart took 4 s to
+  stop and 291 s to run again; the forced checks moved the battery but the house moved more.
+- **Neither start-power register answers on any SH-RS**: 33149 and 33150 are absent, which is
+  what #743 concluded and what the P067 capability test states outright.
 - [13074](register-13074.md) **stores a written word as handed** on P065, P057 and P066.
 - **[Register 32998](register-32998.md) limits grid import**, at 0.01 kW, on Jam3s97's SH10RS by
   the owner's meter trace; every SH-RS diagnosed reads 1300 (13.00 kW).

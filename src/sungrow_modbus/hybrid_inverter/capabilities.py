@@ -548,12 +548,17 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # ra1k_0's SH20T through a WiNet-S, 2026-11-01: 20421 W before, 28 W
     # during, 20395 W after; the behavioural leg again.
     #   sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json
+    # bigz2012's SH10RS through a WiNet-S2, 2026-11-17: 3467 W before, 0 W
+    # during, 3641 W after. The dongle's readback is a stale cache there, so
+    # the behavioural leg is the whole evidence -- which is what it is for.
+    #   sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan.json
     Capability.PV_GENERATION_CUT_CONTROL: frozenset(
         {
             "PEARL-H_B000.V000.P071",
             "SAPPHIRE-H_B001.V000.P022",
             "SAPPHIRE-H_B001.V000.P023",
             "SUNSTONE-H_B000.V002.P065",
+            "SUNSTONE-H_B000.V002.P067",
         }
     ),
     # Watched at bar12 (SH10RT-20, P023), over the cable and through a

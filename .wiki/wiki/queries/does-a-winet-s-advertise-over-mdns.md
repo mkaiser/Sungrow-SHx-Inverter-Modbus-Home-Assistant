@@ -4,7 +4,7 @@ title: Does a WiNet-S advertise over mDNS, and can discovery start there?
 tags: [winet-s, wallbox, mdns, discovery]
 created: '2026-11-11'
 query: Does a WiNet-S, and a wallbox at its own address, advertise itself over multicast mDNS, on every firmware, with the TXT record measured at gerd?
-results_count: 5
+results_count: 7
 ---
 
 # Does a WiNet-S advertise over mDNS, and can discovery start there?
@@ -38,6 +38,21 @@ Home Assistant's own zeroconf, browsing `_http._tcp` for 2 s, heard the WiNet-S 
 inverter, `WiNet-WebServer`, with a TXT record in gerd's layout (`board`, `inverter` with the
 same trailing `1;4`), on `WINET-SV200.001.00.P045`
 ([twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)).
+
+**A WiNet-S2 answers a multicast browse too, and its record names more.** At
+[bigz2012](../entities/installation-bigz2012.md), on `WINET-SV300.001.03.P032`, a 5-second browse
+from a machine on the inverter's own subnet heard one `_http._tcp` service -- the dongle's -- with
+**two battery fields**, `battery1=2;200;...;SBR224;` and `battery2=3;201;...;SBR224;`, beside the
+inverter and the board
+([the reading](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)).
+So the layout extends to a second pack with units of its own, and the record is where a house's
+**per-pack serials** are legible at all. Its `inverter` field ends `1;3` where the two SH-RTs
+measured end `1;4`, on a machine with four trackers, so that field is not the tracker count.
+
+**The first real reverse-DNS label is `espressif`**, the same dongle's. peter-sm's was masked in
+its document, so nothing was known of the shape before. A matcher keyed on "sungrow" in a hostname
+would miss a WiNet-S2 entirely; the MAC prefix `AC:19:9F` is what the integration keys on, and it
+is what that dongle reports too.
 
 Still open:
 

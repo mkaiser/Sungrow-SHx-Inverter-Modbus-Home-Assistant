@@ -19,7 +19,7 @@ details are under [Why each one](#why-each-one).
 | 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
-| 8 | **An SH-RS on `SUNSTONE-H` P057, P059, P066, P067 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all five, and has been watched cutting on P065 only |
+| 8 | **An SH-RS on `SUNSTONE-H` P057, P059, P066 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all four, and has been watched cutting on P065 and P067 only |
 | 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 | 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
@@ -145,12 +145,13 @@ not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
 10 kW. A 5 kW SH5.0RT-V112 on `.95.14` has answered the probe with a refusal, which both
 readings give: a capability test on one, with limitation on, settles it.
 
-### 8. An SH-RS on P057, P059, P066, P067 or P068
+### 8. An SH-RS on P057, P059, P066 or P068
 
-Register 31211, the PV cut, answers on all five, and has been watched cutting
-on P065 only, so the integration offers the switch on P065 only
+Register 31211, the PV cut, answers on all four, and has been watched cutting
+on P065 and P067, so the integration offers the switch on those two
 ([register 31211](../.wiki/wiki/entities/register-31211.md)). A capability test
-in daylight, with the PV cut allowed, watches it on one more.
+in daylight, with the PV cut allowed, watches it on one more. P067 was settled
+on 2026-11-17 through a WiNet-S2: 3467 W before, 0 W during, 3641 W after.
 
 ### 9. An SG string inverter other than an SG5.0RS or SG10RT
 

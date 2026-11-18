@@ -35,6 +35,18 @@ probe, not a family rule, is what keeps an RS right.
 **Only while feed-in limitation (13087) is on.** With it off, the register
 ignores writes on B001: no exception, no change. That is most houses.
 
+**A second dongle echoes a forwarded word, which weakens the P071 lead.** At
+[bigz2012](installation-bigz2012.md)'s SH10RS on
+[P067](firmware-sunstone-h-b000-v002-p067.md) the capability test wrote word 60 for 600 W with
+feed-in limitation off, and the WiNet-S2 reported 60 back -- the same pattern that was kept open
+below as possible evidence that P071 stores the word as handed
+([the diagnosis](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)).
+Two dongles, two firmware families, one behaviour: a cache answering with the word it forwarded
+explains both, where "the register took it" would have to be true of both firmwares at once. The
+P071 lead stays open and the dongle is now the better explanation of it. On P067 itself the write
+scale is **unmeasured**: the owner reports 1:1 in watts, which is a report, and a probe needs the
+mode on.
+
 **SH-T on [P071](firmware-pearl-h-b000-v000-p071.md): not determined.** At
 [ra1k-0](installation-ra1k-0.md) the register held 20000 W, its maximum, and
 ten times that wraps to 3392 W in sixteen bits, inside the bounds, so the
