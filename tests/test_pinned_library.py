@@ -230,3 +230,61 @@ def test_the_tree_s_own_classes_have_every_member_it_uses(tmp_path):
     }
 
     assert check.unresolved_class_members(_wheel(tmp_path, modules)) == {}
+
+
+def test_a_constructor_keyword_the_wheel_lacks_is_reported(tmp_path):
+    """`Options(configured_battery_w=...)` against a wheel whose dataclass predates it.
+
+    The real one, #786 on 2026-11-18: the field and its use landed in one
+    commit, the pin still named the release before it, every import resolved,
+    and the capability test died on the first press. A field the wheel does
+    have, and one it inherits, are not reported.
+    """
+    procedure = (
+        "from dataclasses import dataclass\n"
+        "@dataclass\n"
+        "class Base:\n"
+        "    allow_dark: bool = False\n"
+        "@dataclass\n"
+        "class Options(Base):\n"
+        "    restart: bool = False\n"
+    )
+    missing = check.unresolved_keywords(
+        _wheel(tmp_path, {"sungrow_modbus.capability_test.procedure": procedure})
+    )
+
+    assert "Options(... configured_battery_w=...)" in missing
+    assert "Options(... restart=...)" not in missing
+    assert "Options(... allow_dark=...)" not in missing, "inherited from a base"
+    assert all(":" in where for where in missing.values()), "each names a source line"
+
+
+def test_a_class_taking_kwargs_is_never_reported(tmp_path):
+    """Anything goes into `**kwargs`, so a keyword there proves nothing.
+
+    A gate that cries wolf gets switched off, which is the rule the whole
+    script is written to.
+    """
+    source = (
+        "class Options:\n"
+        "    def __init__(self, **kwargs):\n"
+        "        self.kwargs = kwargs\n"
+    )
+    missing = check.unresolved_keywords(
+        _wheel(tmp_path, {"sungrow_modbus.capability_test.procedure": source})
+    )
+
+    assert missing == {}
+
+
+def test_the_tree_s_own_constructors_take_every_keyword_it_passes(tmp_path):
+    """No false alarms on a consistent tree, which is what CI gates on."""
+    root = Path(__file__).resolve().parents[1] / "src"
+    modules = {
+        ".".join(path.relative_to(root).with_suffix("").parts).removesuffix(
+            ".__init__"
+        ): path.read_text(encoding="utf-8")
+        for path in (root / "sungrow_modbus").rglob("*.py")
+    }
+
+    assert check.unresolved_keywords(_wheel(tmp_path, modules)) == {}

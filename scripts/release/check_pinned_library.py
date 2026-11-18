@@ -351,6 +351,103 @@ def unresolved_class_members(wheel: Path) -> dict[str, str]:
     return missing
 
 
+def class_parameters(wheel: Path) -> tuple[dict[str, set[str]], set[str]]:
+    """Per class the wheel defines, the keywords its constructor accepts.
+
+    Two sources, because the library uses both: a dataclass declares its
+    fields as annotated class-level names, and a hand-written `__init__`
+    declares parameters. Bases are followed by name within the wheel, so a
+    subclass of a dataclass inherits its fields.
+
+    The second return is the classes that take `**kwargs`, which accept any
+    keyword and must therefore never be reported.
+    """
+    fields: dict[str, set[str]] = {}
+    bases: dict[str, list[str]] = {}
+    open_ended: set[str] = set()
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.namelist():
+            if not (member.endswith(".py") and member.split("/")[0] == LIBRARY):
+                continue
+            tree = ast.parse(archive.read(member).decode("utf-8"), filename=member)
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                names = fields.setdefault(node.name, set())
+                for item in node.body:
+                    if isinstance(item, ast.AnnAssign) and isinstance(
+                        item.target, ast.Name
+                    ):
+                        names.add(item.target.id)
+                    elif isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                        names.update(
+                            arg.arg
+                            for arg in [*item.args.args, *item.args.kwonlyargs]
+                            if arg.arg != "self"
+                        )
+                        if item.args.kwarg is not None:
+                            open_ended.add(node.name)
+                bases.setdefault(node.name, []).extend(
+                    base.id for base in node.bases if isinstance(base, ast.Name)
+                )
+
+    def resolve(name: str, seen: frozenset[str] = frozenset()) -> set[str]:
+        found = set(fields.get(name, set()))
+        for base in bases.get(name, []):
+            if base in open_ended:
+                open_ended.add(name)
+            if base not in seen:
+                found |= resolve(base, seen | {name})
+        return found
+
+    return {name: resolve(name) for name in fields}, open_ended
+
+
+def unresolved_keywords(wheel: Path) -> dict[str, str]:
+    """`Class(keyword=...)` calls whose keyword the wheel's class does not take.
+
+    The fourth half, and the one that cost a day. `Options` gained
+    `configured_battery_w` and the integration started passing it in the same
+    commit; the pin still named the release before it, every import resolved,
+    and the capability test died on the first press with
+    `TypeError: Options.__init__() got an unexpected keyword argument`
+    (#786, Korsberg, 2026-11-18).
+
+    Nothing earlier here could see it: a keyword is not an import, not an
+    attribute read off a device, and not an UPPER_CASE class member.
+
+    As conservative as its neighbours. Only a class imported by name from the
+    library is asked about, a class taking `**kwargs` is never reported, and
+    a call this cannot resolve is left alone.
+    """
+    parameters, open_ended = class_parameters(wheel)
+    missing: dict[str, str] = {}
+    for path in sources():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        classes: dict[str, str] = {}
+        for node in tree.body:
+            if isinstance(node, ast.ImportFrom) and (
+                (node.module or "") == LIBRARY
+                or (node.module or "").startswith(f"{LIBRARY}.")
+            ):
+                for alias in node.names:
+                    if alias.name in parameters:
+                        classes[alias.asname or alias.name] = alias.name
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                continue
+            name = classes.get(node.func.id)
+            if name is None or name in open_ended:
+                continue
+            for keyword in node.keywords:
+                if keyword.arg is None:  # **mapping: any keyword, unknowable
+                    continue
+                if keyword.arg not in parameters[name]:
+                    key = f"{name}(... {keyword.arg}=...)"
+                    missing.setdefault(key, f"{path.name}:{node.lineno}")
+    return missing
+
+
 def download(version: str, into: Path) -> Path:
     """Fetch the wheel for one published version. Raises on anything unclear."""
     url = PYPI.format(name=DISTRIBUTION, version=version)
@@ -409,6 +506,10 @@ def report(wheel: Path, label: str) -> int:
     gaps += [
         f"{member} is not in this wheel (used at {where})"
         for member, where in sorted(unresolved_class_members(wheel).items())
+    ]
+    gaps += [
+        f"this wheel's {call} takes no such keyword (passed at {where})"
+        for call, where in sorted(unresolved_keywords(wheel).items())
     ]
 
     print(f"imports      {len(wanted)} library modules, integration and scripts")
