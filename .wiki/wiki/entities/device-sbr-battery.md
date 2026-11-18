@@ -34,6 +34,18 @@ datasheet's conservative power for that model (`battery/power.py`) instead of
 BMS current times voltage. The integration and the capability test grant it the
 same way. An [SBH](device-sbh-battery.md) is not granted yet.
 
+## Two packs read as one capacity
+
+Register 5639 reports the **sum of the packs**, while the voltage is one stack's. Two houses with
+two packs each show it: [brendan](installation-brendan.md)'s two SBR224 read 44.8 kWh, exactly
+2 x 22.4
+([the reading](../sources/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md)),
+and [Maximo101](installation-maximo101.md)'s two SBR192 read **38.6 kWh** against 2 x 19.2 = 38.4
+([the reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)).
+The 0.2 kWh over is unexplained and small enough to be the pack's own accounting rather than the
+model's nameplate. This is what makes 5639 an unreliable way to name a model where two packs are
+fitted: the sum of two can land on another model's figure.
+
 ## Its state of charge and the inverter's battery level
 
 The pack's own state of charge is the absolute charge iSolarCloud shows. The inverter's battery

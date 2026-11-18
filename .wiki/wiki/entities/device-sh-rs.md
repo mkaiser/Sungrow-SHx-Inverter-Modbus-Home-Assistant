@@ -7,8 +7,8 @@ created: '2026-10-31'
 
 # SH-RS hybrid inverters
 
-The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Seven diagnoses in
-the corpus, five through a [WiNet-S](device-winet-s.md): an anonymous
+The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Eight diagnoses in
+the corpus, six through a [WiNet-S](device-winet-s.md): an anonymous
 [SH10RS](../sources/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md) on
 [`SUNSTONE-H_B000.V002.P059`](firmware-sunstone-h-b000-v002-p059.md) with an SBR, an
 [SH6.0RS](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)
@@ -20,7 +20,10 @@ on [`SUNSTONE-H_B000.V002.P065`](firmware-sunstone-h-b000-v002-p065.md) with an
 [SH10RS](../sources/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan-summary.md) on
 [`SUNSTONE-H_B000.V002.P057`](firmware-sunstone-h-b000-v002-p057.md) with an SBH250, and [brendan](installation-brendan.md)'s
 [SH10RS](../sources/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md) on
-[`SUNSTONE-H_B000.V002.P067`](firmware-sunstone-h-b000-v002-p067.md) with two SBR224. And
+[`SUNSTONE-H_B000.V002.P067`](firmware-sunstone-h-b000-v002-p067.md) with two SBR224, and
+[Maximo101](installation-maximo101.md)'s
+[SH10RS](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)
+on the same firmware with two SBR192. And
 [icefest](installation-icefest.md)'s SH6.0RS on
 [`SUNSTONE-H_B000.V001.P066`](firmware-sunstone-h-b000-v001-p066.md) with an SBR192, read twice
 in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md) and
@@ -40,6 +43,15 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
 - [13074](register-13074.md) **stores a written word as handed** on P065, P057 and P066.
 - **[Register 32998](register-32998.md) limits grid import**, at 0.01 kW, on Jam3s97's SH10RS by
   the owner's meter trace; every SH-RS diagnosed reads 1300 (13.00 kW).
+- **13250 answers on every SH-RS read**, so the firmware strings are available here, against
+  V1.1.16's remark that SH3.0-10RS does not support 13250-13369. The model table keeps
+  `FIRMWARE_VERSIONS` in the RS family's absent set and the probe overrides it on every machine
+  ([Maximo101](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)
+  names the override; every SH-RS source page above reads the strings).
+- **The SH8RS and SH10RS have four MPPTs**, and all four answer. The table excludes the RS family
+  from `MPPT4`'s absent set for that reason but leaves it in `MPPT3`'s, which the probe then
+  overrides. It costs nothing -- a probed capability survives the table -- and an SH3.0-6RS with
+  two trackers is still right by the table.
 - **On P066 the forced-charging window cannot be written**: its days word, holding 33209,
   refuses with 0x04 over RS485 and through the dongle alike. A restart there: 2 s to stop,
   150-165 s to run.

@@ -1565,3 +1565,31 @@ What changed:
   for the first time since the third reading (the house had held `battery_max_charge_power` at
   10 W), an eleventh and twelfth link drop on 33213, a third on EMS mode 3, and restarts ten and
   eleven, both back at 271 s.
+
+## [2026-11-18] ingested | Maximo101's SH10RS on P067, with an iHomeManager and an AC22E-01 (#786)
+
+A read-only diagnostics download from an Australian house with an
+[SH10RS](entities/device-sh-rs.md) on [P067](entities/firmware-sunstone-h-b000-v002-p067.md), two
+[SBR192](entities/device-sbr-battery.md), an [iHomeManager](entities/device-ihomemanager.md) and an
+AC22E-01 [wallbox](entities/device-wallbox.md) on its own entry
+([the reading](sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)).
+Six downloads were posted, three pairs of the same entry seconds apart; all six agree on what they
+establish, so the one taken after the owner answered the diagnosis's questions is committed.
+
+**Version 1 and version 2 moved under an unchanged P067**: `.02.69` and `.03021.01.16` here
+against `.02.67` and `.01.15` at the first P067 reading twelve days before. The inverter firmware
+string alone does not say what an SH-RS is running.
+
+What changed:
+
+- **`entities/firmware-sunstone-h-b000-v002-p067.md`** leads with the moving versions.
+- **`entities/device-sh-rs.md`** gains two standing overrides of the family table: 13250 answers on
+  every SH-RS read, against V1.1.16's remark, and the SH8/10RS's four MPPTs answer although `MPPT3`
+  lists the RS family absent. The probe keeps both, so nothing is lost.
+- **`entities/device-sbr-battery.md`** gains "two packs read as one capacity", now measured at two
+  houses: 44.8 kWh for two SBR224 and 38.6 kWh for two SBR192.
+- **`entities/installation-maximo101.md`** is new.
+
+Left open: the house's AC22E-01 could not be ingested. A **wallbox-only entry's diagnostics report
+carries no `diagnosis` section** although the entry runs one -- `diagnostics.py` returns its entry
+and device rows and stops -- so three downloads of it hold nothing to read. Noted in `Todo.md`.
