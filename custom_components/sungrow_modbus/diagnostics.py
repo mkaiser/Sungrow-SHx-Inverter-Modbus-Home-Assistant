@@ -123,6 +123,16 @@ async def async_get_config_entry_diagnostics(
                 },
                 TO_REDACT,
             ),
+            # The last diagnosis's document, already masked for publishing --
+            # the wallbox's own read, and its capability test where one ran
+            # (`wallbox_diagnosis.WallboxDiagnosisRunner`). Without it a
+            # wallbox entry's download holds two rows and nothing to read,
+            # which is what three downloads of an AC22E-01 came to in #786,
+            # and the run's own notification points here once its link has
+            # lapsed.
+            "diagnosis": getattr(
+                getattr(runtime.diagnosis, "state", None), "document", None
+            ),
         }
     if runtime.is_string_inverter:
         return await _async_string_inverter_diagnostics(hass, entry)

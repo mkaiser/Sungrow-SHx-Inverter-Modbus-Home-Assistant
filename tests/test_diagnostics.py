@@ -30,6 +30,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
 from .conftest import SERIAL
+from .test_wallbox_entry import WALLBOX_SERIAL, _setup as _setup_wallbox
 
 ENTRY_DATA = {
     CONF_HOST: "192.168.1.50",
@@ -231,3 +232,30 @@ async def test_the_capability_test_is_carried_into_the_diagnosis(
     report = await async_get_config_entry_diagnostics(hass, entry)
 
     assert report["diagnosis"]["capability_test"] == block
+
+
+async def test_a_wallbox_entry_carries_its_diagnosis_too(hass: HomeAssistant) -> None:
+    """A wallbox at its own address has a diagnosis, and the download holds it.
+
+    Its entry has *Diagnosis: start*, a capability test of its own and a
+    notification that says to use Download diagnostics once the run's own link
+    has lapsed (`wallbox_diagnosis.WallboxDiagnosisRunner`). Before this, the
+    report held the entry and device rows and stopped there: three downloads
+    of an AC22E-01 in #786 carried nothing to read, and that wallbox is still
+    unmeasured.
+    """
+    entry = await _setup_wallbox(hass)
+    report = await async_get_config_entry_diagnostics(hass, entry)
+
+    # Nothing has run yet, which is not the same as a section that is missing.
+    assert report["diagnosis"] is None
+    assert report["device"]["serial_number"] != WALLBOX_SERIAL
+
+    document = {"document": "wallbox", "readings": {"values": {"model": "AC22E-01"}}}
+    entry.runtime_data.diagnosis._set(
+        document=document,
+        finished=datetime(2026, 11, 18, 9, 0, tzinfo=UTC),
+    )
+    report = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert report["diagnosis"] == document

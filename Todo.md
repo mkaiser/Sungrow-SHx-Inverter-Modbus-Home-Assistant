@@ -1133,19 +1133,29 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-16T10:00:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-16T10:00:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-18T07:00:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-18T07:00:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-16 10:00 UTC**: #786 brought the retry that was
-asked for -- a diagnostics download with an **AC011E-01 at unit 4 behind a
-WiNet-S**, ingested, anonymous in the document and so unnamed. It is the
-third wallbox read and the first that is not an AC22E-01: it answers which
-unit a WiNet-S gives a wallbox (not always 3) and confirms 21203 at 0.1 A
-per count on the model whose other map reads it as 0.01 A. It carries none
-of blocker 15's three masked blocks. Only the general diagnosis thread was
-read, by the comment the maintainer named; the issue sweep was not run.
+Last checked: **2026-11-18 07:00 UTC**: four contributors on #786, seven
+documents ingested. **bigz2012** settled the PV cut on
+[P067](.wiki/wiki/entities/firmware-sunstone-h-b000-v002-p067.md) (3467 W,
+0 W, 3641 W) and their outcome 4 was discarded as the dongle echoing a
+forwarded word, which narrows the P071 lead on
+[13074](.wiki/wiki/entities/register-13074.md). **swo14** gave the second
+master/slave cluster, both SH10RT-20 on `01011.95.03`: 13074 is 1:1 there on
+a second model, 5214 answers `0x7FFFFFFF` with no battery (now declared),
+and 32998 did not hold. **Korsberg** (peter_sm) brought the site import
+limit holding twice on an SH10RT-V112, the model of the one report against
+it. **Maximo101** showed version 1 moving under an unchanged P067. Both
+issue sweep and thread were read.
+
+Their AC22E-01 could not be ingested, and the reason was a defect: a
+wallbox-only entry's diagnostics report never asked for its diagnosis
+document, so three downloads of it held two rows and nothing to read. Fixed
+in the same batch (`diagnostics.py`), with the test. **Worth asking that
+house again** -- it is still the second AC22E-01 item 5 wants.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
