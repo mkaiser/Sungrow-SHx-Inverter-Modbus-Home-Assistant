@@ -452,6 +452,11 @@ capacity register (5639) matches. A cell is the diagnosis's own decoded
 reading of the pack: a component the pack refused with an exception is
 absent, one lost to the link is untested.
 
+A firmware written `22011.01.30+44` is one whose string carries
+bytes **after** its terminating NUL, which several packs do. Those bytes
+are part of the reading, so such a column is not the same column as the
+string without them.
+
 ### What the diagnoses say so far
 
 **No cell is split.** Wherever two pack models on one firmware were both
@@ -461,26 +466,26 @@ it is tested only where a column pools more than one of the pack models.
 
 What moves between firmware versions of one platform, over one kind of link:
 
-- **SBHBCU-S, dongle** (22011.04.07, 22011.04.08 32, 22011.04.09, 22011.04.11): nothing differs.
+- **SBHBCU-S, dongle** (22011.04.07, 22011.04.08+32, 22011.04.09, 22011.04.11): nothing differs.
 - **SBRBCU-S, direct** (22011.01.21, 22011.01.27, 22011.01.30): nothing differs.
-- **SBRBCU-S, dongle** (22011.01.21, 22011.01.27, 22011.01.27 24, 22011.01.30, 22011.01.30 44): nothing differs.
+- **SBRBCU-S, dongle** (22011.01.21, 22011.01.27, 22011.01.27+24, 22011.01.30, 22011.01.30+44): nothing differs.
 
 ### Columns
 
 | Column | Platform | Firmware | Link | Models | Diagnoses |
 | --- | --- | --- | --- | --- | --- |
 | B1 | SBHBCU-S | 22011.04.07 | unit 2 (dongle) | 25.34 kWh, no single model | 1 |
-| B2 | SBHBCU-S | 22011.04.08 32 | unit 2 (dongle) | SBH300 | 1 |
+| B2 | SBHBCU-S | 22011.04.08+32 | unit 2 (dongle) | SBH300 | 1 |
 | B3 | SBHBCU-S | 22011.04.09 | unit 2 (dongle) | SBH100 | 1 |
 | B4 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 6 |
 | B5 | SBRBCU-S | 22011.01.21 | unit 200 (cable) | SBR096 | 1 |
 | B6 | SBRBCU-S | 22011.01.21 | unit 2 (dongle) | SBR096 | 1 |
 | B7 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |
 | B8 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
-| B9 | SBRBCU-S | 22011.01.27 24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
+| B9 | SBRBCU-S | 22011.01.27+24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
 | B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 34 |
 | B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 38.6 kWh, no single model, 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 11 |
-| B12 | SBRBCU-S | 22011.01.30 44 | unit 2 (dongle) | SBR192 | 1 |
+| B12 | SBRBCU-S | 22011.01.30+44 | unit 2 (dongle) | SBR192 | 1 |
 
 Left out, with a battery firmware but no pack reading, or no battery firmware:
 

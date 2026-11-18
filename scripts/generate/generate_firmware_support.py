@@ -317,6 +317,28 @@ def _written(document: dict, dongle: bool) -> frozenset[str]:
     )
 
 
+#: What a NUL and the bytes after it become in a column label.
+#:
+#: An SBR's BCU string at 13280 can carry bytes **after** its terminating NUL
+#: -- measured on `SUNSTONE-H` P065 and P067, and on three pack firmwares here
+#: -- and those bytes are part of the reading: two packs whose strings differ
+#: only there are two columns, not one. Written through verbatim they put raw
+#: NULs in this page, which makes it a binary file to `grep` and renders as
+#: `22011.04.0832` wherever Markdown is shown. So the NUL is printed, the
+#: label stays unique, and the suffix stays visible as what it is.
+TRAILING = "+"
+
+
+def printable(version: str) -> str:
+    """Return a firmware string safe to put in a Markdown table.
+
+    Only the NUL is replaced: everything else in these strings is ASCII that
+    a table can hold, and replacing more would merge two readings that the
+    device kept apart.
+    """
+    return version.replace("\x00", TRAILING)
+
+
 def _readings() -> tuple[list[Reading], list[str]]:
     """Return every diagnosis that can be placed, and the labels of the rest."""
     readings: list[Reading] = []
@@ -326,6 +348,7 @@ def _readings() -> tuple[list[Reading], list[str]]:
         dongle = _dongle(document)
         firmware = _firmware(document, dump)
         platform, _, version = firmware.partition("_")
+        version = printable(version)
         if not dump.get("input") or dongle is None or not version:
             skipped.append(label)
             continue
@@ -634,6 +657,7 @@ def _pack_readings() -> tuple[list[PackReading], list[str]]:
         if not pack and not firmware:
             continue
         platform, _, version = firmware.partition("_")
+        version = printable(version)
         unit = pack.get("unit")
         if not pack or not version or unit not in (2, 200):
             skipped.append(label)
@@ -1072,6 +1096,11 @@ def render() -> str:
         "capacity register (5639) matches. A cell is the diagnosis's own decoded",
         "reading of the pack: a component the pack refused with an exception is",
         "absent, one lost to the link is untested.",
+        "",
+        f"A firmware written `22011.01.30{TRAILING}44` is one whose string carries",
+        "bytes **after** its terminating NUL, which several packs do. Those bytes",
+        "are part of the reading, so such a column is not the same column as the",
+        "string without them.",
         "",
         *_summary(list(pack_columns), pack_matrix, "pack models"),
         "",

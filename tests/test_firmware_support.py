@@ -42,6 +42,7 @@ from generate_firmware_support import (
     _silent,
     _tally,
     _written,
+    printable,
 )
 
 from sungrow_modbus import Capability
@@ -317,3 +318,36 @@ def test_13074_writes_x10_on_b001_and_as_handed_on_the_older_firmware() -> None:
     assert factors["01011.95.03"] == {1}
     for firmware in ("B001.V000.P020", "B001.V000.P022", "B001.V000.P023"):
         assert factors[firmware] == {10}, firmware
+
+
+def test_a_firmware_string_with_bytes_after_its_nul_stays_printable() -> None:
+    """A pack's BCU string can carry bytes after its NUL; a table cannot.
+
+    Measured on three pack firmwares here and on `SUNSTONE-H` P065 and P067.
+    Written through verbatim they made `doc/firmware_support.md` a file
+    `grep` treats as binary, and rendered as `22011.04.0832` wherever the
+    Markdown is shown.
+
+    The suffix is kept, because it is part of the reading: two packs whose
+    strings differ only there are two columns.
+    """
+    assert printable("22011.01.30\x0044") == "22011.01.30+44"
+    assert printable("22011.01.30") == "22011.01.30"
+    assert printable("22011.01.30\x0044") != printable("22011.01.30")
+
+
+def test_the_generated_pages_are_text() -> None:
+    """No NUL reaches a page somebody greps, or GitHub renders.
+
+    Asserted on the committed files rather than on the builders: the point is
+    the artefact, and a NUL round-trips through `--check` unnoticed, which is
+    how this one survived.
+    """
+    for name in (
+        "doc/firmware_support.md",
+        "doc/compatibility.md",
+        "doc/entity_names.md",
+        "device-diagnosis/devices-wanted.md",
+    ):
+        page = REPO / name
+        assert "\x00" not in page.read_text(encoding="utf-8"), name
