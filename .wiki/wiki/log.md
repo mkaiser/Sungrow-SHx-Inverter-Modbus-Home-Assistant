@@ -1472,3 +1472,70 @@ wallbox entry, and a standalone snapshot that would have gone back through a man
 Updated: [the wallbox](entities/device-wallbox.md) (21203 lags; a mode change does not always end a session),
 [gerd](entities/installation-gerd.md), [why a managed wallbox stops charging](queries/why-does-a-managed-wallbox-stop-charging.md)
 (three results to four), and the index.
+
+## [2026-11-17] ingested | the midnight-reset check fails on a clock at the maintainer's
+
+The readings checks have been observing between runs at
+[mkaiser](entities/installation-mkaiser.md)'s SH10RT since the evening of 2026-11-16. After 932
+observations one of them has **failed** -- their first failure on hardware -- and the inverter
+did nothing wrong
+([the midnight reset](sources/mkaiser-midnight-reset-2026-11-17-summary.md)).
+
+`daily counters reset at midnight` recorded `daily_pv_generation fell from 4.4 to 0 at 23:04`.
+The development instance keeps UTC; the inverter keeps German local time, measured an hour ahead
+of it in run 2's `inverter_clock`. So the fall happened at **00:04 on the inverter's clock**, to a
+clean zero: a textbook pass, judged against the wrong midnight. The observation is stamped with
+`dt_util.as_local(now)` and `_near_midnight` spans 23:30 to 00:30 of *that* clock.
+
+The clock that would settle it is already collected, in every run's `conditions`. A failed
+readings check counts as answered, so auto repeat will not wait for a second midnight: the row
+stands as the house's one failure until the ledger is cleared or the check's revision is raised.
+
+What changed:
+
+- **`concepts/capability-test.md`** said the readings checks were not measured on hardware yet.
+  They have been, at mkaiser's, and the page now carries both the passes and this failure.
+- **`entities/installation-mkaiser.md`** gains the failure and the 926 passes of
+  `lifetime counters never fall`, still short of its day of polls.
+
+## [2026-11-18] ingested | the midnight reset repeats, to the minute
+
+A second night of observing at [mkaiser](entities/installation-mkaiser.md)'s SH10RT, read at 1440
+observations ([the second night](sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+
+The inverter reset `daily_pv_generation` from 1.6 to a clean 0 at 00:03 on its own clock, against
+4.4 to 0 at 00:04 the night before: different days, different totals, the same minute. **Its
+counters are sound, measured twice.** What repeats with them is the false failure, because the
+development instance still keeps UTC while the inverter keeps German local time.
+
+That changes the defect's status rather than its diagnosis. It is not an occasional artefact but
+one failure a night, for as long as the two clocks disagree. Each night's sentence carries that
+day's kWh figure, so it is distinct and is appended: the row grows until five are kept.
+
+What changed:
+
+- **`concepts/capability-test.md`** said a failed readings check "counts as answered". True of the
+  verdict, but it understated the behaviour: the check keeps judging and accumulating distinct
+  failures, and `verdict()` cannot recover while any is held. The page now says so.
+- **`entities/installation-mkaiser.md`** carries the second night and the counts at 1440
+  observations: `lifetime counters never fall` at 1434 passes with no failure, `running states`
+  with its day of polls seen.
+
+## [2026-11-18] ingested | the first day of polls anywhere
+
+The two readings checks that wait for **a day of polls** reached their minimum at
+[mkaiser](entities/installation-mkaiser.md)'s SH10RT, the first time either has anywhere
+([the day of polls](sources/mkaiser-day-of-polls-2026-11-18-summary.md)). Over 1470 observations
+spanning 30 hours -- a day, a night, a forced charge from the grid, five hours of low-SoC standby
+and a six-minute burst of lost connections -- `lifetime counters never fall` passed on 1464 judged
+steps with none going backwards, and `running states` passed on four codes, all in the decode
+table. The house stands at **39 of 54**.
+
+The running-state counts carry a sampling lesson worth keeping: `Starting` was caught **once** in
+1470 polls, so a code's absence from such a listing is not evidence the inverter never entered it.
+
+What changed:
+
+- **`entities/register-13000.md`** gains what a day of polling actually produces, and the warning
+  that a one-minute cadence samples a transient state by luck.
+- **`entities/installation-mkaiser.md`** carries the settle and the new count.

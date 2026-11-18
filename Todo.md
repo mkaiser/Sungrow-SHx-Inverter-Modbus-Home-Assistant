@@ -7,6 +7,10 @@ forward looking, reordering it, taking in new issues -- follows
 (`/revise-todo`). It has more than one writer: read it from disk and change
 only your part (`AGENTS.md`).
 
+Where the last hardware session at the maintainer's SH10RT left off, and what
+a fresh session needs that is written nowhere else:
+[`plans/mkaiser-diagnosis/handover.md`](plans/mkaiser-diagnosis/handover.md).
+
 Structure:
 
 1. **Next steps** -- work that can start now, in order of priority.
@@ -478,40 +482,65 @@ diagnosis-only entry; how it is handled beyond that is open.
     maintainer's call whether a house that never runs a capability test should
     show it.
 
-13. **A step quantisation is recorded as a clamp.** In
-    `src/sungrow_modbus/capability_test/writepath.py` the upper-bound check
-    returns `CLAMPED` whenever the readback word is below the written word:
+13. **Clearing a ledger is all or nothing.**
+    `DiagnosisRunner.async_clear_ledger` clears the capability ledger **and**
+    removes the plausibility store with it, so an owner who wants the runs
+    afresh loses every reading the checks have gathered too -- at the
+    maintainer's on 2026-11-17 that would have been a day of polls and three
+    settled V x I checks. Worth separating, or offering per check.
 
-    ```text
-    if raw is not None and raw < word:
-        return [row(check, CLAMPED, f"took {value:g} {probe.unit} and stored the word {raw}", ...)]
-    ```
+    **Not urgent, and no longer the remedy for a wrong verdict.** That is
+    what `CHECK_REVISIONS` is for (`capability_test/coverage.py`): each check
+    carries a revision, a run records the revisions it was measured with, and
+    `ledger.py` keeps only rows measured at the current one, so raising a
+    number makes every ledger ask that check again -- and only that one -- on
+    update, with no clearing and nothing for a user to do. The step-as-clamp
+    fix of 2026-11-17 raised the seven bound checks to 2 accordingly, and
+    `tests/test_capability_ledger.py::test_a_bound_clamped_under_the_old_rule_is_asked_again`
+    holds the rule and the bump together.
 
-    It never asks whether the stored value is inside the bound. Measured
-    2026-11-17 at the maintainer's SH10RT:
-    `battery_forced_charge_discharge_power` was written 7374 W and stored
-    7370 W -- the register rounding to its own 10 W step -- against a maximum
-    of 7274 W. The check recorded "the device clamped it", and `CLAMPED` maps
-    to established in `capability_test/ledger.py`, so a bound the device does
-    **not** enforce is now marked settled and will never be asked again.
+    The lesson, since it was nearly missed: **a change that could change a
+    verdict needs its revision raised in the same commit**, which the table's
+    own docstring says and the first fix did not do.
 
-    **Fixed**: a clamp now requires the stored value to be at or below the
-    bound, and a register that merely rounded to its own step gets the "the
-    bound is not enforced" verdict the other four got
-    (`tests/test_capability_test_writepath.py::test_rounding_to_the_registers_step_is_not_a_clamp`).
+14. **The midnight-reset check judges by the wrong clock.**
+    Found on hardware 2026-11-17, the readings checks' first failure anywhere,
+    and the inverter did nothing wrong
+    ([the note](.wiki/wiki/sources/mkaiser-midnight-reset-2026-11-17-summary.md)).
+    `daily counters reset at midnight` recorded `daily_pv_generation fell from
+    4.4 to 0 at 23:04`. The development instance keeps UTC, the inverter keeps
+    German local time -- an hour ahead, measured in run 2's `inverter_clock` --
+    so the counter reset at **00:04 on the inverter's own clock**, to a clean
+    zero, and was judged against Home Assistant's midnight instead.
 
-    **What is left is the stale verdict already in a ledger**, and it has no
-    cheap remedy. `DiagnosisRunner.async_clear_ledger` clears the capability
-    ledger **and** removes the plausibility store with it, so a user told to
-    clear history to re-ask one check loses every plausibility observation
-    too -- at the maintainer's that would be a day of polls and three settled
-    V x I checks. It is all or nothing, and the maintainer's own ledger still
-    carries `upper bound of battery_forced_charge_discharge_power` as
-    "the device clamped it" because clearing it is not worth that price.
+    A daily counter resets on the **inverter's** clock, and nothing makes a
+    Home Assistant share its inverter's timezone. The observation is stamped
+    `dt_util.as_local(now)` in
+    `custom_components/sungrow_modbus/diagnosis.py`, and `_near_midnight` in
+    `src/sungrow_modbus/capability_test/plausibility.py` spans 23:30 to 00:30
+    of that clock.
 
-    To decide: whether clearing should be per check, or at least separate the
-    ledger from the plausibility store, so a wrong verdict can be retracted
-    without discarding observations that took days to gather.
+    **The clock is already collected** -- `inverter_clock` sits in every run's
+    `conditions` -- so the fix is to judge the fall against it, and to say so
+    when the two disagree: an inverter whose clock is set wrong is a real
+    condition, worth reporting as itself rather than as a counter that
+    misbehaves. Raise the check's revision in the same commit, per item 13.
+
+    **It is one failure a night, not one failure.** The next night repeated it
+    to the minute -- `daily_pv_generation fell from 1.6 to 0 at 23:03` beside
+    the previous `4.4 to 0 at 23:04`, both 00:03 and 00:04 on the inverter's
+    own clock, both to a clean zero
+    ([the second night](.wiki/wiki/sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+    So the inverter's counters are sound, measured twice, and the defect is
+    systematic: it fires every night a Home Assistant's timezone differs from
+    its inverter's.
+
+    It is also **sticky, and it grows**. `EventCheck.observe` keeps judging
+    after a failure and appends each *distinct* sentence, keeping the last
+    five, while `verdict()` returns the failure for as long as any is held,
+    whatever `passes` reaches. Each night's sentence carries that day's kWh
+    figure, so it is distinct and is appended rather than folded in. Raising
+    the revision clears the row; only the clock fix keeps it clear.
 
 # Open decisions
 

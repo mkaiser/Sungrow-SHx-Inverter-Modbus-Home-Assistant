@@ -228,8 +228,25 @@ over the cable, and at [ra1k-0](../entities/installation-ra1k-0.md), through a W
 write path took its own word at both. **The upper bounds are the firmware's only in part**:
 on P023, 13058 and 13059 refuse a step past their maximum, while 33047, 33048, 13052, 33149
 and 33150 store it ([peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)); on P071, 33048 refuses it
-([ra1k-0](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)). The readings checks are not measured on
-hardware yet.
+([ra1k-0](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+
+**The readings checks have run at [mkaiser](../entities/installation-mkaiser.md)**, over a night
+and a day of observing. The six ratio checks and the lifetime-counter check hold there
+([the sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)),
+and one check has **failed**: `daily counters reset at midnight`, on a clock rather than on the
+inverter. A daily counter resets on the **inverter's** clock, while the observation is stamped
+and judged with Home Assistant's local time (`dt_util.as_local`), so an hour of timezone
+difference between the two records a clean reset at the inverter's 00:04 as a fall "at 23:04"
+([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). The clock that
+would settle it is already read into each run's `conditions` as `inverter_clock`.
+
+**A failed readings check keeps judging, and cannot recover.** `EventCheck.observe` appends each
+*distinct* failure sentence and keeps the last five, while `verdict()` returns the failure for as
+long as any is held, whatever `passes` reaches. The midnight check at mkaiser's shows what that
+costs when the cause recurs: a second night added a second sentence, because each carries that
+day's kWh figure, and the row will take one more every night
+([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)). Raising a
+check's revision clears the row; only fixing the cause keeps it clear.
 
 ## Drivers
 

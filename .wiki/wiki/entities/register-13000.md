@@ -24,3 +24,11 @@ running and stopped sets are derived from its labels.
   `async_ensure_running` re-sends while the state still reads stopped, and
   every capability-test driver calls it on the way out. See the
   [capability test](../concepts/capability-test.md).
+- **A day of polling produces very few codes.** Over 1470 one-minute polls
+  spanning 30 hours at [mkaiser](installation-mkaiser.md) on P020, over the
+  cable, only four appeared and every one was in the map: Standby 1013,
+  Running 452, Stop 4, Starting 1
+  ([the day of polls](../sources/mkaiser-day-of-polls-2026-11-18-summary.md)).
+  **`Starting` was caught once**, so a code's absence from such a listing is
+  not evidence the inverter never entered it: a transient state is sampled by
+  luck at that cadence.

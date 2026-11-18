@@ -100,6 +100,16 @@ CHECK_REVISIONS: dict[str, int] = {
     "charging start threshold": 1,
     "discharging start threshold": 1,
     **dict.fromkeys(WRITE_PATH_CHECKS, 1),
+    # 2 since 2026-11-17: the upper-bound check used to call any readback
+    # word below the one written a clamp, without asking whether the stored
+    # value was inside the bound. A register that rounds to its own step
+    # stores less than it was given and still lands above the maximum, so a
+    # bound the device does **not** enforce was recorded as enforced -- and
+    # `CLAMPED` counts as established, so it would never be asked again.
+    # Measured at a real house: 7374 W written, 7370 stored, bound 7274.
+    # Only these are raised: the other write-path checks are unchanged, and
+    # their kept evidence stands.
+    **dict.fromkeys((bound_check(probe.field) for probe in bounded_probes()), 2),
 }
 
 #: Every field the readback walk writes and checks by raw word.
