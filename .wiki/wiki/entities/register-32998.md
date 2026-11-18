@@ -63,6 +63,13 @@ in kW. The diagnosis's register dump reads it too.
   [the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
   and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
   That is the model of the one report against it.
+- **On [`01011.95.03`](firmware-sapphire-h-01011-95-03.md) it did not hold**, the first measured
+  failure: at [swo14](installation-swo14.md)'s SH10RT-20 a 520 W cap against 1030 W of import
+  under a forced charge moved nothing (992 W during, 1020.5 W after). That battery was at 3.3 %
+  against a 10 % floor, so cutting the charge was nearly all the inverter had to give. Every
+  SH-RT that obeyed is on P020, P022 or P023, and the integration offers the control there only
+  ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md)).
+  The range words answered there as at mkaiser: 0 and 5001 refused with 0x04, 5000 taken.
 - **On one other SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
@@ -75,6 +82,10 @@ in kW. The diagnosis's register dump reads it too.
 | 950, then 990 | 9.50, 9.90 | [peter-sm](installation-peter-sm.md), whose owner sets it |
 | 1300 | 13.00 | all four SH-RS dumps: [Jam3s97](installation-jam3s97.md), [brendan](installation-brendan.md) and two published as `anonymous` |
 | 4347 | 43.47 | [ra1k-0](installation-ra1k-0.md)'s [SH20T](device-sh-t.md) |
+
+On [swo14](installation-swo14.md)'s cluster both inverters read 2000 as well, the slave included
+-- but its capability test counts the register absent, because the snapshot gates it behind the
+battery capability and the slave has no pack. So a cluster slave's import limit is unmeasured.
 
 Whether 2000 on the SH-RT and 1300 on the SH-RS are factory defaults is not on record: only
 Jam3s97 is known to have written theirs. Every value is the device's own word, read through

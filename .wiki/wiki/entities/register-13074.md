@@ -26,7 +26,9 @@ entry.
 On the times-ten firmware, a plain write sets ten times what was asked, or
 it is refused with 0x04 when ten times the value is out of range. fwitten's
 SH10RT-V112 pair answered 1:1 on 01011.95.03, and times ten on P023, cable
-and dongle alike. So it is the firmware, not the model. On the SH-RS, P065 stores as handed;
+and dongle alike. So it is the firmware, not the model -- and swo14's two
+**SH10RT-20s** on 01011.95.03 answer 1:1 as well, which is the same version on
+a different model, through a Modbus proxy. On the SH-RS, P065 stores as handed;
 [P068](firmware-sunstone-h-b000-v001-p068.md) is unmeasured, so the integration's per-device
 probe, not a family rule, is what keeps an RS right.
 

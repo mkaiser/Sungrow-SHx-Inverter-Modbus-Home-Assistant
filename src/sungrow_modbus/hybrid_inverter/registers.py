@@ -55,9 +55,19 @@ from . import ev_charger
 #: `battery_capacity_high_precision`: the same slave answers 0xFFFF at 5639,
 #: which decoded to 655.35 kWh and fed `battery_charge`. The largest pack in
 #: the diagnoses reads 4055 (40.55 kWh).
+#:
+#: `battery_power`: a second cluster slave, swo14's on SAPPHIRE-H
+#: 01011.95.03, answers 0x7FFFFFFF at 5214 -- the specification's unavailable
+#: value for an S32 -- which decoded to 2147483647 W, a battery sensor
+#: reporting 2.1 GW on an inverter with no battery. `battery_power_unsigned`
+#: beside it declares 65535 and was correctly unavailable, so the two
+#: registers agree about absence and only this one said so.
+#:   sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan.json
+#: No real reading reaches it: the largest in the corpus is five figures.
 NAN_BEYOND_YAML: dict[str, int] = {
     "battery_level": 65535,
     "battery_capacity_high_precision": 65535,
+    "battery_power": 2147483647,
 }
 
 
@@ -308,11 +318,14 @@ class InverterBatteryPower(Component):
 
     register_space = "input"
 
-    battery_power = int32(reg(5214), word_order="little", unit="W")
+    battery_power = int32(reg(5214), word_order="little", nan=2147483647, unit="W")
     """Battery power.
 
     YAML package: refused on an SH8.0RS through a WiNet-S (#655), reported.
     Measured refused over gerd's cable, so read on its own.
+
+    0x7FFFFFFF is what a cluster slave with no battery answers (swo14's, on
+    01011.95.03), which the YAML does not declare -- see `NAN_BEYOND_YAML`.
     """
 
 

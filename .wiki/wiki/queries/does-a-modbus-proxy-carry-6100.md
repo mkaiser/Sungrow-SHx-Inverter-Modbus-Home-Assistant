@@ -4,17 +4,23 @@ title: "Does a Modbus proxy carry register 6100?"
 tags: [proxy, transport, register-6100, mkaiser, open]
 created: '2026-11-16'
 query: "Through a modbus-proxy, does input 6100 answer for every session, or only for a short one of the reader's own?"
-results_count: 2
+results_count: 4
 ---
 
 # Does a Modbus proxy carry register 6100?
 
-**Open, and the two readings disagree about one address.**
+**Open, and narrowed: it is the address, not proxies.** Two houses' proxies carry 6100 for every
+reader; one address at a third carries it for a short probe and not for a config entry.
 
 **For it.** An anonymous SH10RT-V112 read through a modbus-proxy add-on
 answered [register 6100](../entities/register-6100.md), so transport
 detection saw the cable behind it
 ([the reading](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-summary.md)).
+**Both of [swo14](../entities/installation-swo14.md)'s cluster inverters** answer it through a
+proxy as well, each on a port of its own, and on the entry's ordinary polling connection rather
+than a probe of its own -- which is the case mkaiser's entry could not get an answer for
+([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md),
+[the slave](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)).
 At [mkaiser](../entities/installation-mkaiser.md) the config flow's own probe
 of the proxy's address answered too, which is why the search labelled the
 proxy "the inverter's own LAN port"
@@ -28,7 +34,8 @@ same entry read **direct** within a minute, and moved back it was unknown
 again ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)).
 
 So the address answers 6100 for one reader and not for another in the same
-hour. Two explanations, neither measured:
+hour, while another house's proxy answers it for every reader. Two
+explanations, neither measured:
 
 - **The session.** The flow opens a short connection of its own; the entry
   reads through Home Assistant's shared `modbus` connection, which is also

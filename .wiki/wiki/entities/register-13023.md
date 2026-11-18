@@ -33,6 +33,12 @@ diagnosis). The two agree only when the minimum is 0 % and the maximum 100 %.
   ([the diagnosis](../sources/sh10t-b001v001p038-3p-biergitkraft-anon-38431301666-battery-sbh100-winet-lan-summary.md)).
 - **The figure moves when the window does.** Changing 13058 or 13059 changes 13023 with no change
   in the battery.
+- **With no battery it answers 0xFFFF on P023 and 0 on `01011.95.03`.** fwitten's cluster slave
+  gives the sentinel, which is why `NAN_BEYOND_YAML` declares 65535 for this field;
+  [swo14](installation-swo14.md)'s gives a plain 0, which
+  [zero means absent](../concepts/zero-means-absent.md) catches instead
+  ([the slave](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)).
+  Both are needed: the firmware decides which arrives, not the role.
 
 The integration's battery level sensor reads this register
 (`src/sungrow_modbus/hybrid_inverter/registers.py`, `battery_level`), as the YAML package does; the

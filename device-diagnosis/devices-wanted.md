@@ -19,11 +19,10 @@ details are under [Why each one](#why-each-one).
 | 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
-| 8 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
-| 9 | **An SH-RS on `SUNSTONE-H` P057, P059, P066, P067 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all five, and has been watched cutting on P065 only |
-| 10 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
-| 11 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
-| 12 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
+| 8 | **An SH-RS on `SUNSTONE-H` P057, P059, P066, P067 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all five, and has been watched cutting on P065 only |
+| 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
+| 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
+| 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
 
 ## Not needed any more
 
@@ -41,6 +40,10 @@ It is still worth sending when it brings **a firmware update** since your
 last diagnosis (that is how a silent change is noticed), **the first capability
 test** for its model and firmware, **both paths** of one machine minutes
 apart, or a **battery size** nobody has read.
+
+A **second master/slave cluster** was read on 2026-11-17 and kept both rules the
+config flow rests on -- a slave's own unit id is 2, and it answers 0 where a lone
+inverter answers 0xFFFF -- so a third is no longer wanted on its own account.
 
 ## Where the coverage is today
 
@@ -142,32 +145,26 @@ not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
 10 kW. A 5 kW SH5.0RT-V112 on `.95.14` has answered the probe with a refusal, which both
 readings give: a capability test on one, with limitation on, settles it.
 
-### 8. A second master/slave cluster
-
-One cluster gave two rules the config flow relies on: a slave's device
-address is 2, and a slave answers 0 where a standalone inverter answers
-0xFFFF. A second shows whether they are rules or one house's convention.
-
-### 9. An SH-RS on P057, P059, P066, P067 or P068
+### 8. An SH-RS on P057, P059, P066, P067 or P068
 
 Register 31211, the PV cut, answers on all five, and has been watched cutting
 on P065 only, so the integration offers the switch on P065 only
 ([register 31211](../.wiki/wiki/entities/register-31211.md)). A capability test
 in daylight, with the PV cut allowed, watches it on one more.
 
-### 10. An SG string inverter other than an SG5.0RS or SG10RT
+### 9. An SG string inverter other than an SG5.0RS or SG10RT
 
 The SG map is from another project's source and unmeasured for most models,
 and an SG answers 0 for hardware it lacks, so its tracker and phase count
 decide its entities ([SG-RS](../.wiki/wiki/entities/device-sg-rs.md), [SG-RT](../.wiki/wiki/entities/device-sg-rt.md)).
 
-### 11. An inverter on a three-wire grid (3P3L)
+### 10. An inverter on a three-wire grid (3P3L)
 
 Register 5002 says 3P3L when there is no neutral; then 5019-5021 carry line
 voltages, and the integration creates no phase voltages or phase powers.
 Nothing on 3P3L has been read.
 
-### 12. A hybrid in low-SoC standby
+### 11. A hybrid in low-SoC standby
 
 Register 13017 wakes a standby inverter and sends it back to sleep on P020 and
 P023, watched ([register 13017](../.wiki/wiki/entities/register-13017.md)); the

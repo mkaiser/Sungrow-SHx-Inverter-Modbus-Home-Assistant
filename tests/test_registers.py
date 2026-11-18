@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from modbus_connection.mock import MockModbusConnection
 from modbus_connection.model import Component
 import pytest
 
@@ -163,3 +164,40 @@ def test_an_isolated_group_is_a_component_of_its_own(group: str) -> None:
     component = registers.COMPONENTS[group]
     actual = {name for name, (owner, _f) in GENERATED.items() if owner is component}
     assert actual == expected
+
+
+@pytest.mark.parametrize("name", sorted(registers.NAN_BEYOND_YAML))
+def test_a_sentinel_beyond_the_yaml_is_on_the_field(name: str) -> None:
+    """Declaring one in the table is only half of it; the field has to carry it.
+
+    The table exists so that a difference from the YAML is visible rather
+    than silent, and `test_each_field_matches_the_yaml` reads it as the
+    expected value. Without this, deleting the `nan=` from a field would make
+    that test pass by changing what it expects.
+    """
+    _component, field = GENERATED[name]
+    assert field.nan == frozenset({registers.NAN_BEYOND_YAML[name]})
+
+
+@pytest.mark.asyncio
+async def test_an_inverter_with_no_battery_reports_no_battery_power() -> None:
+    """5214 answers 0x7FFFFFFF on a cluster slave, not 2.1 GW.
+
+    Measured at swo14's slave on SAPPHIRE-H 01011.95.03, which has no pack of
+    its own (`sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan.json`).
+    Undeclared, the S32 sentinel decodes to 2147483647 W, and a power sensor
+    that large is the kind of number that reaches a dashboard -- and the
+    recorder -- before anybody notices. 13022 beside it declared 65535 from
+    the start and was correctly unavailable, which is how the two were told
+    apart.
+    """
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = {5213: 0xFFFF, 5214: 0x7FFF}
+    component = registers.InverterBatteryPower(unit)
+    await component.async_update()
+    assert component.battery_power is None
+
+    # And a real reading, low word first, still decodes: -2047 W charging.
+    unit.input = {5213: (-2047) & 0xFFFF, 5214: 0xFFFF}
+    await component.async_update()
+    assert component.battery_power == -2047

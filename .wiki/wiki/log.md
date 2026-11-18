@@ -1593,3 +1593,38 @@ What changed:
 Left open: the house's AC22E-01 could not be ingested. A **wallbox-only entry's diagnostics report
 carries no `diagnosis` section** although the entry runs one -- `diagnostics.py` returns its entry
 and device rows and stops -- so three downloads of it hold nothing to read. Noted in `Todo.md`.
+
+## [2026-11-18] ingested | swo14's cluster: two SH10RT-20 on 01011.95.03, a BYD pack, a proxy (#786)
+
+Three readings from a **second master/slave cluster**, each with a capability test
+([the host](sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md),
+[the host again](sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2-summary.md),
+[the slave](sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)). Both
+inverters are on the older [`SAPPHIRE-H_01011.95.03`](entities/firmware-sapphire-h-01011-95-03.md),
+reached through a Modbus proxy on a port each, with a **third-party BYD HVM 11 kWh** pack on the
+host and none on the slave.
+
+Five things it settles or moves:
+
+- **[13074](entities/register-13074.md) is 1:1 on `.95.03` at a second installation**, and on a
+  model that is not fwitten's SH10RT-V112. The firmware decides, not the model.
+- **A cluster slave's unit id is 2 and it answers 0 for what it lacks**, twice now, so
+  `device-diagnosis/devices-wanted.md` no longer asks for a cluster.
+- **Register 5214 answers `0x7FFFFFFF` with no battery**, undeclared until now, so the slave's
+  battery power read 2,147,483,647 W. Declared in
+  `src/sungrow_modbus/hybrid_inverter/registers.py` with a test of its own.
+- **[Register 6100](entities/register-6100.md) answers through a Modbus proxy** on both entries,
+  on the entry's own polling connection -- the case mkaiser's proxy would not answer
+  ([the query](queries/does-a-modbus-proxy-carry-6100.md) narrows to the address, not proxies).
+- **[Register 32998](entities/register-32998.md) did not hold** on `.95.03`: a 520 W cap against
+  1030 W of import moved nothing. The first SH-RT where it failed, and the integration already
+  gates the control to P020, P022 and P023.
+
+What changed:
+
+- **`entities/installation-swo14.md`** is new.
+- **`entities/firmware-sapphire-h-01011-95-03.md`** gains the second installation, the two ways
+  13250 fails (a closed connection at fwitten, an exception here), and 13017's silence.
+- **`entities/register-13023.md`** gains what a battery-less slave answers: 0xFFFF on P023, 0 here.
+- **`queries/is-battery-power-firmware-dependent.md`** gains the S32 sentinel and a real BYD pack
+  answering 5214, which bears on #770.

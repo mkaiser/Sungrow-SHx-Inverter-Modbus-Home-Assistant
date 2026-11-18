@@ -4,7 +4,7 @@ title: "Is battery power firmware dependent?"
 tags: [battery, register-5214, register-13022, firmware, open]
 created: '2026-11-11'
 query: "Do 5214 and 13022 read battery power the same way on every firmware, and does 5214 answer on every one?"
-results_count: 35
+results_count: 38
 ---
 
 # Is battery power firmware dependent?
@@ -35,7 +35,13 @@ cable, through a WiNet-S and through a Logger. In all 35:
   beside 3800 ([gerd, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3-summary.md)).
   The two are read in different blocks, so they differ by what the battery did in between.
 - **With no battery, 13022 reads 65535**, the unavailable word: fwitten's slave
-  ([cable](../sources/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)).
+  ([cable](../sources/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)),
+  and [swo14](../entities/installation-swo14.md)'s
+  ([the slave](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)).
+- **With no battery, 5214 reads `0x7FFFFFFF`**, the S32 unavailable value, measured for the first
+  time at swo14's slave. The map did not declare it, so it decoded to 2,147,483,647 W; declaring
+  it is part of this ingest (`src/sungrow_modbus/hybrid_inverter/registers.py`). So the two
+  registers agree about absence as well, each in its own width.
 
 ## Whether 5214 answers: unknown for older firmware
 
@@ -47,10 +53,15 @@ cable, through a WiNet-S and through a Logger. In all 35:
   where other readings on the same firmware answered every round: the link, not the firmware.
 - **Users report it failing**: on an SH8.0RS through a WiNet-S on WLAN, every poll, firmware not
   recorded (#655); and no battery power sensor with a third-party battery emulating a BYD (#770)
-  ([user findings](../sources/github-issues-user-findings-summary.md)).
+  ([user findings](../sources/github-issues-user-findings-summary.md)). **A real BYD pack now
+  answers it**: swo14's host, a BYD HVM 11 kWh on `01011.95.03`, reads 5214 and 13022 alike (0 W
+  with the pack idle at its floor)
+  ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md)),
+  so #770 is not the pack being third-party as such. The sign could not be checked there: the pack
+  was at 3.3 % and moved nothing.
 - **No diagnosis reads SAPPHIRE 51.0x**, the older firmware on which other newer registers
   (13249, 13264, 13279) time out (#660, #673, same source). Whether 5214 exists there is not
   known.
 
 What answers it: a diagnosis of #655's SH8.0RS with its firmware, or of any inverter on
-SAPPHIRE 51.0x or with a third-party battery.
+SAPPHIRE 51.0x. A third-party battery has now been read, and 5214 answered.
