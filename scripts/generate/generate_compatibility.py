@@ -34,7 +34,7 @@ REPO = Path(__file__).resolve().parents[2]
 DOCUMENTS = REPO / "device-diagnosis" / "results" / "inverter"
 SG_DOCUMENTS = REPO / "device-diagnosis" / "results" / "string_inverter"
 
-from sungrow_modbus.diagnosis_document import REPORTED_TRANSPORTS  # noqa: E402
+from sungrow_modbus.diagnosis_document import REPORTED_TRANSPORTS, battery_pack_unit  # noqa: E402
 from sungrow_modbus.string_inverter import MODELS as SG_MODELS  # noqa: E402
 from sungrow_modbus.string_inverter.registers import COMPONENTS as SG_COMPONENTS  # noqa: E402
 
@@ -135,6 +135,35 @@ ALL_ZERO_MEANS_ABSENT: dict[str, tuple[str, ...]] = {
 #: What such a cell says instead. A footnote rather than a "no", because this
 #: is not a reading of absence -- it is a reading that cannot distinguish.
 UNTRUSTWORTHY = "yes?[^dongle]"
+
+
+def _pack_decoded(document: dict) -> bool:
+    """Whether this document reads a Sungrow pack on a unit of its own.
+
+    The same evidence the filename's battery word rests on
+    (`diagnosis_document._battery_word`): the `battery_pack` section a Home
+    Assistant document carries, or the sibling probe a terminal run makes at
+    unit 200 or unit 2.
+
+    It is here because the Battery column's own probe can **fail to answer**
+    while the pack is read in the same document. peter-sm's twenty-first
+    reading is the case: `battery level` got no answer on a busy link -- one
+    probe losing its turn -- while unit 200 answered with five modules and
+    1600 (16.0 kWh) at 5639, which is how the filename came to say
+    `battery-sbr160` while this table said nothing at all. A failed read is
+    not a refusal, so the cell stays "-" only when nothing else in the
+    document saw the pack.
+    """
+    pack = document.get("battery_pack")
+    if isinstance(pack, dict) and pack.get("unit") is not None:
+        return True
+    probes = document.get("capability_probes", document.get("registers", {})) or {}
+    states = {
+        label: entry.get("state")
+        for label, entry in probes.items()
+        if isinstance(entry, dict)
+    }
+    return battery_pack_unit(states) is not None
 
 
 def _short_firmware(version: str) -> str:
@@ -542,6 +571,10 @@ def render() -> str:
                     continue
                 state = (registers.get(register) or {}).get("state")
                 mark = MARKS.get(state, "—")
+                if name == "Battery" and mark == "—" and _pack_decoded(document):
+                    # The probe said nothing and the pack answered elsewhere
+                    # in the same document; see `_pack_decoded`.
+                    mark = "yes"
                 if (
                     mark == "yes"
                     and through_module

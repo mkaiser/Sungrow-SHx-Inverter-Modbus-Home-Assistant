@@ -12,8 +12,11 @@ An [SH10RS](device-sh-rs.md) on [P067](firmware-sunstone-h-b000-v002-p067.md) wi
 [iHomeManager](device-ihomemanager.md) and an **AC22E-01**
 [wallbox](device-wallbox.md) at its own address, read through a
 [WiNet-S](device-winet-s.md) from Home Assistant. The owner describes it as an Australian
-installation; the export limit holds 5000 W, where every other house in the corpus holds its
-rating. One reading, read only, with no capability test
+installation, and [register 13074](register-13074.md) holds **5000 W against a 10000 W maximum**,
+half the inverter's rating -- though feed-in limitation is off (13087 holds 0x55), so nothing
+enforces it. [Register 32998](register-32998.md) holds 13.00 kW, as on every SH-RS read.
+
+One reading, read only, with no capability test
 ([the reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)).
 Stand-in `anon-09651441112`.
 

@@ -51,7 +51,7 @@ inverter answers 0xFFFF -- so a third is no longer wanted on its own account.
 
 Generated from [`results/`](results/) by `scripts/generate/generate_devices_wanted.py`; edit that, not this.
 
-33 inverters, each counted once by its stand-in serial however many times it was read: 30 hybrids and 3 SG string inverters. Beside them 3 wallboxes read, 2 at their own address and 1 on an inverter's bus, and an iHomeManager.
+37 inverters, each counted once by its stand-in serial however many times it was read: 34 hybrids and 3 SG string inverters. Beside them 3 wallboxes read, 2 at their own address and 1 on an inverter's bus, and an iHomeManager.
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
@@ -60,12 +60,12 @@ Generated from [`results/`](results/) by `scripts/generate/generate_devices_want
 | SG string inverter model | **2 of 40**: SG10RT, SG5.0RS | the other models |
 | Phase / output type | single phase, three phase 3P4L | three phase 3P3L |
 | Inverter firmware | PEARL-H `B000.V000.P067`, `B000.V000.P071`, `B001.V001.P038`; SAPPHIRE-H `B001.V000.P020`, `B001.V000.P022`, `B001.V000.P023`; SUNSTONE-H `B000.V001.P066`, `B000.V001.P068`, `B000.V002.P057`, `B000.V002.P059`, `B000.V002.P065`, `B000.V002.P067` | any other |
-| Version 1 | PEARL-H `01011.01.42`, `01011.01.45`, `01011.94.41`, `01011.95.41`; SAPPHIRE-H `01011.95.03`, `01011.95.11`, `01011.95.12`, `01011.95.13`, `01011.95.14`; SUNSTONE-H `01011.02.61`, `01011.02.65`, `01011.02.67`, `01011.03.68` | see item 7 |
-| Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P031, P032, P033 | any other |
+| Version 1 | PEARL-H `01011.01.42`, `01011.01.45`, `01011.94.41`, `01011.95.41`; SAPPHIRE-H `01011.95.03`, `01011.95.11`, `01011.95.12`, `01011.95.13`, `01011.95.14`; SUNSTONE-H `01011.02.61`, `01011.02.65`, `01011.02.67`, `01011.02.69`, `01011.03.68` | see item 7 |
+| Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P030, P031, P032, P033 | any other |
 | Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
-| Third-party battery | 3 inverters | other packs |
-| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 4 inverters through a Modbus proxy | any route not listed |
-| Capability test | 14 of 30 hybrid inverters | every other model and firmware |
+| Third-party battery | 4 inverters | other packs |
+| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 7 inverters through a Modbus proxy | any route not listed |
+| Capability test | 17 of 34 hybrid inverters | every other model and firmware |
 | Wallbox | AC011E-01, AC22E-01 | AC007-00 |
 | iHomeManager | read | a second unit |
 | Sungrow Logger | the Logger itself unread; 2 inverters read through one | the Logger's own registers |

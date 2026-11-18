@@ -88,16 +88,20 @@ What moves between firmware versions of one platform, over one kind of link:
 | 7 | SAPPHIRE-H | B001.V000.P020 | dongle | SH10RT-20 | 2 |
 | 8 | SAPPHIRE-H | B001.V000.P022 | direct | SH6.0RT-20, SH8.0RT-V112 | 4 |
 | 9 | SAPPHIRE-H | B001.V000.P022 | dongle | SH8.0RT-V112 | 3 |
-| 10 | SAPPHIRE-H | B001.V000.P023 | direct | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112, SH8.0RT-V112 | 27 |
+| 10 | SAPPHIRE-H | B001.V000.P023 | direct | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112, SH8.0RT-V112 | 29 |
 | 11 | SAPPHIRE-H | B001.V000.P023 | dongle | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 6 |
 | 12 | SUNSTONE-H | B000.V001.P068 | dongle | SH6.0RS | 1 |
 | 13 | SUNSTONE-H | B000.V002.P059 | dongle | SH10RS | 1 |
 | 14 | SUNSTONE-H | B000.V002.P065 | dongle | SH10RS | 1 |
-| 15 | SUNSTONE-H | B000.V002.P067 | dongle | SH10RS | 1 |
+| 15 | SUNSTONE-H | B000.V002.P067 | dongle | SH10RS | 2 |
 
 Left out, with no register dump, no firmware or no way to tell the link:
 
 - `sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan`
+- `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan`
+- `sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan`
+- `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2`
+- `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan`
@@ -127,31 +131,31 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Measurement | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Export power limit write scale (13074) |  |  |  | 1:1 | 1:1 | ×10 |  | ×10 | ×10 | ×10 | ×10 |  |  | 1:1 |  |
-| Settings read back as written, over a cable |  |  |  | 12/12 |  | 16/16 |  | 27/27 |  | 175/175 |  |  |  |  |  |
+| Settings read back as written, over a cable |  |  |  | 12/12 |  | 16/16 |  | 27/27 |  | 193/193 |  |  |  |  |  |
 | Restart: running again after |  | 148 s |  | 170–197 s |  | 186–187 s |  | 181–185 s | 181 s | 168–363 s | 186 s |  |  |  |  |
-| Behaviour: forced charge |  | ? 1 |  |  |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 2 | ✓ 8, ✗ 1 | ✓ 2 |  |  |  |  |
-| Behaviour: forced discharge |  | ✓ 2, ✗ 1 |  | ✓ 1 |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 1 | ✓ 10, ✗ 2, ? 5 | ✓ 1, ? 1 |  |  |  |  |
+| Behaviour: forced charge |  | ? 1 |  |  |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 2 | ✓ 10, ✗ 1 | ✓ 2 |  |  |  | ✓ 1 |
+| Behaviour: forced discharge |  | ✓ 2, ✗ 1 |  | ✓ 1 |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 1 | ✓ 12, ✗ 2, ? 5 | ✓ 1, ? 1 |  |  |  | ✓ 1 |
 | Behaviour: charge ceiling |  |  |  |  |  |  | ✓ 1 |  |  | ✓ 1, ? 1 |  |  |  |  |  |
-| Behaviour: export power limit |  |  |  | ✗ 1 |  | ✓ 1 | ✓ 1 | ✓ 1 | ? 1 | ✓ 11, ? 3 | ✓ 1 |  |  | ? 1 |  |
-| Behaviour: PV generation cut |  | ✓ 1 |  |  |  |  |  | ✓ 3 | ✓ 2 | ✓ 3 | ✓ 1 |  |  | ✓ 1 |  |
-| Behaviour: forced-charging window |  | ? 1 |  |  |  | ? 1 |  | ✓ 1, ? 1 | ✓ 1, ? 1 | ✓ 1, ? 12 | ? 1 |  |  |  |  |
-| Behaviour: discharge windows away from now |  | ? 1 |  |  |  |  |  | ✓ 1 |  | ? 8 |  |  |  |  |  |
-| Behaviour: site import limit |  |  |  |  |  |  |  |  |  | ✓ 1 |  |  |  |  |  |
+| Behaviour: export power limit |  |  |  | ✗ 1 |  | ✓ 1 | ✓ 1 | ✓ 1 | ? 1 | ✓ 13, ? 3 | ✓ 1 |  |  | ? 1 |  |
+| Behaviour: PV generation cut |  | ✓ 1 |  |  |  |  |  | ✓ 3 | ✓ 2 | ✓ 3 | ✓ 1 |  |  | ✓ 1 | ✓ 1 |
+| Behaviour: forced-charging window |  | ? 1 |  |  |  | ? 1 |  | ✓ 1, ? 1 | ✓ 1, ? 1 | ✓ 1, ? 14 | ? 1 |  |  |  |  |
+| Behaviour: discharge windows away from now |  | ? 1 |  |  |  |  |  | ✓ 1 |  | ? 10 |  |  |  |  |  |
+| Behaviour: site import limit |  |  |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
 | Behaviour: forced startup under low SoC |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | Behaviour: charging start threshold |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | Behaviour: discharging start threshold |  |  |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
-| Behaviour: backup mode write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  |  |
-| Behaviour: load control write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  |  |
-| Behaviour: weekend discharge enable write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  |  |
-| Behaviour: forced-charging window 2 encoding |  |  |  |  |  |  |  |  |  | ✓ 4 |  |  |  |  |  |
-| Behaviour: EMS mode options |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
-| Behaviour: upper bound of battery_min_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_charge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 3 |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_discharge_power |  | ✓ 1 |  |  |  |  |  |  |  | ✗ 5 |  |  |  |  |  |
-| Behaviour: upper bound of battery_forced_charge_discharge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 5 |  |  |  |  |  |
-| Behaviour: upper bound of battery_charging_start_power |  |  |  |  |  |  |  |  |  | ✗ 5 |  |  |  |  |  |
-| Behaviour: upper bound of battery_discharging_start_power |  |  |  |  |  |  |  |  |  | ✗ 5 |  |  |  |  |  |
+| Behaviour: backup mode write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 7 |  |  |  |  | ✓ 1 |
+| Behaviour: load control write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 7 |  |  |  |  | ✓ 1 |
+| Behaviour: weekend discharge enable write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 7 |  |  |  |  |  |
+| Behaviour: forced-charging window 2 encoding |  |  |  |  |  |  |  |  |  | ✓ 6 |  |  |  |  |  |
+| Behaviour: EMS mode options |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  | ✓ 1 |
+| Behaviour: upper bound of battery_min_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 5 |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 7 |  |  |  |  | ✓ 1 |
+| Behaviour: upper bound of battery_max_charge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 5 |  |  |  |  | ✓ 1 |
+| Behaviour: upper bound of battery_max_discharge_power |  | ✓ 1 |  |  |  |  |  |  |  | ✗ 7 |  |  |  |  | ✓ 1 |
+| Behaviour: upper bound of battery_forced_charge_discharge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 7 |  |  |  |  | ✓ 1 |
+| Behaviour: upper bound of battery_charging_start_power |  |  |  |  |  |  |  |  |  | ✗ 7 |  |  |  |  |  |
+| Behaviour: upper bound of battery_discharging_start_power |  |  |  |  |  |  |  |  |  | ✗ 7 |  |  |  |  |  |
 
 ### Backup power
 
@@ -206,9 +210,9 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Running state code | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Shutdown inverter when limited to 0 % power *(binary_sensor)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Shutdown inverter when limited to 0 % power code | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Wallbox charge *(switch)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |
-| Wallbox charge mode *(select)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |
-| Wallbox user-defined current *(number)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |
+| Wallbox charge *(switch)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
+| Wallbox charge mode *(select)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
+| Wallbox user-defined current *(number)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
 
 ### Faults and alarms
 
@@ -274,7 +278,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 | Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cut PV generation *(switch)* | read + watched | ✓ | ✓ W | ✓ |  | ✗ | ✗ | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ W | ✓ |
+| Cut PV generation *(switch)* | read + watched | ✓ | ✓ W | ✓ |  | ✗ | ✗ | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ W | ✓ W |
 | Daily PV generation | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Daily exported energy from PV | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Export from PV this month | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -393,7 +397,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Importing power *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total exported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total imported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Wallbox grid purchase *(switch)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |
+| Wallbox grid purchase *(switch)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
 
 ### The house
 
@@ -474,8 +478,8 @@ What moves between firmware versions of one platform, over one kind of link:
 | B7 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |
 | B8 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
 | B9 | SBRBCU-S | 22011.01.27 24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
-| B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 32 |
-| B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 9 |
+| B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 34 |
+| B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 38.6 kWh, no single model, 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 11 |
 | B12 | SBRBCU-S | 22011.01.30 44 | unit 2 (dongle) | SBR192 | 1 |
 
 Left out, with a battery firmware but no pack reading, or no battery firmware:
