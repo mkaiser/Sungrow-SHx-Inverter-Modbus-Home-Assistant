@@ -9,29 +9,38 @@ created: '2026-10-29'
 
 An [SH10RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md) with an
 [SBR160](device-sbr-battery.md), read on the inverter's own LAN port, with a WiNet-S fitted but not
-in the path. Twenty readings, all from Home Assistant, sixteen with a capability test. The first was
-published as `anonymous`; the later nineteen are signed `peter_sm`. All carry the stand-in
+in the path. Twenty-two readings, all from Home Assistant, eighteen with a capability test. The first was
+published as `anonymous`; the later twenty-one are signed `peter_sm`. All carry the stand-in
 `anon-91477823483`, so they are one installation.
 
 - **[13074](register-13074.md) writes times ten.** The probe answered it by refusal in every
   reading that ran, and the readback through the cable matched with feed-in limitation on.
 - **[31211](register-31211.md) answers 0x55**; the PV cut has not been written here (no leave).
+- **[The site import limit holds](register-32998.md)**, twice, in the twenty-first and
+  twenty-second readings: under a forced charge over the cable, caps of 800 W and 1730 W brought
+  import from 1438 W to 768 W and from 2359 W to 1702 W, and it returned both times. This is the
+  first SH10RT-V112 to be watched obeying 32998, the model of the one owner report against it
+  ([the query](../queries/does-the-import-limit-hold-during-a-forced-charge.md)). The range words:
+  0 refused with 0x04, 5000 taken, and **5001 lost the connection** rather than being refused, as
+  writes this house will not take do.
 - **Forced charge, forced discharge and the export limit all act as commanded**, over the cable,
   in the third reading (outcome 0): 1248 W, 1250 W and an export held at 1250 W against 1250 W
   commanded. The first P023 SH10RT-V112 with all three confirmed. The sixth and seventh readings
   confirm all three again, with nine of nine readbacks matched.
 - **The charge window's write of 33213 lost the connection every time it was tried**: in the
-  sixth, seventh, tenth, twelfth, thirteenth, fifteenth, sixteenth, seventeenth, eighteenth and
-  twentieth readings (2026-11-02 to 2026-11-15), ten of ten, so the window was never measured here;
+  sixth, seventh, tenth, twelfth, thirteenth, fifteenth, sixteenth, seventeenth, eighteenth,
+  twentieth, twenty-first and twenty-second readings (2026-11-02 to 2026-11-16), twelve of twelve,
+  so the window was never measured here;
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md). From the sixteenth reading
-  on, other writes lost it too: 13059 once, 13050 (EMS mode 3) twice, 33047 (a value above its
-  bound) three times, and the discharge-window write after 33213 each time.
+  on, other writes lost it too: 13059 once, 13050 (EMS mode 3) three times, 33047 (a value above its
+  bound) three times, 32998's word 5001, and the discharge-window write after 33213 each time.
 - **A Modbus restart did as it was told** in the tenth reading: stopped in 2.0 s, running again
   269 s after the start command, in daylight; and four times more, at 271 s, 301 s, 361 s (after
   dark) and 271 s ([twelfth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-10-summary.md) to
   [fifteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-13-summary.md) readings),
   and three times more, at 363 s (after dark), 271 s and 303 s (sixteenth to eighteenth), and at
-  271 s in the twentieth. Settings survived every restart.
+  271 s in the twentieth, twenty-first and twenty-second. Eleven restarts, six of them back at
+  271 s to the second. Settings survived every restart.
 - **Forced discharge and the export limit acted again** in the thirteenth and fifteenth readings
   (1250 W and 1248 W; export held at 1249 W and 1246.5 W against 1250 W); nine of nine readbacks
   matched, 13074 times ten each time.
@@ -44,8 +53,11 @@ published as `anonymous`; the later nineteen are signed `peter_sm`. All carry th
   The discharging start threshold did as it was told twice.
 - The tenth reading's file is named `battery-thirdparty`, though the pack is the SBR160: its
   document lost the pack's own section (see [the page](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)).
-- The house often holds `battery_max_charge_power` at 10 W (the twelfth to twentieth readings), so
-  the forced charge has not been checked since the third reading.
+- The house held `battery_max_charge_power` at 10 W from the twelfth to the twentieth reading, so
+  the forced charge was not checked between the third and the twenty-first. In the twenty-first and
+  twenty-second it is back at 10000 W, and **forced charge, forced discharge and the export limit
+  all acted again** (1248 W, 1251 W and 1249 W, export held at 1249.5 W and 1253 W against 1250 W
+  commanded, through the feed-in ratio rather than 13074).
 - The fifth reading's capability test did not run: the inverter was in Standby that evening.
 - **The second reading's forced checks are not evidence**: the house held
   `battery_max_charge_power` and `battery_max_discharge_power` at 10 W then, where the first and
@@ -54,6 +66,8 @@ published as `anonymous`; the later nineteen are signed `peter_sm`. All carry th
 - **Its WiNet-S answers a multicast mDNS browse** from Home Assistant on the house's LAN, the
   first browse recorded in a house; its TXT record's `ethinfo` carries an address
   ([twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)).
+  The twenty-second reading, the first written by schema 28, adds that 15 services were heard in
+  the browse and that Home Assistant is on the inverter's own subnet.
 
 - **The history block and the schedules**, in the fourth reading's dump: inputs 6101-6826 all
   answer over the cable, and the forced-charging schedule (33208-33219) is off. [Register 32998](register-32998.md),
@@ -81,3 +95,5 @@ published as `anonymous`; the later nineteen are signed `peter_sm`. All carry th
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, nineteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-17-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twenty-first reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twenty-second reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)

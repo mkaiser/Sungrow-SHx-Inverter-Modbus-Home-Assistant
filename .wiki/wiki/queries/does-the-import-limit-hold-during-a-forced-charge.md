@@ -4,7 +4,7 @@ title: "Does the site import limit hold during a forced charge on an SH-RT?"
 tags: [register-32998, import-limit, sh-rt, forced-charge, open]
 created: '2026-11-07'
 query: "Does register 32998 cap grid import while an SH-RT force-charges its battery, and does it depend on how the charge is commanded?"
-results_count: 7
+results_count: 9
 ---
 
 # Does the site import limit hold during a forced charge on an SH-RT?
@@ -34,6 +34,14 @@ a 1250 W forced charge to ~950 W of import, over the cable and written through a
 transport ([the bar12 runs](../sources/bar12-import-limit-2026-11-07-summary.md)). So neither the
 firmware nor the dongle explains the report.
 
+**And the model does not either.** At [peter-sm](../entities/installation-peter-sm.md) the cap held
+twice on an **SH10RT-V112** on P023, ulfben's model, over the cable with the charge commanded
+through 13050 and 13051: 800 W against 1438 W of import, and 1730 W against 2359 W, each returning
+when the cap came off
+([the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
+and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
+That leaves how ulfben's charge was commanded as the only untried explanation.
+
 A scheduled charge is capped too: at bar12 the forced-charging schedule's 4099 W charge was cut to
 ~510-690 W under a 1.00 kW cap ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
 And P022 obeys, over the cable and through a WiNet-S, EMS and schedule
@@ -42,4 +50,5 @@ And P022 obeys, over the cable and through a WiNet-S, EMS and schedule
 dongle, EMS and schedule, the cap has held every charge this repository commanded.
 
 What would answer it: how ulfben's charge is commanded (iSolarCloud's own forced charge is not
-among those tried), his B001 firmware, and whether a cap was set at all when it charged.
+among those tried), his B001 firmware, and whether a cap was set at all when it charged. The model
+and the firmware are no longer candidates.

@@ -30,6 +30,10 @@ in kW. The diagnosis's register dump reads it too.
   cap. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
   ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The capability test's
   `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
+  **At peter-sm the same three words answered differently in one respect**: 0 refused with 0x04 and
+  5000 was taken, but 5001 **lost the connection** instead of drawing a refusal -- that house drops
+  the link on several writes it will not take, so it says nothing about the register's range
+  ([a failed read is not a refusal](../concepts/failed-read-is-not-refusal.md)).
 - **There it does not hold against house load the battery does not cover.** With the battery
   held idle by a forced stop and ~2.2 kW of load, import ran at the whole load against a
   2.00 kW cap, as at 20.00 kW; the inverter neither shed load nor discharged
@@ -52,7 +56,14 @@ in kW. The diagnosis's register dump reads it too.
   [gerd](installation-gerd.md) ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)), and a
   scheduled charge through the dongle: 4399 W cut to 862 W, import 994 W
   ([the schedule run](../sources/gerd-import-limit-schedule-2026-11-08-summary.md)).
-- **On one SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
+- **On an SH10RT-V112 on [P023](firmware-sapphire-h-b001-v000-p023.md) it holds too**, twice, at
+  [peter-sm](installation-peter-sm.md), over the cable, the charge commanded through 13050 and
+  13051: a 800 W cap took import from 1438 W to 768 W and a 1730 W cap took 2359 W to 1702 W, each
+  returning when the cap came off (the capability test's `--import-limit` check;
+  [the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
+  and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
+  That is the model of the one report against it.
+- **On one other SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 

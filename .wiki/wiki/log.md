@@ -1539,3 +1539,29 @@ What changed:
 - **`entities/register-13000.md`** gains what a day of polling actually produces, and the warning
   that a one-minute cadence samples a transient state by luck.
 - **`entities/installation-mkaiser.md`** carries the settle and the new count.
+
+## [2026-11-18] ingested | peter_sm's twenty-first and twenty-second readings (#786)
+
+Two more readings of [peter-sm](entities/installation-peter-sm.md)'s SH10RT-V112 on P023, 79
+minutes apart on 2026-11-16, posted by Korsberg
+([the twenty-first](sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md),
+[the twenty-second](sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
+The second is the first committed document written by **schema 28**, and names integration
+0.1.0a43.
+
+**The site import limit holds on an SH10RT-V112.** The capability test's `--import-limit` check ran
+at this house for the first time and ran twice: under a forced charge over the cable, caps of
+800 W and 1730 W took import from 1438 W to 768 W and from 2359 W to 1702 W, each returning when
+the cap came off. That is ulfben's model, on ulfben's firmware family, obeying -- so neither the
+model nor the firmware explains the one report against
+[register 32998](entities/register-32998.md), and only how that charge was commanded is left.
+
+What changed:
+
+- **`entities/register-32998.md`** gains the SH10RT-V112 confirmation, and the one difference in
+  the range words: 5001 **lost the connection** here instead of being refused with 0x04.
+- **`queries/does-the-import-limit-hold-during-a-forced-charge.md`** narrows to the command path.
+- **`entities/installation-peter-sm.md`** carries both readings: the forced charge measured again
+  for the first time since the third reading (the house had held `battery_max_charge_power` at
+  10 W), an eleventh and twelfth link drop on 33213, a third on EMS mode 3, and restarts ten and
+  eleven, both back at 271 s.
