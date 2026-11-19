@@ -53,9 +53,10 @@ well past that, because a timeout kill reads exactly like a red gate.
 
 ## 6. Commit your own paths
 
-`git commit -- <your paths>`, never `git add -A`. Another agent's uncommitted
-or staged files stay standing and stay out of your commit. **Ask before
-pushing, every time** (`AGENTS.md`).
+`git commit -- <your paths>`, naming them, never the whole tree
+(`workflow.md`, *Git*). Another agent's uncommitted or staged files stay
+standing and stay out of your commit. **Ask before pushing, every time**
+(`AGENTS.md`).
 
 ## 7. Report
 
