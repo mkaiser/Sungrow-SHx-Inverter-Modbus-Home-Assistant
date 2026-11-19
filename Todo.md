@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T064.** Numbers are minted in order, never reused and
+**Next free item number: T065.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -35,7 +35,7 @@ houses.
 
 ## Battery
 
-Nothing can start now (T038).
+Nothing can start now (T038, T064).
 
 ## Wallbox
 
@@ -60,24 +60,12 @@ left -- the same sweep run from the production machine, where a modbus-proxy
 holds the session -- [plan](plans/T008-search-missed-the-inverter.md).
 *Needs*: a sweep from the production machine with the proxy running.
 
-**T010. Bound every write entity from what the device states**, where it
-states it: the wallbox's user-defined current is capped at a flat 32 A while
-the wallbox reports 16.0 A at 21263 -- [plan](plans/T010-range-checks.md).
-*Needs*: nothing; the readings are in the corpus.
-
-**T012. A safe pattern for ad-hoc hardware watches**, after an expiring access
-token left the maintainer's 13017 on for 50 minutes past its window --
-[plan](plans/T012-ad-hoc-hardware-watches.md).
-*Needs*: nothing.
-
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
-where it said "no runs kept", on a house that may never run a capability test.
+where it said "no runs kept", on a house that may never run a capability test
+-- which is also what *Diagnosis: tests, clear history* now leaves, since it
+keeps the readings.
 *Needs*: the maintainer's call, and a look at a real device page.
-
-**T015. Separate clearing the capability ledger from clearing the
-plausibility store** -- [plan](plans/T015-clearing-a-ledger.md).
-*Needs*: nothing; not urgent.
 
 **T018. Should `mppt3 / mppt4 carries a string` ask for the current?** It
 grants a tracker on voltage alone, which is wrong at Maximo101's SH10RS --
@@ -249,6 +237,13 @@ stopped.
 **T038. SBH.** It answers the SBR's common block at unit 2 with the SBR's
 scales; the per-module arrays are unread.
 *Unblocked by*: the SBH register document.
+
+**T064. Whether the start thresholds' 1000 W maximum is the right judgement**:
+the YAML's author called it a guess and asked to be told, and the inverter does
+not enforce it (1010 W stored at the maintainer's on P020).
+*Unblocked by*: a watched hour at a house setting a threshold above the
+battery's maximum charging power, where a charge should then never start --
+the behaviour `scripts/generate/tables/writes.py` already predicts.
 
 ## Wallbox
 
