@@ -1816,3 +1816,41 @@ What changed:
   `tests/test_plausibility.py`.
 - [SUNSTONE-H_B000.V002.P067](wiki/entities/firmware-sunstone-h-b000-v002-p067.md) says how
   the integration answers it.
+
+## [2026-11-19] changed | the midnight check judges on the inverter's clock, and a corrected check forgets
+
+**T016.** The readings checks' first failure on hardware was a clock, not an inverter
+([mkaiser](wiki/entities/installation-mkaiser.md)'s, two nights running): a daily counter
+resets on the **inverter's** midnight, and the check judged the fall by Home Assistant's
+local time, so an hour of timezone difference recorded a clean reset at the inverter's 00:04
+as `daily_pv_generation fell from 4.4 to 0 at 23:04`.
+
+- **Judged on the inverter's clock**, read from the six `system_clock_*` fields the `clock`
+  component already polls (holding 5000-5005). Where the inverter's clock did not read,
+  Home Assistant's is used and the sentence says so.
+- **Both readings, not an offset.** Where the two clocks differ by two minutes or more the
+  sentence prints each one -- `reset at 00:04 by the inverter's clock, where Home Assistant
+  read 23:04` -- because the inverter's clock is polled every 600 s and an offset computed
+  from a stale reading would understate it. A difference is not a fault: nothing requires a
+  Home Assistant to keep its inverter's timezone.
+- **Readings checks now carry revisions**, which answers a question the plan left open.
+  `CHECK_REVISIONS` in `plausibility.py` -- not `coverage.py`'s, which is the write paths'
+  and which a readings row never passes through. A stored state whose revision has moved is
+  dropped for **that check alone**, so a corrected check forgets what it judged by the rule
+  it no longer runs while its neighbours keep days of evidence. Checked against the real
+  store read that night: the failure goes, `lifetime counters never fall` keeps its 926
+  passes. Nothing has to be pressed afterwards; ordinary polling fills the row again.
+
+A `SCHEMA` bump would have thrown away every check's evidence at every house to correct one,
+and is still there for when the shape itself changes.
+
+What changed:
+
+- `src/sungrow_modbus/capability_test/plausibility.py`, and `doc/capability_tests.md`, whose
+  table also gains the containment check added with T019.
+- Tests: the hardware failure replayed as a pass, a fall at noon still a finding, clocks that
+  agree not both printed, an unread and an impossible clock, and the revision drop against
+  the state read off hardware.
+- [The capability test](wiki/concepts/capability-test.md) and
+  [mkaiser](wiki/entities/installation-mkaiser.md) say what is true now; the two source pages
+  keep what was measured then.

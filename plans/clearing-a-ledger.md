@@ -20,3 +20,11 @@ holds the rule and the bump together.
 The lesson, since it was nearly missed: **a change that could change a
 verdict needs its revision raised in the same commit**, which the table's
 own docstring says and the first fix did not do.
+
+**Readings checks have their own revisions now** (`CHECK_REVISIONS` in
+`capability_test/plausibility.py`, not the one in `coverage.py`), raised
+for `daily counters reset at midnight` by the clock fix. That takes the
+urgency out of this item from the other side: a *wrong* readings verdict
+no longer needs the store cleared, so what is left here is only the
+owner's own wish to start the runs afresh without losing days of
+readings.

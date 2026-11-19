@@ -147,7 +147,8 @@ finding; a ratio merely off (losses, reactive power) is *could not tell*, never 
 | *daily counter* against power | the counter's rise = ∫ power dt, a kWh at a time | three kWh of flow | a daily energy register a decade off |
 | *total* against *daily counter* | the lifetime counter rises with the daily one, 2 kWh at a time | 2 kWh on the daily counter | a lifetime register a decade off |
 | lifetime counters never fall | — | a day of polls | a wrong register or word order |
-| daily counters reset at midnight | a fall only between 23:30 and 00:30, to under 0.5 kWh | a midnight | the inverter's clock, or a counter that is not daily |
+| lifetime battery counters contain each other | charge ≥ charge from PV, and ≥ discharge | 100 kWh through the battery | a broken word in a lifetime counter |
+| daily counters reset at midnight | a fall only between 23:30 and 00:30 **of the inverter's clock**, to under 0.5 kWh | a midnight | a counter that is not daily |
 | battery level follows its power | 1 kWh out lowers the level, 1 kWh in raises it | 1 kWh through the battery | a level read from the wrong register |
 | running states | every 13000 code seen is in the table | a day of polls | a code nobody has named |
 | mppt3 / mppt4 carries a string | a voltage in daylight | PV above 1000 W | a tracker granted with nothing on it |
@@ -157,6 +158,19 @@ that fell in the same poll, and every one that had not fallen yet, whether it pa
 That is what says whether a device zeroes its counters together or over several polls -- which
 decides whether a poll can land between two of them and read a day's energy from two different
 days.
+
+**The midnight check judges on the inverter's clock.** A daily counter resets on the inverter's
+own midnight, and nothing requires a Home Assistant to keep its inverter's timezone: judged by
+the observer's clock, an hour of difference turns a clean reset at 00:04 into a counter falling
+at 23:04. Where the two clocks differ the sentence prints both readings, because a clock set
+wrong is worth reporting as itself.
+
+**The containment check needs no particular weather, and nothing to happen.** It is arithmetic
+between counters read in the same block -- a battery cannot give out more than it took in, and
+charging from PV is a part of charging -- so it is settled by one poll, where every other check
+here waits for sun, a load or a midnight. It is what finds a lifetime counter whose high word is
+wrong but whose reading still looks like a number a house could have. A 10 % margin, because
+Sungrow's own counters cross each other honestly by up to about 4 %.
 
 **The tracker check reads a voltage, not a string.** It grants the tracker at 50 V in daylight,
 and an unloaded input can drift past that: on an SH10RS `mppt4` reads 39.5 V to 53.6 V at 0.0 A

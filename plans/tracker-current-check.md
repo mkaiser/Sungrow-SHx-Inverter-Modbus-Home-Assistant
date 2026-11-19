@@ -15,7 +15,12 @@ discriminator is there. What has to be decided is the other case: a model
 that reports no tracker current at all should not turn a *matched* into an
 *inconclusive* for everyone. A verdict that reads "a voltage, and current
 with it" where the current answers, and the present rule where it does
-not, is the shape to weigh. Whether the verdict change owes a revision is
-T015's question; the plausibility store carries no revision at all
-(T016's correction), so in practice it owes a `plausibility.SCHEMA`
-bump or nothing.
+not, is the shape to weigh.
+
+**What it owes is settled, and it is cheap**: a readings check carries a
+revision of its own since the clock fix, in
+`plausibility.CHECK_REVISIONS`. So a verdict change raises
+`mppt3 / mppt4 carries a string` to 2 **in the same commit**, and every
+house drops what that check gathered under the old rule and keeps
+everything else. No `plausibility.SCHEMA` bump, no clearing, and nothing
+for an owner to press: ordinary polling fills the row again.

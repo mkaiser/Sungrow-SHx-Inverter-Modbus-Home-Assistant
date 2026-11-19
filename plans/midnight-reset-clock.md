@@ -47,3 +47,47 @@ readings row joins the summary straight from `Plausibility.summary()` through
 tests, clear history* (the whole ledger) or a `plausibility.SCHEMA` bump
 (every check's evidence). Worth its own decision: whether readings checks
 should carry revisions like the write paths, so one can be re-asked alone.
+
+## Status log
+
+Newest first.
+
+### 2026-11-19 -- built: the inverter's clock judges it, and a corrected check forgets
+
+**The clock.** `_inverter_time` reads the six `system_clock_*` fields the
+`clock` component already polls (holding 5000-5005, slowest tier) and
+`_daily_resets` judges `_near_midnight` on that, falling back to Home
+Assistant's and saying so where the inverter's did not read. Replaying the
+house that found this -- Home Assistant on UTC, the inverter an hour ahead --
+turns the recorded failure into:
+
+> `pv_generation 4.4->0 reset at 00:04 by the inverter's clock, where Home
+> Assistant read 23:04, the rest at zero`
+
+**Both readings, no arithmetic.** The sentence prints what each clock read
+rather than an offset in minutes, because the inverter's clock is polled
+every 600 s and a stale reading would understate an offset computed from it.
+Two measured numbers beside each other say the same thing and cannot be
+wrong. They are printed only when the two differ by two minutes or more.
+
+**Staleness is inside the window.** The clock is up to one poll of its
+component old, 600 s by default, against a `_near_midnight` span of an hour,
+so a reset at 00:04 reads somewhere in 23:54-00:04 and is judged as the
+midnight it is. A fall at noon still reads at noon and still fails.
+
+**What was decided, which the plan left open: readings checks carry
+revisions.** `CHECK_REVISIONS` and `revision_of()` in `plausibility.py`,
+`daily counters reset at midnight` on **2**. `as_dict` stores a revision per
+check and `from_dict` drops the state of a check whose revision has moved,
+that check alone. Checked against the real stored state from 2026-11-17: the
+`4.4 to 0 at 23:04` failure is dropped and `lifetime counters never fall`
+keeps its 926 passes.
+
+Why not the alternatives: a `SCHEMA` bump throws away every check's evidence
+at every house to correct one, and `coverage.CHECK_REVISIONS` is the write
+paths' table, which a readings row never passes through (the plan's own
+correction). A readings check needs no re-asking either -- ordinary polling
+fills a dropped row again with nobody pressing anything -- which is what
+makes dropping one cheap enough to be the right answer.
+
+Next: the tests, then the wiki and `Todo.md`.

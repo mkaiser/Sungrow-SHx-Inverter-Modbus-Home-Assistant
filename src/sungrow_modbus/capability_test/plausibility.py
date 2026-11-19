@@ -52,6 +52,35 @@ from .procedure import (
 #: schema is dropped, and the collection starts again.
 SCHEMA = 1
 
+#: What each check's own logic is on, where it has been corrected since a
+#: house may have kept evidence judged by the old one. A check absent here is
+#: on revision 1 and has never been corrected.
+#:
+#: Why per check and not a `SCHEMA` bump: the shape is unchanged, and a bump
+#: throws away *every* check's evidence at every house -- days of ratios and
+#: trails that are still perfectly good -- to correct one. A stored state
+#: under a different revision is dropped for **that check alone**, which is
+#: what `CHECK_REVISIONS` does for the write paths (`coverage.py`) and what
+#: the write paths' row needs here: a corrected check must forget what it
+#: judged by the rule it no longer runs, or its verdict outlives the fix.
+#:
+#: These are read, not re-asked: a readings check is fed by ordinary polling,
+#: so a dropped row fills itself again without anybody pressing anything.
+CHECK_REVISIONS: dict[str, int] = {
+    # 2 since 2026-11-19: it judged the fall by Home Assistant's clock, and
+    # a daily counter resets on the inverter's. A house whose Home Assistant
+    # keeps a different timezone recorded a correct reset as a failure, one
+    # a night, and a readings check that has failed counts as answered -- so
+    # the row would have stayed red behind the fix.
+    "daily counters reset at midnight": 2,
+}
+
+
+def revision_of(name: str) -> int:
+    """Return the revision of check `name` that this library runs."""
+    return CHECK_REVISIONS.get(name, 1)
+
+
 #: How a plausibility row is marked in a folded ledger's summary.
 KIND = "plausibility"
 
@@ -632,6 +661,66 @@ def _counters_contain(
     return (True, "") if judged else None
 
 
+#: The inverter's own clock, holding 5000-5005, as `observe` receives it.
+#: Year, month, day, hour, minute, second, in the inverter's local time.
+CLOCK_FIELDS: tuple[str, ...] = (
+    "system_clock_year",
+    "system_clock_month",
+    "system_clock_day",
+    "system_clock_hour",
+    "system_clock_minute",
+    "system_clock_second",
+)
+
+#: How far apart the two clocks must read before a sentence names both.
+#: Below this they are the same clock seen a moment apart, and saying so
+#: every night would be noise.
+CLOCK_DIFFERS_S = 120.0
+
+
+def _inverter_time(values: Values) -> datetime | None:
+    """Return what the inverter's own clock last read, or None.
+
+    Naive, because it is the inverter's local time and the inverter does not
+    say which zone that is -- which is the whole point: it is the only clock
+    its daily counters answer to.
+
+    **Up to one poll of the clock component old**, 600 s by default, because
+    `observe` is fed whatever the last poll of each component left. That is
+    well inside the hour `_near_midnight` spans, so a reset at 00:04 reads
+    somewhere between 23:54 and 00:04 and is judged as the midnight it is.
+    """
+    found = _all(values, *CLOCK_FIELDS)
+    if found is None:
+        return None
+    year, month, day, hour, minute, second = (int(part) for part in found)
+    try:
+        return datetime(year, month, day, hour, minute, second)  # noqa: DTZ001
+    except ValueError:
+        return None
+
+
+def _clock_said(clock: datetime | None, at: datetime) -> tuple[datetime, str]:
+    """Return the time to judge by, and how to name the clock it came from.
+
+    A **measured** sentence rather than a derived one: where the two clocks
+    disagree it prints both readings and leaves the arithmetic to the reader.
+    A difference is not a fault -- nothing requires a Home Assistant to share
+    its inverter's timezone -- so naming it is all this does. An offset in
+    minutes would be worse than useless here, because the inverter's clock is
+    read every 600 s and a stale reading would understate it.
+    """
+    if clock is None:
+        return at, f"{at:%H:%M} by Home Assistant's clock, the inverter's unread"
+    here = at.replace(tzinfo=None)
+    if abs((clock - here).total_seconds()) < CLOCK_DIFFERS_S:
+        return clock, f"{clock:%H:%M}"
+    return (
+        clock,
+        f"{clock:%H:%M} by the inverter's clock, where Home Assistant read {at:%H:%M}",
+    )
+
+
 def _near_midnight(at: datetime) -> bool:
     minutes = at.hour * 60 + at.minute
     return minutes >= 23 * 60 + 30 or minutes <= 30
@@ -656,6 +745,18 @@ def _daily_resets(
     the device, and this is where it is observed: a sentence naming one
     counter cannot tell an atomic reset from a staggered one, because the
     first counter to fall reads the same either way.
+
+    **Judged on the inverter's clock, not on Home Assistant's.** A daily
+    counter resets on the inverter's own midnight, and nothing requires a
+    Home Assistant to share its inverter's timezone. Judged by the wrong one,
+    a correct reset an hour away from the observer's midnight is reported as
+    a counter falling at 23:04 -- which is what happened at the maintainer's
+    house on two nights running, the readings checks' first failure anywhere
+    and the inverter blameless
+    (`.wiki/wiki/sources/mkaiser-midnight-reset-2026-11-17-summary.md`).
+    Where the inverter's clock did not read, Home Assistant's is used and the
+    sentence says so, because a window judged by an unnamed clock is worth
+    less than one that names it.
     """
     fell: list[str] = []
     missed: list[str] = []
@@ -673,13 +774,14 @@ def _daily_resets(
     if not fell:
         return None
     moved = ", ".join(fell)
-    if not _near_midnight(at):
-        return False, f"{moved} fell at {at:%H:%M}"
+    when, said = _clock_said(_inverter_time(current), at)
+    if not _near_midnight(when):
+        return False, f"{moved} fell at {said}"
     if missed:
-        return False, f"{moved} reset at {at:%H:%M}, {', '.join(missed)} not to zero"
+        return False, f"{moved} reset at {said}, {', '.join(missed)} not to zero"
     if standing:
-        return True, f"{moved} reset at {at:%H:%M}, {', '.join(standing)} did not"
-    return True, f"{moved} reset at {at:%H:%M}, the rest at zero"
+        return True, f"{moved} reset at {said}, {', '.join(standing)} did not"
+    return True, f"{moved} reset at {said}, the rest at zero"
 
 
 @dataclass
@@ -848,7 +950,10 @@ def checks() -> list[Check]:
             name="daily counters reset at midnight",
             needs="a midnight",
             minimum=1,
-            fields=DAILY,
+            # The inverter's clock comes with the counters, because it is the
+            # clock they answer to. A daily counter stays first, so what
+            # decides whether this check applies to a device is unchanged.
+            fields=(*DAILY, *CLOCK_FIELDS),
             judge=_daily_resets,
         ),
         SocDirection(
@@ -966,14 +1071,22 @@ class Plausibility:
         }
 
     def as_dict(self) -> dict[str, Any]:
-        """Return everything to keep across a restart."""
+        """Return everything to keep across a restart.
+
+        Each check's state carries the revision of the logic that produced
+        it, so a later library can tell evidence it still stands behind from
+        evidence it does not (`CHECK_REVISIONS`).
+        """
         return {
             "schema": SCHEMA,
             "observations": self.observations,
             "first": self.first,
             "last": self.last,
             "present": sorted(self._present),
-            "checks": {check.name: check.state() for check in self.checks},
+            "checks": {
+                check.name: {**check.state(), "revision": revision_of(check.name)}
+                for check in self.checks
+            },
         }
 
     @classmethod
@@ -988,6 +1101,13 @@ class Plausibility:
         out._present = set(state.get("present") or [])
         kept = state.get("checks") or {}
         for check in out.checks:
-            if check.name in kept:
-                check.load(kept[check.name])
+            held = kept.get(check.name)
+            if held is None:
+                continue
+            # Judged by logic this library no longer runs: dropped, and this
+            # check alone starts again. A state written before revisions
+            # existed reads as revision 1, which is what it was.
+            if int(held.get("revision", 1)) != revision_of(check.name):
+                continue
+            check.load(held)
         return out

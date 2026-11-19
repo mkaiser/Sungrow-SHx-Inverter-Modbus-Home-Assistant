@@ -233,12 +233,14 @@ and 33150 store it ([peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-a
 **The readings checks have run at [mkaiser](../entities/installation-mkaiser.md)**, over a night
 and a day of observing. The six ratio checks and the lifetime-counter check hold there
 ([the sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)),
-and one check has **failed**: `daily counters reset at midnight`, on a clock rather than on the
-inverter. A daily counter resets on the **inverter's** clock, while the observation is stamped
+and one check had **failed**: `daily counters reset at midnight`, on a clock rather than on the
+inverter. A daily counter resets on the **inverter's** clock, while the observation was stamped
 and judged with Home Assistant's local time (`dt_util.as_local`), so an hour of timezone
-difference between the two records a clean reset at the inverter's 00:04 as a fall "at 23:04"
-([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). The clock that
-would settle it is already read into each run's `conditions` as `inverter_clock`.
+difference between the two recorded a clean reset at the inverter's 00:04 as a fall "at 23:04"
+([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). **It is judged on
+the inverter's clock now**, from the six `system_clock_*` fields the `clock` component already
+polls, and the sentence prints both readings where they differ -- two measured times rather than
+an offset, which a clock read every 600 s would understate.
 
 **A failed readings check keeps judging, and cannot recover.** `EventCheck.observe` appends each
 *distinct* failure sentence and keeps the last five, while `verdict()` returns the failure for as
@@ -247,21 +249,25 @@ costs when the cause recurs: a second night added a second sentence, because eac
 day's kWh figure, and the row will take one more every night
 ([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
 
-**And a readings check's revision does not clear it**, though a write path's does. `CHECK_REVISIONS`
-is read by `_current` in `src/sungrow_modbus/capability_test/ledger.py`, which only the readback and
-effect tables pass through; a readings row joins the summary straight from `Plausibility.summary()`
-via `with_plausibility`, carrying no revision at all. What clears one is *Diagnosis: tests, clear
-history* (`async_clear_ledger` removes the plausibility store with the ledger), or raising
-`plausibility.SCHEMA`, which drops every check's evidence and not just the failing one. Fixing the
-cause is what keeps it clear.
+**A readings check carries a revision of its own**, since 2026-11-19 and the clock fix.
+`CHECK_REVISIONS` in `src/sungrow_modbus/capability_test/plausibility.py` -- not the table of the
+same name in `coverage.py`, which is the write paths' and which a readings row never passes
+through. `as_dict` stores a revision per check and `from_dict` drops the state of a check whose
+revision has moved, **that check alone**: a corrected check forgets what it judged by the rule it
+no longer runs, while its neighbours keep days of ratios and trails. Nothing has to be pressed
+afterwards, because ordinary polling fills a dropped row again.
+
+The heavier instruments are still there and still mean what they meant: *Diagnosis: tests, clear
+history* (`async_clear_ledger` removes the plausibility store with the ledger), and raising
+`plausibility.SCHEMA`, which drops every check's evidence at every house.
 
 **A check can measure while it judges.** A judgement that passes may leave a *note*, kept beside
 the failures and reported behind the verdict whichever way the verdict goes
 (`EventCheck.notes`, `_detail`, `src/sungrow_modbus/capability_test/plausibility.py`). The
 midnight check uses it: its sentence names **every** daily counter that fell in that one poll,
-with before and after, and every counter still standing. A house whose clocks agree says so in a
-pass; a house whose clocks differ, like mkaiser's, says the same thing in the nightly failure --
-so the measurement arrives either way.
+with before and after, and every counter still standing. It arrives whichever way the verdict
+goes, which is what it is for -- and at a house whose clocks differ it now also names both
+clocks, in a pass.
 
 What it measures is not this integration's arithmetic but the **device's**: whether an inverter
 zeroes its eight daily counters in one step or across several polls. It decides a user-visible

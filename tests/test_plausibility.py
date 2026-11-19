@@ -537,3 +537,164 @@ def test_most_of_the_corpus_is_judged_and_matches() -> None:
     verdicts = _corpus_verdicts()
     matched = sum(1 for verdict, _ in verdicts.values() if verdict == MATCH)
     assert matched > 75, verdicts
+
+
+# -- the midnight check judges on the inverter's clock -------------------------
+
+MIDNIGHT = "daily counters reset at midnight"
+
+
+def _with_clock(values: Values, at: datetime, ahead: timedelta) -> None:
+    """Put an inverter clock `ahead` of Home Assistant's into the readings."""
+    clock = at.replace(tzinfo=None) + ahead
+    parts = (clock.year, clock.month, clock.day, clock.hour, clock.minute, clock.second)
+    for name, part in zip(plausibility.CLOCK_FIELDS, parts, strict=True):
+        values[name] = float(part)
+
+
+def test_a_reset_on_the_inverters_midnight_passes() -> None:
+    """The failure found on hardware, 2026-11-17, replayed.
+
+    Home Assistant kept UTC and the inverter German local time, so a reset
+    at the inverter's 00:04 was recorded as `daily_pv_generation fell from
+    4.4 to 0 at 23:04` -- the readings checks' first failure anywhere, and
+    the inverter had done nothing wrong.
+    """
+
+    def german(at: datetime, values: Values) -> None:
+        _with_clock(values, at, timedelta(hours=1))
+        # The inverter's day ends an hour before Home Assistant's.
+        if at.hour == 23:
+            for name in plausibility.DAILY:
+                values[name] = 0.0
+
+    row = _run(german)[MIDNIGHT]
+    assert row["verdict"] == MATCH
+    assert "reset at 00:00 by the inverter's clock" in row["detail"]
+    assert "Home Assistant read 23:00" in row["detail"]
+
+
+def test_a_reset_away_from_the_inverters_midnight_is_still_a_finding() -> None:
+    """The check still catches what it is for: the clock is not an excuse."""
+
+    def noon(at: datetime, values: Values) -> None:
+        _with_clock(values, at, timedelta(hours=1))
+        if at.date() == START.date() and at.hour >= 12:
+            values["daily_pv_generation"] = 0.0
+
+    row = _run(noon)[MIDNIGHT]
+    assert row["verdict"] == OFF_BY
+    # 12:00 for the observer is 13:00 on the inverter, and the sentence says so.
+    assert "fell at 13:00 by the inverter's clock" in row["detail"]
+
+
+def test_clocks_that_agree_are_not_both_printed() -> None:
+    """A sentence that named two identical times every night would be noise."""
+
+    def same(at: datetime, values: Values) -> None:
+        _with_clock(values, at, timedelta(0))
+
+    row = _run(same)[MIDNIGHT]
+    assert row["verdict"] == MATCH
+    assert "reset at 00:00," in row["detail"]
+    assert "Home Assistant read" not in row["detail"]
+
+
+def test_an_unread_inverter_clock_says_which_clock_judged_it() -> None:
+    """The synthetic house carries no clock fields: the fallback names itself."""
+    row = _run()[MIDNIGHT]
+    assert row["verdict"] == MATCH
+    assert "by Home Assistant's clock, the inverter's unread" in row["detail"]
+
+
+def test_a_clock_that_makes_no_date_falls_back() -> None:
+    """0xFFFF in every clock register decodes to numbers that are not a date."""
+
+    def impossible(_at: datetime, values: Values) -> None:
+        for name in plausibility.CLOCK_FIELDS:
+            values[name] = 99.0
+
+    row = _run(impossible)[MIDNIGHT]
+    assert row["verdict"] == MATCH
+    assert "the inverter's unread" in row["detail"]
+
+
+# -- a corrected check forgets what the old rule judged ------------------------
+
+
+def _stored(revision: int | None) -> dict[str, Any]:
+    """Return a kept state shaped like the one read off hardware that night."""
+    midnight: dict[str, Any] = {
+        "passes": 0,
+        "failures": ["daily_pv_generation fell from 4.4 to 0 at 23:04"],
+        "notes": [],
+    }
+    if revision is not None:
+        midnight["revision"] = revision
+    return {
+        "schema": plausibility.SCHEMA,
+        "observations": 932,
+        "first": "2026-11-16T17:27:00+00:00",
+        "last": "2026-11-17T14:40:00+00:00",
+        "present": [MIDNIGHT, "lifetime counters never fall"],
+        "checks": {
+            MIDNIGHT: midnight,
+            "lifetime counters never fall": {
+                "passes": 926,
+                "failures": [],
+                "notes": [],
+            },
+        },
+    }
+
+
+def _loaded(state: dict[str, Any]) -> dict[str, plausibility.Check]:
+    return {check.name: check for check in Plausibility.from_dict(state).checks}
+
+
+def test_a_state_from_before_the_clock_fix_is_dropped_for_that_check_alone() -> None:
+    """The real failure, from the real store, read 2026-11-17.
+
+    It was judged by Home Assistant's clock, which this library no longer
+    does, so it goes -- and a readings check that has failed counts as
+    answered, so without this the row would stay red behind the fix. What
+    was judged by rules that have not changed stays: 926 passes of
+    `lifetime counters never fall` are days of evidence and still good.
+    """
+    checks = _loaded(_stored(revision=None))
+    assert checks[MIDNIGHT].failures == []  # type: ignore[attr-defined]
+    assert checks[MIDNIGHT].passes == 0  # type: ignore[attr-defined]
+    assert checks["lifetime counters never fall"].passes == 926  # type: ignore[attr-defined]
+
+
+def test_a_state_at_the_current_revision_is_kept() -> None:
+    """Otherwise every restart would throw the collection away."""
+    checks = _loaded(_stored(revision=plausibility.revision_of(MIDNIGHT)))
+    assert checks[MIDNIGHT].failures == [  # type: ignore[attr-defined]
+        "daily_pv_generation fell from 4.4 to 0 at 23:04"
+    ]
+
+
+def test_the_counts_around_a_dropped_check_are_kept() -> None:
+    """Dropping one check is not starting the collection again."""
+    collection = Plausibility.from_dict(_stored(revision=None))
+    assert collection.observations == 932
+    assert collection.first == "2026-11-16T17:27:00+00:00"
+
+
+def test_every_check_writes_its_revision() -> None:
+    """A state with no revision for a check could never be told from one."""
+    kept = Plausibility().as_dict()["checks"]
+    for check in plausibility.checks():
+        assert kept[check.name]["revision"] == plausibility.revision_of(check.name)
+
+
+def test_every_raised_revision_names_a_check_that_exists() -> None:
+    """A typo in the table would silently correct nothing."""
+    names = {check.name for check in plausibility.checks()}
+    assert set(plausibility.CHECK_REVISIONS) <= names
+
+
+def test_the_clock_fix_raised_the_midnight_checks_revision() -> None:
+    """The fix is not finished until the houses that hit it forget it."""
+    assert plausibility.revision_of(MIDNIGHT) > 1
