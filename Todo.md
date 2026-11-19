@@ -67,18 +67,6 @@ where it said "no runs kept", on a house that may never run a capability test
 keeps the readings.
 *Needs*: the maintainer's call, and a look at a real device page.
 
-**T018. Should `mppt3 / mppt4 carries a string` ask for the current?** It
-grants a tracker on voltage alone, which is wrong at Maximo101's SH10RS --
-[plan](plans/T018-tracker-current-check.md).
-*Needs*: nothing; a verdict change raises the check's revision in
-`plausibility.CHECK_REVISIONS`, which costs that check's evidence alone.
-
-**T020. Tell a managed wallbox from a standalone one**: infer it from
-behaviour, show the inference, and still ask the owner before writing a
-wallbox's own registers -- [plan](plans/T020-managed-vs-standalone-wallbox.md).
-*Needs*: nothing for steps 1-4; a standalone wallbox to measure against
-(T003) before the inference can be trusted.
-
 # Open decisions
 
 Nothing is built on these until the maintainer answers them.
@@ -246,6 +234,11 @@ battery's maximum charging power, where a charge should then never start --
 the behaviour `scripts/generate/tables/writes.py` already predicts.
 
 ## Wallbox
+
+**T020. Whether the standalone inference is right**: it is built, shown and
+asked for, so what is left is measuring it where it matters --
+[plan](plans/T020-managed-vs-standalone-wallbox.md), step 5.
+*Unblocked by*: a standalone wallbox, which nobody has offered (T003, T040).
 
 **T039. A wallbox charging negative, or past 32.7 kW**, which settles whether
 21308/21310 are signed. Input 21313 and input 21365 are still unnamed, and a
@@ -421,9 +414,8 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 
 Last checked **2026-11-19 07:30 UTC**: one contributor on #786, one document
 ingested (Maximo101's SH10RS, committed as `-2`). It left two findings, both
-now items of their own: `mppt4 carries a string` answered wrong (T018) and a
-broken `total_battery_charge` high word on every P067 machine, which is fixed
-and closed (T019). Their
+since fixed and closed: `mppt4 carries a string` answered wrong, and a broken
+`total_battery_charge` high word on every P067 machine. Their
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
 `"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
 entry's download hands over the last run's document from memory
