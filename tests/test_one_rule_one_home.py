@@ -10,10 +10,17 @@ rule -- and in the document that owns it, and nowhere else among the
 hand-written documents. If this test fails, the fix is a link to the owner,
 not a third copy.
 
-Excluded, because they are history or frozen evidence rather than rules:
-`.wiki/raw/` and `device-diagnosis/results/` (immutable sources),
-`.wiki/wiki/log.md` (the only place wiki history goes), and `plans/`, whose
-files are working documents deleted when their work is done.
+A plan under `plans/` is covered too. A plan is written to be picked up by a
+session reading that file alone, which is the pressure that makes somebody
+paste a whole rule into it, and a pasted rule drifts like any other copy.
+Invoking a rule is not copying it: "no push without asking" carries nothing
+that can go stale, and no marker here matches it.
+
+Excluded, because they are history, frozen evidence or generated rather than
+rules: `.wiki/raw/` and `device-diagnosis/results/` (immutable sources),
+`.wiki/wiki/log.md` (the only place wiki history goes), and
+`plans/text_translation_review.md`, which a generator writes -- a marker
+firing there is fixed in the generator.
 """
 
 from __future__ import annotations
@@ -43,7 +50,7 @@ EXCLUDED_PREFIXES = (
     ".wiki/raw/",
     ".wiki/wiki/log.md",
     "device-diagnosis/results/",
-    "plans/",
+    "plans/text_translation_review.md",
     "tests/",
 )
 
