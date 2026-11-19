@@ -36,9 +36,13 @@ maintainer writes new entries here (`workflow.md`).
 
 ## Inverter
 
-Nothing can start now. What the maintainer's own inverter can answer is a
-planned test below (T001, T002); the rest waits on a house with other
-firmware.
+**T036. Let the discharge windows be written** (#785) -- the watched write
+they waited for has happened twice, at the maintainer's SH10RT on P020 and at
+gerd's SH8.0RT on P022, each stopping a discharge and bringing it back
+([the capability test](.wiki/wiki/concepts/capability-test.md)): what is left
+is a `DISCHARGE_SCHEDULE_CONTROL` capability gated on those two firmwares, as
+the PV cut is.
+*Needs*: nothing; both readings are in the corpus.
 
 ## Battery
 
@@ -145,6 +149,24 @@ while the inverter works -- and from that, whether Standby should read
 *Needs*: the inverter working in daylight. The 13022 path still waits on a
 house that refuses 5214 (T046).
 
+**T007. A day and a night of *Extended test (auto repeat)* at the
+maintainer's SH10RT**, then ingest -- the new checks on hardware, the
+auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
+names on a real device page -- [plan](plans/diagnosis-and-capability-tests.md).
+*Needs*: the run started and left alone. The forced-startup mode on other
+firmware is T063, which this house cannot answer.
+
+**T013. The scenes other than *Battery Forced Charge*, at the maintainer's
+SH10RT** -- [plan](plans/scenes-on-hardware.md), *Beyond the one press*.
+*Needs*: sun with a battery that is not empty (the two export scenes), and a
+battery with something in it (bypass, forced discharge).
+
+**T017. One midnight at the maintainer's SH10RT on 0.1.0a44 or later**,
+which answers whether the inverter resets its daily counters in one step --
+[plan](plans/daily-counter-reset.md).
+*Needs*: the development instance observing over a midnight. Its clock no
+longer matters: the check reads the inverter's own (T016).
+
 **T025. The site import limit (32998) at fwitten's master, when it is
 reachable** (SH10RT-V112, P023, SBR096, cable -- ulfben's exact hardware,
 #546): what it adds is the engine's own `--import-limit` check on P023.
@@ -223,10 +245,6 @@ Nothing here or at the maintainer's P020 can answer it.
 875 then 961 on ra1k_0's SH20T in EMS mode 3. Nothing reads or writes it until
 then.
 *Unblocked by*: two reads of it a minute apart at that house.
-
-**T036. The discharge windows: writing them** (#785), in no Sungrow document.
-They read as diagnostic entities (`Capability.DISCHARGE_SCHEDULE`).
-*Unblocked by*: a watched write, as 31211 had (wiki: firmware gating).
 
 **T037. The discharge window on P023** (#785). It has run on P022 and P020;
 no P023 or SBR house has run it.
@@ -316,26 +334,10 @@ single write of 33213's held value.
 13022 is built on ten firmwares' evidence but has never met a house that
 refuses 5214; then decide whether the *Battery power* entity falls back too.
 Not to be asked for on #655 (maintainer, 2026-11-11).
-*Unblocked by*: a diagnosis of an SH8.0RS on #655's firmware, of SAPPHIRE
-51.0x, or of an inverter with a third-party battery.
-
-**T007. The diagnosis and its capability tests**: the forced-startup mode on
-other firmware, the new checks on hardware, the auto-repeat slot schedule, the
-status line's wording and translation, and the *Diagnosis:* names on a real
-device page -- [plan](plans/diagnosis-and-capability-tests.md).
-*Unblocked by*: one auto-repeat collection at the maintainer's SH10RT over a
-day and a night, then ingest; and a house in low-SoC standby after dark on
-P022, P023 or an SH-T for the forced-startup mode.
-
-**T013. The scenes other than *Battery Forced Charge*, on hardware** --
-[plan](plans/scenes-on-hardware.md), *Beyond the one press*.
-*Unblocked by*: sun with a battery that is not empty (the two export scenes),
-and a battery with something in it (bypass, forced discharge).
-
-**T017. Does the inverter reset its daily counters in one step?** --
-[plan](plans/daily-counter-reset.md).
-*Unblocked by*: a midnight at a house where the check names every counter that
-fell (0.1.0a44 on).
+*Unblocked by*: a diagnosis of an SH8.0RS on #655's firmware, or of SAPPHIRE
+51.0x. **A third-party battery is not enough**: the maintainer's is one and
+its 5214 answers (-765, -2739 and 1022 W across its readings), so what is
+wanted is a house where the register is refused.
 
 # Release
 
