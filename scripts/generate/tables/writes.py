@@ -296,9 +296,11 @@ NUMBERS += (
 #: (0.1 A), outside Sungrow's document. Watched at gerd's on P022: the car
 #: followed 6, 8, 10 and 12 A; 5 A was refused, so 6 A is the floor, and 33 A
 #: was taken on a 32 A wallbox, so the inverter does not cap it. 32 A, the
-#: largest Sungrow wallbox's rating, is the ceiling here. The inverter takes it
-#: **only in user-defined mode**; the number refuses before writing in any
-#: other (`number.py`). Gated by `EV_CHARGER_CONTROL`, which
+#: largest Sungrow wallbox's rating, is the ceiling here, and the entity
+#: narrows it to what this wallbox reports at input 21263 -- 16.0 A on an
+#: AC011E-01 -- wherever that register is read (`number.py`). The inverter
+#: takes the write **only in user-defined mode**; the number refuses before
+#: writing in any other (`number.py`). Gated by `EV_CHARGER_CONTROL`, which
 #: `capabilities.CONFIRMED_ON_FIRMWARE` grants per watched firmware.
 NUMBERS += (
     {

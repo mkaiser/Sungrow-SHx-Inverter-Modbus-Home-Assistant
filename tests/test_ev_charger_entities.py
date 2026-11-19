@@ -36,9 +36,11 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from sungrow_modbus.hybrid_inverter import capabilities, ev_charger as ev
 from sungrow_modbus.hybrid_inverter.capabilities import Capability, probe, resolve
+from sungrow_modbus.wallbox import capability_test as wct
 
 from .conftest import SERIAL, encode_string
-from .test_wallbox_entities import _wallbox_unit
+from .test_wallbox_entities import WORDS, _wallbox_unit
+from .test_wallbox_one_device import _inverter_entry, _set_up, _Units, _wallbox_entry
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -46,6 +48,26 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 INVERTER_FIRMWARE_ADDRESS = 13249
 WATCHED = "SAPPHIRE-H_B001.V000.P022"
 UNWATCHED = "SAPPHIRE-H_B001.V000.P023"
+
+
+def _seed(
+    unit: MockModbusUnit,
+    *,
+    firmware: str = WATCHED,
+    mode: int = ev.FAST,
+    charging: int = ev.ON,
+) -> None:
+    """Give the inverter its firmware and its EV charger block."""
+    unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(firmware, 15)
+    unit.holding[ev.CHARGING] = charging
+    unit.holding[ev.MODE] = mode
+    unit.holding[ev.USER_CURRENT] = 160
+    unit.holding[ev.GRID_SURPLUS] = ev.OFF
+
+
+def _rated(word: int) -> dict[str, dict[int, int]]:
+    """Return the wallbox's words with its rated current set to `word`."""
+    return {**WORDS, "input": {**WORDS["input"], wct.RATED_CURRENT: word}}
 
 
 async def _setup(
@@ -56,12 +78,9 @@ async def _setup(
     mode: int = ev.FAST,
     charging: int = ev.ON,
     wallbox_at: int | None = 3,
+    rated: int = 320,
 ) -> MockConfigEntry:
-    unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(firmware, 15)
-    unit.holding[ev.CHARGING] = charging
-    unit.holding[ev.MODE] = mode
-    unit.holding[ev.USER_CURRENT] = 160
-    unit.holding[ev.GRID_SURPLUS] = ev.OFF
+    _seed(unit, firmware=firmware, mode=mode, charging=charging)
     entry = MockConfigEntry(
         domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
     )
@@ -74,7 +93,7 @@ async def _setup(
         if unit_id == 1:
             return unit
         if wallbox_at is not None and unit_id == wallbox_at:
-            return _wallbox_unit(unit_id)
+            return _wallbox_unit(unit_id, _rated(rated))
         return empty
 
     with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
@@ -268,4 +287,68 @@ async def test_the_user_current_is_refused_before_writing_in_any_other_mode(
     assert raised.value.translation_placeholders["mode_entity"] == _entity_id(
         hass, "select", "ev_charger_mode"
     )
+    assert sungrow_unit.holding[ev.USER_CURRENT] == 160
+
+
+async def test_the_slider_stops_at_what_this_wallbox_is_rated_for(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """An AC011E-01 reads 16.0 A at 21263, half the static 32 A ceiling.
+
+    The inverter does not cap the write -- 33.0 A was taken on a 32 A wallbox
+    at gerd's -- so the entity's maximum is the only guard there is.
+    """
+    await _setup(hass, sungrow_unit, mode=ev.USER_DEFINED, rated=160)
+    entity_id = _entity_id(hass, "number", "ev_charger_user_current")
+
+    assert hass.states.get(entity_id).attributes["max"] == pytest.approx(16.0)
+    with pytest.raises(ServiceValidationError):
+        await _set_current(hass, 20)
+    assert sungrow_unit.holding[ev.USER_CURRENT] == 160
+
+    await _set_current(hass, 15)
+    assert sungrow_unit.holding[ev.USER_CURRENT] == 150
+
+
+@pytest.mark.parametrize("word", [0, 50])
+async def test_a_rating_of_zero_or_below_the_floor_leaves_the_ceiling(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, word: int
+) -> None:
+    """A 0 is not a rating, and 5.0 A is below the 6.0 A the inverter takes.
+
+    One reading of 21263 answered 0 (wiki: zero means absent), and a bound
+    under the entity's own minimum would offer nothing at all. Either way the
+    static 32 A stands.
+    """
+    await _setup(hass, sungrow_unit, mode=ev.USER_DEFINED, rated=word)
+    entity_id = _entity_id(hass, "number", "ev_charger_user_current")
+
+    assert hass.states.get(entity_id).attributes["max"] == pytest.approx(32.0)
+
+    await _set_current(hass, 32)
+    assert sungrow_unit.holding[ev.USER_CURRENT] == 320
+
+
+async def test_the_rating_is_reached_in_a_wallbox_entry_of_its_own(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A wallbox with its own entry is still bounded at the inverter's slider.
+
+    The inverter entry left the wallbox to that entry and polls it no more
+    (`wallbox_elsewhere`), so the rating is read across: the same register on
+    the same hardware, at no session's cost.
+    """
+    _seed(sungrow_unit, mode=ev.USER_DEFINED)
+    units = _Units(sungrow_unit)
+    units.direct.input[wct.RATED_CURRENT] = 160
+    wallbox = _wallbox_entry(hass)
+    inverter = _inverter_entry(hass)
+    await _set_up(hass, units, wallbox, inverter)
+    assert inverter.runtime_data.wallbox is None
+    assert inverter.runtime_data.wallbox_elsewhere is not None
+
+    entity_id = _entity_id(hass, "number", "ev_charger_user_current")
+    assert hass.states.get(entity_id).attributes["max"] == pytest.approx(16.0)
+    with pytest.raises(ServiceValidationError):
+        await _set_current(hass, 20)
     assert sungrow_unit.holding[ev.USER_CURRENT] == 160

@@ -428,6 +428,17 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   managed wallbox is controlled through the inverter's EV charger block
   (`hybrid_inverter/ev_charger.py`), behind `EV_CHARGER_CONTROL`: only on
   firmware where those writes were watched.
+- **A write entity's bound comes from the device wherever the device states
+  one**, because for everything but the state of charge the bound is the only
+  guard there is: the inverter stores a battery power above its own maximum
+  and took 33 A on a 32 A wallbox (wiki: which write bounds the inverter
+  enforces). So the battery powers take the lower of the inverter's BDC rating
+  and the pack's limit (`battery.ceiling`, shared with the capability test),
+  the feed-in limit its own registers' pair, and the managed wallbox's current
+  the wallbox's rated current at input 21263 -- read where that entry polls
+  it, or from the wallbox's own entry where one has it. A static bound is
+  either a measured refusal or a judgement, and the write table
+  (`scripts/generate/tables/writes.py`) says which beside it.
 - **The opt-in SBR YAML sensors are not adopted and keep no history**:
   partial adoption looks like a migration and is not one.
 - **Entity ids are English in every language; names are translated.** Home

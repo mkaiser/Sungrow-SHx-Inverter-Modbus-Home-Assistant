@@ -32,7 +32,11 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   inverter's entry offers these four words as controls only on firmware where the writes were
   watched (`CONFIRMED_ON_FIRMWARE` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`); run
   from Home Assistant at gerd's, each took its write
-  ([the controls](../sources/gerd-wallbox-ha-controls-2026-11-14-summary.md)).
+  ([the controls](../sources/gerd-wallbox-ha-controls-2026-11-14-summary.md)). Since the inverter
+  takes a current above the rating, that entry offers the user current only up to the wallbox's
+  own rated current (input 21263), wherever one is read -- behind the dongle here, or in the
+  wallbox's own entry -- and 32 A, the largest Sungrow wallbox's rating, where nothing reports
+  one.
 - **What the night of 2026-11-16/17 added** ([the night](../sources/gerd-wallbox-night-2026-11-16-summary.md)):
   in user-defined mode 21203 settles at the user current, in 0.1 A, and the car draws about 0.7 A
   less, **but it follows a change 4-5 minutes late** while the car follows within seconds

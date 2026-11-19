@@ -35,7 +35,7 @@ from .const import (
     CONF_EXPORT_WRITE_SCALE_PROBE,
     DOMAIN,
 )
-from .coordinator import SungrowConfigEntry
+from .coordinator import SungrowConfigEntry, SungrowWallboxCoordinator
 from .entity import SungrowEntity, SungrowNumberDescription, write_failed
 from .number_descriptions import NUMBER_DESCRIPTIONS
 from .write_owner import async_owner_wrote, refuse_while_test_writes
@@ -60,6 +60,9 @@ EXPORT_LIMIT = "export_power_limit"
 #: The managed wallbox's user-defined current, and the mode select it needs.
 EV_CHARGER_USER_CURRENT = "ev_charger_user_current"
 EV_CHARGER_MODE_KEY = "ev_charger_mode"
+
+#: The wallbox's own rated current (input 21263), which bounds that current.
+WALLBOX_RATED_CURRENT = "rated_current"
 
 #: An entity's unit against its field's, where the two differ on purpose.
 #: Register 32998 is kept in kW, as the YAML-era map records it
@@ -338,7 +341,65 @@ class EvChargerUserCurrentNumber(SungrowNumber):
     The inverter refuses a write of register 33545 with exception 0x04 in any
     mode but user defined (37 times at gerd's), so this says why before it
     writes, rather than passing on a refusal nobody can read.
+
+    It also does not stop at the wallbox's rating -- 33.0 A was taken on a
+    32 A wallbox -- so this entity's maximum is the only guard there is, and
+    it comes from the wallbox where the wallbox reports one.
     """
+
+    @property
+    def native_max_value(self) -> float:
+        """Return the lower of this wallbox's rating and the static ceiling.
+
+        The static one is 32 A, the largest Sungrow wallbox's rating, and on
+        an AC011E-01 that is twice what the hardware takes: a wallbox reports
+        its own at input 21263, read 16.0 A on 2026-11-16. The lower of the
+        two, because a rating above the largest unit Sungrow makes is a
+        misread rather than a bigger wallbox.
+        """
+        ceiling = super().native_max_value
+        rating = self._wallbox_rating()
+        return ceiling if rating is None else min(rating, ceiling)
+
+    def _wallbox_rating(self) -> float | None:
+        """Return the rated current of the wallbox this inverter manages.
+
+        From the wallbox this entry polls itself, or -- where the wallbox has
+        an entry of its own and this one left it to it
+        (`SungrowRuntimeData.wallbox_elsewhere`) -- from that entry's
+        reading, which is the same register on the same hardware. Reaching
+        across costs no session: the figure is already polled there.
+
+        A 0 is not a rating (wiki: zero means absent; one reading of 21263
+        answered 0), and neither is anything below the 6.0 A the inverter
+        takes as its floor -- a bound under the minimum would offer nothing
+        at all. Either leaves the static ceiling standing.
+        """
+        coordinator = self._wallbox_coordinator()
+        if coordinator is None:
+            return None
+        try:
+            rating = coordinator.device.field(WALLBOX_RATED_CURRENT)
+        except (AttributeError, KeyError):
+            return None
+        if not isinstance(rating, (int, float)) or rating < ev_charger.MIN_AMPS:
+            return None
+        return float(rating)
+
+    def _wallbox_coordinator(self) -> SungrowWallboxCoordinator | None:
+        """Return the coordinator reading this wallbox, in this entry or another."""
+        runtime_data = self._runtime_data
+        if runtime_data.wallbox is not None:
+            return runtime_data.wallbox
+        serial = runtime_data.wallbox_elsewhere
+        if serial is None:
+            return None
+        this_entry = self.coordinator.config_entry.entry_id
+        for other in self.hass.config_entries.async_entries(DOMAIN):
+            if other.entry_id == this_entry or other.unique_id != serial:
+                continue
+            return getattr(getattr(other, "runtime_data", None), "wallbox", None)
+        return None
 
     async def async_set_native_value(self, value: float) -> None:
         """Write the current, or refuse while the mode is not user defined."""
