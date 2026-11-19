@@ -1854,3 +1854,36 @@ What changed:
 - [The capability test](wiki/concepts/capability-test.md) and
   [mkaiser](wiki/entities/installation-mkaiser.md) say what is true now; the two source pages
   keep what was measured then.
+
+## [2026-11-19] ingested | all seven scenes on hardware, and a scene is not atomic
+
+**T009 and T013.** The scenes of `doc/scenes.md` beyond the one press, at
+[mkaiser](wiki/entities/installation-mkaiser.md)'s SH10RT on P020, 12:35-13:11 CET
+([the run](wiki/sources/mkaiser-scenes-2026-11-19-summary.md)). The pack was **empty**, so a
+forced charge made the battery scenes testable: 0.0 % to 8.7 % in 14 minutes at -4502 W.
+
+- **Both forced scenes move what they are told**, to within two watts, and both need the
+  `number..._power` line the 2026-11-17 fix added. The discharge scene **overwrote** the power
+  the charge left, so the line writes rather than filling a blank.
+- **Bypass holds the battery at 0 W** and sends the PV it was absorbing to the grid: -814 W out
+  of the battery's column and 1057 W into the grid's in the same poll, against an unmoved load.
+- **Both export scenes work**, and *Max Export Power* is half a thing without its automation --
+  which was not installed here. The document now names the automation at the scene that needs it.
+- **A scene is not atomic.** Three of seven presses did nothing first time and worked on a
+  retry; one named the cause: `Could not write ...: Connection lost before response was
+  received`. Both registers of that scene were written singly between the failures and both took.
+  This inverter carries the production Home Assistant and the development instance at once and
+  logged 34 lost connections in the hour ([contention](wiki/concepts/contention.md)). A scene
+  abandons the rest of its writes when one raises, so it fails more readily than a single write.
+
+Every setting was restored to the snapshot and verified by read-back, and a detached restore was
+armed before the first write -- it logs in afresh each time, because an access token lasts thirty
+minutes, which is how a watch once left 13017 on for fifty minutes past its window.
+
+What changed:
+
+- `doc/scenes.md`: the retry lesson where a reader meets it, the automation named at each scene
+  that needs one, and why the automations read the maximum rather than storing it -- the ceiling
+  moves with the pack (7148 W empty, 7420 W at 25 %, 7318 W a minute later), which was T009's
+  one remaining need.
+- [mkaiser](wiki/entities/installation-mkaiser.md) says what the house showed.

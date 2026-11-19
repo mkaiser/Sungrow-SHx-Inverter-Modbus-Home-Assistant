@@ -66,8 +66,9 @@ reload scenes (**Developer tools → YAML → Scenes**).
     select.battery_forced_charge_discharge: stop
     # Your battery's maximum, in watts. Developer tools → States shows the
     # highest it accepts, as the number's "max" attribute. Or leave this
-    # line out and use the automation below, which reads it from the
-    # inverter.
+    # line out and use the *Max battery discharge* automation below, which
+    # reads it from the inverter. With neither, this scene sets the mode and
+    # leaves the limit where it was.
     number.battery_max_discharge_power: "5000"
 
 - name: Self-Consumption Mode (no battery discharge)
@@ -86,8 +87,10 @@ reload scenes (**Developer tools → YAML → Scenes**).
 - name: Max Export Power
   entities:
     switch.export_power_limit: "on"
-    # The automation below sets the limit itself: a scene cannot ask the
-    # inverter what its maximum is.
+    # Needs the *Max export power* automation below, which sets the limit
+    # itself: a scene cannot ask the inverter what its maximum is. Without
+    # it this scene turns the limit **on** and leaves whatever number was
+    # already there -- including the 0 that Zero Export Power left.
 
 - name: Battery Bypass Mode
   entities:
@@ -116,6 +119,16 @@ reload scenes (**Developer tools → YAML → Scenes**).
 **Forced mode does not end by itself.** The battery stays charging or
 discharging at that power until something sets it back -- use
 *Self-Consumption Mode* when you are done.
+
+**If a scene seems to do nothing, press it again and look at the log.** A
+scene writes its registers one after another, and a Sungrow accepts very few
+Modbus connections at once: where something else is polling the inverter --
+another Home Assistant, the YAML package, an energy manager -- a write can
+lose the connection, and **when one write fails the rest of the scene is
+abandoned**. Home Assistant logs it as `Could not write ...: Connection lost
+before response was received`, and a second press usually lands. Three of
+seven presses needed a second one on an inverter carrying two Home
+Assistants; on a quiet link this does not happen.
 
 ## The two automations
 
@@ -156,6 +169,17 @@ comes from the entity itself.
 If you used the second automation, drop the
 `number.battery_max_discharge_power` line from the first scene — otherwise
 the scene sets one value and the automation immediately sets another.
+
+**Why read the maximum instead of writing a number into the scene.** The
+battery's ceiling is not a constant: it is what the pack's BMS will take at
+that moment, so it moves with the battery's state. On an SH10RT with a
+third-party battery the same maximum read **7148 W with the pack empty,
+7420 W at about 25 %, and 7318 W a minute later**. A figure typed into a
+scene is right on the day you measure it and slowly wrong afterwards; the
+automation is right every time it runs. The same applies to the export
+limit, which is why both automations exist.
+
+Both have now run on hardware, and both do what they say.
 
 ## What the scenes do to your inverter
 

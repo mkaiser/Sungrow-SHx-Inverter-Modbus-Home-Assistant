@@ -38,11 +38,10 @@ maintainer writes new entries here (`workflow.md`).
 
 **T036. Let the discharge windows be written** (#785) -- the watched write
 they waited for has happened twice, at the maintainer's SH10RT on P020 and at
-gerd's SH8.0RT on P022, each stopping a discharge and bringing it back
-([the capability test](.wiki/wiki/concepts/capability-test.md)): what is left
-is a `DISCHARGE_SCHEDULE_CONTROL` capability gated on those two firmwares, as
-the PV cut is.
-*Needs*: nothing; both readings are in the corpus.
+gerd's SH8.0RT on P022 -- [plan](plans/discharge-windows-writable.md).
+*Needs*: nothing. The window shape is decided (a `time` per edge plus an
+"all day" switch for the hour that is 24), and the four build steps are in
+the plan.
 
 ## Battery
 
@@ -70,11 +69,6 @@ diagnosis (T005, T006, T042).
 left -- the same sweep run from the production machine, where a modbus-proxy
 holds the session -- [plan](plans/search-missed-the-inverter.md).
 *Needs*: a sweep from the production machine with the proxy running.
-
-**T009. Activate the scenes of `doc/scenes.md` on hardware.** *Battery Forced
-Charge* was pressed at the maintainer's on 2026-11-17 and the ceiling it
-reads moves with the pack -- [plan](plans/scenes-on-hardware.md).
-*Needs*: the finding written into `doc/scenes.md`.
 
 **T010. Bound every write entity from what the device states**, where it
 states it: the wallbox's user-defined current is capped at a flat 32 A while
@@ -155,11 +149,6 @@ auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
 names on a real device page -- [plan](plans/diagnosis-and-capability-tests.md).
 *Needs*: the run started and left alone. The forced-startup mode on other
 firmware is T063, which this house cannot answer.
-
-**T013. The scenes other than *Battery Forced Charge*, at the maintainer's
-SH10RT** -- [plan](plans/scenes-on-hardware.md), *Beyond the one press*.
-*Needs*: sun with a battery that is not empty (the two export scenes), and a
-battery with something in it (bypass, forced discharge).
 
 **T017. One midnight at the maintainer's SH10RT on 0.1.0a44 or later**,
 which answers whether the inverter resets its daily counters in one step --

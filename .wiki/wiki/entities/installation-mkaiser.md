@@ -39,6 +39,12 @@ from the grid the same morning, run from the `doc/scenes.md` scenes, took the pa
 companion automation render `state_attr(..., 'max')` as 7420 W -- a ceiling that read 7148 W with
 the pack empty and 7318 W a minute later, because it falls back to what the BMS will take at that
 moment ([the charge](../sources/mkaiser-forced-charge-2026-11-17-summary.md)).
+**All seven scenes of `doc/scenes.md` have now run here** (2026-11-19): both forced scenes move
+what they are told to within two watts, bypass holds the battery at 0 W and sends the PV it was
+absorbing to the grid, and the two export scenes and both automations work -- with the lesson that
+a scene is not atomic and this link drops, so three of seven presses needed a second
+([the scenes](../sources/mkaiser-scenes-2026-11-19-summary.md)). In self-consumption below about
+10 % this inverter charges the pack **from the grid** rather than covering the load with it.
 The forced-charging window took charging from -633 W to 4499 W and back, did as it was told
 ([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)).
 A night of *Extended test (auto repeat)*, 19 runs, did it seven times more, held the site import

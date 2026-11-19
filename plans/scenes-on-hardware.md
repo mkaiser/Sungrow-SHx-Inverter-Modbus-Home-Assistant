@@ -44,3 +44,32 @@ house that is exporting, so they wait for sun with a battery that is not
 empty; *Battery Bypass* and *Battery Forced Discharge* need a battery with
 something in it. None of them is urgent, and the forced-charge press
 already proved the mechanism the rewrite was for.
+
+## Status log
+
+### 2026-11-19 -- done: all seven scenes, and both automations, on hardware
+
+Everything this plan waited for ran at the maintainer's SH10RT between 12:35
+and 13:11 CET
+(`.wiki/wiki/sources/mkaiser-scenes-2026-11-19-summary.md`). The pack was
+empty, so a forced charge made the battery scenes testable -- 0.0 % to 8.7 %
+in 14 minutes at -4502 W -- and the export scenes came with it, because
+bypass sends the PV the battery was absorbing to the grid.
+
+**T009's last need is met**: why the automations read the maximum instead of
+storing it is now in `doc/scenes.md`, with the three readings that show the
+ceiling moving with the pack.
+
+**T013 is done**, and found three things worth more than the presses:
+
+- the `number..._power` line is what makes a forced scene move, and the
+  discharge scene overwrites what the charge left;
+- *Max Export Power* is half a thing without its automation, which was not
+  installed here -- so the document now names the automation at the scene;
+- **a scene is not atomic**: three of seven presses did nothing first time,
+  one logging a lost connection mid-write, on a link carrying two Home
+  Assistants. Both registers of the failing scene were written singly
+  between the failures and both took.
+
+Nothing of `doc/scenes.md` is untested now. What is unmeasured is what any
+scene does over time: every reading here is within two minutes of a press.

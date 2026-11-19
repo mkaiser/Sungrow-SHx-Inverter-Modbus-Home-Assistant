@@ -86,6 +86,7 @@
 
 ## Sources
 
+- [All seven scenes on hardware, mkaiser's SH10RT](sources/mkaiser-scenes-2026-11-19-summary.md) — Every scene of doc/scenes.md measured; a scene is not atomic and a contended link abandons the rest #scenes #mkaiser #contention
 - [gerd-battery-level-2026-11-14.md](sources/gerd-battery-level-2026-11-14-summary.md) — gerd's inverter battery level 1.5 % beside the pack's 11.4 % at a 10 % minimum: the min-max window #register-13023 #soc #gerd #read-only
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #diagnosis #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-gerd-anon-41346964423-wallbox-tls-2.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) — AC22E-01 wallbox, gerd, over TLS while a car charged; 21320 holds the time of reading during a session #diagnosis #wallbox #ac22e-01 #gerd #tls
