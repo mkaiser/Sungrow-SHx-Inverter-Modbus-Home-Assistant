@@ -563,6 +563,75 @@ def _totals_rise(
     return (True, "") if judged else None
 
 
+#: Lifetime counters that cannot honestly pass each other, with why not.
+#:
+#: `(whole, part, why)`: the energy in `part` has already been counted in
+#: `whole`, so a reading where the part stands above the whole is not an
+#: unusual house, it is a register that is not holding what it says.
+#:
+#: This is the one check that costs no Modbus read at all and still finds a
+#: broken word, which is why it is here: a counter whose **high** word is a
+#: wrap short reads a number that is perfectly plausible on its own --
+#: 14,844.2 kWh at bigz2012's -- and only standing it beside the discharge
+#: total it has to contain says so (wiki: a-million-kwh-is-not-a-reading).
+COUNTER_CONTAINMENTS: tuple[tuple[str, str, str], ...] = (
+    (
+        "total_battery_charge",
+        "total_battery_charge_from_pv",
+        "charging from PV is a part of charging",
+    ),
+    (
+        "total_battery_charge",
+        "total_battery_discharge",
+        "a battery cannot give out more than it took in",
+    ),
+)
+
+#: How far the part may stand above the whole before it is a finding, as a
+#: fraction of the whole.
+#:
+#: Measured over the diagnosis corpus, not chosen. Four machines cross the
+#: line honestly and all of them by a little: anonymous-33472554127 by 0.03 %,
+#: sisu70 by 0.70 %, icefest by 2.06 %, and biergitkraft by 4.17 % of a
+#: counter that has barely started. The two SH-RS on
+#: SUNSTONE-H_B000.V002.P067 whose high word is a wrap short are out by
+#: 32.4 % and 40.6 % (bigz2012) and 97.3 % and 99.4 % (brendan). Ten per cent
+#: sits five times above the worst honest reading and three times below the
+#: smallest broken one, which is as much room as eighty-nine inverter
+#: documents can buy.
+CONTAINMENT_MARGIN = 0.10
+
+#: How far the counters must have run before the pair is judged, in kWh.
+#: A house in its first weeks reads 4.8 kWh charged against 5.0 kWh
+#: discharged (biergitkraft's), where a tenth of a kilowatt-hour of
+#: bookkeeping is a percentage that means nothing.
+COUNTER_FLOOR_KWH = 100.0
+
+
+def _counters_contain(
+    _previous: Values, current: Values, _at: datetime
+) -> tuple[bool, str] | None:
+    """Judge that no lifetime counter stands above one that contains it.
+
+    Judged on one poll: the previous reading is not used, because this is an
+    arithmetic relation between registers read in the same block and not an
+    event between two moments. That is what lets a diagnosis settle it from
+    one run, where every other check here needs days.
+    """
+    judged = False
+    for whole, part, why in COUNTER_CONTAINMENTS:
+        big, small = _get(current, whole), _get(current, part)
+        if big is None or small is None or small < COUNTER_FLOOR_KWH:
+            continue
+        judged = True
+        if small > big * (1 + CONTAINMENT_MARGIN):
+            return False, (
+                f"{part} reads {small:g} kWh and {whole} only {big:g}: {why}, "
+                f"so one of the two is holding a broken word"
+            )
+    return (True, "") if judged else None
+
+
 def _near_midnight(at: datetime) -> bool:
     minutes = at.hour * 60 + at.minute
     return minutes >= 23 * 60 + 30 or minutes <= 30
@@ -753,6 +822,27 @@ def checks() -> list[Check]:
             minimum=1440,
             fields=TOTALS,
             judge=_totals_rise,
+        ),
+        EventCheck(
+            name="lifetime battery counters contain each other",
+            needs="100 kWh through the battery",
+            # Two polls, where its neighbours want hundreds: a relation
+            # between registers read together is settled by reading them,
+            # and the second poll is only an echo of the first. A failure
+            # needs no minimum at all -- one poll out by a third is not a
+            # house the collection has not seen enough of.
+            minimum=2,
+            # `total_battery_charge` first, so that a machine where it reads
+            # past its ceiling (`model.ENERGY_CEILING_KWH`) and decodes as
+            # None drops this row rather than waiting on it for ever. There
+            # the ceiling has already refused the reading; this check is for
+            # the broken word that reads plausibly.
+            fields=(
+                "total_battery_charge",
+                "total_battery_charge_from_pv",
+                "total_battery_discharge",
+            ),
+            judge=_counters_contain,
         ),
         EventCheck(
             name="daily counters reset at midnight",

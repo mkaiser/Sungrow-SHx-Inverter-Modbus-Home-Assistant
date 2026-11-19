@@ -1,15 +1,20 @@
-"""The readings' plausibility checks, on a synthetic house.
+"""The readings' plausibility checks, on a synthetic house and on the corpus.
 
 The house is made up: a bell of PV, a steady load, a battery that soaks up
 surplus and covers the night. Every reading is derived from the same flows,
 so a consistent house passes every check, and a decade put into one field
 must turn up as that check's finding and nowhere else.
+
+The last section is not synthetic. `lifetime battery counters contain each
+other` judges one poll, so every committed diagnosis can be put through it,
+and that is the only way to know what it does to eighty-nine real houses.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+import json
 import math
 from typing import Any
 
@@ -25,6 +30,8 @@ from sungrow_modbus.capability_test.procedure import (
     SCALED,
     SIGN_INVERTED,
 )
+
+from .corpus import INVERTER_DOCUMENTS
 
 START = datetime(2026, 6, 1, 0, 1, tzinfo=UTC)
 CAPACITY_KWH = 10.0
@@ -371,3 +378,162 @@ def test_every_field_a_check_reads_is_collected() -> None:
     """A driver collecting `FIELDS` gives every check what it reads."""
     for check in plausibility.checks():
         assert set(check.fields) <= set(plausibility.FIELDS), check.name
+
+
+# -- lifetime battery counters contain each other ------------------------------
+
+CONTAINMENT = "lifetime battery counters contain each other"
+
+
+def test_a_lifetime_charge_below_what_it_contains_is_a_finding() -> None:
+    """A whole that has fallen below its own part: the P067 fault's shape.
+
+    `total_battery_charge`'s high word is a wrap short, so the counter reads
+    far below the charge-from-PV and the discharge it has to contain. Here
+    the whole is cut by a sixth, well past the 10 % margin.
+    """
+
+    def short(_at: datetime, values: Values) -> None:
+        values["total_battery_charge"] = values["total_battery_charge"] / 1.2  # type: ignore[operator]
+
+    row = _run(short)[CONTAINMENT]
+    assert row["verdict"] == OFF_BY
+    assert "total_battery_charge_from_pv reads" in row["detail"]
+    assert "broken word" in row["detail"]
+
+
+def test_a_counter_a_few_per_cent_out_is_not_a_finding() -> None:
+    """Four honest machines in the corpus cross the line, none by more than 5 %.
+
+    Sungrow's own bookkeeping puts `total_battery_charge_from_pv` above
+    `total_battery_charge` by up to 2.06 % (icefest's), so anything inside the
+    margin has to pass or the check would report four working houses.
+    """
+
+    def slightly(_at: datetime, values: Values) -> None:
+        values["total_battery_charge"] = values["total_battery_charge"] / 1.05  # type: ignore[operator]
+
+    assert _run(slightly)[CONTAINMENT]["verdict"] == MATCH
+
+
+def test_counters_under_the_floor_are_not_judged() -> None:
+    """A house in its first weeks, where a tenth of a kWh is a percentage.
+
+    biergitkraft's reads 4.8 kWh charged against 5.0 discharged, which is
+    4.17 % out and still nothing at all. The row stays, saying what it is
+    waiting for -- the counters read, so the check applies to this house; it
+    is the readings that are too small to judge.
+    """
+
+    def tiny(_at: datetime, values: Values) -> None:
+        values["total_battery_charge"] = 4.8
+        values["total_battery_charge_from_pv"] = 5.0
+        values["total_battery_discharge"] = 5.0
+
+    row = _run(tiny)[CONTAINMENT]
+    assert row["verdict"] is None
+    assert row["needs"] == "100 kWh through the battery"
+
+
+def test_the_check_is_settled_by_one_run_of_a_diagnosis() -> None:
+    """Three polls a minute apart, which is what a diagnosis takes.
+
+    Every other check here wants hours or days. This one is arithmetic
+    between registers read together, so a diagnosis settles it where it
+    stands -- which is how the corpus answered it for three machines nobody
+    can visit.
+    """
+    collection = Plausibility()
+    for minute in range(3):
+        at = START + timedelta(minutes=minute)
+        collection.observe(
+            {
+                "total_battery_charge": 6374.1,
+                "total_battery_charge_from_pv": 12574.5,
+                "total_battery_discharge": 12708.0,
+            },
+            at,
+        )
+    assert collection.summary()[CONTAINMENT]["verdict"] == OFF_BY
+
+
+# -- the same check, over every committed diagnosis ----------------------------
+
+
+def _containment_verdict(values: dict[str, Any]) -> tuple[str | None, str]:
+    """Return what the check makes of one document's readings."""
+    collection = Plausibility()
+    for minute in range(3):
+        collection.observe(values, START + timedelta(minutes=minute))
+    row = collection.summary().get(CONTAINMENT)
+    return (None, "") if row is None else (row["verdict"], row["detail"])
+
+
+def _corpus_verdicts() -> dict[str, tuple[str | None, str]]:
+    """Run the check over every inverter document in the corpus."""
+    out: dict[str, tuple[str | None, str]] = {}
+    for path in INVERTER_DOCUMENTS:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        values = (document.get("readings") or {}).get("values") or {}
+        out[path.name] = _containment_verdict(
+            {
+                name: value
+                for name, value in values.items()
+                if value is None or isinstance(value, (int, float))
+            }
+        )
+    return out
+
+
+def test_the_check_finds_exactly_the_two_machines_that_read_plausibly() -> None:
+    """bigz2012's and brendan's, and no honest house anywhere in the corpus.
+
+    Both are SH-RS on SUNSTONE-H_B000.V002.P067, both read a counter a house
+    could have -- 14,844.2 and 6,374.1 kWh -- and both are a whole wrap of
+    6,553.6 kWh short at 13042. Nothing in either reading says so on its own;
+    standing it beside the discharge total it has to contain does.
+    """
+    found = {
+        name: detail
+        for name, (verdict, detail) in _corpus_verdicts().items()
+        if verdict not in (MATCH, None)
+    }
+    assert sorted(found) == [
+        "sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan.json",
+        "sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json",
+    ], found
+
+
+def test_maximo101_is_the_ceilings_to_catch_and_not_this_checks() -> None:
+    """The third machine on that firmware, and the division of labour.
+
+    Its high word reads 0xFFFF, so `total_battery_charge` comes out
+    *larger* than everything it contains and the relation is satisfied. A
+    containment cannot see it, and no upper bound could: the corpus has an
+    honest house reading 9,290 kWh charged against 0.0 from PV. That reading
+    is `model.ENERGY_CEILING_KWH`'s to refuse (`tests/test_energy_ceiling.py`),
+    and in a live house the field decodes it as None, which drops this row
+    altogether rather than passing it.
+    """
+    verdicts = _corpus_verdicts()
+    maximo = {
+        name: verdict
+        for name, (verdict, _detail) in verdicts.items()
+        if "maximo101" in name
+    }
+    assert maximo and set(maximo.values()) == {MATCH}
+    # And with the ceiling applied, as the integration reads it: no row.
+    assert _containment_verdict(
+        {
+            "total_battery_charge": None,
+            "total_battery_charge_from_pv": 13540.5,
+            "total_battery_discharge": 16668.7,
+        }
+    ) == (None, "")
+
+
+def test_most_of_the_corpus_is_judged_and_matches() -> None:
+    """Otherwise the two tests above would pass on a check that never fires."""
+    verdicts = _corpus_verdicts()
+    matched = sum(1 for verdict, _ in verdicts.values() if verdict == MATCH)
+    assert matched > 75, verdicts

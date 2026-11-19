@@ -149,6 +149,42 @@ Things that do **not** follow the entity IDs automatically:
   name you set yourself is kept. There is no language option: the names follow
   Settings → System → General.
 
+## A reading the integration now refuses, that your history may still hold
+
+The integration refuses a lifetime energy counter above a million kWh: no
+house reaches one, so a reading past it is a broken register word and the
+sensor reads unknown instead of publishing it.
+
+It is needed because of a firmware fault. All three SH-RS measured on
+`SUNSTONE-H_B000.V002.P067` have a wrong high word in *Total battery charge*
+(register 13042), while the word below it counts correctly. On two of them the
+counter comes out a few thousand kWh too low, which looks like an ordinary
+number and only the integration's own readings check can see. On the third the
+high word reads the *unavailable* code, and the sensor published
+**429,494,295.3 kWh** — which is the reading this ceiling now refuses.
+
+**The refusal only works forwards.** If your recorder took such a reading
+while you were on the YAML package, that number is in your long-term
+statistics, and migrating keeps the same entity ID and therefore the same
+statistics. The integration will not delete it: removing years of recorded
+data is not a thing an upgrade should do behind you.
+
+So if you have ever seen an absurd value — an Energy dashboard bar in the
+hundreds of millions, or a *Total battery charge* graph with a cliff in it —
+clear it yourself, in **Developer tools → Statistics**. Find the entity,
+and on its row:
+
+- **Delete statistics in a time range** removes the bad stretch and leaves
+  the rest of the history alone. This is usually the one you want.
+- **Adjust sum** corrects a single hour, if the damage is one spike.
+- **Delete selected statistics** throws away that entity's long-term
+  statistics entirely, and starts over.
+
+Deleted statistics cannot be restored, so take the backup from
+[Before you start](#before-you-start) first. The states behind the graph are
+separate: `recorder.purge_entities` removes those and leaves the statistics
+untouched, which is why it is not the tool for this.
+
 ## What the entities look like now
 
 Whichever answer you gave, names are consistent and translatable (only

@@ -16,9 +16,10 @@ transport: 200 over the inverter's own LAN port, 2 through a WiNet-S. See
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, uint32
+from modbus_connection.model import Component, gauge
 
 from ..addresses import reg
+from ..model import energy_counter
 
 
 class SbrBatteryPack(Component):
@@ -57,10 +58,14 @@ class SbrBatteryPack(Component):
     state_of_health = gauge(reg(10745), 1, signed=False, nan=0xFFFF, unit="%")
     """State of health, whole percent. Read 98 %."""
 
-    total_charge = uint32(reg(10746), scale=0.1, word_order="little", unit="kWh")
+    total_charge = energy_counter(
+        reg(10746), scale=0.1, word_order="little", unit="kWh"
+    )
     """Lifetime energy into the pack."""
 
-    total_discharge = uint32(reg(10748), scale=0.1, word_order="little", unit="kWh")
+    total_discharge = energy_counter(
+        reg(10748), scale=0.1, word_order="little", unit="kWh"
+    )
     """Lifetime energy out of the pack."""
 
 

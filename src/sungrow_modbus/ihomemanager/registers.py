@@ -40,7 +40,7 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, int32, integer, uint32
 
 from ..addresses import reg
-from ..model import RegisterValue, string
+from ..model import RegisterValue, energy_counter, string
 
 #: The unit an iHomeManager answers on, fixed by Sungrow ("changes are not
 #: supported").
@@ -157,7 +157,7 @@ class IHomeManagerSystem(Component):
     total_rated_active_power = uint32(
         reg(8145), scale=0.1, word_order="little", nan=0xFFFFFFFF, unit="kW"
     )
-    total_rated_battery_capacity = uint32(
+    total_rated_battery_capacity = energy_counter(
         reg(8147), scale=0.1, word_order="little", nan=0xFFFFFFFF, unit="kWh"
     )
     battery_power_range = uint32(
@@ -201,10 +201,10 @@ class IHomeManagerEnergy(Component):
 
     register_space = "input"
 
-    grid_import_energy = uint32(
+    grid_import_energy = energy_counter(
         reg(8176), scale=0.1, word_order="little", nan=0xFFFFFFFF, unit="kWh"
     )
-    grid_export_energy = uint32(
+    grid_export_energy = energy_counter(
         reg(8178), scale=0.1, word_order="little", nan=0xFFFFFFFF, unit="kWh"
     )
 

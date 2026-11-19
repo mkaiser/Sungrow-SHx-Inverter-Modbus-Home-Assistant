@@ -1783,3 +1783,36 @@ What changed:
   `src/sungrow_modbus/hybrid_inverter/capabilities.py`.
 - Tests: a download with no run before it, a download during a run, and an inverter with the
   capability but no wallbox.
+
+## [2026-11-19] changed | a broken high word is refused by its size, and found by what it contains
+
+**T019.** `total_battery_charge` published 429,494,295.3 kWh at
+[Maximo101](wiki/entities/installation-maximo101.md)'s and reached the recorder, because a
+high word of `0xFFFF` over a sound low word is a number and not a sentinel. Two defences
+now, and the corpus says neither does the other's half
+([a million kWh is not a reading](wiki/concepts/a-million-kwh-is-not-a-reading.md)):
+
+- **A ceiling of a million kWh on every energy counter wider than one word** -- all 74 of
+  them, across the six device maps -- as a property of the field, so that the sensors, the
+  diagnosis's readings and the plausibility checks refuse the same reading
+  (`src/sungrow_modbus/model.py`). The largest honest counter in the corpus is 79,459.6 kWh.
+- **`lifetime battery counters contain each other`**, judged on one poll, which is what
+  catches the two machines whose high word is only a wrap short and whose readings are
+  otherwise perfectly plausible. Margin 10 % over a floor of 100 kWh, measured against the
+  four machines that cross the line honestly by up to 4.17 %.
+
+Maximo101's reading **passes** the containment -- 429 million is larger than everything it
+is compared with -- so the division is exact: the ceiling takes the absurd reading, the
+containment takes the plausible one.
+
+What changed:
+
+- `src/sungrow_modbus/model.py` (`CeilingField`, `energy_counter`), the six
+  `*/registers.py` maps, and `src/sungrow_modbus/capability_test/plausibility.py`.
+- `doc/integration_migration.md` says that a statistic already recorded is the owner's to
+  delete, and how (**Developer tools -> Statistics**); the integration deletes nobody's data.
+- Tests: `tests/test_energy_ceiling.py` (every multi-word energy counter, and every
+  committed document against the ceiling) and the corpus section of
+  `tests/test_plausibility.py`.
+- [SUNSTONE-H_B000.V002.P067](wiki/entities/firmware-sunstone-h-b000-v002-p067.md) says how
+  the integration answers it.

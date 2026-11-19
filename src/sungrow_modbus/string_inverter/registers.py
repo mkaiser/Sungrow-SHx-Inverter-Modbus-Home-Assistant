@@ -26,7 +26,7 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, int32, integer, uint32
 
 from ..addresses import reg
-from ..model import RegisterValue
+from ..model import RegisterValue, energy_counter
 
 #: Which SG a device type code names (input 5000), from the source's model
 #: table. The codes interleave with nothing in the hybrid's `DEVICE_TYPES`.
@@ -192,7 +192,9 @@ class SgRealtime(Component):
     daily_pv_generation = gauge(reg(5003), 0.1, signed=False, unit="kWh")
     """Energy generated today."""
 
-    total_pv_generation = uint32(reg(5004), word_order="little", unit="kWh")
+    total_pv_generation = energy_counter(
+        reg(5004), scale=1, word_order="little", unit="kWh"
+    )
     """Energy generated, lifetime, in whole kWh."""
 
     total_running_time = uint32(reg(5006), word_order="little", unit="h")
@@ -297,27 +299,29 @@ class SgMeter(Component):
     load_power = int32(reg(5091), word_order="little", nan=2147483647, unit="W")
     """What the house draws. KTL only, by the source."""
 
-    daily_exported_energy = uint32(
+    daily_exported_energy = energy_counter(
         reg(5093), scale=0.1, word_order="little", unit="kWh"
     )
     """Exported today. KTL only, by the source."""
-    total_exported_energy = uint32(
+    total_exported_energy = energy_counter(
         reg(5095), scale=0.1, word_order="little", unit="kWh"
     )
     """Exported, lifetime. KTL and RS, by the source."""
-    daily_imported_energy = uint32(
+    daily_imported_energy = energy_counter(
         reg(5097), scale=0.1, word_order="little", unit="kWh"
     )
     """Imported today. KTL only, by the source."""
-    total_imported_energy = uint32(
+    total_imported_energy = energy_counter(
         reg(5099), scale=0.1, word_order="little", unit="kWh"
     )
     """Imported, lifetime. KTL and RS, by the source."""
-    daily_direct_energy_consumption = uint32(
+    daily_direct_energy_consumption = energy_counter(
         reg(5101), scale=0.1, word_order="little", unit="kWh"
     )
     """PV used directly today. KTL only, by the source."""
-    total_direct_energy_consumption = uint32(reg(5103), word_order="little", unit="kWh")
+    total_direct_energy_consumption = energy_counter(
+        reg(5103), scale=1, word_order="little", unit="kWh"
+    )
     """PV used directly, lifetime, in whole kWh. KTL only, by the source."""
 
 
@@ -360,7 +364,7 @@ class SgTrackers(Component):
     mppt7_power = _tracker_power(7)
     mppt8_power = _tracker_power(8)
 
-    monthly_pv_generation = uint32(
+    monthly_pv_generation = energy_counter(
         reg(5128), scale=0.1, word_order="little", unit="kWh"
     )
     """Energy generated this month."""
@@ -393,7 +397,7 @@ class SgPrecision(Component):
 
     register_space = "input"
 
-    total_pv_generation_precise = uint32(
+    total_pv_generation_precise = energy_counter(
         reg(5144), scale=0.1, word_order="little", unit="kWh"
     )
     """Energy generated, lifetime, in tenths of a kWh: `total_pv_generation`

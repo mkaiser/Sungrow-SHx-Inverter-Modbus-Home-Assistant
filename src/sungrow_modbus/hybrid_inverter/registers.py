@@ -37,7 +37,7 @@ from modbus_connection.model import (
 )
 
 from ..addresses import reg
-from ..model import string
+from ..model import energy_counter, string
 from . import ev_charger
 
 #: Unavailable sentinels the YAML package does not declare, by field name.
@@ -738,7 +738,7 @@ class InverterSlowestInput(Component):
         reg(5003), 0.1, signed=False, unit="kWh"
     )
     """Daily PV generation & battery discharge."""
-    total_pv_generation_battery_discharge = uint32(
+    total_pv_generation_battery_discharge = energy_counter(
         reg(5004), scale=0.1, word_order="little", unit="kWh"
     )
     """Total PV generation & battery discharge."""
@@ -762,23 +762,25 @@ class InverterSlowestInput(Component):
     """Battery capacity high precision."""
     daily_pv_generation = gauge(reg(13002), 0.1, signed=False, unit="kWh")
     """Daily PV generation."""
-    total_pv_generation = uint32(reg(13003), scale=0.1, word_order="little", unit="kWh")
+    total_pv_generation = energy_counter(
+        reg(13003), scale=0.1, word_order="little", unit="kWh"
+    )
     """Total PV generation."""
     daily_exported_energy_from_pv = gauge(reg(13005), 0.1, signed=False, unit="kWh")
     """Daily exported energy from PV."""
-    total_exported_energy_from_pv = uint32(
+    total_exported_energy_from_pv = energy_counter(
         reg(13006), scale=0.1, word_order="little", unit="kWh"
     )
     """Total exported energy from PV."""
     daily_battery_charge_from_pv = gauge(reg(13012), 0.1, signed=False, unit="kWh")
     """Daily battery charge from PV."""
-    total_battery_charge_from_pv = uint32(
+    total_battery_charge_from_pv = energy_counter(
         reg(13013), scale=0.1, word_order="little", unit="kWh"
     )
     """Total battery charge from PV."""
     daily_direct_energy_consumption = gauge(reg(13017), 0.1, signed=False, unit="kWh")
     """Daily direct energy consumption."""
-    total_direct_energy_consumption = uint32(
+    total_direct_energy_consumption = energy_counter(
         reg(13018), scale=0.1, word_order="little", unit="kWh"
     )
     """Total direct energy consumption."""
@@ -786,7 +788,7 @@ class InverterSlowestInput(Component):
     """Battery state of health."""
     daily_battery_discharge = gauge(reg(13026), 0.1, signed=False, unit="kWh")
     """Daily battery discharge."""
-    total_battery_discharge = uint32(
+    total_battery_discharge = energy_counter(
         reg(13027), scale=0.1, word_order="little", unit="kWh"
     )
     """Total battery discharge."""
@@ -796,19 +798,19 @@ class InverterSlowestInput(Component):
     """Self-consumption of today."""
     daily_imported_energy = gauge(reg(13036), 0.1, signed=False, unit="kWh")
     """Daily imported energy."""
-    total_imported_energy = uint32(
+    total_imported_energy = energy_counter(
         reg(13037), scale=0.1, word_order="little", unit="kWh"
     )
     """Total imported energy."""
     daily_battery_charge = gauge(reg(13040), 0.1, signed=False, unit="kWh")
     """Daily battery charge."""
-    total_battery_charge = uint32(
+    total_battery_charge = energy_counter(
         reg(13041), scale=0.1, word_order="little", unit="kWh"
     )
     """Total battery charge."""
     daily_exported_energy = gauge(reg(13045), 0.1, signed=False, unit="kWh")
     """Daily exported energy."""
-    total_exported_energy = uint32(
+    total_exported_energy = energy_counter(
         reg(13046), scale=0.1, word_order="little", unit="kWh"
     )
     """Total exported energy."""
@@ -966,7 +968,7 @@ def _energy_history(
         for month in range(1, 13)
     }
     fields |= {
-        f"{quantity}_year_{HISTORY_FIRST_YEAR + i}": uint32(
+        f"{quantity}_year_{HISTORY_FIRST_YEAR + i}": energy_counter(
             reg(yearly + 2 * i),
             scale=0.1,
             word_order="little",

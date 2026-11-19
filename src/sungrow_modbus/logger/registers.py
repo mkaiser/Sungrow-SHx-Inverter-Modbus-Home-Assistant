@@ -36,7 +36,7 @@ from modbus_connection.model import (
 )
 
 from ..addresses import reg
-from ..model import string
+from ..model import energy_counter, string
 
 #: Where a Logger answers on its own endpoint.
 UNIT = 247
@@ -133,11 +133,13 @@ class LoggerArray(Component):
     """Unlatched by default; latched, it ignores remote dispatch."""
 
     total_active_power = uint64(reg(8070), nan=_U64, unit="W")
-    daily_yield = uint32(
+    daily_yield = energy_counter(
         reg(8074), scale=0.1, word_order="little", nan=_U32, unit="kWh"
     )
     total_reactive_power = int64(reg(8076), nan=_S64, unit="var")
-    total_yield = uint64(reg(8080), scale=0.1, nan=_U64, unit="kWh")
+    total_yield = energy_counter(
+        reg(8080), scale=0.1, word_order="big", nan=_U64, unit="kWh", count=4
+    )
     min_adjustable_active_power = uint32(
         reg(8084), scale=0.1, word_order="little", nan=_U32, unit="kW"
     )
@@ -160,8 +162,12 @@ class LoggerArray(Component):
     )
     grid_connected_inverters = integer(reg(8096), signed=False, nan=_U16)
     off_grid_inverters = integer(reg(8097), signed=False, nan=_U16)
-    monthly_yield = uint64(reg(8098), scale=0.1, nan=_U64, unit="kWh")
-    annual_yield = uint64(reg(8102), scale=0.1, nan=_U64, unit="kWh")
+    monthly_yield = energy_counter(
+        reg(8098), scale=0.1, word_order="big", nan=_U64, unit="kWh", count=4
+    )
+    annual_yield = energy_counter(
+        reg(8102), scale=0.1, word_order="big", nan=_U64, unit="kWh", count=4
+    )
     apparent_power = uint64(reg(8106), nan=_U64, unit="VA")
 
 

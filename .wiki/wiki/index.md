@@ -63,6 +63,7 @@
 
 ## Concepts
 
+- [A million kWh is not a reading](concepts/a-million-kwh-is-not-a-reading.md) — A broken high word reads as a number, so a lifetime counter is refused above a million kWh, and a counter one wrap short is caught by what it has to contain #decoding #counters #recorder #firmware
 - [Contention](concepts/contention.md) — Few sessions, 90 s to recover; progressive failure means contention, a fixed address means a fault #modbus #sessions #polling
 - [The capability test's restore](concepts/capability-test-restore.md) — Snapshot before the first write, raw-word restore, never skipped; exit 5 means a house is left changed #capability-test #restore #safety
 - [Energy history (inputs 6227-6637)](concepts/energy-history.md) — Monthly U16 and yearly U32 totals from 2015, cable only; the yearly slot is the sum of the months at four houses, not at gerd #energy-history #cable-only #registers

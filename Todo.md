@@ -107,12 +107,6 @@ states it: the wallbox's user-defined current is capped at a flat 32 A while
 the wallbox reports 16.0 A at 21263 -- [plan](plans/range-checks.md).
 *Needs*: nothing; the readings are in the corpus.
 
-**T011. Replace the deprecated `DeviceEntry.config_entries`** in
-`custom_components/sungrow_modbus/services.py` (line 308) with
-`config_entry_id`: it logs a warning on every action call and stops working in
-Home Assistant 2027.10.
-*Needs*: nothing.
-
 **T012. A safe pattern for ad-hoc hardware watches**, after an expiring access
 token left the maintainer's 13017 on for 50 minutes past its window --
 [plan](plans/ad-hoc-hardware-watches.md).
@@ -146,11 +140,6 @@ grants a tracker on voltage alone, which is wrong at Maximo101's SH10RS --
 [plan](plans/tracker-current-check.md).
 *Needs*: a decision on whether a verdict change owes a `plausibility.SCHEMA`
 bump (T015, T016).
-
-**T019. A lifetime counter with a broken high word reaches the recorder**
-(`total_battery_charge` on P067 machines; 429,494,295.3 kWh) --
-[plan](plans/broken-high-word.md).
-*Needs*: nothing; three machines in the corpus show it.
 
 **T020. Tell a managed wallbox from a standalone one**: infer it from
 behaviour, show the inference, and still ask the owner before writing a
@@ -432,7 +421,8 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 Last checked **2026-11-19 07:30 UTC**: one contributor on #786, one document
 ingested (Maximo101's SH10RS, committed as `-2`). It left two findings, both
 now items of their own: `mppt4 carries a string` answered wrong (T018) and a
-broken `total_battery_charge` high word on every P067 machine (T019). Their
+broken `total_battery_charge` high word on every P067 machine, which is fixed
+and closed (T019). Their
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
 `"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
 entry's download hands over the last run's document from memory

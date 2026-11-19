@@ -189,6 +189,7 @@ Verified against hardware; read the page before changing code that relies on it:
 | Addresses are protocol addresses; maps use `reg()`; no literal addresses outside tests | [protocol addresses](.wiki/wiki/concepts/protocol-addresses.md) |
 | Firmware is read before anything decides on it; `CONFIRMED_ON_FIRMWARE` only from a watched write | [firmware gating](.wiki/wiki/concepts/firmware-gating.md) |
 | A dongle's 0, and an all-NUL string, are not evidence of a capability | [zero means absent](.wiki/wiki/concepts/zero-means-absent.md) |
+| A lifetime counter past a million kWh is a broken word, not a reading; one a wrap short is caught by what it contains | [a million kWh is not a reading](.wiki/wiki/concepts/a-million-kwh-is-not-a-reading.md) |
 | 2612 and 2628 send padded frames; add to `layout.py` only from `blocks.py`'s strict measurement | [padded frames](.wiki/wiki/concepts/padded-frames.md) |
 | Few sessions, and 90 s of quiet to recover; a short retry is not a retry | [contention](.wiki/wiki/concepts/contention.md) |
 | 6100 decides transport: not 13265, and not round-trip time | [transport detection](.wiki/wiki/concepts/transport-detection.md) |

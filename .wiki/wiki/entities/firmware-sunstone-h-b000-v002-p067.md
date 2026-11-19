@@ -43,7 +43,10 @@ update can arrive with nothing in 13250 to show for it
   sets out the arithmetic). **13041, the low word, is sound**: it rises by the kilowatt-hours the
   battery takes. No machine on any other firmware shows it, and every other lifetime total on these
   three is exact -- `total_direct_energy_consumption` + `total_battery_charge_from_pv` +
-  `total_exported_energy_from_pv` meets `total_pv_generation` to the 0.1 kWh.
+  `total_exported_energy_from_pv` meets `total_pv_generation` to the 0.1 kWh. **The
+  integration now refuses it**: a lifetime counter past a million kWh decodes as None, and the
+  two machines whose high word is merely a wrap short are caught by the counters they have to
+  contain ([a million kWh is not a reading](../concepts/a-million-kwh-is-not-a-reading.md)).
 - An earlier capability test was refused because that inverter was key-stopped.
 - The battery firmware string (13280) carries bytes after its NUL, as on
   [P065](firmware-sunstone-h-b000-v002-p065.md).

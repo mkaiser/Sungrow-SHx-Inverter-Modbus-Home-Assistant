@@ -46,7 +46,7 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, integer, uint32
 
 from ..addresses import reg
-from ..model import RegisterValue, string
+from ..model import RegisterValue, energy_counter, string
 
 #: What register 21317's charging status codes mean.
 #:
@@ -204,7 +204,9 @@ class WallboxLive(Component):
 
     register_space = "input"
 
-    lifetime_energy = uint32(reg(21300), word_order="little", unit="Wh")
+    lifetime_energy = energy_counter(
+        reg(21300), scale=1, word_order="little", unit="Wh"
+    )
     """Energy delivered since installation. Measured here.
 
     Read 280557 Wh. Low word first, which is what this is -- read the other
@@ -233,7 +235,7 @@ class WallboxLive(Component):
     charging_power = uint32(reg(21308), word_order="little", unit="W")
     """Power being delivered. Three sources."""
 
-    session_energy = uint32(reg(21310), word_order="little", unit="Wh")
+    session_energy = energy_counter(reg(21310), scale=1, word_order="little", unit="Wh")
     """Energy delivered this session. Three sources.
 
     Read 105 Wh against a lifetime 280557 Wh, which is the pairing that
