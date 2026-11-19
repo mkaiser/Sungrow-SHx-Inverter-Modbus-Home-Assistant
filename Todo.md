@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T066.** Numbers are minted in order, never reused and
+**Next free item number: T067.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -403,6 +403,13 @@ route (evcc's `homeassistant` templates) and what is left to write
 (`doc/evcc.md`).
 *Needs*: nothing; no integration code changes.
 
+**T066. Provenance in the YAML package's files**: the same two-line
+attribution as the maps, in `legacy/modbus_sungrow.yaml` and the other files
+under `legacy/`, the most-copied code here and the one place `doc/attribution.md`
+does not yet reach -- [attribution](doc/attribution.md).
+*Needs*: parity, since the YAML package stays untouched until the integration
+replaces it; the same change that next touches `main`.
+
 ## T061. Recurrent: new diagnoses to ingest (daily, after noon)
 
 Every day after noon, read the general diagnosis thread
@@ -415,13 +422,13 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-19T07:30:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-19T07:30:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-19T17:45:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-19T17:45:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-19 07:30 UTC**: one contributor on #786, one document
-ingested (Maximo101's SH10RS, committed as `-2`). It left two findings, both
+Last checked **2026-11-19 17:45 UTC**: nothing new since that morning, whose
+one document (Maximo101's SH10RS, committed as `-2`) left two findings, both
 since fixed and closed: `mppt4 carries a string` answered wrong, and a broken
 `total_battery_charge` high word on every P067 machine. Their
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries

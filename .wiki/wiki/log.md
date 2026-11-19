@@ -1887,3 +1887,25 @@ What changed:
   moves with the pack (7148 W empty, 7420 W at 25 %, 7318 W a minute later), which was T009's
   one remaining need.
 - [mkaiser](wiki/entities/installation-mkaiser.md) says what the house showed.
+
+## [2026-11-19] answered | a tracker needs current, and who drives a wallbox
+
+Two open questions settled in the code rather than by a new reading, and the pages they were
+open on now state the rule.
+
+- **A tracker carries a string only if current comes with the voltage.**
+  [Maximo101](wiki/entities/installation-maximo101.md)'s floating `mppt4` drifts to 53.6 V at
+  0.0 A and was called *matched*; the check now wants at least one count of current beside the
+  voltage, keeps the voltage rule where a model reports no tracker current, and both tracker
+  checks carry revision 2 so every house drops what the old rule gathered
+  ([the capability test](wiki/concepts/capability-test.md),
+  [SH-RS](wiki/entities/device-sh-rs.md)).
+- **Who drives a wallbox is inferred from 21203, shown, and never acted on.** Moving twice
+  during a charge says managed, 30 charging polls without a move suggest standalone, an idle
+  wallbox says nothing; writing its own registers waits for the owner's answer in the entry's
+  options ([the wallbox](wiki/entities/device-wallbox.md)).
+
+Beside them, from the same session: the managed wallbox's user current is now bounded by the
+rating the wallbox reports at input 21263 rather than a flat 32 A, and
+[the restore](wiki/concepts/capability-test-restore.md) carries the rule a watch broke on
+2026-11-17 -- a restore that depends on a credential which can expire is not a restore.

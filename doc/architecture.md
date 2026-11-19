@@ -428,6 +428,23 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   managed wallbox is controlled through the inverter's EV charger block
   (`hybrid_inverter/ev_charger.py`), behind `EV_CHARGER_CONTROL`: only on
   firmware where those writes were watched.
+- **An inference decides what is shown; the owner decides what is written.**
+  Who drives a wallbox cannot be read from any register, only inferred from
+  behaviour (`wallbox/management.py`: an inverter managing a charge rewrites
+  21203 every few seconds). That inference is published -- the `management`
+  attribute of *Diagnosis: test summary* -- and never acted on: writing the
+  wallbox's own registers waits for the owner's answer in the entry's
+  options, because a wrong *standalone* writes what an inverter overwrites
+  within seconds and a setting that sits still is not proof nobody is driving
+  it. The same division fits anything later inferred about a device.
+- **What an owner can throw away is split by what it costs them to gather.**
+  Clearing the capability test's kept runs and clearing what the readings'
+  checks have gathered are two buttons, because a run can be asked for again
+  this evening and the readings are fed every minute for days. A wrong
+  verdict is not what either is for: a check whose rule changes raises its
+  revision (`capability_test.plausibility.CHECK_REVISIONS`,
+  `capability_test.coverage`), which drops that check's evidence at every
+  house on update with nothing for anyone to press.
 - **A write entity's bound comes from the device wherever the device states
   one**, because for everything but the state of charge the bound is the only
   guard there is: the inverter stores a battery power above its own maximum
