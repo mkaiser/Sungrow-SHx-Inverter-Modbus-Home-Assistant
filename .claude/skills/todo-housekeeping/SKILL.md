@@ -1,5 +1,5 @@
 ---
-name: revise-todo
+name: todo-housekeeping
 description: Revise Todo.md - close what is done or what was decided against, keep it forward looking, reorder by priority, take in new issues and diagnoses. Use when the maintainer asks to revise, clean up or update the todo list, when it has grown long, or at the end of a session that changed what is next.
 ---
 

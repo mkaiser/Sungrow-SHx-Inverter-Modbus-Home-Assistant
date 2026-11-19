@@ -2,9 +2,9 @@ Todo.md contains only what is still to do (forward looking), one sentence an
 item, with its plan and its requirements. What belongs here, what belongs in a
 plan under [`plans/`](plans/), and how items are numbered:
 [`workflow.md`](workflow.md). Revising this file follows
-[`.claude/skills/revise-todo/SKILL.md`](.claude/skills/revise-todo/SKILL.md)
-(`/revise-todo`). It has more than one writer: read it from disk and change
-only your part (`AGENTS.md`).
+[`.claude/skills/todo-housekeeping/SKILL.md`](.claude/skills/todo-housekeeping/SKILL.md)
+(`/todo-housekeeping`). It has more than one writer: read it from disk and
+change only your part (`AGENTS.md`).
 
 **Next free item number: T064.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
