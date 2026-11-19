@@ -246,14 +246,16 @@ real_hardware:
       adapters into WSL distributions, and Docker Desktop's containers reach
       the network through com.docker.backend, not through a distribution.
     docker_engine_in_wsl: >-
-      Possibly, untried. Docker Engine installed in a WSL distribution (not
-      Docker Desktop), with `networkingMode=mirrored` under [wsl2] in
+      Technically possible, and decided against: this is not worth a second
+      development configuration. Docker Engine installed in a WSL distribution
+      (not Docker Desktop), with `networkingMode=mirrored` under [wsl2] in
       %UserProfile%\.wslconfig (Windows 11 22H2 or later), gives a host-network
       container the distribution's namespace, and mirrored mode lists
-      "Multicast support". Open questions: the Hyper-V firewall drops inbound
-      by default (Set-NetFirewallHyperVVMSetting ... -DefaultInboundAction
-      Allow, or a rule for UDP 5353), and Windows' own mDNS responder holds
-      UDP 5353 on the same, shared ports.
+      "Multicast support". What is untried, and what the cost is: the Hyper-V
+      firewall drops inbound by default (Set-NetFirewallHyperVVMSetting ...
+      -DefaultInboundAction Allow, or a rule for UDP 5353); Windows' own mDNS
+      responder holds UDP 5353 on the same, shared ports; and host networking
+      puts the WireGuard tunnels into the host's own routes. Use `instead`.
     native_linux: >-
       Yes: --network=host shares the host's interfaces and multicast with it.
     what_it_changes:

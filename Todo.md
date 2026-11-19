@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/revise-todo`). It has more than one writer: read it from disk and change
 only your part (`AGENTS.md`).
 
-**Next free item number: T063.** Numbers are minted in order, never reused and
+**Next free item number: T064.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Where the last hardware session at the maintainer's SH10RT left off, and what
@@ -36,16 +36,9 @@ maintainer writes new entries here (`workflow.md`).
 
 ## Inverter
 
-**T001. The site import limit (32998) and forced startup (13017): what is
-left to run on hardware** --
-[plan](plans/import-limit-and-forced-startup.md).
-*Needs*: daylight with PV above the load (the engine's `--import-limit`
-check); a watched run after dark on firmware other than P020 for 13017.
-
-**T002. Decide what *Inverter self consumption (estimated)* should read in
-Standby, and see it by day** -- [plan](plans/inverter-self-consumption.md).
-*Needs*: the maintainer's SH10RT working in daylight; a house that refuses
-5214 for the 13022 path (T046).
+Nothing can start now. What the maintainer's own inverter can answer is a
+planned test below (T001, T002); the rest waits on a house with other
+firmware.
 
 ## Battery
 
@@ -53,15 +46,8 @@ Nothing can start now (T038).
 
 ## Wallbox
 
-**T003. Controlling the wallbox**: the mode select's timing, pairing a TLS
-wallbox entry with the inverter that manages it, a standalone wallbox, and
-the first writing run -- [plan](plans/wallbox_tests.md), section 8.
-*Needs*: gerd's AC22E-01 with a car charging and his own Home Assistant
-stopped; a standalone wallbox, which nobody has offered (T040).
-
-**T004. The wallbox's settings as entities** (21298, 21299, 21313): whether
-any of them may be written -- [plan](plans/wallbox_tests.md), section 9.
-*Needs*: the standalone wallbox of T003.
+Nothing can start now (T003, T004); a standalone wallbox is what unblocks
+both (T040).
 
 ## Logger
 
@@ -71,26 +57,10 @@ how it is handled beyond that is open.
 
 ## iHomeManager
 
-**T005. See an iHomeManager entry in a real Home Assistant.** Its 40 read-only
-sensors were built 2026-11-11 against the one unit's words and released in
-0.1.0a37, but no real instance has shown them; how many connections a unit
-takes at once is unmeasured.
-*Needs*: an iHomeManager owner running the preview.
-
-**T006. The iHomeManager fields left out of its entities** (8554, 8047, 8048,
-8051, 8052, channel 2, 8029) -- [plan](plans/ihomemanager-unmeasured-fields.md).
-*Needs*: a second unit's diagnosis (T042), ideally single phase or with a
-PROD.CT.
+Nothing can start now: an owner running the preview, and a second unit's
+diagnosis (T005, T006, T042).
 
 ## Integration and tooling
-
-**T007. The diagnosis and its capability tests**: the forced-startup mode on
-other firmware, the new checks on hardware, the auto-repeat slot schedule, the
-status line's wording and translation, and the *Diagnosis:* names on a real
-device page -- [plan](plans/diagnosis-and-capability-tests.md).
-*Needs*: one auto-repeat collection at the maintainer's SH10RT over a day and
-a night, then ingest; a house in low-SoC standby after dark on P022, P023 or
-an SH-T for the forced-startup mode.
 
 **T008. Why the search missed the maintainer's inverter**: one measurement
 left -- the same sweep run from the production machine, where a modbus-proxy
@@ -112,11 +82,6 @@ token left the maintainer's 13017 on for 50 minutes past its window --
 [plan](plans/ad-hoc-hardware-watches.md).
 *Needs*: nothing.
 
-**T013. The scenes other than *Battery Forced Charge*, on hardware** --
-[plan](plans/scenes-on-hardware.md), *Beyond the one press*.
-*Needs*: sun with a battery that is not empty (the two export scenes) and a
-battery with something in it (bypass, forced discharge).
-
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
 where it said "no runs kept", on a house that may never run a capability test.
@@ -126,20 +91,11 @@ where it said "no runs kept", on a house that may never run a capability test.
 plausibility store** -- [plan](plans/clearing-a-ledger.md).
 *Needs*: nothing; not urgent.
 
-**T016. The midnight-reset check judges by the wrong clock** -- the inverter's
-day is not Home Assistant's -- [plan](plans/midnight-reset-clock.md).
-*Needs*: nothing; it fires once a night at the maintainer's until fixed.
-
-**T017. Does the inverter reset its daily counters in one step?** --
-[plan](plans/daily-counter-reset.md).
-*Needs*: a midnight at a house where the check names every counter that fell
-(0.1.0a44 on).
-
 **T018. Should `mppt3 / mppt4 carries a string` ask for the current?** It
 grants a tracker on voltage alone, which is wrong at Maximo101's SH10RS --
 [plan](plans/tracker-current-check.md).
-*Needs*: a decision on whether a verdict change owes a `plausibility.SCHEMA`
-bump (T015, T016).
+*Needs*: nothing; a verdict change raises the check's revision in
+`plausibility.CHECK_REVISIONS`, which costs that check's evidence alone.
 
 **T020. Tell a managed wallbox from a standalone one**: infer it from
 behaviour, show the inference, and still ask the owner before writing a
@@ -158,14 +114,6 @@ language. A rename later leaves existing ids alone and only diverges new
 installs, which a registry migration can close: cheap until the release, not
 free. A new name goes under **To discuss** (`NAME_DISCUSSION` in `naming.py`).
 
-**T022. Is mDNS in the devcontainer worth a second config?** Docker Desktop's
-`--network=host` forwards TCP/UDP only and carries no LAN multicast, and WSL's
-mirrored mode does not change that; the one route left is Docker Engine inside
-a WSL distribution in mirrored mode -- untried, and it would put the WireGuard
-tunnels into the host's routes (`doc/development.yaml`,
-`real_hardware.host_networking`). The other way is the zeroconf matcher (T043)
-on a Linux Home Assistant in a house with a dongle.
-
 **T023. Should a battery or wallbox be looked for again while an entry runs?**
 Both are found at setup only (`dynamic-devices` on the quality scale), and
 looking again costs sessions on an inverter that grants few.
@@ -178,6 +126,24 @@ enabled, or its history stops (`AGENTS.md`).
 # Planned tests
 
 Hardware runs with a date. Removed once run and ingested.
+
+**T001. The site import limit (32998) at the maintainer's SH10RT, in
+daylight** -- [plan](plans/import-limit-and-forced-startup.md). What it
+settles: whether the cap is on the grid's share alone with PV counted, which
+needs PV above the load, the battery part full and a forced charge above the
+surplus. How: `sungrow_capability_test.py <host> --import-limit` from this
+checkout, a dry run first.
+*Needs*: a bright enough hour. The forced startup (13017) on firmware other
+than P020 is not testable here and is T063.
+
+**T002. *Inverter self consumption (estimated)* by day, at the maintainer's
+SH10RT** -- [plan](plans/inverter-self-consumption.md). It reads about
+-1.9 W in Standby at night, where every term but the load's noise is zero;
+what is left is the daytime look -- whether the mean is steady and plausible
+while the inverter works -- and from that, whether Standby should read
+`unknown` instead of a number near zero.
+*Needs*: the inverter working in daylight. The 13022 path still waits on a
+house that refuses 5214 (T046).
 
 **T025. The site import limit (32998) at fwitten's master, when it is
 reachable** (SH10RT-V112, P023, SBR096, cable -- ulfben's exact hardware,
@@ -201,6 +167,12 @@ a named person.
 T -- [plan](plans/sh-t-through-a-dongle.md).
 *Unblocked by*: any SH15T or SH10T owner running one capability test
 (`--enable-export-limit`) while the house exports.
+
+**T063. Forced startup (13017) on firmware other than P020** -- the other
+half of [the import-limit plan](plans/import-limit-and-forced-startup.md),
+which its own house cannot answer: the maintainer's SH10RT is P020.
+*Unblocked by*: a watched run after dark at a house on P022, P023 or an SH-T,
+in low-SoC standby.
 
 **T027. firetribe, once more** (#784): a cable capability test with the
 inverter *running* gives the first SH6.0RT-V112 readbacks and its 13074 write
@@ -279,6 +251,16 @@ identify the unit -- [plan](plans/wallbox-identity-blocks.md).
 *Unblocked by*: the masking publishing a stand-in per masked block, plus a
 terminal diagnosis carrying those blocks.
 
+**T003. Controlling the wallbox**: the mode select's timing, pairing a TLS
+wallbox entry with the inverter that manages it, a standalone wallbox, and
+the first writing run -- [plan](plans/wallbox_tests.md), section 8.
+*Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
+stopped; or a standalone wallbox, which nobody has offered (T040).
+
+**T004. The wallbox's settings as entities** (21298, 21299, 21313): whether
+any of them may be written -- [plan](plans/wallbox_tests.md), section 9.
+*Unblocked by*: the standalone wallbox of T003.
+
 ## Logger
 
 **T041. A first Sungrow Logger diagnosis** (#786), which unblocks Logger
@@ -291,6 +273,17 @@ entities -- [plan](plans/first-logger-diagnosis.md).
 left out of its entities (T006) and whether 4358-4362 are U32. The first unit
 (SV930.001.00.P020, port 503) answered all 56 mapped fields.
 *Unblocked by*: a second unit, ideally single phase, on other firmware or with
+a PROD.CT.
+
+**T005. See an iHomeManager entry in a real Home Assistant.** Its 40 read-only
+sensors were built 2026-11-11 against the one unit's words and released in
+0.1.0a37, but no real instance has shown them; how many connections a unit
+takes at once is unmeasured.
+*Unblocked by*: an iHomeManager owner running the preview.
+
+**T006. The iHomeManager fields left out of its entities** (8554, 8047, 8048,
+8051, 8052, channel 2, 8029) -- [plan](plans/ihomemanager-unmeasured-fields.md).
+*Unblocked by*: a second unit's diagnosis (T042), ideally single phase or with
 a PROD.CT.
 
 ## Integration and tooling
@@ -325,6 +318,24 @@ refuses 5214; then decide whether the *Battery power* entity falls back too.
 Not to be asked for on #655 (maintainer, 2026-11-11).
 *Unblocked by*: a diagnosis of an SH8.0RS on #655's firmware, of SAPPHIRE
 51.0x, or of an inverter with a third-party battery.
+
+**T007. The diagnosis and its capability tests**: the forced-startup mode on
+other firmware, the new checks on hardware, the auto-repeat slot schedule, the
+status line's wording and translation, and the *Diagnosis:* names on a real
+device page -- [plan](plans/diagnosis-and-capability-tests.md).
+*Unblocked by*: one auto-repeat collection at the maintainer's SH10RT over a
+day and a night, then ingest; and a house in low-SoC standby after dark on
+P022, P023 or an SH-T for the forced-startup mode.
+
+**T013. The scenes other than *Battery Forced Charge*, on hardware** --
+[plan](plans/scenes-on-hardware.md), *Beyond the one press*.
+*Unblocked by*: sun with a battery that is not empty (the two export scenes),
+and a battery with something in it (bypass, forced discharge).
+
+**T017. Does the inverter reset its daily counters in one step?** --
+[plan](plans/daily-counter-reset.md).
+*Unblocked by*: a midnight at a house where the check names every counter that
+fell (0.1.0a44 on).
 
 # Release
 
