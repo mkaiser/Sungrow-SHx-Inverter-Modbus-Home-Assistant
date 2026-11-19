@@ -100,6 +100,7 @@ The preview mirror's sync, for one, is then
 | `make forget` | Drop the stored Sungrow config entry, so the next boot starts at *Add integration* |
 | `scripts/dev/fetch_references.sh` (`make refs`) | Clone upstream sources into `.reference/` for reading, hassfest included |
 | `scripts/dev/hassfest.sh` (`make hassfest`) | Run hassfest on the integration in the 2026.11 venv, against the clone from `make refs` |
+| `scripts/dev/ha_watch.py` | The helper a one-off hardware watch presses through, so its restore does not depend on a token that expires; `--restore <note>` finishes a dead watch's |
 | `pytest` | Library and integration tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
 | `mypy` | `--strict` over the library and the integration |

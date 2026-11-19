@@ -63,6 +63,16 @@ exist so that a house is never left changed without anyone knowing.
   since the dongle last read it.
 - **A restore on its own measures the transport first.** `--restore` and
   Home Assistant's repair run with no preflight, and the default is a cable.
+- **A restore that depends on a credential which can expire mid-run is not a
+  restore.** The shipped test is immune: it writes over its own Modbus
+  connection and holds nothing that expires. A one-off watch driving Home
+  Assistant is not -- a token held from the start expired 29 minutes in, every
+  restore attempt came back HTTP 401, and
+  [register 13017](../entities/register-13017.md) stayed on for 50 minutes
+  past the watch's end until a person put it back
+  ([the watch](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)).
+  Such a watch presses through `scripts/dev/ha_watch.py`, which mints its
+  credential at the moment of restoring and never holds one.
 - **Exit 5 is the one code meaning a house is left changed.**
 - **A failed restore is logged with its traceback** (`_LOGGER.exception` in
   `repairs.py`). It is the only record of why somebody's inverter still

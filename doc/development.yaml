@@ -228,6 +228,21 @@ real_hardware:
       192.168.178.0/24 (the FRITZ!Box default) a probe can reach the wrong
       inverter without any error. See doc/maintainer_setup.md section 4.
 
+  one_off_watches: |
+    A script that writes to a real house for an hour -- a plan's hardware run,
+    not the shipped capability test -- presses through scripts/dev/ha_watch.py
+    rather than its own finally block. It mints the credential at the moment of
+    restoring (a held token expired mid-watch on 2026-11-17 and left register
+    13017 on for 50 minutes), writes its note to disk before the first press,
+    reads every restore back, and exits 5 where the house is left changed. It
+    also waits for a diagnosis run in flight instead of interrupting one.
+
+      ha_watch.py --url http://127.0.0.1:8125 --quiet sensor.<prefix>_diagnosis_test_summary
+      ha_watch.py --url http://127.0.0.1:8125 --restore <note>.json
+
+    The module's own docstring is the API; the note goes in tmp/, which is
+    gitignored, because it names the instance.
+
   host_networking:
     # Whether `"runArgs": ["--network=host"]` lets the container see the LAN's
     # mDNS, so the zeroconf matcher can be tried from `make dev`. It depends

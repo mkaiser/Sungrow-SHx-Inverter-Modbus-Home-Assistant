@@ -16,6 +16,12 @@ what every run measured).
 Not worth a run: a full battery at night, a forced charge into a full
 battery (the engine skips at 90 %), a forced discharge.
 
+**A watch that drives Home Assistant presses through
+`scripts/dev/ha_watch.py`** rather than a `finally` block of its own: it mints
+its credential when it restores, which is what the watch of 2026-11-17 could
+not do, waits for a run in flight instead of interrupting one, and exits 5
+where the house is left changed. Its first real use is the next 13017 watch.
+
 **The engine refuses an inverter in low-SoC Standby** ("reports
 'Standby'"), though a forced charge wakes one by itself in ~2 min (EMS or
 schedule, bar12). Whether the import-limit check should command that
