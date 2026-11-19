@@ -15,7 +15,7 @@ links to it.
 | Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | How work is written down and how agents share one tree: `Todo.md`, `plans/`, item numbers, commits and pushes | `workflow.md` |
-| Recurring procedures (ingest new diagnoses, release, run a diagnosis for a contributor, revise `Todo.md`) | `.claude/skills/`, each pointing at the document it follows; any agent can follow them, not only Claude Code |
+| Recurring procedures (ingest new diagnoses, release, run a diagnosis for a contributor, revise `Todo.md`, close a session) | `.claude/skills/`, each pointing at the document it follows; any agent can follow them, not only Claude Code |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
 ## Two tracks
@@ -95,7 +95,7 @@ Edit the source, not the output (`workflow.md`). Here that means:
 - the coverage table in `device-diagnosis/devices-wanted.md`, between its
   markers -- `generate_devices_wanted.py`, from the diagnoses;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
-- `doc/entity_names.md` and `plans/text_translation_review.md` --
+- `doc/entity_names.md` and `plans/_gen_text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
   `generate_second_inverter_config.py`; CI regenerates and commits it,

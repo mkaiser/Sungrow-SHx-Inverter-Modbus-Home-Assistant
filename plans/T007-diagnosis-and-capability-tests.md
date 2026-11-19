@@ -35,20 +35,34 @@ be tested with is `doc/capability_tests.md`. Left:
     Assistant on 2026-11-15 (0.1.0a40, three runs, 26 of 53 checks
     settled, 0 failed); its diagnostics download is kept locally and is
     **still to ingest**, and the history was cleared for a fresh start.
-    The dev instance's collection has five plausibility checks matched
-    (power balance, both meter checks, daily_imported_energy and
-    total_imported_energy against power). After the stopped run of
-    2026-11-17 the ledger shows **15 of 52** established, the rest split
-    between checks the stopped run never reached ("not run, the run ran
-    out of time"), checks "the house was in no state for it", and the
-    plausibility ones waiting on PV, battery movement or export. So a
-    re-armed auto repeat **will** want writing runs again -- the stopped
-    run left real work behind, which is worth knowing before parking it;
+    The dev instance's collection was re-armed and has run since
+    2026-11-16. Read on 2026-11-19 it stands at **35 of 54** established
+    (22 of 31 on the write side, 13 of 23 plausibility), and what it is
+    still waiting for says what the collection needs rather than what the
+    code owes:
+      - **export power limit** -- "export, or a battery to discharge into
+        the grid"; **charge ceiling** -- "the battery charging, above
+        55 %"; **upper bound of `battery_min_soc`** -- "the battery above
+        57 %". These three are the write-side checks this house has never
+        answered, and each wants a charged battery, which November has not
+        given it;
+      - **six other upper bounds** (`battery_max_soc`,
+        `max_charge_power`, `max_discharge_power`,
+        `forced_charge_discharge_power`, `charging_start_power`,
+        `discharging_start_power`) -- each "a run", so auto repeat takes
+        them as budget frees;
+      - **ten plausibility checks**, which no run can force: three want
+        three kilowatt-hours of flow (daily exported, battery charge,
+        battery discharge), five want 2 kWh on a daily counter, "battery
+        level follows its power" wants 1 kWh through the pack, and "daily
+        counters reset at midnight" wants a midnight (T017).
+    So a re-armed auto repeat **will** want writing runs again -- there is
+    real work left, which is worth knowing before parking it;
   - **anything on a WiNet-S beyond one run**, and any T-series cable.
   The night re-check and the plausibility checks need one auto-repeat
   collection at the maintainer's SH10RT over a day and a night, which
   may catch a slow PV charge for the threshold too; then ingest. The
-  wallbox's tests are planned in `plans/wallbox_tests.md`.
+  wallbox's tests are planned in `plans/T003-T004-wallbox_tests.md`.
 3. **Outside the repository**: issue #786's title still says survey, and
   the repository variable `SURVEY_ISSUE` keeps its name.
 4. **Capability test runs over a day.** Home Assistant folds every run

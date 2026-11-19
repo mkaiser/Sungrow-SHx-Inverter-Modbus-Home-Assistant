@@ -9,26 +9,19 @@ change only your part (`AGENTS.md`).
 **Next free item number: T064.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
-Where the last hardware session at the maintainer's SH10RT left off, and what
-a fresh session needs that is written nowhere else:
-[`plans/mkaiser-diagnosis/handover.md`](plans/mkaiser-diagnosis/handover.md).
-
-Sections: **From the maintainer** (their inbox, read first), **Next steps**
-(startable now, in priority order), **Open
+Sections: **Incoming items by maintainer** (a holding area, taken in when
+they ask), **Next steps** (startable now, in priority order), **Open
 decisions** (for the maintainer; nothing is built on them until answered),
 **Planned tests** (hardware runs with a date), **Blockers** (waiting on
 hardware, daylight or a contributor), **Release**, **Future work** (wanted,
 not scheduled). Next steps and blockers are grouped by device: Inverter,
 Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 
-# From the maintainer
+# Incoming items by maintainer
 
-Anything the maintainer puts here, in any form. **Read this section first**,
-before deciding what to work on: an entry here outranks the priority order
-below. Do it if it is small, otherwise file it as a numbered item with a plan;
-remove what you took in, in the same edit, and say what you did with it. An
-entry you cannot act on stays, with one line saying what it waits on. Only the
-maintainer writes new entries here (`workflow.md`).
+Where the maintainer drops anything, in any form. A holding area, not a queue:
+nothing here has priority, and it is taken in only when they ask, at a
+housekeeping ([`workflow.md`](workflow.md)).
 
 *(empty)*
 
@@ -64,17 +57,17 @@ diagnosis (T005, T006, T042).
 
 **T008. Why the search missed the maintainer's inverter**: one measurement
 left -- the same sweep run from the production machine, where a modbus-proxy
-holds the session -- [plan](plans/search-missed-the-inverter.md).
+holds the session -- [plan](plans/T008-search-missed-the-inverter.md).
 *Needs*: a sweep from the production machine with the proxy running.
 
 **T010. Bound every write entity from what the device states**, where it
 states it: the wallbox's user-defined current is capped at a flat 32 A while
-the wallbox reports 16.0 A at 21263 -- [plan](plans/range-checks.md).
+the wallbox reports 16.0 A at 21263 -- [plan](plans/T010-range-checks.md).
 *Needs*: nothing; the readings are in the corpus.
 
 **T012. A safe pattern for ad-hoc hardware watches**, after an expiring access
 token left the maintainer's 13017 on for 50 minutes past its window --
-[plan](plans/ad-hoc-hardware-watches.md).
+[plan](plans/T012-ad-hoc-hardware-watches.md).
 *Needs*: nothing.
 
 **T014. Decide the wording a fresh entry shows** now that watching the
@@ -83,18 +76,18 @@ where it said "no runs kept", on a house that may never run a capability test.
 *Needs*: the maintainer's call, and a look at a real device page.
 
 **T015. Separate clearing the capability ledger from clearing the
-plausibility store** -- [plan](plans/clearing-a-ledger.md).
+plausibility store** -- [plan](plans/T015-clearing-a-ledger.md).
 *Needs*: nothing; not urgent.
 
 **T018. Should `mppt3 / mppt4 carries a string` ask for the current?** It
 grants a tracker on voltage alone, which is wrong at Maximo101's SH10RS --
-[plan](plans/tracker-current-check.md).
+[plan](plans/T018-tracker-current-check.md).
 *Needs*: nothing; a verdict change raises the check's revision in
 `plausibility.CHECK_REVISIONS`, which costs that check's evidence alone.
 
 **T020. Tell a managed wallbox from a standalone one**: infer it from
 behaviour, show the inference, and still ask the owner before writing a
-wallbox's own registers -- [plan](plans/managed-vs-standalone-wallbox.md).
+wallbox's own registers -- [plan](plans/T020-managed-vs-standalone-wallbox.md).
 *Needs*: nothing for steps 1-4; a standalone wallbox to measure against
 (T003) before the inference can be trusted.
 
@@ -103,7 +96,7 @@ wallbox's own registers -- [plan](plans/managed-vs-standalone-wallbox.md).
 Nothing is built on these until the maintainer answers them.
 
 **T021. Are the entity names final?** They are reviewed and decided in English
-and German (`doc/entity_names.md`, `plans/text_translation_review.md`,
+and German (`doc/entity_names.md`, `plans/_gen_text_translation_review.md`,
 `scripts/generate/tables/naming.py`), and entity ids stay English in every
 language. A rename later leaves existing ids alone and only diverges new
 installs, which a registry migration can close: cheap until the release, not
@@ -122,8 +115,17 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
+**At the maintainer's SH10RT** (T001, T002, T007, T017) one instance serves
+them all: `make dev-real`, on :8125 against `config-real/`
+([`doc/development.md`](doc/development.md) for its login, its clock, and what
+a restart costs an armed auto repeat). Its entities are prefixed
+`hwr_sh10rt_`, and *Diagnosis: test summary* reports only when a run or a
+restart makes it -- `config-real/.storage/` is what the ledger actually
+holds. Two owner settings are deliberate and stay as they are:
+`battery_max_soc` 90 % and the entry option `battery_max_power` 5000 W.
+
 **T001. The site import limit (32998) at the maintainer's SH10RT, in
-daylight** -- [plan](plans/import-limit-and-forced-startup.md). What it
+daylight** -- [plan](plans/T001-T063-import-limit-and-forced-startup.md). What it
 settles: whether the cap is on the grid's share alone with PV counted, which
 needs PV above the load, the battery part full and a forced charge above the
 surplus. How: `sungrow_capability_test.py <host> --import-limit` from this
@@ -132,7 +134,7 @@ checkout, a dry run first.
 than P020 is not testable here and is T063.
 
 **T002. *Inverter self consumption (estimated)* by day, at the maintainer's
-SH10RT** -- [plan](plans/inverter-self-consumption.md). It reads about
+SH10RT** -- [plan](plans/T002-inverter-self-consumption.md). It reads about
 -1.9 W in Standby at night, where every term but the load's noise is zero;
 what is left is the daytime look -- whether the mean is steady and plausible
 while the inverter works -- and from that, whether Standby should read
@@ -143,15 +145,19 @@ house that refuses 5214 (T046).
 **T007. A day and a night of *Extended test (auto repeat)* at the
 maintainer's SH10RT**, then ingest -- the new checks on hardware, the
 auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
-names on a real device page -- [plan](plans/diagnosis-and-capability-tests.md).
-*Needs*: the run started and left alone. The forced-startup mode on other
-firmware is T063, which this house cannot answer.
+names on a real device page -- [plan](plans/T007-diagnosis-and-capability-tests.md).
+*Needs*: the run started and left alone -- armed since 2026-11-16 and
+collecting, 35 of 54 established on 2026-11-19, what is left in the plan. The
+forced-startup mode on other firmware is T063, which this house cannot
+answer.
 
 **T017. One midnight at the maintainer's SH10RT on 0.1.0a44 or later**,
 which answers whether the inverter resets its daily counters in one step --
-[plan](plans/daily-counter-reset.md).
-*Needs*: the development instance observing over a midnight. Its clock no
-longer matters: the check reads the inverter's own (T016).
+[plan](plans/T017-daily-counter-reset.md).
+*Needs*: the development instance observing over a midnight -- T007's
+collection is doing it, and its *daily counters reset at midnight* check
+still reads "needs a midnight". Its clock no longer matters: the check reads
+the inverter's own (T016).
 
 **T025. The site import limit (32998) at fwitten's master, when it is
 reachable** (SH10RT-V112, P023, SBR096, cable -- ulfben's exact hardware,
@@ -172,12 +178,12 @@ a named person.
 
 **T026. An SH-T through its WiNet-S, in daylight, with export**: settles
 13074's scale on P071, an SBH on a direct link, and 13018 / 33149-33150 on the
-T -- [plan](plans/sh-t-through-a-dongle.md).
+T -- [plan](plans/T026-sh-t-through-a-dongle.md).
 *Unblocked by*: any SH15T or SH10T owner running one capability test
 (`--enable-export-limit`) while the house exports.
 
 **T063. Forced startup (13017) on firmware other than P020** -- the other
-half of [the import-limit plan](plans/import-limit-and-forced-startup.md),
+half of [the import-limit plan](plans/T001-T063-import-limit-and-forced-startup.md),
 which its own house cannot answer: the maintainer's SH10RT is P020.
 *Unblocked by*: a watched run after dark at a house on P022, P023 or an SH-T,
 in low-SoC standby.
@@ -252,24 +258,24 @@ wallbox restart would show whether 21267 falls to near zero.
 *Unblocked by*: a wallbox seen charging under those conditions.
 
 **T040. A second wallbox's diagnosis**, which settles whether 21211-21214
-identify the unit -- [plan](plans/wallbox-identity-blocks.md).
+identify the unit -- [plan](plans/T040-wallbox-identity-blocks.md).
 *Unblocked by*: the masking publishing a stand-in per masked block, plus a
 terminal diagnosis carrying those blocks.
 
 **T003. Controlling the wallbox**: the mode select's timing, pairing a TLS
 wallbox entry with the inverter that manages it, a standalone wallbox, and
-the first writing run -- [plan](plans/wallbox_tests.md), section 8.
+the first writing run -- [plan](plans/T003-T004-wallbox_tests.md), section 8.
 *Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
 stopped; or a standalone wallbox, which nobody has offered (T040).
 
 **T004. The wallbox's settings as entities** (21298, 21299, 21313): whether
-any of them may be written -- [plan](plans/wallbox_tests.md), section 9.
+any of them may be written -- [plan](plans/T003-T004-wallbox_tests.md), section 9.
 *Unblocked by*: the standalone wallbox of T003.
 
 ## Logger
 
 **T041. A first Sungrow Logger diagnosis** (#786), which unblocks Logger
-entities -- [plan](plans/first-logger-diagnosis.md).
+entities -- [plan](plans/T041-first-logger-diagnosis.md).
 *Unblocked by*: a contributor with a Logger1000/3000/4000; nobody has offered.
 
 ## iHomeManager
@@ -287,7 +293,7 @@ takes at once is unmeasured.
 *Unblocked by*: an iHomeManager owner running the preview.
 
 **T006. The iHomeManager fields left out of its entities** (8554, 8047, 8048,
-8051, 8052, channel 2, 8029) -- [plan](plans/ihomemanager-unmeasured-fields.md).
+8051, 8052, channel 2, 8029) -- [plan](plans/T006-ihomemanager-unmeasured-fields.md).
 *Unblocked by*: a second unit's diagnosis (T042), ideally single phase or with
 a PROD.CT.
 
@@ -296,7 +302,7 @@ a PROD.CT.
 **T043. mDNS and DHCP discovery: what is still open.** The zeroconf and DHCP
 matchers ship; what is left is other houses, a browse the reader cannot have
 spoiled, and the fields nothing explains --
-[plan](plans/mdns-and-dhcp-discovery.md).
+[plan](plans/T043-mdns-and-dhcp-discovery.md).
 *Unblocked by*: diagnoses carrying `network_names` from houses with a dongle,
 and one whose inverter port takes its address by DHCP.
 
@@ -332,7 +338,7 @@ The maintainer targets a stable release in **December 2026** (said 2026-11-06).
 It needs a stable `0.1.0` rather than an alpha (T048), the production-database
 run or a decision to go without it (T050), the catalog submission on release
 and not before (T048), and `doc/integration_migration.md` made current. The
-whole of it is one plan: [`plans/release.md`](plans/release.md).
+whole of it is one plan: [`plans/T047-T053-release.md`](plans/T047-T053-release.md).
 
 The ordinary setup is **on** (the maintainer, 2026-11-15): the opening "what
 is this for?" dialog and `ONLY_DIAGNOSIS_MODE` are gone, every new entry has
@@ -340,63 +346,63 @@ entities, and the diagnosis and capability test share the device page with the
 readings (`tests/test_one_setup_path.py`). `MODE_DIAGNOSTICS` stays for the
 entries made while it was offered.
 
-**T047. When to merge into `main`** -- [plan](plans/release.md).
+**T047. When to merge into `main`** -- [plan](plans/T047-T053-release.md).
 *Needs*: the brand in `home-assistant/brands`, and the
 `proper-ha-integration` links moved to `main`.
 
 **T048. Submit to the HACS catalog once the merge is decided** --
-[plan](plans/release.md). *Needs*: at least one full (non-pre) GitHub release;
+[plan](plans/T047-T053-release.md). *Needs*: at least one full (non-pre) GitHub release;
 "(preview)" dropped from the name on `main`.
 
 **T049. The preview channel under the Marketplace**: left is a screenshot of
 *Add from link* for `doc/installing_a_preview.md` --
-[plan](plans/release.md). *Needs*: `make marketplace`.
+[plan](plans/T047-T053-release.md). *Needs*: `make marketplace`.
 
 **T050. The production database** at real scale --
-[plan](plans/release.md). *Needs*: a copy of the maintainer's instance files,
+[plan](plans/T047-T053-release.md). *Needs*: a copy of the maintainer's instance files,
 or an IPv4 route to it (the hostname resolves to IPv6 only).
 
 **T051. The YAML track's documentation, for the integration** --
-[plan](plans/release.md). *Needs*: the release, after which the notes point at
+[plan](plans/T047-T053-release.md). *Needs*: the release, after which the notes point at
 the ordinary install.
 
 **T052. Hand the preview channel's users over to the release** --
-[plan](plans/release.md). *Needs*: the maintainer's decision on keeping the
+[plan](plans/T047-T053-release.md). *Needs*: the maintainer's decision on keeping the
 mirror running after the release.
 
 **T053. Deprecate and retire the YAML package, after the release** --
-[plan](plans/release.md). *Needs*: parity, the merge, and the HACS default
+[plan](plans/T047-T053-release.md). *Needs*: parity, the merge, and the HACS default
 store.
 
 # Future work
 
 Wanted, not scheduled.
 
-**T054. How far the MPPT energy drifts** -- [plan](plans/mppt-energy-drift.md).
+**T054. How far the MPPT energy drifts** -- [plan](plans/T054-mppt-energy-drift.md).
 *Needs*: a house running it a few days, on a cable and through a WiNet-S.
 
-**T055. A generated dashboard** -- [plan](plans/generated-dashboard.md).
+**T055. A generated dashboard** -- [plan](plans/T055-generated-dashboard.md).
 *Needs*: the question of one default dashboard over houses that differ.
 
 **T056. Helping users set up the Energy dashboard** --
-[plan](plans/energy-dashboard-help.md). *Needs*: nothing; core cannot be
+[plan](plans/T056-energy-dashboard-help.md). *Needs*: nothing; core cannot be
 pre-filled, so what is left is wording and links.
 
 **T057. Site-wide sensors for several inverters** --
-[plan](plans/site-wide-sensors.md). *Needs*: users asking for them; today the
+[plan](plans/T057-site-wide-sensors.md). *Needs*: users asking for them; today the
 answer is documented helpers.
 
 **T058. Renames and the databases outside Home Assistant** (InfluxDB, Grafana,
 Prometheus, MQTT statestream, Node-RED) --
-[plan](plans/renames-outside-home-assistant.md). *Needs*: nothing; the script
+[plan](plans/T058-renames-outside-home-assistant.md). *Needs*: nothing; the script
 and the guide exist.
 
 **T059. The wallbox: the direct connection first** --
-[plan](plans/wallbox-direct-connection.md). *Needs*: gerd's two entries side
+[plan](plans/T059-wallbox-direct-connection.md). *Needs*: gerd's two entries side
 by side, and a retaken options screenshot.
 
 **T060. Hand inverter and wallbox readings to evcc**, so it need not open a
-Modbus session of its own -- [plan](plans/evcc-integration.md), which has the
+Modbus session of its own -- [plan](plans/T060-evcc-integration.md), which has the
 route (evcc's `homeassistant` templates) and what is left to write
 (`doc/evcc.md`).
 *Needs*: nothing; no integration code changes.

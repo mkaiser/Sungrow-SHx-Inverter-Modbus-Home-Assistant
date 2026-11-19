@@ -1,36 +1,48 @@
 ---
 name: todo-housekeeping
-description: Revise Todo.md - close what is done or what was decided against, keep it forward looking, reorder by priority, take in new issues and diagnoses. Use when the maintainer asks to revise, clean up or update the todo list, when it has grown long, or at the end of a session that changed what is next.
+description: Revise Todo.md - take the maintainer's incoming items in with them, close what is done or what was decided against, keep it forward looking, reorder by priority, take in new issues and diagnoses. Use when the maintainer asks to revise, clean up or update the todo list, when it has grown long, and as the todo step of closing a session.
 ---
 
 # Revise Todo.md
 
-`Todo.md` is what a session reads to know what to do next, and it holds only
-that: one sentence an item, its plan under `plans/`, and its requirements.
-`AGENTS.md` outranks this skill, and `workflow.md` says what belongs in
-`Todo.md`, what belongs in a plan, and how items are numbered; this is the
-order to apply it in. An item whose entry grows past a sentence or two gets a
-plan in `plans/`, and the entry links to it.
+**Keep to [`workflow.md`](../../../workflow.md)**: it says what belongs in
+`Todo.md`, what belongs in a plan under `plans/`, how items are numbered, how
+the maintainer's incoming items are handled, and how to write a file more than
+one agent writes. Read it first and follow it as it stands; `AGENTS.md`
+outranks both. This skill adds only the order to apply it in, and what this
+project checks along the way.
 
-## Before the first write
+Before the first write, do what `workflow.md`'s *Several agents write here at
+the same time* says: `git status --short Todo.md`, `git diff Todo.md`, re-read
+from disk, change only your part. Another agent's uncommitted changes stay
+standing, stay out of your commit, and are named in the report.
 
-`Todo.md` has more than one writer, and a revision touches all of it.
+## 1. Take the incoming items in, with the maintainer
 
-1. `git status --short Todo.md` and `git diff Todo.md`. Uncommitted changes
-   that are not yours belong to another agent: leave them standing, leave
-   them out of your commit, and name them in the report.
-2. Re-read the file from disk. Never write back a copy read earlier in the
-   session.
-3. Change it as targeted replacements. A whole-file rewrite loses the other
-   writer's work.
+**Incoming items by maintainer** is the first section and the first step
+whenever this skill was asked for by name. Reached any other way -- closing a
+session, a tidy-up nobody asked for -- **ask first** whether to address them,
+and skip the step unless they say so. The section is a holding area; nothing
+in it is due.
 
-## 1. Take in the maintainer's inbox
+Taking it in is a conversation, not a filing job. Work through the entries one
+at a time:
 
-`Todo.md`'s first section, **From the maintainer**, is read before anything
-else. Each entry is either done on the spot, or filed as a numbered item in
-the right section with a plan under `plans/` where it needs one. Remove what
-you took in as you take it, leave standing only what you could not act on
-(with one line saying what it waits on), and report each entry's outcome.
+- small enough to just do: do it, remove it, say what became of it;
+- anything else: say what you read the entry to mean, what you would make of
+  it -- a numbered item in which section, a plan under `plans/`, an open
+  decision, or nothing -- and what it would need. The maintainer settles it.
+  Write the item or the plan only once they have, and remove the entry in that
+  same edit.
+- settled as not worth doing: record the decision where step 2 says, then
+  remove the entry.
+
+Never file an entry you had to guess at, and never invent an item from one.
+What is left unsettled stays as the maintainer wrote it. Report what became of
+every entry.
+
+If the session is not interactive, do none of it: leave the whole section
+standing and put what you would propose for each entry in the report.
 
 ## 2. Close what is done, or what was decided
 
@@ -70,7 +82,8 @@ Removing an item is not the same as doing it.
 Keep what the next session needs in order to act: the decision an item waits
 on, the measurement that chooses between two paths, the register, firmware
 and house a test applies to. Drop narrative, superseded options, and anything
-the code already does.
+the code already does. An entry that has grown past a sentence or two is a
+plan that has not been written yet.
 
 **Before deleting a hardware result, confirm the wiki holds it, cited.** If it
 does not, ingest it first (`.wiki/AGENTS.md`) and link the page from the item.
@@ -89,10 +102,9 @@ Within each group, in this order:
    with what unblocks it);
 4. what an open decision blocks.
 
-**Future work** stays last. **Never renumber**: every item carries a `T###`
-number minted once and never reused, so reordering and removing items leave
-every reference standing (`workflow.md`). A new item takes the next free
-number from `Todo.md`'s first lines and raises it in the same edit.
+**Future work** stays last. Reordering and removing never touch an item's
+`T###` number (`workflow.md`); a new item takes the next free number from
+`Todo.md`'s first lines and raises it in the same edit.
 
 ## 5. Take in what is new
 
@@ -116,11 +128,10 @@ tables of `plans/*.md` for work that finished without reaching `Todo.md`.
 ## 6. What must not change
 
 - The sections and the grouping by device that the file's own header
-  describes, **From the maintainer** first among them.
-- No real serial, no IP address (`AGENTS.md`), in an item or in a quoted
-  reading.
-- No history: no "was", "used to", "since 0.x". That belongs in the commit
-  message and in `.wiki/wiki/log.md`.
+  describes, **Incoming items by maintainer** first among them.
+- No real serial, no other owner's address (`AGENTS.md`), in an item or in a
+  quoted reading.
+- No history (`workflow.md`, *Documents*): no "was", "used to", "since 0.x".
 - Links relative and resolving; a named file exists.
 
 ## Done means
@@ -128,7 +139,7 @@ tables of `plans/*.md` for work that finished without reaching `Todo.md`.
 - `make quick`; `pytest tests/test_wiki.py tests/test_no_real_serials.py` as
   well if the wiki or a reading changed.
 - One commit, `git commit -- Todo.md` plus anything you ingested or recorded a
-  decision in. Do not push; ask (`AGENTS.md`).
-- A report: what closed and the evidence for each, what came in and from
-  where, what you could not decide and what would decide it, and any other
-  agent's changes you left out of the commit.
+  decision in. Ask before pushing (`workflow.md`).
+- A report: what became of each incoming item, what closed and the evidence
+  for each, what came in and from where, what you could not decide and what would
+  decide it, and any other agent's changes you left out of the commit.

@@ -417,7 +417,7 @@ def _quote(label: str, text: str) -> str:
 
 
 REVIEW_DOC = Path(__file__).resolve().parents[2] / "doc" / "entity_names.md"
-TEXTS_DOC = REVIEW_DOC.parents[1] / "plans" / "text_translation_review.md"
+TEXTS_DOC = REVIEW_DOC.parents[1] / "plans" / "_gen_text_translation_review.md"
 
 
 def _render(markdown: bool) -> str:
@@ -471,7 +471,7 @@ def _render(markdown: bool) -> str:
             "recurring idea\nmust use (`GERMAN_TERMS`). Every other text in "
             "`strings.json` -- the setup and\noptions flows, repairs, actions "
             "and error messages -- is in\n"
-            "[text_translation_review.md](../plans/text_translation_review.md), "
+            "[text_translation_review.md](../plans/_gen_text_translation_review.md), "
             "English above German.\n"
         )
         print(

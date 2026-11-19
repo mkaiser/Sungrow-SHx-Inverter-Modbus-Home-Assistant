@@ -50,7 +50,7 @@ registers an inverter overwrites.
 4. Tests for all three, including a managed wallbox that must never be
    declared standalone by inference alone.
 5. A run against a standalone wallbox, which nobody has offered yet (T003,
-   item 3; `plans/wallbox_tests.md` section 8).
+   item 3; `plans/T003-T004-wallbox_tests.md` section 8).
 
 ## Status log
 

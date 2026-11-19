@@ -32,7 +32,8 @@ address (holding 21203 is wire 21202). The inverter block's meanings are from
 
 ## Writes to the wallbox's own 21203 (10:53 and 11:0x): ignored
 
-Written in breach of `plans/wallbox_recovery_and_retest.md` ("no further wallbox write"); only 21203,
+Written in breach of `plans/wallbox_recovery_and_retest.md` (since merged
+into `plans/T003-T004-wallbox_tests.md`) ("no further wallbox write"); only 21203,
 nothing under 60, no 21211 and no 21212.
 
 - Capability test base run (`--leave`): wrote 60; the same session read 0, a fresh one 316. Exit 3,

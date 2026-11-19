@@ -49,23 +49,27 @@ or wait until they are committed, and say so.
 that. It is **forward looking**: anything done is removed from it, and its
 history lives in git and in the project's log.
 
-### The maintainer's inbox
+### Incoming items by maintainer
 
-`Todo.md` opens with an **inbox**: a section the maintainer writes into in
-whatever form suits them -- a line, a paragraph, a pasted link, a half-formed
-idea -- without having to shape it into an item.
+`Todo.md` opens with **Incoming items by maintainer**: a section the
+maintainer writes into in whatever form suits them -- a line, a paragraph, a
+pasted link, a half-formed idea -- without having to shape it into an item.
 
-- **Every session reads it first**, as part of reading `Todo.md`, before
-  deciding what to work on. It is not optional and not skimmed: an entry there
-  outranks the priority order below it.
-- **An agent that takes an entry in either does it or files it** as a numbered
-  item in the right section, with a plan under `plans/` where it needs one,
-  and **removes it from the inbox in the same edit**, saying what it did with
-  it. Nothing is left half-taken. An entry that cannot be acted on stays, with
-  one line underneath saying what it waits on -- a decision, an answer,
-  hardware -- or it moves to **Open decisions** or **Blockers** as an item.
+- **It is a holding area, not a queue.** An entry there is not work that is
+  due: it carries no priority and never displaces the order below it. A
+  session deciding what to work on reads the sections below, not this one.
+- **It is taken in only when the maintainer asks for it**, as the first step
+  of the project's todo housekeeping (`AGENTS.md` names it), and it is taken
+  in *with* them: the agent says what it reads each entry to mean and what it
+  would make of it, the maintainer settles it, and only what they agreed is
+  written into the file. An agent that had to guess asks instead of filing.
+- **Closing a session, ask whether to address them.** Asking is the whole
+  obligation; their answer decides. Unasked, the section is left alone.
+- **An entry goes only in the edit that disposes of it**, with one line saying
+  what became of it. Nothing is half-taken: what is not settled stays as the
+  maintainer wrote it.
 - **Only the maintainer writes new entries there.** An agent's own note to a
-  later session is a numbered item or a plan's status log, never the inbox.
+  later session is a numbered item or a plan's status log, never this section.
 - It is the one part of `Todo.md` with no sentence limit and no item number.
   Shaping it is the reader's job, not the writer's.
 
@@ -79,9 +83,8 @@ idea -- without having to shape it into an item.
 4. **Release** -- what the next release needs, and what follows it.
 5. **Future work** -- wanted, not scheduled; includes recurrent checks.
 
-A project adds the sections its work needs and says so in `AGENTS.md`. (This
-one adds **Planned tests** -- hardware runs with a date, removed once run and
-ingested -- and groups next steps and blockers by device.)
+A project adds the sections its own work needs, and groups the longer ones by
+whatever its work divides into. Both are recorded in `AGENTS.md`.
 
 ### How long an entry may be
 
@@ -99,8 +102,8 @@ second paragraph is a plan that has not been written yet.
 ## plans/
 
 **When a next step or future work is planned, the plan goes in `plans/` and
-`Todo.md` links to it.** One file per piece of work,
-`plans/<kebab-case-name>.md`, named after the work and not after a session.
+`Todo.md` links to it.** One file per piece of work, named after the work and
+not after a session.
 
 A plan carries:
 
@@ -125,13 +128,20 @@ Rules:
   `Todo.md`. Git keeps the file.
 - **A finished plan is not a changelog.** History goes to git and the
   project's log; a plan states what is still true.
+- **A plan's filename starts with the item numbers it serves**, then the
+  work's name: `T017-daily-counter-reset.md`. `plans/` then sorts by item, and
+  a plan is found from `Todo.md` without opening it. Several items to one plan
+  join their numbers with `-`, a contiguous run written first-last:
+  `T003-T004-...`, `T047-T053-...`. Numbers are never reused, so a name goes
+  stale only when a further item joins the plan.
+- **A leading `_` marks a file under `plans/` that is not a plan**: `_` alone
+  for a prompt meant to be reused across sessions, `_gen_` for a generated
+  file -- which is listed among the project's generated files in `AGENTS.md`,
+  and is never hand-edited. Both sort clear of the numbered plans.
 - **Check `plans/` before writing a new one**, so two files do not describe
   the same work.
-- **A handover is a plan for one device or one run**, not for a session: write
-  what the next session needs, not what the last one did.
-- **Not every file under `plans/` is a plan.** A generated file that lives
-  there is listed among the project's generated files in `AGENTS.md`, and is
-  never hand-edited.
+- **A handover is a plan for one piece of work or one run**, not for a
+  session: write what the next session needs, not what the last one did.
 
 ## Closing a session
 
@@ -142,8 +152,10 @@ checklist, not a second statement of them.
 1. **Write up every plan you touched**: its status log entry.
 2. **Put the knowledge where it is read.** A finding that lives only in the
    conversation is lost.
-3. **Update `Todo.md`**, the maintainer's inbox included, and raise the next
-   free item number if you minted one.
+3. **Run the project's todo housekeeping** (`AGENTS.md` names it): close what
+   this session finished, take in what is new, reorder, and raise the next
+   free item number if you minted one. **Ask whether to take the incoming
+   items in**, and take them in only if the maintainer says so.
 4. **Delete what is spent**: a finished plan, a working file, a stale handover.
 5. **Run the gate** and read its real result.
 6. **Commit your own paths.** Ask before pushing.

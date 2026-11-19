@@ -204,12 +204,12 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
 | `screenshot.py` | Retake a documentation screenshot from a scratch instance, on the screenshot venv's Python; see [Screenshots for the docs](#screenshots-for-the-docs) |
 | `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
-| `managed_wallbox_field.py` | Watch a wallbox an inverter manages, on this tree's library: its block, energy, a session, a phase switch, a scan of the inverter's 33501-33600; `charge` writes charging on/off and puts it back. Addresses as arguments; see `plans/wallbox_tests.md` |
+| `managed_wallbox_field.py` | Watch a wallbox an inverter manages, on this tree's library: its block, energy, a session, a phase switch, a scan of the inverter's 33501-33600; `charge` writes charging on/off and puts it back. Addresses as arguments; see `plans/T003-T004-wallbox_tests.md` |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, `german`, or all eight with no argument (`strings` and `german` last, since they read the others) |
 | `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `tables/naming.py` | **Input table**: the entity-name convention, and the German name for every key (`GERMAN`). Feeds `strings.json`, `translations/de.json`, `review_names.py` and the Influx helper |
-| `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`plans/text_translation_review.md`) |
+| `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`plans/_gen_text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
 | `generate_devices_wanted.py` | Rewrite the coverage table of `device-diagnosis/devices-wanted.md` (and so of the pinned diagnosis issue) from the committed diagnoses, each device counted once by its stand-in serial; the wanted list above it stays hand-written |
@@ -221,7 +221,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
-| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/text_translation_review.md`); `--check` fails when either file has drifted |
+| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/_gen_text_translation_review.md`); `--check` fails when either file has drifted |
 | `diagnosis_issue_body.py` | Build the body of the pinned diagnosis issue (#786) from `device-diagnosis/diagnosis-issue.md` and `devices-wanted.md`, links made absolute; `.github/workflows/diagnosis-issue.yml` runs it. Prints to stdout |
 | `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` also renders a check sheet of the icons, at the sizes they are shown at and on both backgrounds, to `build/brand_preview.png`) |
 
@@ -235,6 +235,11 @@ tree.
 
 Each of these is verified in a container or against hardware.
 
+- **`All checks passed!` is *ruff's* line, not the gate's.** `make check`
+  runs ruff first, and ruff prints that on its own success while pytest, mypy
+  and `gen-check` are still to come -- so a scrollback ending in it says
+  nothing about whether the gate passed. Read the exit code and pytest's own
+  summary instead.
 - **`ruff format` reformats Python inside Markdown.** A fenced ```python
   block in any tracked `.md` -- a wiki page, a note, `Todo.md` -- is formatted
   like a source file, so a snippet with an elision (`...` standing for omitted

@@ -19,7 +19,7 @@ that can go stale, and no marker here matches it.
 Excluded, because they are history, frozen evidence or generated rather than
 rules: `.wiki/raw/` and `device-diagnosis/results/` (immutable sources),
 `.wiki/wiki/log.md` (the only place wiki history goes), and
-`plans/text_translation_review.md`, which a generator writes -- a marker
+`plans/_gen_text_translation_review.md`, which a generator writes -- a marker
 firing there is fixed in the generator.
 """
 
@@ -50,7 +50,7 @@ EXCLUDED_PREFIXES = (
     ".wiki/raw/",
     ".wiki/wiki/log.md",
     "device-diagnosis/results/",
-    "plans/text_translation_review.md",
+    "plans/_gen_text_translation_review.md",
     "tests/",
 )
 
