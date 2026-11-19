@@ -72,6 +72,13 @@ TRACKER_LIVE_V = 50.0
 #: Daylight, for the tracker check: total DC power at least this.
 DAYLIGHT_W = 1000.0
 
+#: Failures an event check keeps: enough to see a pattern in them.
+MAX_FAILURES = 5
+
+#: Notes it keeps. Fewer, because a note is one event described in full and
+#: the same event recurs nightly: three nights settle what one cannot.
+MAX_NOTES = 3
+
 
 def _get(values: Values, name: str) -> float | None:
     value = values.get(name)
@@ -285,6 +292,14 @@ class EventCheck(Check):
     failure: str = OFF_BY
     passes: int = 0
     failures: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+    """Sentences a *passing* judgement left: what the event looked like.
+
+    A pass is usually silent, and most judges return an empty sentence for
+    one. A judge that is also measuring something -- how a device resets its
+    daily counters, say -- says it here, and it is kept and reported whatever
+    the verdict turns out to be.
+    """
     _previous: dict[str, float | None] | None = None
     _last_at: float | None = None
 
@@ -303,26 +318,43 @@ class EventCheck(Check):
         ok, sentence = judged
         if ok:
             self.passes += 1
+            if sentence and sentence not in self.notes:
+                self.notes.append(sentence)
+                del self.notes[:-MAX_NOTES]
         elif sentence not in self.failures:
             self.failures.append(sentence)
-            del self.failures[:-5]
+            del self.failures[:-MAX_FAILURES]
 
     def verdict(self) -> tuple[str | None, str]:
         """Return a failure, or a pass once enough events agree."""
         if self.failures:
-            return self.failure, "; ".join(self.failures)
+            return self.failure, self._detail("; ".join(self.failures))
         if self.passes < self.minimum:
-            return None, f"{self.passes} of {self.minimum} events"
-        return MATCH, f"{self.passes} events, none against"
+            return None, self._detail(f"{self.passes} of {self.minimum} events")
+        return MATCH, self._detail(f"{self.passes} events, none against")
+
+    def _detail(self, said: str) -> str:
+        """Put the kept notes behind the verdict's own sentence.
+
+        Behind every verdict, failures included: a note is a measurement of
+        the event, not an argument about it, and a check that has failed is
+        where one is most worth reading.
+        """
+        return "; ".join([said, *self.notes])
 
     def state(self) -> dict[str, Any]:
-        """Return the counts and the failures."""
-        return {"passes": self.passes, "failures": list(self.failures)}
+        """Return the counts, the failures and the notes."""
+        return {
+            "passes": self.passes,
+            "failures": list(self.failures),
+            "notes": list(self.notes),
+        }
 
     def load(self, state: Mapping[str, Any]) -> None:
         """Take kept counts back."""
         self.passes = int(state.get("passes") or 0)
         self.failures = [str(f) for f in state.get("failures") or []]
+        self.notes = [str(n) for n in state.get("notes") or []]
 
 
 @dataclass
@@ -536,21 +568,49 @@ def _near_midnight(at: datetime) -> bool:
     return minutes >= 23 * 60 + 30 or minutes <= 30
 
 
+def _short(name: str) -> str:
+    """Drop the prefix every daily counter shares: eight in one sentence."""
+    return name.removeprefix("daily_")
+
+
 def _daily_resets(
     previous: Values, current: Values, at: datetime
 ) -> tuple[bool, str] | None:
-    """Judge that a daily counter falls only at midnight, to almost nothing."""
-    verdict: tuple[bool, str] | None = None
+    """Judge that a daily counter falls only at midnight, to almost nothing.
+
+    The sentence names **every** counter that fell in this poll, and every
+    one that is still standing, because it is also the measurement of
+    whether the device resets them together. It matters beyond this check:
+    `daily_consumed_energy` adds five of these counters up, so a poll that
+    catches some reset and some not reads a day's energy as a deep negative
+    (YAML package #708, #797). Whether such a poll exists is a property of
+    the device, and this is where it is observed: a sentence naming one
+    counter cannot tell an atomic reset from a staggered one, because the
+    first counter to fall reads the same either way.
+    """
+    fell: list[str] = []
+    missed: list[str] = []
+    standing: list[str] = []
     for name in DAILY:
         before, now = _get(previous, name), _get(current, name)
-        if before is None or now is None or now >= before:
+        if before is None or now is None:
             continue
-        if not _near_midnight(at):
-            return False, f"{name} fell from {before:g} to {now:g} at {at:%H:%M}"
-        if now > 0.5:
-            return False, f"{name} reset to {now:g}, not to zero, at {at:%H:%M}"
-        verdict = (True, "")
-    return verdict
+        if now < before:
+            fell.append(f"{_short(name)} {before:g}->{now:g}")
+            if now > 0.5:
+                missed.append(_short(name))
+        elif now > 0.5:
+            standing.append(f"{_short(name)} {now:g}")
+    if not fell:
+        return None
+    moved = ", ".join(fell)
+    if not _near_midnight(at):
+        return False, f"{moved} fell at {at:%H:%M}"
+    if missed:
+        return False, f"{moved} reset at {at:%H:%M}, {', '.join(missed)} not to zero"
+    if standing:
+        return True, f"{moved} reset at {at:%H:%M}, {', '.join(standing)} did not"
+    return True, f"{moved} reset at {at:%H:%M}, the rest at zero"
 
 
 @dataclass

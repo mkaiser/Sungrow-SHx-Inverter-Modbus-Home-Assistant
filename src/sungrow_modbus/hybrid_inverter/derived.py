@@ -603,7 +603,28 @@ class Derived:
         return self._consumed("total")
 
     def _consumed(self, period: str) -> float | None:
-        """Return generation, less what left, plus what arrived, less storage."""
+        """Return generation, less what left, plus what arrived, less storage.
+
+        **Clamped at zero**, which the YAML package's template was not. A
+        house cannot consume a negative amount of energy, so a negative is
+        always an artefact of the five counters disagreeing, and the one
+        moment they disagree is the midnight reset: the inverter zeroes them
+        over a short span, and a poll landing inside it reads some of today
+        against some of yesterday. The YAML package showed that as a spike
+        to about minus a day's export (#708, #797), on a sensor whose true
+        value at that moment is a few minutes of consumption -- so zero is
+        not only the floor here, it is the better answer.
+
+        This hides nothing: whether a device resets its counters together is
+        measured where it belongs, by `daily counters reset at midnight` in
+        the capability test's plausibility checks, which names every counter
+        that fell in a poll and every one that had not yet.
+
+        `inverter_self_consumption` stays signed on purpose, and the two do
+        not contradict each other: that one is an instantaneous balance of
+        fields read in different blocks, whose mean clamping would bias
+        upwards. This is a counter that cannot be negative at all.
+        """
         values = self._floats(
             f"{period}_pv_generation",
             f"{period}_exported_energy",
@@ -614,4 +635,4 @@ class Derived:
         if values is None:
             return None
         generated, exported, imported, stored, released = values
-        return generated - exported + imported - stored + released
+        return max(generated - exported + imported - stored + released, 0.0)

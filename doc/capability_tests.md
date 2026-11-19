@@ -151,3 +151,9 @@ finding; a ratio merely off (losses, reactive power) is *could not tell*, never 
 | battery level follows its power | 1 kWh out lowers the level, 1 kWh in raises it | 1 kWh through the battery | a level read from the wrong register |
 | running states | every 13000 code seen is in the table | a day of polls | a code nobody has named |
 | mppt3 / mppt4 carries a string | a voltage in daylight | PV above 1000 W | a tracker granted with nothing on it |
+
+**The midnight check also measures the reset itself.** Its sentence names every daily counter
+that fell in the same poll, and every one that had not fallen yet, whether it passes or fails.
+That is what says whether a device zeroes its counters together or over several polls -- which
+decides whether a poll can land between two of them and read a day's energy from two different
+days.

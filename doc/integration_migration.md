@@ -159,6 +159,14 @@ only with the YAML package's IDs, for the dashboards that read them. With
 device-scoped IDs the decoded value stands in their place — a binary sensor
 for an on/off mode, a ratio with its unit.
 
+**Consumed energy never reads below zero.** `sensor.daily_consumed_energy` and
+`sensor.total_consumed_energy` are the same sum of the same five registers, held at zero as a
+floor. A house cannot consume a negative amount, and the one moment the sum goes negative is the
+inverter's midnight reset, when a poll can catch some of the five counters zeroed and some still
+holding yesterday's. On the YAML package that put a drop of about a day's export into the
+history every night; here the reading at that moment is zero, which is also what the house had
+actually used by then.
+
 ## Three entities that do not come across
 
 Everything the YAML package reads or sets has a replacement on the same ID,

@@ -230,6 +230,58 @@ def test_a_reset_at_noon_is_a_finding() -> None:
     assert "12:00" in row["detail"]
 
 
+def test_a_midnight_reset_records_every_counter_that_fell() -> None:
+    """The passing check still says what it saw: all of them, at once."""
+    row = _run()["daily counters reset at midnight"]
+    assert row["verdict"] == MATCH
+    detail = row["detail"]
+    assert "the rest at zero" in detail
+    for name in plausibility.DAILY:
+        assert name.removeprefix("daily_") in detail, detail
+
+
+def test_a_staggered_midnight_reset_names_what_had_not_reset_yet() -> None:
+    """Two counters reset a poll late: the moment #708 reads as negative.
+
+    What is measured here is the device's, not the integration's: whether a
+    poll can fall between two of the eight resets. `daily_consumed_energy`
+    adds five of them up, so such a poll is the one that reads deeply
+    negative, and this sentence is the evidence that it happened.
+    """
+    late = ("daily_exported_energy", "daily_battery_charge")
+    held: Values = {}
+
+    def stagger(at: datetime, values: Values) -> None:
+        if at.hour == 23 and at.minute == 59:
+            held.update({name: values[name] for name in late})
+        elif at.hour == 0 and at.minute == 0 and held:
+            values.update(held)
+
+    row = _run(stagger)["daily counters reset at midnight"]
+    assert row["verdict"] == MATCH
+    detail = row["detail"]
+    assert "exported_energy" in detail and "battery_charge" in detail
+    assert "did not" in detail, detail
+
+
+def test_a_note_is_reported_behind_a_failure() -> None:
+    """A check that has failed is where its measurement is worth most.
+
+    The failure here is the one a clock mismatch produces at a real house:
+    the row stays red for as long as the clocks differ, and the nightly
+    reset would go unrecorded if a note only spoke on a pass.
+    """
+
+    def reset(at: datetime, values: Values) -> None:
+        if at.date() == START.date() and at.hour >= 12:
+            values["daily_pv_generation"] = 0.0
+
+    row = _run(reset)["daily counters reset at midnight"]
+    assert row["verdict"] == OFF_BY
+    assert "fell at 12:00" in row["detail"]
+    assert "reset at 00:00" in row["detail"], row["detail"]
+
+
 def test_the_battery_level_running_backwards_is_a_finding() -> None:
     """A level that rises while the battery discharges."""
 

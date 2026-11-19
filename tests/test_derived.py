@@ -158,6 +158,29 @@ async def test_consumption_is_generation_less_what_left(
     assert inverter.derived.daily_consumed_energy == pytest.approx(21.0)
 
 
+async def test_consumption_does_not_go_negative_across_a_staggered_midnight() -> None:
+    """The midnight reset, caught half done, reads zero rather than below it.
+
+    PV, import and discharge have reset while export and charge still hold
+    yesterday's. The plain formula gives -18 kWh here, which is what the YAML package's
+    template put in the history every night (#708, #797). This is the one
+    place the integration's arithmetic departs from the YAML's on purpose:
+    the entity id and its unit class are unchanged, only an impossible value
+    is. The register words are a poll, not an invention -- whether a device
+    really splits its reset across two polls is measured by the capability
+    test, not asserted here.
+    """
+    device = await _inverter(
+        {
+            13001: 0,  # daily PV generation, reset
+            13035: 0,  # daily imported, reset
+            13025: 0,  # daily battery discharge, reset
+            # 13044 daily exported (10.0) and 13039 daily charge (8.0) have not.
+        }
+    )
+    assert device.derived.daily_consumed_energy == 0.0
+
+
 async def test_self_consumption_is_what_the_balance_leaves() -> None:
     """PV + battery discharge - export - load: 6000 + 1500 - 2500 - 4800."""
     pv_low, pv_high = _int32(6000)

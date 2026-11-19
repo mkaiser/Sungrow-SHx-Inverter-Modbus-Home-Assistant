@@ -245,8 +245,33 @@ would settle it is already read into each run's `conditions` as `inverter_clock`
 long as any is held, whatever `passes` reaches. The midnight check at mkaiser's shows what that
 costs when the cause recurs: a second night added a second sentence, because each carries that
 day's kWh figure, and the row will take one more every night
-([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)). Raising a
-check's revision clears the row; only fixing the cause keeps it clear.
+([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+
+**And a readings check's revision does not clear it**, though a write path's does. `CHECK_REVISIONS`
+is read by `_current` in `src/sungrow_modbus/capability_test/ledger.py`, which only the readback and
+effect tables pass through; a readings row joins the summary straight from `Plausibility.summary()`
+via `with_plausibility`, carrying no revision at all. What clears one is *Diagnosis: tests, clear
+history* (`async_clear_ledger` removes the plausibility store with the ledger), or raising
+`plausibility.SCHEMA`, which drops every check's evidence and not just the failing one. Fixing the
+cause is what keeps it clear.
+
+**A check can measure while it judges.** A judgement that passes may leave a *note*, kept beside
+the failures and reported behind the verdict whichever way the verdict goes
+(`EventCheck.notes`, `_detail`, `src/sungrow_modbus/capability_test/plausibility.py`). The
+midnight check uses it: its sentence names **every** daily counter that fell in that one poll,
+with before and after, and every counter still standing. A house whose clocks agree says so in a
+pass; a house whose clocks differ, like mkaiser's, says the same thing in the nightly failure --
+so the measurement arrives either way.
+
+What it measures is not this integration's arithmetic but the **device's**: whether an inverter
+zeroes its eight daily counters in one step or across several polls. It decides a user-visible
+question, because `daily_consumed_energy` adds five of them together, and a poll that caught some
+reset and some not read a day's energy as a deep negative on the YAML package
+([#708](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/708),
+[#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797)). The
+integration holds that sum at zero, so the answer no longer changes what a user sees -- it says
+whether the device has the behaviour at all. **Unmeasured so far**: the two nights observed at
+mkaiser's named only `daily_pv_generation`, so neither atomic nor staggered is established.
 
 ## Drivers
 

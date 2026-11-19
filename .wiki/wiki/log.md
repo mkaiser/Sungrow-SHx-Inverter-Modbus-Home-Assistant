@@ -1668,3 +1668,40 @@ What changed:
 - **`entities/device-sbr-battery.md`** gains "a second pack has units of its own".
 - **`queries/does-a-winet-s-advertise-over-mdns.md`** gains the WiNet-S2's record and the label.
 - **`device-diagnosis/devices-wanted.md`**: item 8 drops P067.
+
+## [2026-11-18] changed | the midnight check names every counter that fell; consumed energy holds at zero
+
+[#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797) reports
+what [#708](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/708)
+reported before it: `daily_consumed_energy` spikes deeply negative at midnight. The YAML
+package's share of the cause -- a template recomputing on each of its five inputs separately --
+is already gone, since the integration computes a derived value from one coherent poll. What was
+left open is the device's share: an inverter that zeroes its eight daily counters across several
+polls would still give one poll some of today and some of yesterday.
+
+**That is now measured rather than assumed.** `daily counters reset at midnight` names every
+counter that fell in the one poll, with before and after, and every counter still standing, and
+it says so whether it passes or fails -- a passing judgement may now leave a *note*, which is
+reported behind the verdict either way (`EventCheck.notes`,
+`src/sungrow_modbus/capability_test/plausibility.py`). At
+[mkaiser](entities/installation-mkaiser.md)'s the row is red on a clock, not on the inverter, and
+the nightly failure sentence carries the measurement all the same. The two nights observed there
+named only `daily_pv_generation`, so **nothing is established yet**: one more night says it.
+
+**`daily_consumed_energy` and `total_consumed_energy` are held at zero as a floor** regardless
+(`_consumed`, `src/sungrow_modbus/hybrid_inverter/derived.py`). A house cannot consume a negative
+amount, and at the only moment the sum goes negative the true value is a few minutes of
+consumption, so zero is the better answer and not merely the floor. It is the one place the
+integration's arithmetic departs from the YAML package's on purpose; the entity ids, units and
+state classes are untouched, so history is unaffected. `inverter_self_consumption` stays signed,
+for the reason its docstring gives: it is an instantaneous balance whose mean clamping would
+bias.
+
+What changed:
+
+- **`concepts/capability-test.md`** gains "a check can measure while it judges", and what is
+  still unmeasured.
+- **`doc/capability_tests.md`**: what the midnight check records beyond its verdict.
+- **`doc/integration_migration.md`**: consumed energy never reads below zero.
+- Tests: a staggered midnight in `tests/test_plausibility.py`, and `tests/test_derived.py`
+  reading a half-done reset as 0 rather than -18 kWh.
