@@ -250,6 +250,17 @@ class Capability(StrEnum):
     `CONFIRMED_ON_FIRMWARE`.
     """
 
+    DISCHARGE_SCHEDULE_CONTROL = "discharge_schedule_control"
+    """The discharge windows may be written, because a write was watched.
+
+    Registers 33151-33158 and 33179-33187, outside Sungrow's document (#785),
+    so the same rule as the PV cut: never probed, granted by `resolve` only
+    where `DISCHARGE_SCHEDULE` answered **and** the firmware is in
+    `CONFIRMED_ON_FIRMWARE`. What a readback proves here is that the words
+    went in, not that the inverter obeys them; only watching a discharge stop
+    does that.
+    """
+
 
 class Family(StrEnum):
     """The product line a device type code belongs to."""
@@ -581,6 +592,19 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
             "SAPPHIRE-H_B001.V000.P023",
         }
     ),
+    # The discharge windows, watched twice by moving every window away from
+    # now and seeing the battery stop and come back (wiki: the capability
+    # test, "the discharge window works on P020 and P022"):
+    # gerd's SH8.0RT on P022 over the cable, 2026-10-30: 3799 W discharging,
+    # 0 W while the windows were away, 3800 W after.
+    #   sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3.json  # noqa: E501
+    # the maintainer's SH10RT on P020 over the cable, 2026-11-04: 722.5 W,
+    # 0 W, 719 W, on a third-party battery at night; every schedule word read
+    # back original afterwards.
+    # Both restored whole. No P023 or SBR house has run it (T037).
+    Capability.DISCHARGE_SCHEDULE_CONTROL: frozenset(
+        {"SAPPHIRE-H_B001.V000.P020", "SAPPHIRE-H_B001.V000.P022"}
+    ),
 }
 
 #: The read a confirmed write also needs, so a firmware entry can never grant
@@ -590,6 +614,7 @@ CONTROL_REQUIRES: dict[Capability, Capability] = {
     Capability.PV_GENERATION_CUT_CONTROL: Capability.PV_GENERATION_CUT,
     Capability.FORCED_STARTUP_CONTROL: Capability.FORCED_STARTUP,
     Capability.SITE_IMPORT_LIMIT_CONTROL: Capability.SITE_IMPORT_LIMIT,
+    Capability.DISCHARGE_SCHEDULE_CONTROL: Capability.DISCHARGE_SCHEDULE,
 }
 
 

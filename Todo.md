@@ -36,12 +36,9 @@ maintainer writes new entries here (`workflow.md`).
 
 ## Inverter
 
-**T036. Let the discharge windows be written** (#785) -- the watched write
-they waited for has happened twice, at the maintainer's SH10RT on P020 and at
-gerd's SH8.0RT on P022 -- [plan](plans/discharge-windows-writable.md).
-*Needs*: nothing. The window shape is decided (a `time` per edge plus an
-"all day" switch for the hour that is 24), and the four build steps are in
-the plan.
+Nothing can start now. What the maintainer's own inverter can answer is a
+planned test below (T001, T002); the rest waits on other firmware or other
+houses.
 
 ## Battery
 
@@ -235,8 +232,9 @@ Nothing here or at the maintainer's P020 can answer it.
 then.
 *Unblocked by*: two reads of it a minute apart at that house.
 
-**T037. The discharge window on P023** (#785). It has run on P022 and P020;
-no P023 or SBR house has run it.
+**T037. The discharge window on P023** (#785). It has run on P022 and P020,
+which is what makes the windows writable there (T036); no P023 or SBR house
+has run it, so P023 keeps the sensors and no controls.
 *Unblocked by*: fwitten's master in the evening, with their Home Assistant
 stopped.
 

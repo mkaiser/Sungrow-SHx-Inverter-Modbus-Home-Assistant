@@ -197,6 +197,13 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Weekday discharge window 1 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekday discharge window 2 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekend discharge *(binary_sensor)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge end 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge end 1 all day *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge end 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge end 2 all day *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge schedule *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge start 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge start 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekend discharge window 1 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekend discharge window 2 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
@@ -214,6 +221,12 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Wallbox charge *(switch)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
 | Wallbox charge mode *(select)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
 | Wallbox user-defined current *(number)* | read |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  | ✓ |
+| Weekday discharge end 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge end 1 all day *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge end 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge end 2 all day *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge start 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge start 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### Faults and alarms
 

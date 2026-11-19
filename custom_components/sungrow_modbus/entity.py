@@ -230,6 +230,16 @@ class SungrowSwitchDescription(SungrowEntityDescription, SwitchEntityDescription
     #: Words read as off that are never written: a factory value outside the
     #: two codes, such as 13017's 0, which the inverter refuses to take.
     also_off: tuple[int, ...] = ()
+    #: The minute register of a window whose end this switch sets, where the
+    #: switch writes a *time* rather than a mode code. A discharge window
+    #: ends at hour 24, which is the end of the day and which a Home
+    #: Assistant `time` entity cannot hold (00:00 to 23:59), so the end
+    #: carries this switch beside its `time`: on writes 24:00, off writes
+    #: 23:59 and hands the end back to the time entity to set properly.
+    minute_field: str | None = None
+    #: The minutes written with `on_value` and `off_value` on such a switch.
+    on_minute: int = 0
+    off_minute: int = 0
 
 
 @dataclass(frozen=True, kw_only=True)

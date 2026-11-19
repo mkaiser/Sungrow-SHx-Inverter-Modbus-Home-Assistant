@@ -16,6 +16,8 @@ import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
+from custom_components.sungrow_modbus.entity import SungrowSwitchDescription
+from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 from homeassistant.components.switch import (
     DOMAIN as SWITCH_DOMAIN,
     SERVICE_TURN_OFF,
@@ -24,6 +26,7 @@ from homeassistant.components.switch import (
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_PORT, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from sungrow_modbus import Capability
 
 from .conftest import SERIAL
 
@@ -169,3 +172,52 @@ async def test_a_second_change_inside_the_debounce_window_is_still_shown(
         await _call(hass, service, BACKUP)
         assert sungrow_unit.holding[BACKUP_ADDRESS] == code
         assert hass.states.get(BACKUP).state == expected, service
+
+
+# -- the discharge windows, and the hour a `time` cannot hold ------------------
+
+
+def _switch(key: str) -> SungrowSwitchDescription:
+    """Return the generated description with this key."""
+    return next(d for d in SWITCH_DESCRIPTIONS if d.key == key)
+
+
+ALL_DAY = "weekday_discharge_end_1_all_day"
+
+
+def test_a_window_end_switch_writes_the_hour_a_time_cannot_hold() -> None:
+    """24:00 is the end of the day, and a `time` entity holds 23:59 at most.
+
+    Every untouched house reads its discharge windows as 00:00 to 24:00, so
+    without this switch the `time` beside it could read such a window and
+    never write it back.
+    """
+    description = _switch(ALL_DAY)
+    assert description.field == "weekday_discharge_end_1_hour"
+    assert description.minute_field == "weekday_discharge_end_1_minute"
+    assert (description.on_value, description.on_minute) == (24, 0)
+    assert (description.off_value, description.off_minute) == (23, 59)
+
+
+def test_every_discharge_window_end_has_one() -> None:
+    """Four windows, four switches: two weekday and two weekend."""
+    keys = {d.key for d in SWITCH_DESCRIPTIONS if d.key.endswith("_all_day")}
+    assert keys == {
+        f"{day}_discharge_end_{window}_all_day"
+        for day in ("weekday", "weekend")
+        for window in (1, 2)
+    }
+
+
+def test_the_discharge_entities_need_a_watched_write() -> None:
+    """Answering the register is not leave to write it.
+
+    The windows are outside Sungrow's document, so what writing them does was
+    settled by watching a discharge stop, on two firmwares -- and the
+    capability that carries that is granted by firmware, never by a probe.
+    """
+    for description in SWITCH_DESCRIPTIONS:
+        if "discharge" in description.key and "forced" not in description.key:
+            assert description.requires is Capability.DISCHARGE_SCHEDULE_CONTROL, (
+                description.key
+            )

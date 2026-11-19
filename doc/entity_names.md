@@ -1,6 +1,6 @@
 # The entity names
 
-**384 entities** that modern mode can create (Hybrid inverter 201, SBR battery 34, Wallbox 24, SG string inverter 85, iHomeManager 40).
+**397 entities** that modern mode can create (Hybrid inverter 214, SBR battery 34, Wallbox 24, SG string inverter 85, iHomeManager 40).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (201)
+## Hybrid inverter (214)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -58,7 +58,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Phase C Backup Voltage (5733) |  | Backup phase C voltage | Backup Phase C Spannung | `sensor.sh10rt_backup_phase_c_voltage` |  | V |
 | Total Backup Power (5726) | Total backup power | Total backup power | Backup Gesamtleistung | `sensor.sh10rt_total_backup_power` | `sensor.total_backup_power` | W |
 
-### Control (17)
+### Control (24)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -77,10 +77,17 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Weekday discharge window 1 | Entladefenster Werktag 1 | `sensor.sh10rt_weekday_discharge_window_1` |  |  |
 |  |  | Weekday discharge window 2 | Entladefenster Werktag 2 | `sensor.sh10rt_weekday_discharge_window_2` |  |  |
 |  |  | Weekend discharge | Entladung am Wochenende | `binary_sensor.sh10rt_weekend_discharge` |  |  |
+| *not in the datasheet* (33182) |  | Weekend discharge end 1 | Entladung Wochenende Ende 1 | `time.sh10rt_weekend_discharge_end_1` |  |  |
+| *not in the datasheet* (33182) |  | Weekend discharge end 1 all day | Entladung Wochenende Ende 1 ganztägig | `switch.sh10rt_weekend_discharge_end_1_all_day` |  |  |
+| *not in the datasheet* (33186) |  | Weekend discharge end 2 | Entladung Wochenende Ende 2 | `time.sh10rt_weekend_discharge_end_2` |  |  |
+| *not in the datasheet* (33186) |  | Weekend discharge end 2 all day | Entladung Wochenende Ende 2 ganztägig | `switch.sh10rt_weekend_discharge_end_2_all_day` |  |  |
+| *not in the datasheet* (33179) |  | Weekend discharge schedule | Entladung Wochenende Zeitplan | `switch.sh10rt_weekend_discharge_schedule` |  |  |
+| *not in the datasheet* (33180) |  | Weekend discharge start 1 | Entladung Wochenende Start 1 | `time.sh10rt_weekend_discharge_start_1` |  |  |
+| *not in the datasheet* (33184) |  | Weekend discharge start 2 | Entladung Wochenende Start 2 | `time.sh10rt_weekend_discharge_start_2` |  |  |
 |  |  | Weekend discharge window 1 | Entladefenster Wochenende 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
 |  |  | Weekend discharge window 2 | Entladefenster Wochenende 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
-### Everything else (10)
+### Everything else (16)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -94,6 +101,12 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | *not in the datasheet* (33540) |  | Wallbox charge | Wallbox laden | `switch.sh10rt_wallbox_charge` |  |  |
 | *not in the datasheet* (33541) |  | Wallbox charge mode | Wallbox-Lademodus | `select.sh10rt_wallbox_charge_mode` |  |  |
 | *not in the datasheet* (33545) |  | Wallbox user-defined current | Wallbox benutzerdefinierter Ladestrom | `number.sh10rt_wallbox_user_defined_current` |  | A |
+| *not in the datasheet* (33153) |  | Weekday discharge end 1 | Entladung Werktag Ende 1 | `time.sh10rt_weekday_discharge_end_1` |  |  |
+| *not in the datasheet* (33153) |  | Weekday discharge end 1 all day | Entladung Werktag Ende 1 ganztägig | `switch.sh10rt_weekday_discharge_end_1_all_day` |  |  |
+| *not in the datasheet* (33157) |  | Weekday discharge end 2 | Entladung Werktag Ende 2 | `time.sh10rt_weekday_discharge_end_2` |  |  |
+| *not in the datasheet* (33157) |  | Weekday discharge end 2 all day | Entladung Werktag Ende 2 ganztägig | `switch.sh10rt_weekday_discharge_end_2_all_day` |  |  |
+| *not in the datasheet* (33151) |  | Weekday discharge start 1 | Entladung Werktag Start 1 | `time.sh10rt_weekday_discharge_start_1` |  |  |
+| *not in the datasheet* (33155) |  | Weekday discharge start 2 | Entladung Werktag Start 2 | `time.sh10rt_weekday_discharge_start_2` |  |  |
 
 ### Faults and alarms (9)
 

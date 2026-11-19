@@ -94,3 +94,56 @@ registers. The build is four steps and none of them is hard; the entity shape
 is a real decision and it is the maintainer's, so it is written up above and
 nothing is built yet. Next: their answer, then steps 1-4 in one commit with
 the capability and its tests.
+
+### 2026-11-19 -- built, all four steps
+
+1. **`Capability.DISCHARGE_SCHEDULE_CONTROL`**, never probed, in
+   `CONFIRMED_ON_FIRMWARE` for `SAPPHIRE-H_B001.V000.P020` and
+   `SAPPHIRE-H_B001.V000.P022` with both runs cited, and in
+   `CONTROL_REQUIRES` against the read. `resolve` needed no change: it
+   already adds a confirmed write where the read it acts on resolved.
+   Checked: P020 with the read grants it, P023 does not, and no read means
+   no control on any firmware.
+2. **The sixteen window registers and the weekend enable are `writable`**,
+   with why in `InverterDischargeWeekday`'s own words, including what hour 24
+   costs.
+3. **Eight `TIMES` entries, four `WINDOW_ENDS` switches and the weekend
+   enable**, generated into `time_descriptions.py` and
+   `switch_descriptions.py`, with English and German names. The platform
+   learned one thing: a switch with a `minute_field` writes a time rather
+   than a mode code, hour then minute, in the order `SungrowTime` uses.
+4. **Tests**: the shape of an *all day* switch, that all four windows have
+   one, and that every discharge control is gated on the watched-write
+   capability.
+
+**The sub-decision the shape left open: what *all day* writes when turned
+off.** There is nothing to hand back to -- while the switch was on, the end
+held 24:00 and the `time` beside it showed nothing, so no previous value
+exists. It writes **23:59**, the latest a `time` can hold, and the owner sets
+the end they want from there. The alternative, refusing to turn off until a
+time is set, makes a switch that will not switch.
+
+### 2026-11-19 -- the two guards the new control had to pass
+
+The full suite failed twice, and both failures were the procedure asking to
+be followed rather than bugs.
+
+**Every writable register is probed or excused** (`test_capability_test.py`).
+The seventeen new writable fields are now excused in
+`procedure.NOT_PROBED`, beside the forced-charging schedule and for the same
+reason: hours, minutes and one mode flag count in ones, so a readback walk
+has no scale to catch, and a window written into the schedule decides when
+the battery may discharge. They are written only by the discharge window
+check, which moves every window away from now and judges by the battery
+stopping.
+
+**Nothing is confirmed without a document that shows it**
+(`test_pv_generation_cut.py`). This control is the first whose two firmwares
+are evidenced *differently*: P022 by gerd's committed diagnosis (`discharge
+windows away from now`, confirmed), P020 by the maintainer's raw note -- that
+house's own diagnosis says *could not tell*. The test partitioned
+capabilities into "the cut, from diagnoses" and "everything else, from raw
+notes", which no longer holds, so it now carries both tables and asks each
+firmware for **either** kind of evidence. Checked that each half is
+load-bearing: P020 passes only by the note, P022 only by the diagnosis, and
+P023 satisfies neither, which is what keeps it out.

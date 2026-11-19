@@ -85,6 +85,12 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
         value = int(raw)
         if value == self.entity_description.on_value:
             return True
+        if self.entity_description.minute_field is not None:
+            # A window's end: any hour but 24 is a time the `time` entity
+            # beside this one holds, so the switch is simply off. There is no
+            # third state to report, because an hour the inverter cannot mean
+            # is already None above.
+            return False
         if (
             value == self.entity_description.off_value
             or value in self.entity_description.also_off
@@ -93,13 +99,27 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
         return None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Set the flag."""
+        """Set the flag, or a window's end to the end of the day."""
+        description = self.entity_description
         await self._async_write(
-            (self.entity_description.field, self.entity_description.on_value)
+            *self._writes(description.on_value, description.on_minute)
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Clear the flag."""
+        """Clear the flag, or hand a window's end back to its time entity."""
+        description = self.entity_description
         await self._async_write(
-            (self.entity_description.field, self.entity_description.off_value)
+            *self._writes(description.off_value, description.off_minute)
         )
+
+    def _writes(self, hour: int, minute: int) -> tuple[tuple[str, float], ...]:
+        """Return the register writes for one side of this switch.
+
+        A mode flag writes one word. A window's end writes two, hour then
+        minute, in that order -- the same order `SungrowTime` uses, so a
+        half-applied write leaves the same state either entity would.
+        """
+        description = self.entity_description
+        if description.minute_field is None:
+            return ((description.field, hour),)
+        return ((description.field, hour), (description.minute_field, minute))

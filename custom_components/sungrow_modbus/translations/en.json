@@ -1432,6 +1432,21 @@
       },
       "skip_established_capability_tests": {
         "name": "Diagnosis: skip completed tests"
+      },
+      "weekday_discharge_end_1_all_day": {
+        "name": "Weekday discharge end 1 all day"
+      },
+      "weekday_discharge_end_2_all_day": {
+        "name": "Weekday discharge end 2 all day"
+      },
+      "weekend_discharge_end_1_all_day": {
+        "name": "Weekend discharge end 1 all day"
+      },
+      "weekend_discharge_end_2_all_day": {
+        "name": "Weekend discharge end 2 all day"
+      },
+      "weekend_discharge_schedule": {
+        "name": "Weekend discharge schedule"
       }
     },
     "time": {
@@ -1446,6 +1461,30 @@
       },
       "forced_charging_start_2": {
         "name": "Forced charging start 2"
+      },
+      "weekday_discharge_end_1": {
+        "name": "Weekday discharge end 1"
+      },
+      "weekday_discharge_end_2": {
+        "name": "Weekday discharge end 2"
+      },
+      "weekday_discharge_start_1": {
+        "name": "Weekday discharge start 1"
+      },
+      "weekday_discharge_start_2": {
+        "name": "Weekday discharge start 2"
+      },
+      "weekend_discharge_end_1": {
+        "name": "Weekend discharge end 1"
+      },
+      "weekend_discharge_end_2": {
+        "name": "Weekend discharge end 2"
+      },
+      "weekend_discharge_start_1": {
+        "name": "Weekend discharge start 1"
+      },
+      "weekend_discharge_start_2": {
+        "name": "Weekend discharge start 2"
       }
     }
   },

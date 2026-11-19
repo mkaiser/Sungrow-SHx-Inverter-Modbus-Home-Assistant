@@ -872,6 +872,27 @@ NOT_PROBED: dict[str, str] = {
         "or, while the schedule is off, the window 2 encoding check, because a "
         "window written into it can charge from the grid",
     ),
+    # The discharge schedule (33151-33158 weekday, 33179-33187 weekend, in no
+    # Sungrow document). Hours, minutes and one mode flag: counted in ones,
+    # with no scale a readback could catch. A window written into it decides
+    # when the battery is allowed to discharge, so the house pays for a wrong
+    # one at the next peak.
+    **dict.fromkeys(
+        (
+            "weekend_discharge_raw",
+            *(
+                f"{days}_discharge_{part}_{window}_{unit}"
+                for days in ("weekday", "weekend")
+                for window in (1, 2)
+                for part in ("start", "end")
+                for unit in ("hour", "minute")
+            ),
+        ),
+        "part of the discharge schedule: counted in ones with no scale to get "
+        "wrong; written only by the discharge window check, which moves every "
+        "window away from now and judges by the battery stopping, because a "
+        "window written into it decides when the battery may discharge",
+    ),
 }
 
 

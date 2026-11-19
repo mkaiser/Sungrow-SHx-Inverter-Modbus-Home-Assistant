@@ -404,6 +404,17 @@ SWITCHES: tuple[Switch, ...] = (
         "off": 0x55,
         "also_off": (0,),
     },
+    # Register 33179, outside Sungrow's document (#785): the weekend
+    # discharge schedule's own enable. Gated by `DISCHARGE_SCHEDULE_CONTROL`,
+    # which `capabilities.CONFIRMED_ON_FIRMWARE` grants per watched firmware
+    # -- moving every window away from now stopped a discharge at two houses.
+    {
+        "field": "weekend_discharge_raw",
+        "key": "weekend_discharge_schedule",
+        "requires": "DISCHARGE_SCHEDULE_CONTROL",
+        "on": 0xAA,
+        "off": 0x55,
+    },
     # The wallbox the inverter manages (registers 33540 and 33550, outside
     # Sungrow's document; `sungrow_modbus.hybrid_inverter.ev_charger`).
     # Charging on/off: watched at gerd's on P022, off stopped the car within a
@@ -552,6 +563,53 @@ TIMES: tuple[Time, ...] = tuple(
     }
     for window in (1, 2)
     for part in ("start", "end")
+) + tuple(
+    # The discharge windows, 33151-33158 and 33180-33187, outside Sungrow's
+    # document (#785). Gated by `DISCHARGE_SCHEDULE_CONTROL`, which only a
+    # watched write grants, so a house whose inverter answers these registers
+    # still gets no control until its firmware is one where moving the
+    # windows was seen to stop a discharge. An end of hour 24 reads as None
+    # here and is written by the switch beside it (`WINDOW_ENDS`).
+    {
+        "key": f"{day}_discharge_{part}_{window}",
+        "hour": f"{day}_discharge_{part}_{window}_hour",
+        "minute": f"{day}_discharge_{part}_{window}_minute",
+        "requires": "DISCHARGE_SCHEDULE_CONTROL",
+    }
+    for day in ("weekday", "weekend")
+    for window in (1, 2)
+    for part in ("start", "end")
+)
+
+
+class WindowEnd(TypedDict):
+    """The "all day" switch beside a discharge window's end time."""
+
+    key: str
+    hour: str
+    minute: str
+    requires: str
+
+
+#: Step 6b: a discharge window ends at **hour 24**, the end of the day, and a
+#: Home Assistant `time` entity holds 00:00 to 23:59 only. Every untouched
+#: house reads `00:00` to `24:00`, so a `time` alone could read such a window
+#: (as None) but never write it back, and an owner who nudged one window
+#: could not restore the other.
+#:
+#: So each window's end carries a switch beside its time: **on writes 24:00**,
+#: off writes 23:59 and hands the end back to the time entity to set properly.
+#: The forced-charging windows need none -- V1.1.16 documents them as 0~23,
+#: which is why `TIMES` fits them as they are.
+WINDOW_ENDS: tuple[WindowEnd, ...] = tuple(
+    {
+        "key": f"{day}_discharge_end_{window}_all_day",
+        "hour": f"{day}_discharge_end_{window}_hour",
+        "minute": f"{day}_discharge_end_{window}_minute",
+        "requires": "DISCHARGE_SCHEDULE_CONTROL",
+    }
+    for day in ("weekday", "weekend")
+    for window in (1, 2)
 )
 
 
@@ -609,6 +667,10 @@ START_STOP = {
 #: written in `components.py` and writable there, so it is not part of this
 #: set -- and the test that asserts `registers.py`'s writable set *is* this
 #: table stays exact.
-WRITABLE_FIELDS: frozenset[str] = frozenset(
-    entry["field"] for entry in (*NUMBERS, *SWITCHES, *SELECTS, *BUTTONS)
-) | frozenset(field for entry in TIMES for field in (entry["hour"], entry["minute"]))
+WRITABLE_FIELDS: frozenset[str] = (
+    frozenset(entry["field"] for entry in (*NUMBERS, *SWITCHES, *SELECTS, *BUTTONS))
+    | frozenset(field for entry in TIMES for field in (entry["hour"], entry["minute"]))
+    | frozenset(
+        field for entry in WINDOW_ENDS for field in (entry["hour"], entry["minute"])
+    )
+)

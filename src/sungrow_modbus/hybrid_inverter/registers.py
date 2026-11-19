@@ -642,25 +642,51 @@ class InverterDischargeWeekday(Component):
     houses on P023 answer the same layout over the cable, with hours 0-24 --
     24:00 is the end of the day. Its own component, apart from the weekend
     block, so the twenty unknown registers between them are never read.
+
+    **Writable, and only where a write was watched**: moving every window
+    away from now stopped a discharge and the restore brought it back, at two
+    houses on two firmwares (`Capability.DISCHARGE_SCHEDULE_CONTROL`). The
+    entities are gated on that capability, not on these fields answering.
+
+    **Hour 24 is why the end of a window is not a `time` entity alone.** A
+    Home Assistant `time` holds 00:00 to 23:59, and every untouched house
+    reads `00:00` to `24:00`, so each window carries an "all day" switch that
+    writes hour 24 beside the two times.
     """
 
     register_space = "holding"
 
-    weekday_discharge_start_1_hour = integer(reg(33151), signed=False, nan=65535)
+    weekday_discharge_start_1_hour = integer(
+        reg(33151), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge start time 1, hour."""
-    weekday_discharge_start_1_minute = integer(reg(33152), signed=False, nan=65535)
+    weekday_discharge_start_1_minute = integer(
+        reg(33152), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge start time 1, minute."""
-    weekday_discharge_end_1_hour = integer(reg(33153), signed=False, nan=65535)
+    weekday_discharge_end_1_hour = integer(
+        reg(33153), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge end time 1, hour."""
-    weekday_discharge_end_1_minute = integer(reg(33154), signed=False, nan=65535)
+    weekday_discharge_end_1_minute = integer(
+        reg(33154), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge end time 1, minute."""
-    weekday_discharge_start_2_hour = integer(reg(33155), signed=False, nan=65535)
+    weekday_discharge_start_2_hour = integer(
+        reg(33155), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge start time 2, hour."""
-    weekday_discharge_start_2_minute = integer(reg(33156), signed=False, nan=65535)
+    weekday_discharge_start_2_minute = integer(
+        reg(33156), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge start time 2, minute."""
-    weekday_discharge_end_2_hour = integer(reg(33157), signed=False, nan=65535)
+    weekday_discharge_end_2_hour = integer(
+        reg(33157), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge end time 2, hour."""
-    weekday_discharge_end_2_minute = integer(reg(33158), signed=False, nan=65535)
+    weekday_discharge_end_2_minute = integer(
+        reg(33158), signed=False, nan=65535, writable=True
+    )
     """Weekday discharge end time 2, minute."""
 
 
@@ -669,28 +695,45 @@ class InverterDischargeWeekend(Component):
 
     The weekend discharge schedule, registers 33179-33187: an enable flag
     (`0xAA` on, `0x55` off) and two windows laid out as on weekdays. Not in
-    Sungrow's protocol document either; see `InverterDischargeWeekday`.
+    Sungrow's protocol document either; see `InverterDischargeWeekday`, which
+    carries why these are writable and what hour 24 costs.
     """
 
     register_space = "holding"
 
-    weekend_discharge_raw = integer(reg(33179), signed=False, nan=65535)
+    weekend_discharge_raw = integer(reg(33179), signed=False, nan=65535, writable=True)
     """Weekend discharge raw: 0xAA enabled, 0x55 disabled."""
-    weekend_discharge_start_1_hour = integer(reg(33180), signed=False, nan=65535)
+    weekend_discharge_start_1_hour = integer(
+        reg(33180), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge start time 1, hour."""
-    weekend_discharge_start_1_minute = integer(reg(33181), signed=False, nan=65535)
+    weekend_discharge_start_1_minute = integer(
+        reg(33181), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge start time 1, minute."""
-    weekend_discharge_end_1_hour = integer(reg(33182), signed=False, nan=65535)
+    weekend_discharge_end_1_hour = integer(
+        reg(33182), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge end time 1, hour."""
-    weekend_discharge_end_1_minute = integer(reg(33183), signed=False, nan=65535)
+    weekend_discharge_end_1_minute = integer(
+        reg(33183), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge end time 1, minute."""
-    weekend_discharge_start_2_hour = integer(reg(33184), signed=False, nan=65535)
+    weekend_discharge_start_2_hour = integer(
+        reg(33184), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge start time 2, hour."""
-    weekend_discharge_start_2_minute = integer(reg(33185), signed=False, nan=65535)
+    weekend_discharge_start_2_minute = integer(
+        reg(33185), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge start time 2, minute."""
-    weekend_discharge_end_2_hour = integer(reg(33186), signed=False, nan=65535)
+    weekend_discharge_end_2_hour = integer(
+        reg(33186), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge end time 2, hour."""
-    weekend_discharge_end_2_minute = integer(reg(33187), signed=False, nan=65535)
+    weekend_discharge_end_2_minute = integer(
+        reg(33187), signed=False, nan=65535, writable=True
+    )
     """Weekend discharge end time 2, minute."""
 
 

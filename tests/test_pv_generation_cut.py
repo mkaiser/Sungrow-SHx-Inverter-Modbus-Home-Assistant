@@ -138,48 +138,66 @@ def test_confirmed_firmware_grants_the_control_where_the_register_answers(
     assert Capability.PV_GENERATION_CUT_CONTROL not in resolved
 
 
-#: Where a watched write of each other control is recorded: the wiki's raw
-#: notes of one-off runs, by the word in their names. A note counts for a
-#: firmware only where it names that exact firmware string.
+#: Where a watched write of each control is recorded, by the name of the
+#: capability test check that confirmed it. A committed diagnosis counts for a
+#: firmware only where that document reports that check confirmed on that exact
+#: firmware string.
+WATCHED_IN_DIAGNOSES: dict[Capability, str] = {
+    Capability.PV_GENERATION_CUT_CONTROL: "PV generation cut",
+    Capability.DISCHARGE_SCHEDULE_CONTROL: "discharge windows away from now",
+}
+
+#: The other place a watched write is recorded: the wiki's raw notes of one-off
+#: runs, by the word in their names. A note counts for a firmware only where it
+#: names that exact firmware string.
 WATCHED_IN_RAW_NOTES: dict[Capability, str] = {
     Capability.FORCED_STARTUP_CONTROL: "forced-startup",
     Capability.SITE_IMPORT_LIMIT_CONTROL: "import-limit",
     Capability.EV_CHARGER_CONTROL: "wallbox-inverter-control",
+    Capability.DISCHARGE_SCHEDULE_CONTROL: "discharge-window",
 }
 RAW_NOTES = Path(__file__).resolve().parent.parent / ".wiki" / "raw"
+
+
+def _confirmed_in_a_diagnosis(check: str, version: str) -> bool:
+    """Say whether a committed document confirms `check` on this firmware."""
+    return any(
+        version in json.dumps(document.get("firmware"))
+        and any(
+            row.get("check") == check and row.get("verdict") == CONFIRMED
+            for row in (capability_test_block(document) or {}).get("effects", [])
+        )
+        for _, document in DOCUMENTS
+    )
+
+
+def _watched_in_a_raw_note(topic: str, version: str) -> bool:
+    """Say whether a raw note of a one-off run names this firmware."""
+    return any(
+        version in path.read_text(encoding="utf-8")
+        for path in RAW_NOTES.glob(f"*{topic}*.md")
+    )
 
 
 def test_nothing_is_confirmed_without_a_document_that_shows_it() -> None:
     """The rule for getting in, as for the absence table: evidence, cited.
 
-    For the cut, a firmware must be named by a committed diagnosis whose
-    capability test confirmed the cut on exactly that firmware. For a control
-    whose watched write was a one-off run, by a raw note of that run.
+    A firmware may be confirmed for a control two ways, and a control may use
+    either or both: by a committed diagnosis whose capability test confirmed
+    that control's check on exactly that firmware, or by a raw note of a
+    one-off watched run that names it. `DISCHARGE_SCHEDULE_CONTROL` is the
+    first to need both -- P022 from a contributor's diagnosis, P020 from the
+    maintainer's own run -- which is why neither table alone is the rule.
     """
-    for version in capabilities.CONFIRMED_ON_FIRMWARE[
-        Capability.PV_GENERATION_CUT_CONTROL
-    ]:
-        assert any(
-            version in json.dumps(document.get("firmware"))
-            and any(
-                row.get("check") == "PV generation cut"
-                and row.get("verdict") == CONFIRMED
-                for row in (capability_test_block(document) or {}).get("effects", [])
-            )
-            for _, document in DOCUMENTS
-        ), f"pv_generation_cut_control on {version} cites no passing run"
-    others = set(capabilities.CONFIRMED_ON_FIRMWARE) - {
-        Capability.PV_GENERATION_CUT_CONTROL
-    }
-    assert others == set(WATCHED_IN_RAW_NOTES), "say where the evidence is"
-    for capability, topic in WATCHED_IN_RAW_NOTES.items():
-        notes = [
-            path.read_text(encoding="utf-8") for path in RAW_NOTES.glob(f"*{topic}*.md")
-        ]
-        for version in capabilities.CONFIRMED_ON_FIRMWARE[capability]:
-            assert any(version in note for note in notes), (
-                f"{capability.value} on {version} cites no watched write"
-            )
+    cited = set(WATCHED_IN_DIAGNOSES) | set(WATCHED_IN_RAW_NOTES)
+    assert set(capabilities.CONFIRMED_ON_FIRMWARE) == cited, "say where the evidence is"
+    for capability, versions in capabilities.CONFIRMED_ON_FIRMWARE.items():
+        check = WATCHED_IN_DIAGNOSES.get(capability)
+        topic = WATCHED_IN_RAW_NOTES.get(capability)
+        for version in versions:
+            assert (check and _confirmed_in_a_diagnosis(check, version)) or (
+                topic and _watched_in_a_raw_note(topic, version)
+            ), f"{capability.value} on {version} cites no watched write"
 
 
 def test_absence_matches_either_firmware_string(

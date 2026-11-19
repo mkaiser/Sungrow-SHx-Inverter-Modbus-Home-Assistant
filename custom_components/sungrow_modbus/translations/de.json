@@ -1432,6 +1432,21 @@
       },
       "skip_established_capability_tests": {
         "name": "Diagnose: abgeschlossene Tests überspringen"
+      },
+      "weekday_discharge_end_1_all_day": {
+        "name": "Entladung Werktag Ende 1 ganztägig"
+      },
+      "weekday_discharge_end_2_all_day": {
+        "name": "Entladung Werktag Ende 2 ganztägig"
+      },
+      "weekend_discharge_end_1_all_day": {
+        "name": "Entladung Wochenende Ende 1 ganztägig"
+      },
+      "weekend_discharge_end_2_all_day": {
+        "name": "Entladung Wochenende Ende 2 ganztägig"
+      },
+      "weekend_discharge_schedule": {
+        "name": "Entladung Wochenende Zeitplan"
       }
     },
     "time": {
@@ -1446,6 +1461,30 @@
       },
       "forced_charging_start_2": {
         "name": "Zwangsladung Start 2"
+      },
+      "weekday_discharge_end_1": {
+        "name": "Entladung Werktag Ende 1"
+      },
+      "weekday_discharge_end_2": {
+        "name": "Entladung Werktag Ende 2"
+      },
+      "weekday_discharge_start_1": {
+        "name": "Entladung Werktag Start 1"
+      },
+      "weekday_discharge_start_2": {
+        "name": "Entladung Werktag Start 2"
+      },
+      "weekend_discharge_end_1": {
+        "name": "Entladung Wochenende Ende 1"
+      },
+      "weekend_discharge_end_2": {
+        "name": "Entladung Wochenende Ende 2"
+      },
+      "weekend_discharge_start_1": {
+        "name": "Entladung Wochenende Start 1"
+      },
+      "weekend_discharge_start_2": {
+        "name": "Entladung Wochenende Start 2"
       }
     }
   },

@@ -45,7 +45,7 @@ from naming import (
     GERMAN_TEXTS,
     modern_name,
 )
-from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES
+from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES, WINDOW_ENDS
 
 from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
 from sungrow_modbus.hybrid_inverter.registers import COMPONENTS
@@ -764,6 +764,25 @@ def render_switches() -> str:
         if also_off := row.get("also_off"):
             words = ", ".join(f"{word:#04x}" for word in also_off)
             lines.append(f"        also_off=({words},),")
+        lines.append("        entity_category=EntityCategory.CONFIG,")
+        lines.append("    ),")
+
+    # The "all day" switches, which write a time rather than a mode code.
+    for end in WINDOW_ENDS:
+        component = _component_of(end["hour"], registers)
+        lines.append("    SungrowSwitchDescription(")
+        lines.append(f'        key="{end["key"]}",')
+        lines.append(f'        component="{component}",')
+        lines.append(f'        field="{end["hour"]}",')
+        lines.append(f'        minute_field="{end["minute"]}",')
+        lines.append(f'        translation_key="{end["key"]}",')
+        lines.append(f"        requires=Capability.{end['requires']},")
+        # On is the end of the day; off is the latest a `time` can hold, from
+        # which the owner sets the end they want.
+        lines.append("        on_value=24,")
+        lines.append("        on_minute=0,")
+        lines.append("        off_value=23,")
+        lines.append("        off_minute=59,")
         lines.append("        entity_category=EntityCategory.CONFIG,")
         lines.append("    ),")
     lines.append(")")

@@ -56,7 +56,7 @@ Nothing here can be written, so a read is the whole test.
 | `battery` | min, max and backup SoC; max charge and discharge power; forced charge/discharge, its power and the EMS mode | reads every one | **leg B**: each is written at a value that shows a decade either way, read back by raw word, two points where the range allows. **Leg C**: forced charge, forced discharge (the power is watched), the charge ceiling (max SoC under the battery), the site import limit; with auto repeat, each once by day and once by night. **Write path**: *upper bound of* each number but the backup reserve, a step above its maximum (the min SoC only under a battery above 57 %) | nothing missing |
 | `battery_start_power` | charge and discharge start thresholds | reads them | **leg B** readback; **leg C**, *charging / discharging start threshold*: with the battery moving 200 to 800 W, all of it through the battery, the threshold set to its 1000 W maximum and the flow watched to stop | nothing missing |
 | `forced_charging` | the forced-charging schedule: switch, days, two windows, two targets | reads them | **leg C**, *forced-charging window*: window 1 around the inverter's clock, a target a few percent up, watched until the battery charges, then put back; not written where the pack has no room under its ceiling. **Write path**, *forced-charging window 2 encoding*: window 2, its target and the days written elsewhere and read back, only with the schedule off and over a cable, with the same leave | nothing missing |
-| `discharge_schedule` | weekday and weekend discharge windows (sensors so far) | reads them | **leg C**, *discharge windows away from now*: both days' windows moved off the clock, watched until the battery stops. **Write path**: the weekend enable (33179) written with its own word, with the same leave | nothing missing |
+| `discharge_schedule` → `discharge_schedule_control` | the four windows, as a `time` per edge with an *all day* switch, and the weekend enable | reads them | **leg C**, *discharge windows away from now*: both days' windows moved off the clock, watched until the battery stops. **Write path**: the weekend enable (33179) written with its own word, with the same leave | nothing missing |
 | `pv_generation_cut` → `pv_generation_cut_control` | *Cut PV generation* (31211) | reads 31211 | **leg C**, *PV generation cut*: 0xAA cuts PV, watched to zero, given 500 W of PV. The control is granted only on firmware where a watched cut is on record (`CONFIRMED_ON_FIRMWARE`) | every firmware not yet on record: the same check in daylight |
 | `forced_startup` → `forced_startup_control` | *Forced startup under low SoC* (13017) | reads 13017 | **leg C**, `diagnosis.sh tests <host> --forced-startup`, a mode of its own: only in low-SoC standby (battery within 5 % of its minimum, no PV). It writes 0xAA and watches Starting and Running, writes 0x55 and watches Standby, then restores; the factory 0 goes back as 0x55. The control is granted per watched firmware | not on a button, because the button refuses a sleeping inverter: in Home Assistant it is the `run_capability_test` action with `forced_startup: true`. No run on hardware is on record yet |
 
@@ -171,6 +171,18 @@ charging from PV is a part of charging -- so it is settled by one poll, where ev
 here waits for sun, a load or a midnight. It is what finds a lifetime counter whose high word is
 wrong but whose reading still looks like a number a house could have. A 10 % margin, because
 Sungrow's own counters cross each other honestly by up to about 4 %.
+
+**The discharge windows can be written where a watched write is on record.**
+They are in no Sungrow document (#785), so answering the registers says
+nothing about what writing them does; moving every window away from now and
+watching the battery stop does, and that is on record at two houses on
+`SAPPHIRE-H_B001.V000.P020` and `SAPPHIRE-H_B001.V000.P022`. On those two the
+windows become entities you can set; everywhere else they stay sensors until
+the same check runs there. **A window's end carries an *all day* switch**
+beside its time, because the end of the day is hour **24** and a Home
+Assistant time entity holds 23:59 at most: with the switch on the end reads
+24:00 and the time shows nothing, and turning it off writes 23:59 for you to
+correct.
 
 **The tracker check reads a voltage, not a string.** It grants the tracker at 50 V in daylight,
 and an unloaded input can drift past that: on an SH10RS `mppt4` reads 39.5 V to 53.6 V at 0.0 A
