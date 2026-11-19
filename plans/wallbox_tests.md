@@ -4,7 +4,7 @@ The one plan for testing and controlling a Sungrow wallbox: the facts measured s
 any write, which checks the capability tests run on their own and which need a person on site, and
 the next session at gerd's (SH8.0RT with an AC22E-01). gerd allows every test while a car charges.
 
-Where a session left off: `plans/wallbox_session_handover.md`. Device facts are on the wiki's [wallbox](../.wiki/wiki/entities/device-wallbox.md) page (section
+Where a session left off is section 10. Device facts are on the wiki's [wallbox](../.wiki/wiki/entities/device-wallbox.md) page (section
 *Under an inverter's energy management*) and in `doc/wallbox_registers.md`. Every write and reading,
 with times, is in the raw notes:
 
@@ -257,7 +257,7 @@ In order; 1 to 4 need the owner at the app.
 
 ## 7. In the repository, still to do
 
-- ~~Entities on the inverter's entry~~: built 2026-11-14 (`Todo.md`, Wallbox item 3), on P022
+- ~~Entities on the inverter's entry~~: built 2026-11-14 (T003), on P022
   only. Tests 1-3 above may still change the select: writing what is already set, a sleeping car,
   the same mode change from the app.
 - ~~A repair for a run that left the house changed~~: built 2026-11-14. A wallbox run (managed or
@@ -293,6 +293,129 @@ In order; 1 to 4 need the owner at the app.
 - **The managed test's open checks**: writing what is already set (by hand: harmless), and a longer
   stop for a sleeping car.
 - **Ingest**: a wiki source page for `.wiki/raw/gerd-wallbox-capability-test-2026-11-13.md`.
+
+## 8. Controlling the wallbox: the state of it (Todo T003)
+
+gerd's wallbox is **managed by the
+inverter**, which drives 21203 and overwrites any write to it, so the
+charge is controlled at the inverter (unit 1): charging on/off, mode, and
+the user-defined current in user-defined mode, 6 A up
+(`hybrid_inverter/ev_charger.py`; wiki:
+`gerd-wallbox-inverter-control-2026-11-14-summary.md`). Holding 21203
+scales 0.1 A, settled by the car. A standalone wallbox is the only one
+whose own registers may be written (`--standalone` from a terminal; from
+Home Assistant never, it cannot tell), never under 6 A.
+
+What exists: the wallbox's capability test
+(`src/sungrow_modbus/wallbox/capability_test.py`, terminal driver
+`sungrow_wallbox_capability_test.py`, TLS 516 unit 248), the managed
+wallbox's (`wallbox/managed_test.py`, `sungrow_managed_wallbox_test.py`,
+which writes the inverter's block and judges by the car), both also from
+Home Assistant on the wallbox's own entry in *Extended test (auto
+repeat)*, with the plausibility checks (`wallbox/plausibility.py`), a
+ledger per wallbox firmware (`wallbox/ledger.py`), the options *May it
+write to the wallbox* (off until switched on) and the highest charging
+current (`wallbox_max_amps`), and the EV charger controls on the
+inverter's entry: *Wallbox charge* (33540), *Wallbox charge mode*
+(33541), *Wallbox user-defined current* (33545) and *Wallbox grid
+purchase* (33550), behind `EV_CHARGER` and `EV_CHARGER_CONTROL` (watched
+on P022, gerd's, alone). Sections 3 to 7 are the procedure; section 10 is where the last session stopped.
+
+### What is left, in order
+
+1. **The mode select's timing.** The four controls ran from Home Assistant
+at gerd's with a car charging on 2026-11-17 and each did what it says
+(wiki: `gerd-wallbox-2026-11-17-afternoon-summary.md`); the number
+refuses outside user-defined mode before writing. Left: a mode change
+to or from user defined ended the session on the night of 2026-11-16
+(battery at its minimum, no PV) but not that afternoon (battery 2.8 %,
+some PV), so whether the select's charging-on, written straight after
+the mode, survives the inverter's delayed off is still unprovoked.
+Decide when a session that ends on a mode change is seen from Home
+Assistant. Firmware beyond P022 is added only from a watched write.
+Discussion #571 (rudolf992: a current set over Modbus went back to
+iSolarCloud's within seconds) is the same thing seen from the wallbox
+side.
+2. **The managed capability test from Home Assistant: link the entries.**
+From the terminal it passed twice (2026-11-16, 2026-11-17), and the
+restore that waits for the inverter and watches the car held on
+2026-11-17. From Home Assistant it cannot run at gerd's: the wallbox
+entry's `managing_entry` comes only from the inverter entry's dongle
+probe (`wallbox_elsewhere`), and an inverter entry on the LAN cable
+never sees the wallbox, so the run took the standalone path and wrote
+nothing. Needs another way to pair a TLS wallbox entry with the
+inverter that manages it (an inverter entry with `EV_CHARGER` at the
+same site, or the owner choosing it), then the write-owner refusal
+(`write_owner.py`) on hardware. Also: a leftover snapshot from a
+standalone run is put back through the wallbox's own registers even
+when an inverter now manages it; refuse that and say so instead. Open
+for both: what ends a session with nothing written (wiki:
+`why-does-a-managed-wallbox-stop-charging.md`; on 2026-11-17 the car
+was also cut to 6-8 A four times after house load spikes, within one
+session).
+3. **A standalone wallbox** (evcc's case): none measured. Idle and with
+no car, gerd's setting reads 0 (160 and 151 while charging), so an
+idle wallbox cannot separate the two scales and the meaning of 0 is
+unknown (wiki: `gerd-wallbox-dry-run-2026-11-06-summary.md`). Input
+21322 is not the setting's echo.
+4. **The wallbox entry's first writing run**, which needs a car charging,
+watched live. With no car it refuses while the wallbox is idle, as it
+should (gerd's; auto repeat ran an hour on 2026-11-10 and started no
+run, the right outcome).
+5. **The next session at gerd's**: sections 6 and 7 above
+(quantity-and-time mode, writes that repeat what is set, waking a
+sleeping car, phase switching, PV surplus in sun), with the field tool
+`scripts/dev/managed_wallbox_field.py` (read only, but `charge`).
+Inverter work there waits for his own Home Assistant to be stopped,
+on the current release, over the cable if it reaches one, the battery
+above 20 %, a car charging. Readback verdicts through a dongle are
+not evidence.
+
+## 9. The wallbox's settings as entities (Todo T004)
+
+Read only: *Start charging on
+plug-in* (21298; not "Plug and Charge", which is ISO 15118's certificate
+login), *Offline charging current* (21299, 0.1 A) and *Power limit*
+(21313, 0.1 kW), with enable 21211 (status 8 while disabled); only the
+wallbox's own address answers them (wiki:
+`gerd-wallbox-app-settings-2026-11-14-summary.md`). Left: whether any of
+them may be written, which needs the standalone wallbox of section 8, item 3.
+
+The mileage check (21232) is **removed**: it proved only a display value,
+and its one run left gerd's at 5555.2 (set back to 5.0). How a day whose
+every recorded write was 50 came to hold 55552 is open
+(open questions, below). A run that leaves a house
+changed raises a Repairs issue naming each setting and where the app sets
+it (`repairs.py`).
+
+## 10. Where the last session stopped (2026-11-17)
+
+- **Done and committed** (4b90098 and before): the managed wallbox test (library, terminal script,
+  Home Assistant from the wallbox's entry via `managing_entry`); the standalone test refuses on a
+  managed wallbox. All pushed; ask the maintainer before every push.
+- **Open finding**: the inverter switched gerd's charging off by itself twice on 2026-11-14 (car
+  at 43 %), the second time with the battery at its minimum SoC; but a session switched on over
+  Modbus at 16:51 ran 5 minutes at that SoC unstopped. Cause open (section 2). `scripts/dev/managed_wallbox_field.py session` and `energy` read it remotely.
+- **gerd's house**: fast charge, 16 A; charging off (put back after the 16:51 five-minute charge),
+  the car at about 44 %. Nothing of ours to put back. Never write the wallbox's own registers there; write the inverter's
+  block only with the owner's consent.
+- **Phase switching**: how to find it is test 5 above, needs a day with
+  1.5-4 kW of sun (`managed_wallbox_field.py phase`, then `scan single-phase`).
+- **Next in code**: the inverter entry's EV charger entities (section 8), from
+  `src/sungrow_modbus/hybrid_inverter/ev_charger.py`.
+
+### 2026-11-16/17, a VPN night at gerd's
+
+- **Done**: the managed capability test's first run on hardware (terminal, passed), same-value writes
+  (harmless), mode changes with a car charging (163 ↔ 160 ends a session), 21203 settled (user current in
+  163, the inverter's offer in fast). Wiki: `gerd-wallbox-night-2026-11-16-summary.md` and the query
+  `why-does-a-managed-wallbox-stop-charging.md`.
+- **Found wrong**: the managed test's restore reported the house back 28 s before the inverter ended the
+  session (it changed the mode back and read at once). Fix before its Home Assistant run
+  (section 7).
+- **gerd's house**: on, fast, 16.0 A; the car suspended by the vehicle at about 89 % from 02:19, then
+  charged to 100 % by the morning. The car says its Internet connection is not established, so its app
+  could not give the suspension's reason. The tunnel is down.
 
 ## Verification
 

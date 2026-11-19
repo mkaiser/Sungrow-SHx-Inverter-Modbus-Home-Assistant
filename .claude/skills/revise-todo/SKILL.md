@@ -6,7 +6,11 @@ description: Revise Todo.md - close what is done or what was decided against, ke
 # Revise Todo.md
 
 `Todo.md` is what a session reads to know what to do next, and it holds only
-that. `AGENTS.md` outranks this skill; this is the order to apply it in.
+that: one sentence an item, its plan under `plans/`, and its requirements.
+`AGENTS.md` outranks this skill, and `workflow.md` says what belongs in
+`Todo.md`, what belongs in a plan, and how items are numbered; this is the
+order to apply it in. An item whose entry grows past a sentence or two gets a
+plan in `plans/`, and the entry links to it.
 
 ## Before the first write
 
@@ -20,7 +24,15 @@ that. `AGENTS.md` outranks this skill; this is the order to apply it in.
 3. Change it as targeted replacements. A whole-file rewrite loses the other
    writer's work.
 
-## 1. Close what is done, or what was decided
+## 1. Take in the maintainer's inbox
+
+`Todo.md`'s first section, **From the maintainer**, is read before anything
+else. Each entry is either done on the spot, or filed as a numbered item in
+the right section with a plan under `plans/` where it needs one. Remove what
+you took in as you take it, leave standing only what you could not act on
+(with one line saying what it waits on), and report each entry's outcome.
+
+## 2. Close what is done, or what was decided
 
 An item leaves the file for one of two reasons, each needing evidence. Judge
 by looking, never by how the sentence reads.
@@ -53,7 +65,7 @@ document above, not back into `Todo.md`.
 What you cannot decide stays, with one line saying what would decide it.
 Removing an item is not the same as doing it.
 
-## 2. Keep it forward looking
+## 3. Keep it forward looking
 
 Keep what the next session needs in order to act: the decision an item waits
 on, the measurement that chooses between two paths, the register, firmware
@@ -67,7 +79,7 @@ does not, ingest it first (`.wiki/AGENTS.md`) and link the page from the item.
 Aim under ~600 lines. A section that outgrows that moves its detail to a wiki
 page or a `plans/` page and keeps a link.
 
-## 3. Reorder
+## 4. Reorder
 
 Within each group, in this order:
 
@@ -77,12 +89,12 @@ Within each group, in this order:
    with what unblocks it);
 4. what an open decision blocks.
 
-**Future work** stays last. Numbers run on across the groups and are cited
-elsewhere as "blocker 16": if you renumber, grep `Todo.md`, `plans/`,
-`doc/` and `.claude/skills/` for the old numbers and fix every reference in
-the same commit. Leaving the numbers alone is usually cheaper.
+**Future work** stays last. **Never renumber**: every item carries a `T###`
+number minted once and never reused, so reordering and removing items leave
+every reference standing (`workflow.md`). A new item takes the next free
+number from `Todo.md`'s first lines and raises it in the same edit.
 
-## 4. Take in what is new
+## 5. Take in what is new
 
 ```bash
 git log -1 --format=%cI -- Todo.md          # the cutoff: the last revision
@@ -101,10 +113,10 @@ do not sweep the diagnosis thread here, and do not copy its issue number.
 Check the **Recurrent** entries' dates while you are there, and the **Status**
 tables of `plans/*.md` for work that finished without reaching `Todo.md`.
 
-## 5. What must not change
+## 6. What must not change
 
-- The six sections and the grouping by device that the file's own header
-  describes.
+- The sections and the grouping by device that the file's own header
+  describes, **From the maintainer** first among them.
 - No real serial, no IP address (`AGENTS.md`), in an item or in a quoted
   reading.
 - No history: no "was", "used to", "since 0.x". That belongs in the commit

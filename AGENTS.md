@@ -11,6 +11,7 @@ document, the wiki included.
 | Releasing, hassfest, the Marketplace and the preview channel | `doc/maintainer_setup.md` |
 | Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
+| How work is written down and how agents share one tree: `Todo.md`, `plans/`, item numbers, commits and pushes | `workflow.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
 | Recurring procedures (ingest new diagnoses, release, run a diagnosis for a contributor, revise `Todo.md`) | `.claude/skills/`, each pointing at the document it follows; any agent can follow them, not only Claude Code |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
@@ -52,31 +53,19 @@ Home Assistant imports**, one subpackage per device (`hybrid_inverter/`,
 engine included) lives there. Core's `sofar` integration is the reference
 implementation; read its real source (`make refs`), not blog posts.
 
-## Git: ask before every push
+## How work is written down, and how we share this tree
 
-**Never `git push` without asking the maintainer first, every time.** An
-earlier "commit and push" covers that one change, not the next one.
-Committing when asked is fine; pushing is a separate question.
-
-## Other agents write here too
-
-Several agents work in this repository at the same time, and their changes
-can sit uncommitted, or staged, beside yours.
-
-- **Commit only the files you changed**, by naming them:
-  `git commit -- <your paths>`. A plain `git commit` takes everything
-  staged, another agent's staged files included. Never `git add -A` or
-  `git add .` across the tree.
-- **`Todo.md` has more than one writer.** Before every write to it, run
-  `git status --short Todo.md` and `git diff Todo.md` to see changes that
-  are not yours, re-read it from disk (never write back a copy read
-  earlier), and change only your part, as a targeted replacement. If
-  another agent's edits to it are uncommitted, leave them out of your
-  commit, or wait until they are committed, and say so.
+`workflow.md` carries it, and it binds here: **never `git push` without asking
+the maintainer first, every time**; **commit only the files you changed**, by
+naming them (`git commit -- <your paths>`, never `git add -A`); several agents
+write here at once, so re-read a shared file from disk before every write and
+leave another agent's uncommitted work out of your commit. `Todo.md` is one
+sentence an item, with its plan in `plans/` and its requirements, and items
+carry a `T###` number that is never reused or renumbered.
 
 ## Do not hand-edit
 
-Edit the source, not the output:
+Edit the source, not the output (`workflow.md`). Here that means:
 
 - `custom_components/sungrow_modbus/{derived,number,switch,select,time,button}_descriptions.py`,
   `strings.json`, `translations/{en,de}.json` -- `scripts/generate/descriptions.py`,
