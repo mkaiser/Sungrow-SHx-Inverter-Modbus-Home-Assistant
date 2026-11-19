@@ -10,6 +10,7 @@ be pasted into a public issue.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import json
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
@@ -234,28 +235,45 @@ async def test_the_capability_test_is_carried_into_the_diagnosis(
     assert report["diagnosis"]["capability_test"] == block
 
 
-async def test_a_wallbox_entry_carries_its_diagnosis_too(hass: HomeAssistant) -> None:
-    """A wallbox at its own address has a diagnosis, and the download holds it.
+async def test_a_wallbox_entry_reads_its_diagnosis_for_the_download(
+    hass: HomeAssistant,
+) -> None:
+    """A wallbox entry's download reads the wallbox, with no run before it.
 
     Its entry has *Diagnosis: start*, a capability test of its own and a
     notification that says to use Download diagnostics once the run's own link
-    has lapsed (`wallbox_diagnosis.WallboxDiagnosisRunner`). Before this, the
-    report held the entry and device rows and stopped there: three downloads
-    of an AC22E-01 in #786 carried nothing to read, and that wallbox is still
-    unmeasured.
+    has lapsed (`wallbox_diagnosis.WallboxDiagnosisRunner`). The run's document
+    is held in memory, so a report that only served that one carried nothing
+    at all after a restart -- and an upgrade is a restart. The inverter's
+    download builds its document; this one does too.
     """
     entry = await _setup_wallbox(hass)
     report = await async_get_config_entry_diagnostics(hass, entry)
 
-    # Nothing has run yet, which is not the same as a section that is missing.
-    assert report["diagnosis"] is None
+    # Nothing has run, and the download still holds the wallbox's own document.
+    assert report["diagnosis"]["document"] == "wallbox"
+    assert report["diagnosis"]["wallbox"]["readings"]
     assert report["device"]["serial_number"] != WALLBOX_SERIAL
+    assert WALLBOX_SERIAL not in json.dumps(report)
 
+
+async def test_a_wallbox_run_in_flight_keeps_the_download_off_the_wire(
+    hass: HomeAssistant,
+) -> None:
+    """While a run is writing to the wallbox, the download serves what it left.
+
+    A run holds the entry's polling off and watches what a car does; a read
+    from a download in the middle of it is not worth the risk, and the
+    document the run has already left says the same things.
+    """
+    entry = await _setup_wallbox(hass)
     document = {"document": "wallbox", "readings": {"values": {"model": "AC22E-01"}}}
     entry.runtime_data.diagnosis._set(
         document=document,
+        running=True,
         finished=datetime(2026, 11, 18, 9, 0, tzinfo=UTC),
     )
+
     report = await async_get_config_entry_diagnostics(hass, entry)
 
     assert report["diagnosis"] == document

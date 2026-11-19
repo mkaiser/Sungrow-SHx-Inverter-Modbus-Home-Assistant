@@ -123,16 +123,14 @@ async def async_get_config_entry_diagnostics(
                 },
                 TO_REDACT,
             ),
-            # The last diagnosis's document, already masked for publishing --
-            # the wallbox's own read, and its capability test where one ran
-            # (`wallbox_diagnosis.WallboxDiagnosisRunner`). Without it a
-            # wallbox entry's download holds two rows and nothing to read,
-            # which is what three downloads of an AC22E-01 came to in #786,
-            # and the run's own notification points here once its link has
-            # lapsed.
-            "diagnosis": getattr(
-                getattr(runtime.diagnosis, "state", None), "document", None
-            ),
+            # The wallbox's own read, built here, with the kept capability
+            # test and readings' checks behind it
+            # (`wallbox_diagnosis.WallboxDiagnosisRunner.async_read_document`).
+            # Built rather than remembered: the run's document is held in
+            # memory, so a restart -- an upgrade is one -- would leave this
+            # download with two rows and nothing to read, and the run's own
+            # notification points here once its link has lapsed.
+            "diagnosis": await _async_wallbox_diagnosis(runtime),
         }
     if runtime.is_string_inverter:
         return await _async_string_inverter_diagnostics(hass, entry)
@@ -270,6 +268,30 @@ def _last_block_read_test(runtime: Any) -> dict[str, Any] | str:
         "measured_at": finished.isoformat() if finished else None,
         **measured,
     }
+
+
+async def _async_wallbox_diagnosis(runtime: Any) -> dict[str, Any] | None:
+    """Return a wallbox entry's diagnosis document, read now where it can be.
+
+    Wrapped like the inverter's: a download is what somebody reaches for when
+    the integration is already misbehaving, so a read that raised must not
+    take away the rest of the report. A run in flight is left alone -- it is
+    writing to the wallbox and watching a car -- and the document it has
+    already left stands in, which is also the fallback when the read fails.
+    """
+    runner = getattr(runtime, "diagnosis", None)
+    kept = getattr(getattr(runner, "state", None), "document", None)
+    if runner is None or runner.state.running:
+        return kept
+    try:
+        document: dict[str, Any] = await runner.async_read_document()
+    # Deliberately broad, and deliberately logged: the report matters more
+    # than this section of it, and whoever has to fix the read needs the
+    # traceback rather than the summary a downloaded file carries.
+    except Exception as err:
+        _LOGGER.exception("Could not read the wallbox for %s", runner.entry.title)
+        return kept if kept else {"error": f"{type(err).__name__}: {err}"}
+    return document
 
 
 def _carry_capability_test(document: dict[str, Any], runtime: Any, device: Any) -> None:

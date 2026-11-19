@@ -814,6 +814,16 @@ class SungrowRuntimeData:
             self.polling_paused = False
             _LOGGER.debug("Polling resumed")
 
+    @property
+    def has_wallbox(self) -> bool:
+        """Whether a Sungrow wallbox answers on this entry's bus.
+
+        Either this entry reads it, or it found it and left it to an entry of
+        its own (`wallbox_elsewhere`) -- both mean the wallbox is on the
+        inverter's bus, which is what an inverter manages.
+        """
+        return self.wallbox is not None or self.wallbox_elsewhere is not None
+
     def serves(self, description: object) -> bool:
         """Whether this description should exist on this entry.
 
@@ -825,6 +835,14 @@ class SungrowRuntimeData:
             return False
         required = getattr(description, "requires", None)
         if required is not None and required not in self.capabilities:
+            return False
+        # A wallbox to drive, or none of the wallbox controls. The capability
+        # behind them is granted by holding 33541 reading a named mode, and
+        # that word reads 161 (PV surplus) at 16.0 A on houses with no wallbox
+        # at all (wiki: device-wallbox, "nothing on the inverter alone tells
+        # it either"), so the block's factory state would otherwise offer
+        # somebody four controls for a wallbox they have not got.
+        if required is Capability.EV_CHARGER_CONTROL and not self.has_wallbox:
             return False
         replaced = getattr(description, "replaced_by", None)
         if replaced is not None and replaced in self.capabilities:

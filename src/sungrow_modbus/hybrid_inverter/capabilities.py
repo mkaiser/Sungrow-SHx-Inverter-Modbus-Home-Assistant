@@ -219,13 +219,16 @@ class Capability(StrEnum):
     """
 
     EV_CHARGER = "ev_charger"
-    """The inverter manages a wallbox: its charging mode (33541) reads a named
-    code (`ev_charger.MODES`).
+    """The inverter's EV charger block answers: its charging mode (33541)
+    reads a named code (`ev_charger.MODES`).
 
     Outside Sungrow's document; the app's EV charger settings write it.
-    Granted only by a named code (`EV_CHARGER_CODES_ONLY`): what an inverter
-    with no wallbox reads there is not measured, so neither 0 nor 0xFFFF
-    grants it. This is the *read*; writing is `EV_CHARGER_CONTROL`.
+    Granted only by a named code (`EV_CHARGER_CODES_ONLY`), so neither 0 nor
+    0xFFFF grants it. **It does not say a wallbox is there**: 161 (PV surplus)
+    with the user current at 16.0 A is the block's factory state, read on
+    houses with no wallbox at all (wiki: device-wallbox). So this is the read,
+    writing is `EV_CHARGER_CONTROL`, and the controls ask for a wallbox on the
+    bus besides (`SungrowRuntimeData.has_wallbox`).
     """
 
     EV_CHARGER_CONTROL = "ev_charger_control"

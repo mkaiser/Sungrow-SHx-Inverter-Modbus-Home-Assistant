@@ -1757,3 +1757,29 @@ What changed:
   tracker verdict does and does not say.
 - **`wiki/entities/device-wallbox.md`**: nothing on the inverter tells a managed wallbox from a
   standalone one either.
+
+## [2026-11-19] changed | a wallbox entry's download reads the wallbox, and the EV controls ask for one
+
+**The download no longer depends on a run having happened.** A wallbox entry's diagnostics report
+served the document the last run left, which is held in memory, so a restart emptied it and an
+upgrade is a restart. It now reads the wallbox and builds the document, as an inverter entry's
+download does, with the kept capability test and readings' checks behind it -- both outlive a
+restart, because the ledger and the plausibility store are loaded at setup
+(`WallboxDiagnosisRunner.async_read_document`, `custom_components/sungrow_modbus/diagnostics.py`).
+A run in flight is left alone: it is writing and watching a car, and the document it has already
+left says the same things.
+
+**And the inverter's wallbox controls ask for a wallbox.** `Capability.EV_CHARGER` is granted by
+holding 33541 reading a named mode, which is the block's factory state on houses with no wallbox
+([the wallbox](wiki/entities/device-wallbox.md)), so the four controls now require one answering
+on the inverter's bus as well (`SungrowRuntimeData.has_wallbox`). Nothing changes for a house with
+a wallbox; what it prevents is the next firmware joining `CONFIRMED_ON_FIRMWARE` and handing
+somebody four controls for a wallbox they have not got.
+
+What changed:
+
+- `custom_components/sungrow_modbus/diagnostics.py`, `wallbox_diagnosis.py`, `coordinator.py`,
+  and `Capability.EV_CHARGER`'s own words in
+  `src/sungrow_modbus/hybrid_inverter/capabilities.py`.
+- Tests: a download with no run before it, a download during a run, and an inverter with the
+  capability but no wallbox.

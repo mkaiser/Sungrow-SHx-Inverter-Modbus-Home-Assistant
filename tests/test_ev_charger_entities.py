@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from modbus_connection.mock import MockModbusUnit
+from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
@@ -38,6 +38,7 @@ from sungrow_modbus.hybrid_inverter import capabilities, ev_charger as ev
 from sungrow_modbus.hybrid_inverter.capabilities import Capability, probe, resolve
 
 from .conftest import SERIAL, encode_string
+from .test_wallbox_entities import _wallbox_unit
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -54,6 +55,7 @@ async def _setup(
     firmware: str = WATCHED,
     mode: int = ev.FAST,
     charging: int = ev.ON,
+    wallbox_at: int | None = 3,
 ) -> MockConfigEntry:
     unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(firmware, 15)
     unit.holding[ev.CHARGING] = charging
@@ -64,7 +66,18 @@ async def _setup(
         domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
     )
     entry.add_to_hass(hass)
-    with patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit):
+    empty = MockModbusConnection().for_unit(9)
+    empty.input = {}
+    empty.holding = {}
+
+    def units(_hass, _entry, _params, unit_id):
+        if unit_id == 1:
+            return unit
+        if wallbox_at is not None and unit_id == wallbox_at:
+            return _wallbox_unit(unit_id)
+        return empty
+
+    with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     return entry
@@ -123,6 +136,32 @@ async def test_no_controls_without_watched_firmware_or_a_named_mode(
 ) -> None:
     await _setup(hass, sungrow_unit, firmware=firmware, mode=mode)
 
+    for domain, key in (
+        ("switch", "ev_charger_charging"),
+        ("switch", "ev_charger_grid_purchase"),
+        ("select", "ev_charger_mode"),
+        ("number", "ev_charger_user_current"),
+    ):
+        assert _entity_id(hass, domain, key) is None
+
+
+async def test_no_controls_where_no_wallbox_answers_on_the_bus(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A named mode is the block's factory state, not a wallbox.
+
+    33541 reads 161 (PV surplus) with the user current at 16.0 A on houses
+    that have no wallbox at all (wiki: device-wallbox), so the capability
+    alone would offer four controls for nothing to drive. The entities ask
+    for a wallbox on the inverter's bus besides
+    (`SungrowRuntimeData.has_wallbox`).
+    """
+    await _setup(hass, sungrow_unit, mode=ev.PV_SURPLUS, wallbox_at=None)
+
+    assert (
+        Capability.EV_CHARGER_CONTROL
+        in hass.config_entries.async_entries(DOMAIN)[0].runtime_data.capabilities
+    )
     for domain, key in (
         ("switch", "ev_charger_charging"),
         ("switch", "ev_charger_grid_purchase"),

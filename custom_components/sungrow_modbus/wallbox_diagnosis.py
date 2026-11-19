@@ -80,6 +80,33 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
         #: The kept runs, oldest first, for the status sensor's count and log.
         self._wallbox_runs: list[dict[str, Any]] = []
 
+    def attach_kept(self, document: dict[str, Any]) -> dict[str, Any]:
+        """Put the kept capability test and readings' checks into a document.
+
+        Both outlive the run that measured them -- the ledger and the
+        plausibility store are loaded at setup -- so a document built later
+        carries them too, and a download is the same document the run
+        offered.
+        """
+        if self._wallbox_folded is not None:
+            document["wallbox_capability_test"] = wallbox_ledger.document(
+                self._wallbox_folded, check_options(self.entry, self.hass)
+            )
+        if self.wallbox_plausibility.observations:
+            document["wallbox_plausibility"] = self.wallbox_plausibility.document()
+        return document
+
+    async def async_read_document(self) -> dict[str, Any]:
+        """Read the wallbox now and return its document, with what is kept.
+
+        What the diagnostics download asks for, so that it never depends on a
+        run having happened in this session: `DiagnosisState.document` is held
+        in memory and a restart empties it, and an upgrade is a restart. The
+        inverter's download builds its document the same way
+        (`device_diagnosis.async_build`); this is the wallbox's.
+        """
+        return self.attach_kept(await self._build(lambda fraction, step: None))
+
     @property
     def tests(self) -> dict[str, Any] | None:
         """The wallbox's kept runs and its readings' checks, counted together.
@@ -119,14 +146,7 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
                 )
                 if test:
                     await self._async_wallbox_test()
-                if self._wallbox_folded is not None:
-                    document["wallbox_capability_test"] = wallbox_ledger.document(
-                        self._wallbox_folded, check_options(self.entry, self.hass)
-                    )
-                if self.wallbox_plausibility.observations:
-                    document["wallbox_plausibility"] = (
-                        self.wallbox_plausibility.document()
-                    )
+                self.attach_kept(document)
         except Exception as err:  # a button press must not crash the loop
             _LOGGER.exception("Diagnosis failed for %s", self.entry.title)
             self._set(

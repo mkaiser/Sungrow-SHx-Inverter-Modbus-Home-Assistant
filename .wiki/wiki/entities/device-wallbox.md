@@ -66,7 +66,9 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   the [AC011E-01](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet-summary.md):
   163 (*user defined*) at 10.0 A. **What does tell**: a wallbox answering on the inverter's bus,
   the app showing EV charger settings under the inverter, and 21203 moving with nothing writing
-  it.
+  it. So the four controls ask for a wallbox on the bus as well as the capability
+  (`SungrowRuntimeData.has_wallbox`, `custom_components/sungrow_modbus/coordinator.py`): without
+  one they are not created, whatever 33541 reads.
 
 - **The phases are the inverter's too**: it switches a managed wallbox to one phase by itself,
   by owners' reports in PV surplus with grid purchase off, and nothing documented chooses them;

@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
-from modbus_connection.mock import MockModbusUnit
+from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
@@ -49,6 +49,7 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus.hybrid_inverter import ev_charger as ev
 
 from .conftest import SERIAL, encode_string
+from .test_wallbox_entities import _wallbox_unit
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -85,9 +86,19 @@ async def entry(hass: HomeAssistant, sungrow_unit: MockModbusUnit) -> MockConfig
         domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
     )
     entry.add_to_hass(hass)
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
+    empty = MockModbusConnection().for_unit(9)
+    empty.input = {}
+    empty.holding = {}
+
+    # A wallbox at unit 3, because the EV charger controls ask for one on the
+    # bus: 33541 reading a named mode is the block's factory state at houses
+    # with none (wiki: device-wallbox).
+    def units(_hass, _entry, _params, unit_id):
+        if unit_id == 1:
+            return sungrow_unit
+        return _wallbox_unit(unit_id) if unit_id == 3 else empty
+
+    with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     return entry
