@@ -320,6 +320,63 @@ def test_a_third_tracker_at_zero_in_daylight_has_no_string() -> None:
     assert _run(empty)["mppt3 carries a string"]["verdict"] == NO_EFFECT
 
 
+def test_a_floating_tracker_drifting_above_fifty_volts_has_no_string() -> None:
+    """Maximo101's `mppt4`: 39.5 V to 53.6 V with 0.0 A, called *matched*.
+
+    The voltage alone said a string was there, at 3.8 kW of PV and at
+    10.5 kW alike, while the other three trackers accounted for
+    `total_dc_power` to within 1 %.
+    """
+
+    def floating(_at: datetime, values: Values) -> None:
+        values["mppt3_voltage"] = 53.6
+        values["mppt3_current"] = 0.0
+
+    row = _run(floating)["mppt3 carries a string"]
+    assert row["verdict"] == NO_EFFECT
+    assert "no string on it" in row["detail"]
+
+
+def test_one_poll_carrying_current_settles_it_however_long_it_was_idle() -> None:
+    """So half a day of shade is not written off as an empty input."""
+
+    def shaded_then_sunny(at: datetime, values: Values) -> None:
+        values["mppt3_voltage"] = 300.0
+        values["mppt3_current"] = 0.0 if at.hour < 15 else 4.0
+
+    row = _run(shaded_then_sunny)["mppt3 carries a string"]
+    assert row["verdict"] == MATCH
+    assert "voltage and current" in row["detail"]
+
+
+def test_a_model_reporting_no_tracker_current_keeps_the_voltage_rule() -> None:
+    """A verdict change for one house must not unanswer every other.
+
+    The current is read where it answers and is not among the check's
+    `fields`, so a device that reports none keeps the check -- on the old
+    rule, said in the sentence rather than left to be inferred.
+    """
+
+    def no_current(_at: datetime, values: Values) -> None:
+        values["mppt3_voltage"] = 300.0
+        values["mppt3_current"] = None
+
+    row = _run(no_current)["mppt3 carries a string"]
+    assert row["verdict"] == MATCH
+    assert "no mppt3 current is reported" in row["detail"]
+
+
+def test_the_corrected_tracker_checks_carry_a_new_revision() -> None:
+    """Both of them, so what the old rule gathered is dropped on update.
+
+    A change that could change a verdict raises the revision in the same
+    commit; without it every house keeps the verdict the old rule reached and
+    the fix never arrives (`CHECK_REVISIONS`' own docstring).
+    """
+    assert plausibility.revision_of("mppt3 carries a string") == 2
+    assert plausibility.revision_of("mppt4 carries a string") == 2
+
+
 def test_a_gap_breaks_the_trails_instead_of_bridging_them() -> None:
     """Polls missing for an hour (a capability test, a restart) count nothing."""
     collection = Plausibility()

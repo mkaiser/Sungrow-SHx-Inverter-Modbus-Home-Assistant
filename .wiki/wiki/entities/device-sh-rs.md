@@ -69,9 +69,10 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
   download, at 3.8 kW of PV and at 10.5 kW alike, while the other three account for
   `total_dc_power` to within 1 %
   ([that reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)).
-  A floating input drifts above the 50 V the
-  [capability test](../concepts/capability-test.md)'s `mppt4 carries a string` check takes as
-  evidence, so that check reads this machine wrong.
+  A floating input drifts above 50 V, which the
+  [capability test](../concepts/capability-test.md)'s `mppt4 carries a string` check once took as
+  evidence on its own; since 2026-11-19 it asks for the tracker's current with the voltage, which
+  is what reads this machine right.
 - **On P066 the forced-charging window cannot be written**: its days word, holding 33209,
   refuses with 0x04 over RS485 and through the dongle alike. A restart there: 2 s to stop,
   150-165 s to run.

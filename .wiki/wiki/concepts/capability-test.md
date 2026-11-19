@@ -285,11 +285,18 @@ mkaiser's named only `daily_pv_generation`, so neither atomic nor staggered is e
 input: 39.5 V to 53.6 V with **0.0 A**, while the three live trackers account for
 `total_dc_power` to within 1 %
 ([that reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)).
-`TrackerCheck` takes any voltage above `TRACKER_LIVE_V`, 50 V, as a string, and an unloaded
+`TrackerCheck` took any voltage above `TRACKER_LIVE_V`, 50 V, as a string, and an unloaded
 tracker on this model drifts past that. The current is the discriminator and it answers on the
 same block -- a reading of 0.0 A, not an absent register, so
-[zero means absent](zero-means-absent.md) does not shield it. **Open**: whether the check should
-require the tracker's current, and what it should answer where a model does not report one.
+[zero means absent](zero-means-absent.md) does not shield it.
+
+**Settled, in the code since 2026-11-19**: the check asks for a current of at least
+`TRACKER_LIVE_A`, one count of a 0.1 A register, beside the voltage. A voltage with less says
+there is nothing on the input, after `minimum` daylight polls of it; one poll carrying current
+says *matched* whatever came before, so a shaded string is not written off. Where a model reports
+no tracker current at all the voltage rule stands and the sentence says so, because a verdict
+change for one house must not unanswer every other. Both tracker checks carry revision 2, so what
+the old rule gathered is dropped at every house on update.
 
 ## Drivers
 

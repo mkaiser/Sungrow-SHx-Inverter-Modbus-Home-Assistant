@@ -37,7 +37,7 @@ Nothing here can be written, so a read is the whole test.
 
 | Capability | Gates | Decided by | Read-only diagnosis | Could still test |
 | --- | --- | --- | --- | --- |
-| `mppt3`, `mppt4` | the third and fourth tracker's sensors | the tracker's voltage; `0xFFFF` is absent, 0 cannot tell | reads it, and the raw dump | the plausibility check *mppt3 carries a string* settles it in daylight; nothing further |
+| `mppt3`, `mppt4` | the third and fourth tracker's sensors | the tracker's voltage; `0xFFFF` is absent, 0 cannot tell | reads it, and the raw dump | the plausibility check *mppt3 carries a string* settles it in daylight, from the tracker's current and not its voltage alone; nothing further |
 | `three_phase` | phase B and C | the device type and output type (5002) | reads both | nothing further |
 | `meter_direct` | the meter block | the block answers | reads it; a WiNet-S refuses it | nothing further |
 | `meter_channel_2` | 13200-13207 | the second channel answers | reads it | nothing further |
@@ -151,7 +151,7 @@ finding; a ratio merely off (losses, reactive power) is *could not tell*, never 
 | daily counters reset at midnight | a fall only between 23:30 and 00:30 **of the inverter's clock**, to under 0.5 kWh | a midnight | a counter that is not daily |
 | battery level follows its power | 1 kWh out lowers the level, 1 kWh in raises it | 1 kWh through the battery | a level read from the wrong register |
 | running states | every 13000 code seen is in the table | a day of polls | a code nobody has named |
-| mppt3 / mppt4 carries a string | a voltage in daylight | PV above 1000 W | a tracker granted with nothing on it |
+| mppt3 / mppt4 carries a string | a voltage **and** current in daylight; the voltage alone only where the model reports no tracker current | PV above 1000 W | a tracker granted with nothing on it, which an unloaded input's drift above 50 V looks like |
 
 **The midnight check also measures the reset itself.** Its sentence names every daily counter
 that fell in the same poll, and every one that had not fallen yet, whether it passes or fails.

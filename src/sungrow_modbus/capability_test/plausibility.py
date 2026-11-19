@@ -73,6 +73,13 @@ CHECK_REVISIONS: dict[str, int] = {
     # a night, and a readings check that has failed counts as answered -- so
     # the row would have stayed red behind the fix.
     "daily counters reset at midnight": 2,
+    # 2 since 2026-11-19 for both trackers: a voltage above 50 V was taken as
+    # a string, and an unloaded input drifts past that -- *matched* for a
+    # floating `mppt4` at Maximo101's SH10RS. The rule now asks for current
+    # with the voltage, so what the old one gathered cannot be reused: its
+    # polls were never sorted by current.
+    "mppt3 carries a string": 2,
+    "mppt4 carries a string": 2,
 }
 
 
@@ -97,6 +104,13 @@ MAX_RATIOS = 240
 
 #: A tracker counts as producing when its voltage is above this.
 TRACKER_LIVE_V = 50.0
+
+#: And when its current is at least this. One count of a 0.1 A register: the
+#: smallest current it can express, so anything a string delivers reads at
+#: least this and only an input with nothing on it reads below it. A voltage
+#: alone is not evidence -- an unloaded tracker drifts above `TRACKER_LIVE_V`
+#: (wiki: device-sh-rs, a tracker that answers need not carry a string).
+TRACKER_LIVE_A = 0.1
 
 #: Daylight, for the tracker check: total DC power at least this.
 DAYLIGHT_W = 1000.0
@@ -428,39 +442,85 @@ class TrackerCheck(Check):
 
     The capability grants the tracker on a voltage that is not `0xFFFF`, and
     a tracker with nothing on it reads 0 at night like a real one does. In
-    full daylight a real one does not.
+    full daylight a real one does not -- **but a voltage alone does not
+    settle it**: at Maximo101's SH10RS `mppt4` is a floating input reading
+    39.5 V to 53.6 V with 0.0 A, at 3.8 kW of PV and at 10.5 kW alike, while
+    the other three trackers account for `total_dc_power` to within 1 %. So
+    it asks for current with the voltage, and a voltage with no current is
+    what an empty input looks like.
+
+    **Where the current does not answer** the old rule stands, named in the
+    sentence: a model that reports no tracker current must not have every
+    tracker turned inconclusive. That is why the current is not in `fields`,
+    which is what decides whether a check applies to a device at all.
+
+    The counts are asymmetric on purpose. One daylight poll with a voltage
+    *and* current settles *matched*, for ever and whatever came before, so a
+    string shaded for half an hour is not written off; it takes `minimum`
+    polls of a voltage with no current to say there is nothing on it, and
+    even that answer gives way to the first poll that carries current.
     """
 
     tracker: str = ""
     live: int = 0
+    #: A voltage above the threshold with no current behind it.
+    idle: int = 0
+    #: A voltage, and no current reading to judge it by: the old rule's polls.
+    unmeasured: int = 0
     dark: int = 0
 
     def observe(self, values: Values, at: datetime) -> None:
-        """Count daylight polls with and without a voltage."""
+        """Sort each daylight poll by what the tracker reads."""
         voltage = _get(values, f"{self.tracker}_voltage")
         dc = _get(values, "total_dc_power")
         if voltage is None or dc is None or dc < DAYLIGHT_W:
             return
-        if voltage >= TRACKER_LIVE_V:
+        if voltage < TRACKER_LIVE_V:
+            self.dark += 1
+            return
+        current = _get(values, f"{self.tracker}_current")
+        if current is None:
+            self.unmeasured += 1
+        elif abs(current) >= TRACKER_LIVE_A:
             self.live += 1
         else:
-            self.dark += 1
+            self.idle += 1
 
     def verdict(self) -> tuple[str | None, str]:
-        """Present once it has carried power; absent after a daylight of 0 V."""
+        """Present once it has carried current; absent on a daylight without."""
         if self.live:
-            return MATCH, f"{self.live} daylight polls with a voltage"
-        if self.dark < self.minimum:
-            return None, f"{self.dark} of {self.minimum} daylight polls"
-        return NO_EFFECT, f"0 V in {self.dark} daylight polls: no string on it"
+            return MATCH, f"{self.live} daylight polls with a voltage and current"
+        if self.idle >= self.minimum:
+            return (
+                NO_EFFECT,
+                f"a voltage but under {TRACKER_LIVE_A} A in {self.idle} daylight "
+                "polls: no string on it",
+            )
+        if self.unmeasured and not self.idle:
+            return (
+                MATCH,
+                f"{self.unmeasured} daylight polls with a voltage; no "
+                f"{self.tracker} current is reported, so the voltage decides",
+            )
+        if self.dark >= self.minimum and not self.idle:
+            return NO_EFFECT, f"0 V in {self.dark} daylight polls: no string on it"
+        counted = self.live + self.idle + self.unmeasured + self.dark
+        return None, f"{counted} of {self.minimum} daylight polls"
 
     def state(self) -> dict[str, Any]:
-        """Return the two counts."""
-        return {"live": self.live, "dark": self.dark}
+        """Return the counts."""
+        return {
+            "live": self.live,
+            "idle": self.idle,
+            "unmeasured": self.unmeasured,
+            "dark": self.dark,
+        }
 
     def load(self, state: Mapping[str, Any]) -> None:
         """Take kept counts back."""
         self.live = int(state.get("live") or 0)
+        self.idle = int(state.get("idle") or 0)
+        self.unmeasured = int(state.get("unmeasured") or 0)
         self.dark = int(state.get("dark") or 0)
 
 
@@ -983,6 +1043,13 @@ def checks() -> list[Check]:
 
 
 #: Every field any check reads: what a driver collects for `observe`.
+#:
+#: More than the checks' own `fields`, which is the narrower list of what a
+#: check *needs* to apply to a device. The names added here are read where
+#: they answer and judged where they do not: `mppt3_current` and
+#: `mppt4_current` are the tracker checks' discriminator, and a model that
+#: reports neither keeps its tracker checks on the voltage rule rather than
+#: losing them (`TrackerCheck`).
 FIELDS: tuple[str, ...] = tuple(
     sorted(
         {name for check in checks() for name in check.fields}
