@@ -187,6 +187,18 @@ DEFAULT_CAPABILITY_TEST_WALLBOX = False
 CONF_WALLBOX_MAX_AMPS = "wallbox_max_amps"
 DEFAULT_WALLBOX_MAX_AMPS = 10.0
 
+#: The owner's word that no inverter manages this wallbox, which is what lets
+#: the test write the wallbox's **own** registers rather than an inverter's EV
+#: charger block. **Off until switched on, and never inferred**: an inverter
+#: under whose management a wallbox charges rewrites 21203 within seconds, so a
+#: wrong yes writes registers that are overwritten and measures nothing. The
+#: integration's own reading of who drives it is shown on the device page, as
+#: *Diagnosis: test summary*'s `management` attribute
+#: (`sungrow_modbus.wallbox.management`), and is a hint for this answer rather
+#: than a substitute for it.
+CONF_WALLBOX_STANDALONE = "wallbox_standalone"
+DEFAULT_WALLBOX_STANDALONE = False
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a

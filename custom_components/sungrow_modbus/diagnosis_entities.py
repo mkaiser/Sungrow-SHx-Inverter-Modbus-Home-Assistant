@@ -565,6 +565,19 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         state = self._runner.state
         return state.running and state.extended and state.started is not None
 
+    def _management(self) -> dict[str, Any]:
+        """Return what drives the wallbox, where there is one, and why.
+
+        Shown so that an owner can see what the integration believes before
+        anything acts on it -- and it is read here only: what may be written
+        to a wallbox is their own answer in the entry's options
+        (`sungrow_modbus.wallbox.management`). Absent where there is no
+        wallbox, rather than an attribute saying "unknown" about nothing.
+        """
+        if not self._runner.wallbox_present:
+            return {}
+        return self._runner.wallbox_management.as_dict()
+
     async def async_added_to_hass(self) -> None:
         """Listen, start the clock if a run is already going, stop it at removal."""
         await super().async_added_to_hass()
@@ -636,6 +649,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         if "summary" not in folded:
             return {
                 **self._runner.continuous.attributes(),
+                **self._management(),
                 "running_since": running_since,
                 "established": None,
                 "total": None,
@@ -645,6 +659,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         runs = folded.get("runs") or []
         return {
             **self._runner.continuous.attributes(),
+            **self._management(),
             "running_since": running_since,
             "established": established,
             "total": total,

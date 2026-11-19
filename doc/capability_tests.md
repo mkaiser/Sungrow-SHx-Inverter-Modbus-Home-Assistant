@@ -80,8 +80,20 @@ its own address over TLS: a dry run without `--leave`, and **with it only on a w
 current driven by the inverter, which overwrites a write within seconds; it is controlled at the
 inverter instead (`src/sungrow_modbus/hybrid_inverter/ev_charger.py`). The test also refuses a
 setting that moves with nothing written, never disables the charge point and never offers under
-6 A. From Home Assistant it writes nothing: an entry cannot tell a managed wallbox from a
-standalone one. Its document is separate from the inverter's feature report.
+6 A. From Home Assistant the same answer is the entry's own question, *Does no inverter manage
+this wallbox?* in **Configure**, off until it is switched on: the integration shows what it makes
+of the wallbox's behaviour but never writes on its own reading
+(`src/sungrow_modbus/wallbox/management.py`, below). Its document is separate from the inverter's
+feature report.
+
+**Who drives a wallbox is inferred, and shown, but never acted on.** An inverter that manages a
+charge rewrites the wallbox's output current every few seconds, so a setting that moves during a
+charge with nothing here writing it says *managed*, and one that holds still through a charge
+suggests *standalone*; an idle wallbox says nothing, however long it is watched. The answer is the
+`management` attribute of *Diagnosis: test summary* on the wallbox's device page, with the counts
+behind it. It decides what is shown and what the summary says it awaits -- **what may be written
+is the owner's answer alone**, because a wrong *standalone* writes registers an inverter
+overwrites within seconds.
 
 A **managed** wallbox has a test of its own, `sungrow_managed_wallbox_test.py`
 (`src/sungrow_modbus/wallbox/managed_test.py`): it writes only the inverter's EV charger block

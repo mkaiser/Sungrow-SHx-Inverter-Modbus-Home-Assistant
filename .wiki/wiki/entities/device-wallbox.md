@@ -59,7 +59,13 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   wallbox entry and its inverter entry is made only through the dongle probe.
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
-  say so (`Options.standalone`), and refuses a setting that moves with nothing written.
+  say so (`Options.standalone`), and refuses a setting that moves with nothing written. In Home
+  Assistant that is a wallbox entry's own option, *Does no inverter manage this wallbox?*, off
+  until it is switched on. **Behaviour is what can be inferred**, and it is shown rather than
+  acted on: 21203 moving during a charge with nothing written says managed, holding still through
+  a charge suggests standalone, and an idle wallbox says nothing
+  (`src/sungrow_modbus/wallbox/management.py`, the `management` attribute of *Diagnosis: test
+  summary*).
 - **And nothing on the inverter alone tells it either.** Holding 33541 reads **161**, a named
   mode (*PV surplus*), with the user current at 16.0 A and energy purchase on, at
   [mkaiser](installation-mkaiser.md)'s, [swo14](installation-swo14.md)'s and

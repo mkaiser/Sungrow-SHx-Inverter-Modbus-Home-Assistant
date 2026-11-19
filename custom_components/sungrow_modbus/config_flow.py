@@ -122,12 +122,14 @@ from .const import (
     CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_MAX_AMPS,
+    CONF_WALLBOX_STANDALONE,
     CONF_WIFI_MODULE,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
     DEFAULT_PORT,
+    DEFAULT_WALLBOX_STANDALONE,
     DIAGNOSIS_ISSUE_URL,
     DOMAIN,
     ENERGY_DASHBOARD_GUIDE_URL,
@@ -2302,6 +2304,13 @@ class SungrowOptionsFlow(OptionsFlow):
                                     default=current.get(
                                         CONF_CAPABILITY_TEST_WALLBOX,
                                         DEFAULT_CAPABILITY_TEST_WALLBOX,
+                                    ),
+                                ): BooleanSelector(),
+                                probatio.Required(
+                                    CONF_WALLBOX_STANDALONE,
+                                    default=current.get(
+                                        CONF_WALLBOX_STANDALONE,
+                                        DEFAULT_WALLBOX_STANDALONE,
                                     ),
                                 ): BooleanSelector(),
                                 probatio.Optional(

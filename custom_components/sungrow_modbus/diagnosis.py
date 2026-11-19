@@ -57,8 +57,10 @@ from sungrow_modbus.capability_test import (
 from sungrow_modbus.capability_test.plausibility import FIELDS, Plausibility
 from sungrow_modbus.wallbox import (
     ledger as wallbox_ledger,
+    management as wallbox_management,
     plausibility as wallbox_plausibility,
 )
+from sungrow_modbus.wallbox.capability_test import CHARGING as WALLBOX_CHARGING
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
@@ -238,6 +240,11 @@ class DiagnosisRunner:
         self._wallbox_folded: dict[str, Any] | None = None
         #: The wallbox's readings checked against each other, kept per firmware.
         self.wallbox_plausibility = wallbox_plausibility.WallboxPlausibility()
+        #: What drives the wallbox, inferred from how its output current
+        #: setting behaves while a car charges. It decides what is shown and
+        #: nothing else: what may be written to a wallbox is the owner's word
+        #: in the entry's options (`sungrow_modbus.wallbox.management`).
+        self.wallbox_management = wallbox_management.Management()
         self._wallbox_firmware: str | None = None
         #: The readings' own checks are fed on their own timer, not auto
         #: repeat's, because **they write nothing**. Auto repeat is a leave to
@@ -344,6 +351,13 @@ class DiagnosisRunner:
             load = None if found is None else float(found)
         self.wallbox_plausibility.observe(
             wallbox_plausibility.values(reading, load), dt_util.as_local(now)
+        )
+        # The same poll answers who drives the wallbox, at no extra read: an
+        # inverter that manages a charge rewrites 21203 every few seconds.
+        status = reading.get("charging_status_raw")
+        self.wallbox_management.observe(
+            reading.get("output_current_setting"),
+            charging=status is not None and int(status) == WALLBOX_CHARGING,
         )
         firmware = self._wallbox_firmware
         collection = self.wallbox_plausibility

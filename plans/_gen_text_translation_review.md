@@ -1,6 +1,6 @@
 # The texts, for review
 
-**336 texts**: everything in `strings.json` that is not an entity name, by its
+**338 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1355,7 +1355,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (103)
+## Options flow (105)
 
 ### `options.step.init.title`
 
@@ -1945,6 +1945,12 @@ and bold are kept.
 
 > **DE** Darf er mit einem ladenden Auto auf die Wallbox schreiben?
 
+### `options.step.wallbox.sections.capability_test.data.wallbox_standalone`
+
+> **EN** Does no inverter manage this wallbox?
+
+> **DE** Verwaltet kein Wechselrichter diese Wallbox?
+
 ### `options.step.wallbox.sections.capability_test.data.wallbox_max_amps`
 
 > **EN** The highest charging current the wallbox test may offer
@@ -1956,6 +1962,12 @@ and bold are kept.
 > **EN** Off until you switch it on. A wallbox a hybrid inverter manages (its EV charger in iSolarCloud) ignores writes to its own settings, so where the inverter is set up here too, the test writes the **inverter's** EV charger settings instead: user-defined mode, a charging current of 6, 8 and 10 A (never above the highest charging current below), 5 A for the inverter to refuse, and a stop and start. It watches what the car draws and puts the inverter's settings back, the charge included. **A charge in progress changes current and is stopped for about 15 seconds.** A wallbox with no inverter set up here is not written. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every 15 minutes in *Extended test (auto repeat)* until each question has an answer.
 
 > **DE** Aus, bis du es einschaltest. Eine Wallbox, die ein Hybrid-Wechselrichter verwaltet (sein E-Auto-Ladegerät in iSolarCloud), ignoriert Schreibzugriffe auf ihre eigenen Einstellungen. Ist der Wechselrichter hier ebenfalls eingerichtet, schreibt der Test deshalb stattdessen die Ladeeinstellungen **des Wechselrichters**: benutzerdefinierter Modus, ein Ladestrom von 6, 8 und 10 A (nie über dem höchsten Ladestrom unten), 5 A, die der Wechselrichter ablehnen soll, und ein Stopp und Start. Er beobachtet, was das Auto zieht, und setzt die Einstellungen des Wechselrichters zurück, die Ladung eingeschlossen. **Eine laufende Ladung ändert ihren Strom und wird für etwa 15 Sekunden gestoppt.** Auf eine Wallbox ohne hier eingerichteten Wechselrichter wird nicht geschrieben. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle 15 Minuten wiederholt, bis jede Frage eine Antwort hat.
+
+### `options.step.wallbox.sections.capability_test.data_description.wallbox_standalone`
+
+> **EN** Off until you switch it on, and your answer rather than a guess. Where an inverter manages the wallbox (its EV charger in iSolarCloud) it rewrites the wallbox's own output current within seconds, so writing those registers measures nothing -- the test writes that inverter's settings instead. Switch this on only for a wallbox nothing else drives, and the test may then write the wallbox's own registers: its charging current, its phases and a stop and start. What the integration itself makes of this is on the device page, as the `management` attribute of *Diagnosis: test summary*: "managed" means it saw the setting move while a car charged, "standalone" that it held still through a charge, and "unknown" that no car has charged since Home Assistant started.
+
+> **DE** Aus, bis du es einschaltest, und deine Antwort statt einer Vermutung. Verwaltet ein Wechselrichter die Wallbox (sein E-Auto-Ladegerät in iSolarCloud), überschreibt er ihren eigenen Ladestrom innerhalb von Sekunden; diese Register zu schreiben misst dann nichts, und der Test schreibt stattdessen die Einstellungen dieses Wechselrichters. Schalte dies nur für eine Wallbox ein, die nichts anderes steuert -- dann darf der Test ihre eigenen Register schreiben: Ladestrom, Phasen sowie Stopp und Start. Was die Integration selbst erkennt, steht auf der Geräteseite im Attribut `management` von *Diagnose: Testübersicht*: "managed" heißt, die Einstellung hat sich während einer Ladung geändert, "standalone", dass sie eine Ladung lang unverändert blieb, und "unknown", dass seit dem Start von Home Assistant kein Auto geladen hat.
 
 ### `options.step.wallbox.sections.capability_test.data_description.wallbox_max_amps`
 

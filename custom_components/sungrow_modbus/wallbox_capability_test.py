@@ -50,8 +50,10 @@ from .const import (
     CONF_CAPABILITY_TEST_WALLBOX,
     CONF_KIND,
     CONF_WALLBOX_MAX_AMPS,
+    CONF_WALLBOX_STANDALONE,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_WALLBOX_MAX_AMPS,
+    DEFAULT_WALLBOX_STANDALONE,
     DOMAIN,
     KIND_WALLBOX,
 )
@@ -153,10 +155,13 @@ def consented(entry: SungrowConfigEntry) -> bool:
 def declared_standalone(entry: SungrowConfigEntry) -> bool:
     """Whether the owner has said no inverter manages this wallbox.
 
-    Never, yet: no option asks it, and a wrong yes writes registers an inverter
-    overwrites. The one seam the tests of the write machinery replace.
+    Their word, from the entry's options, and never an inference: a wrong yes
+    writes registers an inverter overwrites within seconds. What the
+    integration itself makes of the wallbox's behaviour is shown beside the
+    question instead (`sungrow_modbus.wallbox.management`), so the person
+    answering it has the reading in front of them.
     """
-    return False
+    return bool(entry.options.get(CONF_WALLBOX_STANDALONE, DEFAULT_WALLBOX_STANDALONE))
 
 
 def managing_entry(
