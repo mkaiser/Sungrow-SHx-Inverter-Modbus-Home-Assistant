@@ -46,7 +46,11 @@ from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import device_registry as dr, issue_registry as ir
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 
@@ -639,14 +643,21 @@ async def test_a_read_only_run_carries_the_kept_runs_forward(
 async def test_the_clear_button_forgets_every_run(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """And a reload afterwards finds nothing to fold back in."""
+    """And a reload afterwards finds nothing to fold back in.
+
+    The summary does not go back to "no runs kept": the readings' checks keep
+    what they have gathered, so what it shows is their collection with no
+    runs in it -- which is also what a fresh entry shows, since watching the
+    readings does not wait on a run.
+    """
     entry = await _setup(hass, ready_unit)
     await _press(hass, CONTROL_BUTTON)
 
     await _press(hass, CLEAR_BUTTON)
 
     assert entry.runtime_data.diagnosis.state.capability_test is None
-    assert hass.states.get(STATUS).state == "no runs kept"
+    assert "established" in hass.states.get(STATUS).state
+    assert hass.states.get("sensor.sh10rt_diagnosis_test_runs").state == "0"
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
     ):
@@ -890,21 +901,56 @@ async def test_the_tick_feeds_the_readings_and_the_counters_count_them(
     )
 
 
-async def test_clearing_the_history_forgets_the_readings_too(
+async def test_clearing_the_runs_keeps_what_the_readings_gathered(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """One button starts a collection afresh, readings included.
+    """Two clears, because the two cost their owner differently.
 
-    This is also why the button is blunter than it looks: the readings and the
-    runs share one clear, so retracting a single wrong verdict is not on offer
-    without discarding observations that took days to gather.
+    A run can be asked for again this evening; the readings' checks are fed
+    every minute for days, and one clear for both meant starting the runs
+    afresh discarded observations nothing could get back quickly.
     """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
     runner._async_observe_tick(dt_util.utcnow())
-    assert runner.plausibility.observations
+    observed = runner.plausibility.observations
+    assert observed
+    runner._set(capability_test={"summary": {"a check": {}}, "runs": [{}]})
+
     await runner.async_clear_ledger()
+
+    assert runner.state.capability_test is None
+    assert runner.plausibility.observations == observed
+    view = runner.tests
+    assert view is not None and view["summary"]  # the readings' rows remain
+
+
+async def test_clearing_the_readings_keeps_the_runs(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The other half, and the expensive one to press."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    runner._async_observe_tick(dt_util.utcnow())
+    assert runner.plausibility.observations
+    kept = {"summary": {"a check": {}}, "runs": [{}]}
+    runner._set(capability_test=kept)
+
+    await runner.async_clear_readings()
+
     assert runner.plausibility.observations == 0
+    assert not runner.plausibility.summary()
+    assert runner.state.capability_test == kept
+
+
+async def test_both_clears_are_offered_as_buttons(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """And both are held to the capability test's permission."""
+    await _setup(hass, ready_unit)
+    registry = er.async_get(hass)
+    for key in ("clear_capability_test_history", "clear_capability_test_readings"):
+        assert registry.async_get_entity_id("button", DOMAIN, f"{SERIAL}_{key}")
 
 
 # -- stopping a run -------------------------------------------------------------

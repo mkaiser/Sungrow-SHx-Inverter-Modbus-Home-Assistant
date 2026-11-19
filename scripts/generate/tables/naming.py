@@ -123,6 +123,7 @@ OVERRIDES: dict[str, str] = {
     "diagnosis_next_start": "Diagnosis: next attempt",
     "diagnosis_test_runs": "Diagnosis: test runs",
     "clear_capability_test_history": "Diagnosis: tests, clear history",
+    "clear_capability_test_readings": "Diagnosis: readings, clear history",
     "capability_test_status": "Diagnosis: test summary",
     # On the entry with controls, not among the diagnosis's own: whether a
     # capability test holds them (`write_owner`).
@@ -770,6 +771,7 @@ GERMAN: dict[str, str] = {
     "diagnosis_next_start": "Diagnose: nächster Versuch",
     "diagnosis_test_runs": "Diagnose: Testläufe",
     "clear_capability_test_history": "Diagnose: Testverlauf löschen",
+    "clear_capability_test_readings": "Diagnose: Messwertverlauf löschen",
     "capability_test_status": "Diagnose: Testübersicht",
     "controls_held_by_test": "Diagnose: Steuerung vom Test belegt",
     "diagnosis_tests_passed": "Diagnose: Tests bestanden",

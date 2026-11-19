@@ -72,6 +72,9 @@ DIAGNOSTIC_ENTITIES = {
     "sensor.sh10rt_diagnosis_test_runs",
     # The capability test runs kept over a day, and the way to start again.
     "button.sh10rt_diagnosis_tests_clear_history",
+    # The readings' checks gather for days and are cleared on their own, so
+    # starting the runs afresh does not throw them away.
+    "button.sh10rt_diagnosis_readings_clear_history",
     "sensor.sh10rt_diagnosis_test_summary",
     # Whether a single run leaves out what earlier runs established; kept.
     "switch.sh10rt_diagnosis_skip_completed_tests",

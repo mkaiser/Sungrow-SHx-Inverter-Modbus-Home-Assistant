@@ -4,6 +4,9 @@
       "clear_capability_test_history": {
         "default": "mdi:history"
       },
+      "clear_capability_test_readings": {
+        "default": "mdi:chart-timeline-variant"
+      },
       "diagnosis_start": {
         "default": "mdi:play-circle-outline"
       },

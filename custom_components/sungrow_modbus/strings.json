@@ -225,6 +225,9 @@
       "clear_capability_test_history": {
         "name": "Diagnosis: tests, clear history"
       },
+      "clear_capability_test_readings": {
+        "name": "Diagnosis: readings, clear history"
+      },
       "diagnosis_start": {
         "name": "Diagnosis: start"
       },

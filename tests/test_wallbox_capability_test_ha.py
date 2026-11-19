@@ -366,10 +366,23 @@ async def test_clearing_the_history_forgets_the_wallbox_runs(
     firmware = wbt.firmware_of(runner._wallbox_device())
     assert await wbt.async_ledger_runs(hass, entry, firmware)
 
+    from homeassistant.util import dt as dt_util
+
+    runner._async_observe_tick(dt_util.utcnow())
+    observed = runner.wallbox_plausibility.observations
+    assert observed
+
     await runner.async_clear_ledger()
 
     assert runner._wallbox_folded is None
     assert not await wbt.async_ledger_runs(hass, entry, firmware)
+    # The readings' own evidence is not a run's, and waits for a car: it
+    # stays, and `async_clear_readings` is what drops it.
+    assert runner.wallbox_plausibility.observations == observed
+
+    await runner.async_clear_readings()
+
+    assert runner.wallbox_plausibility.observations == 0
 
 
 def test_a_path_is_named_by_where_the_wallbox_is_read() -> None:

@@ -75,6 +75,7 @@ DIAGNOSIS_ENTITIES: tuple[tuple[str, str], ...] = (
     ("button", "diagnosis_start"),
     ("button", "diagnosis_stop"),
     ("button", "clear_capability_test_history"),
+    ("button", "clear_capability_test_readings"),
     ("sensor", "diagnosis_progress"),
     ("sensor", "diagnosis_step"),
     ("sensor", "diagnosis_finished"),
@@ -506,6 +507,37 @@ class ClearCapabilityTestHistoryButton(DiagnosisEntity, ButtonEntity):
             self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
         )
         await self._runner.async_clear_ledger()
+
+
+class ClearCapabilityTestReadingsButton(DiagnosisEntity, ButtonEntity):
+    """Forget what the readings' checks have gathered, and watch afresh.
+
+    The other half of the button above, and the expensive one: those checks
+    are fed every minute for days (`capability_test/plausibility.py`), so a
+    house that presses this waits days for the evidence back, where a run can
+    be asked for again this evening. Writes nothing to the inverter.
+
+    **Not the remedy for a wrong verdict.** A check whose rule changed carries
+    a revision (`plausibility.CHECK_REVISIONS`), and raising it makes every
+    house drop that check's evidence alone, on update, with nothing for an
+    owner to press.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for what pressing it does."""
+        super().__init__(runtime_data, "clear_capability_test_readings")
+
+    @property
+    def available(self) -> bool:
+        """Unavailable while a run is in flight; it is about to publish them."""
+        return not self._runner.state.running
+
+    async def async_press(self) -> None:
+        """Empty the readings' store."""
+        await async_authorize(
+            self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
+        )
+        await self._runner.async_clear_readings()
 
 
 class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):

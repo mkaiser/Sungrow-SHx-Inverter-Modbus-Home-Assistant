@@ -297,16 +297,26 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
         self.async_notify()
 
     async def async_clear_ledger(self) -> None:
-        """Forget the wallbox's kept runs and readings."""
+        """Forget the wallbox's kept runs. Its readings' evidence stays.
+
+        The same split as an inverter entry's, for the same reason
+        (`diagnosis.DiagnosisRunner.async_clear_ledger`): a wallbox's
+        readings checks wait for a car to charge, so what they have gathered
+        can be days old and is not worth throwing away with a run.
+        """
         await async_ledger_clear(self.hass, self.entry)
-        await plausibility_store(self.hass, self.entry).async_remove()
-        self.wallbox_plausibility = wallbox_plausibility.WallboxPlausibility()
         self._wallbox_folded = None
         self._wallbox_runs = []
         self._set(part=None)
         persistent_notification.async_dismiss(
             self.hass, f"{DOMAIN}_wallbox_ledger_{self.entry.entry_id}"
         )
+
+    async def async_clear_readings(self) -> None:
+        """Forget what the wallbox's readings checks have gathered."""
+        await plausibility_store(self.hass, self.entry).async_remove()
+        self.wallbox_plausibility = wallbox_plausibility.WallboxPlausibility()
+        self.async_notify()
 
 
 def _run_line(run: dict[str, Any]) -> dict[str, Any]:

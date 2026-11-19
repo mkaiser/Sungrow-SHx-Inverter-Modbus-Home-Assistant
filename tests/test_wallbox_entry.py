@@ -225,6 +225,7 @@ async def test_the_entry_is_the_wallbox_and_nothing_else(hass: HomeAssistant) ->
         "diagnosis_mode",
         "capability_test_status",
         "clear_capability_test_history",
+        "clear_capability_test_readings",
         "skip_established_capability_tests",
     } <= diagnosis
     controls = [e for e in entities if e.domain in ("number", "switch", "select")]

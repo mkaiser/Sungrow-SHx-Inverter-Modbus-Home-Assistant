@@ -36,6 +36,7 @@ from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
 from .diagnosis_entities import (
     ClearCapabilityTestHistoryButton,
+    ClearCapabilityTestReadingsButton,
     DiagnosisStartButton,
     DiagnosisStopButton,
 )
@@ -66,6 +67,7 @@ async def async_setup_entry(
                 DiagnosisStartButton(runtime_data),
                 DiagnosisStopButton(runtime_data),
                 ClearCapabilityTestHistoryButton(runtime_data),
+                ClearCapabilityTestReadingsButton(runtime_data),
             ]
         )
         return
@@ -87,7 +89,12 @@ async def async_setup_entry(
         # No capability test on an SG, so no history of one to clear -- and
         # nothing here writes to one, so none of the commands either.
         return
-    async_add_entities([ClearCapabilityTestHistoryButton(runtime_data)])
+    async_add_entities(
+        [
+            ClearCapabilityTestHistoryButton(runtime_data),
+            ClearCapabilityTestReadingsButton(runtime_data),
+        ]
+    )
 
     # A diagnostics-only entry stops there: no commands, because it writes
     # nothing but the capability test's own probes.

@@ -225,6 +225,9 @@
       "clear_capability_test_history": {
         "name": "Diagnose: Testverlauf löschen"
       },
+      "clear_capability_test_readings": {
+        "name": "Diagnose: Messwertverlauf löschen"
+      },
       "diagnosis_start": {
         "name": "Diagnose: starten"
       },
