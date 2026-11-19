@@ -56,6 +56,17 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.
+- **And nothing on the inverter alone tells it either.** Holding 33541 reads **161**, a named
+  mode (*PV surplus*), with the user current at 16.0 A and energy purchase on, at
+  [mkaiser](installation-mkaiser.md)'s, [swo14](installation-swo14.md)'s and
+  [peter-sm](installation-peter-sm.md)'s -- three houses with no wallbox at all. So that is the
+  block's factory state, not a report of a wallbox, and `Capability.EV_CHARGER`
+  (`src/sungrow_modbus/hybrid_inverter/capabilities.py`), which grants itself on a named code,
+  is granted where there is nothing to charge. The one reading that differs is the house with
+  the [AC011E-01](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet-summary.md):
+  163 (*user defined*) at 10.0 A. **What does tell**: a wallbox answering on the inverter's bus,
+  the app showing EV charger settings under the inverter, and 21203 moving with nothing writing
+  it.
 
 - **The phases are the inverter's too**: it switches a managed wallbox to one phase by itself,
   by owners' reports in PV surplus with grid purchase off, and nothing documented chooses them;

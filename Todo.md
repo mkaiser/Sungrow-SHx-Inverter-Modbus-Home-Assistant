@@ -577,6 +577,75 @@ diagnosis-only entry; how it is handled beyond that is open.
     (`src/sungrow_modbus/hybrid_inverter/derived.py`), which no longer leaves a
     user-visible defect waiting on the measurement.
 
+16. **Should `mppt3 / mppt4 carries a string` ask for the current?**
+    It grants the tracker on a voltage above `TRACKER_LIVE_V`, 50 V, in
+    daylight (`src/sungrow_modbus/capability_test/plausibility.py`), and at
+    [Maximo101](.wiki/wiki/entities/installation-maximo101.md)'s SH10RS that
+    is wrong: `mppt4` reads 39.5 V to 53.6 V with **0.0 A** in every download,
+    at 3.8 kW of PV and at 10.5 kW alike, while the other three trackers
+    account for `total_dc_power` to within 1 %. An unloaded input drifts past
+    50 V, so the check says *matched* for a tracker with nothing on it -- the
+    one thing `doc/capability_tests.md` says it catches.
+
+    `mppt4_current` answers 0.0 A on that model, in the same block, so the
+    discriminator is there. What has to be decided is the other case: a model
+    that reports no tracker current at all should not turn a *matched* into an
+    *inconclusive* for everyone. A verdict that reads "a voltage, and current
+    with it" where the current answers, and the present rule where it does
+    not, is the shape to weigh. Whether the verdict change owes a revision is
+    item 13's question; the plausibility store carries no revision at all
+    (item 14's correction), so in practice it owes a `plausibility.SCHEMA`
+    bump or nothing.
+
+17. **A lifetime counter with a broken high word reaches the recorder.**
+    `total_battery_charge` is 13041 and 13042, low word first. On all three
+    [P067](.wiki/wiki/entities/firmware-sunstone-h-b000-v002-p067.md) machines
+    in the corpus the high word is wrong, and at
+    [Maximo101](.wiki/wiki/entities/installation-maximo101.md)'s it reads
+    `0xFFFF` -- the specification's *unavailable* -- so the sensor publishes
+    **429,494,295.3 kWh** and then rises plausibly from there. The `nan=`
+    sentinel the fault words carry
+    (`src/sungrow_modbus/hybrid_inverter/registers.py`) does not catch it,
+    because the whole double word is not 0xFFFFFFFF: the low word is alive.
+
+    Two defences, and they are not alternatives:
+
+    - **A ceiling on the energy counters.** A house does not reach a million
+      kWh, and a reading above one is a word that is not a measurement; the
+      sensor is better unavailable than wrong. It has to be a property of the
+      field, not a rule in the sensor platform, so the library's own readers
+      and the diagnosis publish the same.
+    - **A readings check for a relation that cannot fail honestly**:
+      `total_battery_charge` >= `total_battery_charge_from_pv`, the second
+      being a part of the first, and >= `total_battery_discharge`. It costs no
+      Modbus read and it catches all three machines from a single poll, which
+      is what tells a broken register from an unusual house.
+
+    Note what neither fixes: a recorder that has already taken 429 million kWh
+    keeps that statistic until somebody deletes it by hand, so for the houses
+    affected the integration's own answer is only half the repair. Whether to
+    say so in `doc/integration_migration.md` is part of this.
+
+18. **`Capability.EV_CHARGER` is granted where there is no wallbox.**
+    It grants itself when holding 33541 reads a named mode and nothing else
+    (`EV_CHARGER_CODES_ONLY`, `src/sungrow_modbus/hybrid_inverter/capabilities.py`),
+    on the reasoning that what an inverter with no wallbox reads there was
+    never measured. It is measured now: **161, *PV surplus*, with the user
+    current at 16.0 A and energy purchase on**, at mkaiser's, swo14's and
+    peter-sm's -- three houses with no wallbox. That is the block's factory
+    state.
+
+    Today it costs a document section and nothing else, because the four
+    controls need `EV_CHARGER_CONTROL`, which is `SAPPHIRE-H_B001.V000.P022`
+    alone, and the one P022 house in the corpus has a wallbox. The next
+    firmware added to that set changes it: a house with no wallbox would be
+    offered *Wallbox charge*, *Wallbox charge mode*, *Wallbox user-defined
+    current* and *Wallbox grid purchase*, each writing a block with nothing
+    behind it. **Before any firmware joins that set**, the capability needs a
+    second condition -- a wallbox answering on the bus is the obvious one,
+    since that is also what makes the managed test possible
+    (`managing_entry`, `custom_components/sungrow_modbus/wallbox_capability_test.py`).
+
 # Open decisions
 
 1. **Are the entity names final?** They are reviewed and decided, English
@@ -1168,39 +1237,30 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-18T14:00:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-18T14:00:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-19T07:30:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-19T07:30:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-18 14:00 UTC**: four contributors on #786, seven
-documents ingested. **bigz2012** settled the PV cut on
-[P067](.wiki/wiki/entities/firmware-sunstone-h-b000-v002-p067.md) (3467 W,
-0 W, 3641 W) and their outcome 4 was discarded as the dongle echoing a
-forwarded word, which narrows the P071 lead on
-[13074](.wiki/wiki/entities/register-13074.md). **swo14** gave the second
-master/slave cluster, both SH10RT-20 on `01011.95.03`: 13074 is 1:1 there on
-a second model, 5214 answers `0x7FFFFFFF` with no battery (now declared),
-and 32998 did not hold. **Korsberg** (peter_sm) brought the site import
-limit holding twice on an SH10RT-V112, the model of the one report against
-it. **Maximo101** showed version 1 moving under an unchanged P067. Both
-issue sweep and thread were read.
+Last checked: **2026-11-19 07:30 UTC**: one contributor on #786, one document
+ingested. **Maximo101** posted four downloads of their SH10RS entry, two on
+0.1.0a43 and two on 0.1.0a44; the 0.1.0a44 one is committed as `-2`, and the
+other three say nothing about the hardware it does not. It carries the **first
+`plausibility` block from a contributor's machine** -- two minutes of it, so
+only the tracker checks answered, and `mppt4 carries a string` answered wrong
+(item 16). The implausible `total_battery_charge` from their first reading is
+a **broken high word**, and on every P067 machine read, not just theirs
+(item 17).
 
-Their AC22E-01 could not be ingested, and the reason was a defect: a
-wallbox-only entry's diagnostics report never asked for its diagnosis
-document, so three downloads of it held two rows and nothing to read. Fixed
-in the same batch (`diagnostics.py`), with the test. **Worth asking that
-house again** -- it is still the second AC22E-01 item 5 wants.
-
-At 13:52 Korsberg reported, with a screenshot, that the capability test died
-on the first press: `Options.__init__() got an unexpected keyword argument
-'configured_battery_w'`. Not a diagnosis, so nothing to ingest -- a shipped
-defect, released as **0.1.0a44**. The preview channel mirrors the branch
-head against the *pinned* wheel, so one commit touching the library and the
-integration together broke part B for every preview user for a day.
-`check_pinned_library.py` now asks about constructor keywords as well, which
-is the only reason the next one gets caught; `make pin-check` had reported
-that pin clean.
+Their **AC22E-01** still could not be ingested, and this time it is not a
+defect: the 0.1.0a44 download carries `"diagnosis": null` where the a43 one had
+no such key, so the fix shipped and there is simply no run to serve. A wallbox
+entry's download hands over the *last run's* document, held in memory
+(`DiagnosisState.document`), and an upgrade restarts Home Assistant. **Worth
+asking that house again**, with the order spelled out: *Diagnosis: start* on
+the wallbox's own device page, then Download diagnostics in the same session.
+Worth weighing too whether a wallbox entry's download should build its document
+on the spot, as an inverter entry's does.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

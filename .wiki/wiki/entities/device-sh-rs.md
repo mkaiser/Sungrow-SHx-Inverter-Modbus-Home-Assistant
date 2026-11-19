@@ -7,8 +7,9 @@ created: '2026-10-31'
 
 # SH-RS hybrid inverters
 
-The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Nine diagnoses in
-the corpus, seven through a [WiNet-S](device-winet-s.md): an anonymous
+The single-phase hybrids, SH3.0RS to SH10RS, on firmware family `SUNSTONE-H`. Ten diagnoses in
+the corpus, seven of them named for a [WiNet-S](device-winet-s.md) and two more measured behind
+one: an anonymous
 [SH10RS](../sources/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md) on
 [`SUNSTONE-H_B000.V002.P059`](firmware-sunstone-h-b000-v002-p059.md) with an SBR, an
 [SH6.0RS](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)
@@ -23,7 +24,8 @@ on [`SUNSTONE-H_B000.V002.P065`](firmware-sunstone-h-b000-v002-p065.md) with an
 [`SUNSTONE-H_B000.V002.P067`](firmware-sunstone-h-b000-v002-p067.md) with two SBR224, and
 [Maximo101](installation-maximo101.md)'s
 [SH10RS](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)
-on the same firmware with two SBR192, and [bigz2012](installation-bigz2012.md)'s
+on the same firmware with two SBR192, read
+[again two days later](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md), and [bigz2012](installation-bigz2012.md)'s
 [SH10RS](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)
 on the same firmware again with two SBR224 and the PV cut confirmed. And
 [icefest](installation-icefest.md)'s SH6.0RS on
@@ -62,6 +64,14 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
   from `MPPT4`'s absent set for that reason but leaves it in `MPPT3`'s, which the probe then
   overrides. It costs nothing -- a probed capability survives the table -- and an SH3.0-6RS with
   two trackers is still right by the table.
+- **A tracker that answers need not carry a string**, and the current says which. At
+  [Maximo101](installation-maximo101.md)'s, `mppt4` reads 39.5 V to 53.6 V with **0.0 A** in every
+  download, at 3.8 kW of PV and at 10.5 kW alike, while the other three account for
+  `total_dc_power` to within 1 %
+  ([that reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)).
+  A floating input drifts above the 50 V the
+  [capability test](../concepts/capability-test.md)'s `mppt4 carries a string` check takes as
+  evidence, so that check reads this machine wrong.
 - **On P066 the forced-charging window cannot be written**: its days word, holding 33209,
   refuses with 0x04 over RS485 and through the dongle alike. A restart there: 2 s to stop,
   150-165 s to run.

@@ -13,6 +13,9 @@ running. One reading, with a capability test that was refused: the inverter was 
 
 - Register 5639 reads 44.8 kWh, the two packs together, against 488.8 V of one stack.
 - 31211 answers 0x55; the PV cut and the 13074 scale are unmeasured.
+- **`total_battery_charge` reads 6,374.1 kWh against a discharge total of 12,708.0 kWh**, which no
+  battery can do: its high word (13042) is missing a wrap, and the real figure is about 12,927.7 kWh.
+  The register is wrong on every [P067](firmware-sunstone-h-b000-v002-p067.md) machine read.
 
 ## Diagnoses
 

@@ -93,14 +93,20 @@ device answered for: `firmware_versions`, `mppt3` and `three_phase`.
   ([zero means absent](../concepts/zero-means-absent.md)), so three-phase was not resolved. This
   one is the table doing its job.
 
-## One implausible total
+## One implausible total, and its high word is the reason
 
-`total_battery_charge` reads **429,494,257.3 kWh**, about 2^32 tenths less a small remainder: the
-raw double word is near 0xFFFFFFFF, so this is an unsigned reading of something the device meant
-as a small negative, not a real total. `total_battery_charge_from_pv` (13,508.0 kWh) and
-`total_battery_discharge` (16,638.9 kWh) beside it are ordinary. A `total_increasing` sensor taking
-that value once poisons long-term statistics for good, so it is worth a sentinel or a plausibility
-check; nothing in the corpus has shown this register do it before.
+`total_battery_charge` reads **429,494,257.3 kWh**: 13041 holds `0x9F6D` and 13042 holds
+**`0xFFFF`**, the specification's *unavailable*, composed into the total as though it were data.
+The low word is a working counter -- it rises by the kilowatt-hours the battery takes
+([the second reading](sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)) --
+and the inverter's own figure, with the missing wraps of that low word restored, is about
+**17,188.5 kWh**, just above its `total_battery_discharge` of 16,638.9 kWh.
+
+The same register is wrong on both other [P067](../entities/firmware-sunstone-h-b000-v002-p067.md)
+machines in the corpus and on no machine of any other firmware; the second reading sets out the
+whole pattern. `total_battery_charge_from_pv` (13,508.0 kWh) and `total_battery_discharge` beside
+it are ordinary. A `total_increasing` sensor taking that value keeps it for good, so it is worth
+a ceiling or a plausibility check.
 
 ## Beside the inverter
 

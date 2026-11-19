@@ -1705,3 +1705,55 @@ What changed:
 - **`doc/integration_migration.md`**: consumed energy never reads below zero.
 - Tests: a staggered midnight in `tests/test_plausibility.py`, and `tests/test_derived.py`
   reading a half-done reset as 0 rather than -18 kWh.
+
+## [2026-11-19] ingested | Maximo101's SH10RS, read again: a tracker granted a string it has not got
+
+[Maximo101](wiki/entities/installation-maximo101.md) posted four downloads of their
+[SH10RS](wiki/entities/device-sh-rs.md) entry to #786, two on 0.1.0a43 and two on 0.1.0a44, plus
+two of the AC22E-01 entry. The 0.1.0a44 inverter download is committed as
+`device-diagnosis/results/inverter/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2.json`
+([the reading](wiki/sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md));
+the other three say nothing about the hardware that it does not.
+
+**The first `plausibility` block from a contributor's machine**, and it runs two minutes, so only
+the two tracker checks answered -- and `mppt4 carries a string` answered **wrong**. That input
+reads 39.5 V to 53.6 V with 0.0 A in all five downloads of this machine, at 3.8 kW of PV and at
+10.5 kW alike, while the other three trackers account for `total_dc_power` to within 1 %.
+`TrackerCheck` grants a tracker on a voltage above 50 V alone, and an unloaded input drifts past
+that. Open: whether the check should require the tracker's current.
+
+**The implausible lifetime total is a broken high word, on every P067 machine read.**
+`total_battery_charge` is 13041 and 13042; at Maximo101's the low word counts properly -- it rose
+by the 38.0 kWh the battery took in two days -- while 13042 reads `0xFFFF`, the specification's
+*unavailable*, composed into the total as data. [bigz2012](wiki/entities/installation-bigz2012.md)
+and [brendan](wiki/entities/installation-brendan.md), the other two
+[P067](wiki/entities/firmware-sunstone-h-b000-v002-p067.md) machines, read 14,844.2 and 6,374.1
+kWh against discharge totals of 20,874.6 and 12,708.0, which no battery can do. Restoring the
+wraps their high words have lost puts the three at 21,397.8, 12,927.7 and 17,226.5 kWh, each just
+above its own discharge, and exactly one whole number of wraps does that for each. Every other
+lifetime total on the three is exact. Nothing downstream rejects the figure as it stands: it is a
+`total_increasing` sensor at 429 million kWh that then rises plausibly.
+
+**The AC22E-01 is still unread, and now the reason is known.** Its 0.1.0a44 download carries
+`"diagnosis": null` where the 0.1.0a43 one had no such key: the report asks for the document now,
+and a wallbox entry's download serves the *last run's*, which is held in memory and does not
+survive the restart an upgrade brings. What it needs is *Diagnosis: start* on the wallbox's own
+device page, then the download in the same session.
+
+**And the inverter's EV charger block is a default, not a report of a wallbox.** Holding 33541
+reads 161 (*PV surplus*) at 16.0 A here, and the same at
+[mkaiser](wiki/entities/installation-mkaiser.md)'s,
+[swo14](wiki/entities/installation-swo14.md)'s and
+[peter-sm](wiki/entities/installation-peter-sm.md)'s, none of which has a wallbox.
+`Capability.EV_CHARGER` grants itself on a named code alone, so it is granted where there is
+nothing to charge; what that costs, and when, is Todo item 18.
+
+What changed:
+
+- **`wiki/entities/installation-maximo101.md`**, **`device-sh-rs.md`** and
+  **`firmware-sunstone-h-b000-v002-p067.md`**: the second reading, the three strings on four
+  trackers, the moving lifetime total.
+- **`wiki/concepts/capability-test.md`** and **`doc/capability_tests.md`**: what a *matched*
+  tracker verdict does and does not say.
+- **`wiki/entities/device-wallbox.md`**: nothing on the inverter tells a managed wallbox from a
+  standalone one either.

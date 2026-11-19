@@ -98,6 +98,7 @@ What moves between firmware versions of one platform, over one kind of link:
 Left out, with no register dump, no firmware or no way to tell the link:
 
 - `sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan`
+- `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2`
 - `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan`
 - `sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan`
 - `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2`
@@ -484,7 +485,7 @@ What moves between firmware versions of one platform, over one kind of link:
 | B8 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
 | B9 | SBRBCU-S | 22011.01.27+24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
 | B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 34 |
-| B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 38.6 kWh, no single model, 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 11 |
+| B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 38.6 kWh, no single model, 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 12 |
 | B12 | SBRBCU-S | 22011.01.30+44 | unit 2 (dongle) | SBR192 | 1 |
 
 Left out, with a battery firmware but no pack reading, or no battery firmware:

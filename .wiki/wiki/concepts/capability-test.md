@@ -273,6 +273,18 @@ integration holds that sum at zero, so the answer no longer changes what a user 
 whether the device has the behaviour at all. **Unmeasured so far**: the two nights observed at
 mkaiser's named only `daily_pv_generation`, so neither atomic nor staggered is established.
 
+**A tracker check has now answered on a second house, and answered wrong.** At
+[Maximo101](../entities/installation-maximo101.md)'s SH10RS both `mppt3 carries a string` and
+`mppt4 carries a string` returned *matched* after three daylight polls, and `mppt4` is a floating
+input: 39.5 V to 53.6 V with **0.0 A**, while the three live trackers account for
+`total_dc_power` to within 1 %
+([that reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)).
+`TrackerCheck` takes any voltage above `TRACKER_LIVE_V`, 50 V, as a string, and an unloaded
+tracker on this model drifts past that. The current is the discriminator and it answers on the
+same block -- a reading of 0.0 A, not an absent register, so
+[zero means absent](zero-means-absent.md) does not shield it. **Open**: whether the check should
+require the tracker's current, and what it should answer where a model does not report one.
+
 ## Drivers
 
 The engine is the package `src/sungrow_modbus/capability_test/`, one module per

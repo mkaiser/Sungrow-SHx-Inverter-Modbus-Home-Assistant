@@ -20,6 +20,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan` | Jam3s97 | SH10RS (`0x0D1B`) | WiNet-S, wired (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan` | bigz2012 | SH10RS (`0x0D1B`) | WiNet-S, wired (reported) | 2 x Sungrow SBR224 (44.8 kWh total) | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan` | brendan | SH10RS (`0x0D1B`) | WiNet-S, wired (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2` | Maximo101 | SH10RS (`0x0D1B`) | direct LAN port (reported), **via a Modbus proxy** | SBR192 x 2 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes | yes | yes | — | — | yes | no |
 | `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan` | Maximo101 | SH10RS (`0x0D1B`) | direct LAN port (reported), **via a Modbus proxy** | SBR192 x 2 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes | yes | yes | — | — | yes | no |
 | `sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan` | sw14 | SH10RT-20 (`0x0E13`) | direct LAN port (reported), **via a Modbus proxy** | none at this inverter (connected to host inverter) | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | — | no |
 | `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2` | swo14 | SH10RT-20 (`0x0E13`) | direct LAN port (reported), **via a Modbus proxy** | BYD HVM 11kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | — | no |
@@ -215,7 +216,7 @@ that has only one would make the next pair.
 
 | Model | Transport | Inverter firmware |
 | --- | --- | --- |
-| SH10RS | direct_lan | B000.V002.P067 (1 reading) |
+| SH10RS | direct_lan | B000.V002.P067 (2 readings) |
 | SH10RS | winet_lan | B000.V002.P059 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P065 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P067 (2 readings) |

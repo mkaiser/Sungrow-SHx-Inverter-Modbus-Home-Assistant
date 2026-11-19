@@ -39,6 +39,9 @@ Stand-in `anon-10002952285`.
   the dongle's limit from absent hardware, which would settle 13074's write scale here too.
 - `battery_charging_start_power` and `battery_discharging_start_power` are absent on this model,
   as #743 concluded for the SH-RS.
+- **`total_battery_charge` reads 14,844.2 kWh against a discharge total of 20,874.6 kWh**, which no
+  battery can do: its high word (13042) is missing a wrap, and the real figure is about 21,397.8 kWh.
+  The register is wrong on every [P067](firmware-sunstone-h-b000-v002-p067.md) machine read.
 
 ## Diagnoses
 

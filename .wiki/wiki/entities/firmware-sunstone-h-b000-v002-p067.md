@@ -3,7 +3,7 @@ type: entity
 title: SUNSTONE-H_B000.V002.P067
 tags: [firmware, sunstone-h-b000-v002-p067]
 created: '2026-11-05'
-updated: '2026-11-18'
+updated: '2026-11-19'
 ---
 
 # SUNSTONE-H_B000.V002.P067
@@ -30,6 +30,20 @@ update can arrive with nothing in 13250 to show for it
 - **The battery ceiling is 13974 W** on an SH10RS with two SBR224: 14074 W refused at 33047,
   33048 and 13052 with exception 0x04. `battery_charging_start_power` and
   `battery_discharging_start_power` do not answer, as on every SH-RS (#743).
+- **`total_battery_charge`'s high word is wrong here, on all three machines read.** 13042 holds
+  `0x0002` at [bigz2012](installation-bigz2012.md), `0x0000` at [brendan](installation-brendan.md)
+  and **`0xFFFF`** -- the specification's *unavailable* -- at
+  [Maximo101](installation-maximo101.md), so the totals read 14,844.2, 6,374.1 and 429,494,295.3
+  kWh against their own `total_battery_discharge` of 20,874.6, 12,708.0 and 16,668.7 kWh. A battery
+  cannot give out more than it took in, and `total_battery_charge_from_pv` is a part of the charge:
+  it too reads higher than the charge on all three. Restore the wraps the high word has lost
+  (6,553.6 kWh each) and the three land just above their own discharge totals -- 21,397.8, 12,927.7
+  and 17,226.5 kWh -- and exactly one whole number of wraps does that for each
+  ([Maximo101's second reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)
+  sets out the arithmetic). **13041, the low word, is sound**: it rises by the kilowatt-hours the
+  battery takes. No machine on any other firmware shows it, and every other lifetime total on these
+  three is exact -- `total_direct_energy_consumption` + `total_battery_charge_from_pv` +
+  `total_exported_energy_from_pv` meets `total_pv_generation` to the 0.1 kWh.
 - An earlier capability test was refused because that inverter was key-stopped.
 - The battery firmware string (13280) carries bytes after its NUL, as on
   [P065](firmware-sunstone-h-b000-v002-p065.md).
@@ -38,4 +52,5 @@ update can arrive with nothing in 13250 to show for it
 
 - [SH10RS, B000.V002.P067, brendan, a WiNet-S on Ethernet, capability test refused](../sources/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md)
 - [SH10RS, B000.V002.P067, Maximo101, through a WiNet-S2, read only](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-summary.md)
+- [SH10RS, B000.V002.P067, Maximo101, through a WiNet-S2, second reading](../sources/sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan-2-summary.md)
 - [SH10RS, B000.V002.P067, bigz2012, a WiNet-S2 on Ethernet: the PV cut works on P067](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)

@@ -157,3 +157,9 @@ that fell in the same poll, and every one that had not fallen yet, whether it pa
 That is what says whether a device zeroes its counters together or over several polls -- which
 decides whether a poll can land between two of them and read a day's energy from two different
 days.
+
+**The tracker check reads a voltage, not a string.** It grants the tracker at 50 V in daylight,
+and an unloaded input can drift past that: on an SH10RS `mppt4` reads 39.5 V to 53.6 V at 0.0 A
+while the three live trackers account for the whole of `total_dc_power`. So a *matched* verdict
+on `mppt3` or `mppt4` says the input answers a voltage, and the tracker's current says whether
+anything is on it.
