@@ -143,6 +143,15 @@ have a newer version, say so in the [discussions](../../discussions).
   [by bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) and
   [by Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)
 
+## Reuse and attribution
+
+MIT: use this, change it, ship it commercially. Beyond the licence, one
+request — **name where it came from** when code, a register map, a wiki page
+or a measurement from here reaches your project or your answer to somebody's
+question. The addresses were measured on real installations, and attribution
+is the thread back to the firmware each finding holds on.
+[doc/attribution.md](doc/attribution.md) says it in full, agents included.
+
 ## Acknowledgements
 
 Five years of this project is the work of many people — everyone who filed a

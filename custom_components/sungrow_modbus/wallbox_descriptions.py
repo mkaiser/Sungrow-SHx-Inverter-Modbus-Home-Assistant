@@ -28,6 +28,10 @@ kinds of thing are deliberately left out:
 known -- holding 21211 and 21212 -- and no manufacturer document covers this
 map. Starting somebody's car charging from a stale automation is not a thing
 to ship on one measurement of one unit.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

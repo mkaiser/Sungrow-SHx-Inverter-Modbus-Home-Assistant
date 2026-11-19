@@ -456,6 +456,16 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   2026.11, the minimum), through the preview channel until the merge into
   `main` ([maintainer_setup.md](maintainer_setup.md)), then the catalog.
 - **The brand mark is original**, not Sungrow's.
+- **Attribution is asked, never required.** The licence stays MIT, untouched,
+  with its notice clause as the only binding condition; the ask to name this
+  project is written as a request on the four surfaces that are read at four
+  different moments ([attribution.md](attribution.md),
+  `tests/test_attribution.py`). Dual-licensing the wiki under CC-BY, where
+  credit would be a condition, was weighed and rejected: a second licence to
+  explain would cost more friction for other MIT projects than a condition
+  nobody is going to litigate is worth. The one measure that survives an LLM
+  lifting a snippet is the provenance line in each map's docstring, because an
+  instruction file does not travel with the code.
 
 ## Register sources
 

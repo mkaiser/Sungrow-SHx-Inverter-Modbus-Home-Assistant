@@ -345,6 +345,10 @@ file, and CI checks it. The arithmetic itself lives in
 Each entry names the registers its value reads, which decides both the
 coordinator that writes it — the fastest tier among them, so a derived value
 never lags the sensors it is computed from — and when it is unavailable.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
@@ -636,6 +640,10 @@ Each of these reads and writes one register. The YAML package needed three
 pieces for that — a `template number`, a `modbus.write_register` action and a
 `homeassistant.update_entity` call to see the result — because YAML Modbus has
 no write-then-read. An integration does not.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
@@ -723,6 +731,10 @@ Each is one holding register carrying 0xAA or 0x55. The specification states
 both values for the first three, and the owner of an SH10RT observed both by
 their effect for the fourth -- the `on` and `off` codes travel with the
 description rather than being assumed.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
@@ -800,6 +812,10 @@ file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 Each is one holding register with a fixed set of values. The options and the
 value each one writes come from the same row of the write table as the labels
 in `strings.json`, so a label cannot drift from the value behind it.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
@@ -855,6 +871,10 @@ file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 Each is a time of day the inverter holds in two registers, an hour and a
 minute. One entity per pair, so a schedule reads as times rather than as
 numbers.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
@@ -898,6 +918,10 @@ file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 
 Each is a command register: a press writes one word, and there is no state to
 show, because a command does not read back what was sent.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

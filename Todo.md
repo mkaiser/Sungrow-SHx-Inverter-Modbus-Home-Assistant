@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T065.** Numbers are minted in order, never reused and
+**Next free item number: T066.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -66,6 +66,14 @@ where it said "no runs kept", on a house that may never run a capability test
 -- which is also what *Diagnosis: tests, clear history* now leaves, since it
 keeps the readings.
 *Needs*: the maintainer's call, and a look at a real device page.
+
+**T065. Name the people who answer other people's questions** in the README's
+*Acknowledgements*: the discussions and the issues have a handful of regulars
+who help strangers for nothing, and the list thanks contributors in the
+aggregate only. `gh` can rank who replied most; it cannot tell who replied
+well, and the wrong name added or a right one left out is worse than the
+aggregate.
+*Needs*: the maintainer's call on who belongs there.
 
 # Open decisions
 

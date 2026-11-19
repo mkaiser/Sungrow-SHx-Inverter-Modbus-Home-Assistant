@@ -7,6 +7,10 @@ Each is one holding register carrying 0xAA or 0x55. The specification states
 both values for the first three, and the owner of an SH10RT observed both by
 their effect for the fourth -- the `on` and `off` codes travel with the
 description rather than being assumed.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

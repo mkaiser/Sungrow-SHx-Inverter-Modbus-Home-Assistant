@@ -7,6 +7,10 @@ Each of these reads and writes one register. The YAML package needed three
 pieces for that — a `template number`, a `modbus.write_register` action and a
 `homeassistant.update_entity` call to see the result — because YAML Modbus has
 no write-then-read. An integration does not.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

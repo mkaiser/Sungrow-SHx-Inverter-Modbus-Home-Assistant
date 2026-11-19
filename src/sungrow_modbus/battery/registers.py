@@ -12,6 +12,10 @@ it -- the same protection `registers.py` gets from `tests/test_registers.py`.
 **Not on the inverter's unit.** Which unit the pack answers on depends on the
 transport: 200 over the inverter's own LAN port, 2 through a WiNet-S. See
 `sungrow_modbus.battery.probe_units`.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

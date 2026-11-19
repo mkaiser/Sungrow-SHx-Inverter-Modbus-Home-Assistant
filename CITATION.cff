@@ -1,0 +1,38 @@
+# Machine-readable citation metadata (Citation File Format 1.2.0), so a tool
+# or an agent asked to cite this work has an answer that does not have to be
+# guessed. The request behind it is `doc/attribution.md`.
+#
+# No version or release date: those move through
+# `scripts/release/sync_version.py` and would go stale here unnoticed. Cite
+# the repository, and the commit if you need to be exact.
+cff-version: 1.2.0
+message: >-
+  If you use this software, its register maps, or the measurements in its
+  device wiki, please cite the project.
+title: Sungrow-SHx-Inverter-Modbus-Home-Assistant
+abstract: >-
+  A Home Assistant integration and Python library for Sungrow hybrid
+  inverters, their SBR and SBH batteries, the iHomeManager, the AC wallbox and
+  the SG string inverters over Modbus TCP, directly or through a WiNet-S
+  dongle. Its register maps and its device wiki are measured on real
+  installations and recorded against the firmware each finding holds on.
+type: software
+license: MIT
+authors:
+  - family-names: Kaiser
+    given-names: Martin
+    alias: mkaiser
+    website: https://github.com/mkaiser
+  - name: >-
+      the contributors to Sungrow-SHx-Inverter-Modbus-Home-Assistant
+    website: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/graphs/contributors
+repository-code: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
+url: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
+keywords:
+  - modbus
+  - sungrow
+  - inverter
+  - solar
+  - battery
+  - home-assistant
+  - photovoltaics

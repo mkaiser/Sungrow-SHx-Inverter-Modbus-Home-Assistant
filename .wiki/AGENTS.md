@@ -7,6 +7,10 @@ schema (`@llmwiki/core` 0.1.2), with this project's rules added. The
 repository's hard rules are in the root `AGENTS.md`, and they outrank
 anything here.
 
+Every page here was paid for by somebody's installation. Reusing one names the
+project and links the page, so the next reader can see which firmware the
+finding holds on: `../doc/attribution.md`.
+
 ### Page Types
 
 - **entity**: something that exists and can be measured. A device family

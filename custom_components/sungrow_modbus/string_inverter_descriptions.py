@@ -15,6 +15,10 @@ model lacks, which an SG answers as 0 (`SungrowStringInverter.serves`).
 
 **Nothing is writable.** The power limitation is shown so an owner can see a
 curtailment is set; writing it waits for a watched write.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

@@ -21,6 +21,10 @@ values low word first, which the YAML spells `swap: word` and this spells
 Each class is one poll interval in one register space, because a Component
 reads a single space and the integration gives each interval its own
 coordinator.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

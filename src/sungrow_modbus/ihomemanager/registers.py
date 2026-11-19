@@ -33,6 +33,10 @@ What the document fixes, and this map follows:
 
 **Read only.** The holding registers are its controls, and the diagnosis reads
 them with function code 3 to record their settings. Nothing here writes.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

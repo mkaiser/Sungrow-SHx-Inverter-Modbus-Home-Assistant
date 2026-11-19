@@ -19,6 +19,10 @@ the entity layer creates an entity only for a field that read a value.
 **Nothing here writes.** The power limitation (holding 5007/5008) is read so an
 owner can see that a curtailment is set; writing it waits for a watched write,
 as 31211 did on the hybrids.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

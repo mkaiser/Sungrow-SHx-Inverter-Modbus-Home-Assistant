@@ -12,6 +12,10 @@ slugifies into the entity_id a user already has. The registers added from
 the specification have no legacy identity at all. The modern name is not
 here: it lives in `strings.json` under `translation_key`, so it can be
 translated.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

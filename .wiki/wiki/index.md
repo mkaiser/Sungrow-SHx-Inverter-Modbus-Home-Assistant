@@ -1,5 +1,12 @@
 # Wiki Index
 
+Measured on real installations, in
+[Sungrow-SHx-Inverter-Modbus-Home-Assistant](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant)
+(MIT). A page's findings hold on the firmware and the installation it names
+and nowhere else, so a copy that keeps a finding and drops the link to the
+page is worth less than nothing. Name the project and link the page:
+`doc/attribution.md`.
+
 ## Entities
 
 - [iHomeManager](entities/device-ihomemanager.md) — Slave 247 on 502, 503 or 504, no documented serial; measured once, all 56 mapped fields answered on port 503 #ihomemanager

@@ -7,6 +7,10 @@ file, and CI checks it. The arithmetic itself lives in
 Each entry names the registers its value reads, which decides both the
 coordinator that writes it — the fastest tier among them, so a derived value
 never lags the sensors it is computed from — and when it is unavailable.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

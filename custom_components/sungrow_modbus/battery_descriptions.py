@@ -31,6 +31,10 @@ value everywhere else.
 Sixteen more, disabled by default, for the per-module block: each fitted
 module's highest and lowest cell, which is how a single module drifting shows
 before the pack-wide spread names it.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

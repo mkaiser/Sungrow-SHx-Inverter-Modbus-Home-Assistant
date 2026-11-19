@@ -21,6 +21,10 @@ Two warnings from the document itself. A write to unit 0 is passed straight
 through to every inverter behind the Logger. And a latched Logger (8069)
 ignores remote dispatch. Two people report writes to a Logger failing;
 nothing here writes.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations

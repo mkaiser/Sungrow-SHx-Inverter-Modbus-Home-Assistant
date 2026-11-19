@@ -39,6 +39,10 @@ path; `doc/wallbox_registers.md` has the map of valid starts.
 **Codes stay integers.** The raw code is the field and the meaning is a
 property, the same shape the SBR's packed position words take, so a document
 publishes the number the charger sent beside what it is taken to mean.
+
+From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT),
+where `doc/architecture.md` records which document or measurement each
+register comes from. Keep this line with any copy -- `doc/attribution.md`.
 """
 
 from __future__ import annotations
