@@ -4,10 +4,8 @@
 
 This is the schema of the Sungrow Modbus wiki. It follows llmwiki's starter
 schema (`@llmwiki/core` 0.1.2), with this project's rules added. The
-repository's working notes and **hard rules** are in the root `AGENTS.md`,
-and they outrank anything here: ask before every push, do not hand-edit
-generated files, preserve history in a migration, and **never publish a real
-serial number or address**.
+repository's hard rules are in the root `AGENTS.md`, and they outrank
+anything here.
 
 ### Page Types
 
@@ -95,6 +93,11 @@ keep reading the pages.
 - **Every claim cites its evidence**: a source page link, or a repository
   path in backticks (`src/sungrow_modbus/hybrid_inverter/layout.py`,
   `tests/test_export_scale.py`). A claim with no evidence is a query.
+- **Raw sources are immutable**: `device-diagnosis/results/`,
+  `doc/legacy_entity_map.json` and `raw/`. Read them, cite them, never
+  rewrite them. The `doc/` pages are for people and are edited like any
+  document, which is why the wiki cites its own frozen copy in `raw/` rather
+  than the page itself.
 - **Pages state what is true now.** `log.md` is the only history. When a
   measurement overturns a page, rewrite the page and log the ingest.
 - **Register numbers, not protocol addresses**, unless the text says

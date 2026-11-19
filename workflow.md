@@ -24,6 +24,8 @@ outranks this file.
   verdict. Read the exit code and the test summary.
 - **Say what you did not commit.** Another agent's uncommitted or staged files
   stay out of your commit, and your report names them.
+- **A commit message carries the *why*.** It is the only record of a decision
+  that changed no file.
 
 ## Several agents write here at the same time
 
@@ -56,14 +58,12 @@ idea -- without having to shape it into an item.
 - **Every session reads it first**, as part of reading `Todo.md`, before
   deciding what to work on. It is not optional and not skimmed: an entry there
   outranks the priority order below it.
-- **An agent that takes an entry in either does it or files it**: small enough
-  to do now, do it; otherwise turn it into a numbered item in the right
-  section, with a plan under `plans/` where it needs one.
-- **What is taken in is removed from the inbox in the same edit**, and the
-  session says what it did with each entry. Nothing is left half-taken.
-- **An entry that cannot be acted on stays**, with one line underneath saying
-  what it waits on -- a decision, an answer, hardware -- or it moves to
-  **Open decisions** or **Blockers** as a numbered item.
+- **An agent that takes an entry in either does it or files it** as a numbered
+  item in the right section, with a plan under `plans/` where it needs one,
+  and **removes it from the inbox in the same edit**, saying what it did with
+  it. Nothing is left half-taken. An entry that cannot be acted on stays, with
+  one line underneath saying what it waits on -- a decision, an answer,
+  hardware -- or it moves to **Open decisions** or **Blockers** as an item.
 - **Only the maintainer writes new entries there.** An agent's own note to a
   later session is a numbered item or a plan's status log, never the inbox.
 - It is the one part of `Todo.md` with no sentence limit and no item number.
@@ -135,24 +135,18 @@ Rules:
 
 ## Closing a session
 
-Before you stop -- whether the work is finished or only paused -- do the
-housekeeping, in this order. It takes a few minutes and it is what makes the
-next session cheap.
+Before you stop -- whether the work is finished or only paused -- in this
+order. Every line is a rule from above, where its reasoning is; this is the
+checklist, not a second statement of them.
 
-1. **Write the plans up.** Each plan you touched gets its status log entry:
-   what is done, what is running, what is blocked, what is next.
-2. **Put the knowledge where it is read.** A decision goes to the document
-   that governs it, a measured fact to where the project keeps measured facts,
-   an answered question out of **Open decisions**. A finding that lives only
-   in the conversation is lost.
-3. **Update `Todo.md`.** Close what is done, file what the maintainer's inbox
-   left, add what this session turned up, and raise the next free item number
-   if you minted one.
-4. **Delete what is spent.** A plan whose work is finished, a working file,
-   a handover nobody needs any more.
+1. **Write up every plan you touched**: its status log entry.
+2. **Put the knowledge where it is read.** A finding that lives only in the
+   conversation is lost.
+3. **Update `Todo.md`**, the maintainer's inbox included, and raise the next
+   free item number if you minted one.
+4. **Delete what is spent**: a finished plan, a working file, a stale handover.
 5. **Run the gate** and read its real result.
-6. **Commit your own paths**, with a message that carries the *why* -- it is
-   the only record of a decision that changed no file. Ask before pushing.
+6. **Commit your own paths.** Ask before pushing.
 7. **Report**: what changed, what is uncommitted and why, whose work you left
    standing in the tree, and the one thing you would start next.
 

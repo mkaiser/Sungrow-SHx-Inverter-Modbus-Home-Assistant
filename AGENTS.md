@@ -1,18 +1,20 @@
 # Sungrow Modbus — working notes
 
 The rules, and where everything else is. The rules here outrank every other
-document, the wiki included.
+document, the wiki included. Each rule is written down once; everywhere else
+links to it.
+
+## Where everything is
 
 | What | Where |
 | --- | --- |
 | What we know about Sungrow devices | the wiki: start at `.wiki/wiki/index.md`; its schema and ingest workflow are `.wiki/AGENTS.md` |
+| How the integration is cut up, what one config entry is, the goals, the decisions, the register sources and their licences | `doc/architecture.md` |
 | Dev loop, every script, environment pitfalls | `doc/development.md` (`doc/development.yaml` is the copy-paste runbook) |
-| How the integration is cut up, and why | `doc/architecture.md` |
 | Releasing, hassfest, the Marketplace and the preview channel | `doc/maintainer_setup.md` |
 | Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | How work is written down and how agents share one tree: `Todo.md`, `plans/`, item numbers, commits and pushes | `workflow.md` |
-| Goals, decisions, register sources and licences | `doc/architecture.md` |
 | Recurring procedures (ingest new diagnoses, release, run a diagnosis for a contributor, revise `Todo.md`) | `.claude/skills/`, each pointing at the document it follows; any agent can follow them, not only Claude Code |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
@@ -25,43 +27,61 @@ document, the wiki included.
    the library `src/sungrow_modbus`) — on branch `proper-ha-integration`, an
    MVP that will **supersede** the YAML package.
 
-The integration covers the inverter, the
-[SBR battery](.wiki/wiki/entities/device-sbr-battery.md), the
-[wallbox](.wiki/wiki/entities/device-wallbox.md) (read-only entities, through the
-dongle) and an
-[external generator](.wiki/wiki/concepts/external-generator.md).
-One config entry is **one inverter behind one Modbus endpoint** (host + port),
-plus the devices found on it,
-[identified by what answers](.wiki/wiki/concepts/identify-by-what-answers.md),
-never by unit id. The one exception is a
-[wallbox](.wiki/wiki/entities/device-wallbox.md) found by the network search at
-its own address (TLS, port 516, unit 248): it is an entry of its own, with
-read-only entities and a capability test of its own,
-identified by its own serial, with no inverter beside it. That is the
-preferred way to a wallbox: an inverter entry leaves a wallbox that has its
-own entry out, and only that entry may write to it. The search also
-offers an [iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) or a
-Logger (unit 247) as an entry of its own: an iHomeManager's has read-only
-entities and its diagnosis, a Logger's (never measured) only its diagnosis.
-
-The integration needs Home Assistant **2026.11** or later (`hacs.json`).
-Home Assistant's `modbus` integration (2026.9 on) hands a device integration a
-*unit* (`async_get_unit(...)`), and everything on one host/port shares one
-serialized connection: a Sungrow accepts few sessions. The library has **no
-Home Assistant imports**, one subpackage per device (`hybrid_inverter/`,
-`string_inverter/`, `battery/`, `wallbox/`, ...), and anything that must run without HA (the capability test's
-engine included) lives there. Core's `sofar` integration is the reference
+Which devices an entry covers, what one config entry is, why the library has
+no Home Assistant imports, and the minimum Home Assistant version are all in
+`doc/architecture.md`. Core's `sofar` integration is the reference
 implementation; read its real source (`make refs`), not blog posts.
 
-## How work is written down, and how we share this tree
+## Commands
 
-`workflow.md` carries it, and it binds here: **never `git push` without asking
-the maintainer first, every time**; **commit only the files you changed**, by
-naming them (`git commit -- <your paths>`, never `git add -A`); several agents
-write here at once, so re-read a shared file from disk before every write and
-leave another agent's uncommitted work out of your commit. `Todo.md` is one
-sentence an item, with its plan in `plans/` and its requirements, and items
-carry a `T###` number that is never reused or renumbered.
+`make check` is the CI gate: ruff, pytest (the wiki lint included), mypy and
+`gen-check`. `make quick` is the same without pytest, in seconds, and
+`make hooks` runs it before every commit. `make help` lists every shortcut,
+and `doc/development.md` says what each script behind them does.
+
+## The rules
+
+Each line below is the whole rule; the page beside it is the evidence and the
+how. Read that page before changing code that relies on it.
+
+**Hard constraints.** Broken, each of these costs somebody their house's
+settings, their history or their privacy — silently, and usually without a
+failing test.
+
+| In one line | Page |
+| --- | --- |
+| **No real serial and no address go into anything this repository tracks** — not a diagnosis, a fixture, a docstring, a commit message, a comment or a wiki page. Most of them belong to other people. Stand-ins only, and a stand-in is not consent: ask an owner before publishing their readings | [serial anonymization](.wiki/wiki/concepts/serial-anonymization.md), `tests/test_no_real_serials.py` |
+| **Existing users' history and dashboards are keyed by `entity_id`**: claim the legacy id at entity creation, keep the unit class and `state_class` of the entry you replace, and measure a second inverter's slot rather than guess it | [adopting the legacy entity ids](.wiki/wiki/concepts/legacy-id-adoption.md), [the legacy slot](.wiki/wiki/concepts/legacy-slot.md), `tests/test_recorder_migration.py`, `doc/integration_migration.md` |
+| **The capability test's restore is never budgeted, never deadlined and never skipped**; no snapshot file for a day means no writes that day, and exit 5 is the one code that means a house is left changed | [the restore](.wiki/wiki/concepts/capability-test-restore.md) |
+| **The diagnosis writes only with leave**, a simulator cannot produce a finding, and leg B's scale is hand-typed from V1.1.11 rather than read from `field.scale` | [the capability test](.wiki/wiki/concepts/capability-test.md) |
+| **Never `git push` without asking the maintainer first, every time**, and commit only the paths you changed | `workflow.md` |
+
+**Verified against hardware.**
+
+| In one line | Page |
+| --- | --- |
+| An exception response is an answer; a timeout or a lost connection is not. Probes are three-valued, `None` never reads as `False`, and a test fixture raises the real exception type | [a failed read is not a refusal](.wiki/wiki/concepts/failed-read-is-not-refusal.md) |
+| 13000's `0x0000` is Running, and a dongle re-encodes the codes | [register 13000](.wiki/wiki/entities/register-13000.md) |
+| Addresses are protocol addresses; maps use `reg()`; no literal addresses outside tests | [protocol addresses](.wiki/wiki/concepts/protocol-addresses.md) |
+| Firmware is read before anything decides on it; `CONFIRMED_ON_FIRMWARE` only from a watched write | [firmware gating](.wiki/wiki/concepts/firmware-gating.md) |
+| A dongle's 0, and an all-NUL string, are not evidence of a capability | [zero means absent](.wiki/wiki/concepts/zero-means-absent.md) |
+| A lifetime counter past a million kWh is a broken word, not a reading; one a wrap short is caught by what it contains | [a million kWh is not a reading](.wiki/wiki/concepts/a-million-kwh-is-not-a-reading.md) |
+| 2612 and 2628 send padded frames; add to `layout.py` only from `blocks.py`'s strict measurement | [padded frames](.wiki/wiki/concepts/padded-frames.md) |
+| Few sessions, and 90 s of quiet to recover; a short retry is not a retry | [contention](.wiki/wiki/concepts/contention.md) |
+| 6100 decides transport: not 13265, and not round-trip time | [transport detection](.wiki/wiki/concepts/transport-detection.md) |
+| What a WiNet-S refuses, invents, re-encodes and reads back stale | [WiNet-S](.wiki/wiki/entities/device-winet-s.md) |
+| Sweep unit ids, never trust a port; which units answer depends on transport | [identify by what answers](.wiki/wiki/concepts/identify-by-what-answers.md) |
+| A wallbox is at unit 3 behind a dongle (2 or 4 reported, tried too), or 248 over TLS on 516; over TLS a read starts on a data point's first register | [wallbox](.wiki/wiki/entities/device-wallbox.md) |
+| 13074's write scale is probed per device, never assumed (×10 on B001 firmware, 1:1 on `SAPPHIRE-H_01011.95.03`) | [register 13074](.wiki/wiki/entities/register-13074.md) |
+
+**In the code and the tree.**
+
+| In one line | Where |
+| --- | --- |
+| `PARALLEL_UPDATES` is 1 on the write platforms and 0 elsewhere, because the writes interlock. Never catch `Exception` without a traceback | `doc/architecture.md` |
+| The traps this container sets: `custom_components/` on `PYTHONPATH`, a stale editable install breaking *Add integration*, a noisy first boot that is not a bug | `doc/development.md`, *Pitfalls* and *First boot* |
+| The diagnosis's PEP 723 header is its whole install, so it can use only what the pinned wheel has. Read this before touching `device-diagnosis/scripts/` | `device-diagnosis/reference.md` |
+| The maintainer's inverter details live in their own `secrets.yaml`, never here; use the simulator unless you need real hardware | `doc/development.md`, `doc/development.yaml`'s `real_hardware` |
 
 ## Do not hand-edit
 
@@ -81,9 +101,9 @@ Edit the source, not the output (`workflow.md`). Here that means:
   `generate_second_inverter_config.py`; CI regenerates and commits it,
   overwriting any hand edit.
 
-`make gen-check` (and CI) fails on a hand edit of the first five.
-`pyproject.toml`'s version and `manifest.json`'s pin move only through
-`scripts/release/sync_version.py --set X.Y.Z`.
+`make gen` rewrites them all; `make gen-check` (and CI) fails on a hand edit
+of the first five. `pyproject.toml`'s version and `manifest.json`'s pin move
+only through `scripts/release/sync_version.py --set X.Y.Z`.
 
 **`registers.py` and `sensor_descriptions.py` are source**, held field by
 field to `doc/legacy_entity_map.json` (the record of what the YAML package
@@ -93,152 +113,12 @@ where the test can see it (`layout.COUNTS`, `write_units_per_count`), never
 made silently. `battery_`, `wallbox_` and `external_descriptions.py` are
 source too.
 
-## Commands
-
-| Command | What it does |
-| --- | --- |
-| `make help` | Every shortcut |
-| `make check` | The CI gate: ruff, pytest (wiki lint included), mypy, `gen-check` |
-| `make quick` | The same without pytest, in seconds; `make hooks` runs it before every commit |
-| `make gen` | Rewrite every generated file |
-| `make dev` / `make sim` | HA on :8123 (login `dev`/`dev`) / the simulator on :5020 |
-| `make scan-local HOST=...` | The diagnosis on this tree's library instead of the PyPI pin |
-| `pytest` · `ruff check . && ruff format .` · `mypy` | Tests (no network), lint, `--strict` over the library and the integration |
-
-`doc/development.md` lists every script.
-
 ## The wiki
 
 The wiki is the repository's device knowledge, after
 [microsoft/llmwiki](https://github.com/microsoft/llmwiki). Before working on a
 device question, read `.wiki/wiki/index.md` and the pages it points to.
-
-- **Raw sources are immutable**: `device-diagnosis/results/`,
-  `doc/legacy_entity_map.json` and `.wiki/raw/`. Read, cite, never rewrite.
-  A diagnosis transcript is never one. The `doc/` pages are for people and are
-  edited like any doc; the wiki cites its own frozen copy of one.
-- **Every claim cites its source.** One with none goes into `queries/`.
-- **Ingest is part of the work**: a new diagnosis, capability test or hardware
-  finding updates its pages, the index and `log.md` in the same change.
-  `.wiki/AGENTS.md` has the workflow.
-- **`log.md` is the only place history goes.** Pages state what is true now.
-- **Generated files and code are not wiki pages**; the wiki links to them.
-
-## The capability test writes
-
-Part A of the diagnosis only reads. Part B, the
-[capability test](.wiki/wiki/concepts/capability-test.md), writes each control,
-reads it back against the specification's scale, watches what the inverter
-does, and puts everything back. Non-negotiable:
-
-- **The [restore](.wiki/wiki/concepts/capability-test-restore.md) is never
-  budgeted, never deadlined and never skipped**, and it writes the snapshot's
-  raw word, checked by raw read. The one exception is listed in
-  `RESTORE_EQUIVALENT`: 13017's factory 0, which the register refuses, goes
-  back as `0x55`, which behaves the same. And a control the owner set after a
-  run left its snapshot replaces that register's entry: the owner's value is
-  the one to keep (`write_owner.py`). The snapshot is flushed before the first
-  write. **No snapshot file for a day means no writes that day.** Exit 5 is
-  the one code that means a house is left changed.
-- **While a run writes, the owner's controls refuse** (`write_owner.py`), and
-  stay available: Home Assistant drops a call to an unavailable entity
-  without a word.
-- **Leg B's scale is hand-typed from V1.1.11, never read from
-  `field.scale`.** `tests/test_capability_test.py` makes the two meet.
-- **A simulator cannot produce a finding**, and through a WiNet-S only the
-  behavioural leg is evidence.
-- **The diagnosis writes only with leave**: its last question defaults to no,
-  and a run with nobody at a terminal is a no. In Home Assistant the leave is
-  a press of *Diagnosis: start* in an extended mode. In *Extended test (auto
-  repeat)* it lasts until *Diagnosis: stop*, nothing is left to wait for, or a
-  restart: it is never resumed, though the mode select keeps its choice.
-- **[Register 13074](.wiki/wiki/entities/register-13074.md)'s write scale is
-  probed per device, never assumed** (×10 on B001 firmware, 1:1 on
-  `SAPPHIRE-H_01011.95.03`).
-
-Before touching `device-diagnosis/scripts/`, read
-`device-diagnosis/reference.md`: the PEP 723 header is the diagnosis's whole install,
-and it can use only what the pinned wheel has.
-
-## Things that will bite you
-
-- **A failed read is not a refusal.** In `modbus_connection`,
-  `ModbusExceptionError` is the device answering; a connection lost, a
-  timeout or a desync says nothing about the register. Probes are
-  three-valued, `None` never reads as `False`, and **a test fixture raises
-  the real exception type**, never a bare `ModbusError`.
-- **Never catch `Exception` without a traceback.** Use `_LOGGER.exception`;
-  keep the short form for what a user reads in a dialog.
-- **Never put `custom_components/` on `PYTHONPATH`**: the integration's
-  domain is the library's import name, and HA then reports a circular import
-  far from the cause. `config/custom_components` is a symlink instead.
-- **A stale editable install breaks Add integration** with
-  `RequirementsNotFound`: HA checks the pin against what is installed.
-  `sync_version.py --set` re-installs it.
-- **`PARALLEL_UPDATES` is 1 on the write platforms**, 0 elsewhere; writes
-  interlock (`doc/architecture.md`).
-- **A first boot in a fresh container logs ~20 setup errors** and the UI
-  404s. The next boot is clean. Not a bug.
-
-Verified against hardware; read the page before changing code that relies on it:
-
-| In one line | Page |
-| --- | --- |
-| An exception response is an answer; a timeout or a lost connection is not | [a failed read is not a refusal](.wiki/wiki/concepts/failed-read-is-not-refusal.md) |
-| 13000's `0x0000` is Running, and a dongle re-encodes the codes | [register 13000](.wiki/wiki/entities/register-13000.md) |
-| Addresses are protocol addresses; maps use `reg()`; no literal addresses outside tests | [protocol addresses](.wiki/wiki/concepts/protocol-addresses.md) |
-| Firmware is read before anything decides on it; `CONFIRMED_ON_FIRMWARE` only from a watched write | [firmware gating](.wiki/wiki/concepts/firmware-gating.md) |
-| A dongle's 0, and an all-NUL string, are not evidence of a capability | [zero means absent](.wiki/wiki/concepts/zero-means-absent.md) |
-| A lifetime counter past a million kWh is a broken word, not a reading; one a wrap short is caught by what it contains | [a million kWh is not a reading](.wiki/wiki/concepts/a-million-kwh-is-not-a-reading.md) |
-| 2612 and 2628 send padded frames; add to `layout.py` only from `blocks.py`'s strict measurement | [padded frames](.wiki/wiki/concepts/padded-frames.md) |
-| Few sessions, and 90 s of quiet to recover; a short retry is not a retry | [contention](.wiki/wiki/concepts/contention.md) |
-| 6100 decides transport: not 13265, and not round-trip time | [transport detection](.wiki/wiki/concepts/transport-detection.md) |
-| What a WiNet-S refuses, invents, re-encodes and reads back stale | [WiNet-S](.wiki/wiki/entities/device-winet-s.md) |
-| Sweep unit ids, never trust a port; which units answer depends on transport | [identify by what answers](.wiki/wiki/concepts/identify-by-what-answers.md) |
-| A wallbox is at unit 3 behind a dongle (2 or 4 reported, tried too), or 248 over TLS on 516; over TLS a read starts on a data point's first register | [wallbox](.wiki/wiki/entities/device-wallbox.md) |
-
-## Hard constraint: migration must preserve history
-
-Existing users' recorder history and dashboards are **keyed by `entity_id`**;
-get this wrong and years of history break silently. The mechanism is
-asserted in `tests/test_recorder_migration.py`, explained in
-[adopting the legacy entity ids](.wiki/wiki/concepts/legacy-id-adoption.md)
-and [the legacy slot](.wiki/wiki/concepts/legacy-slot.md), and the user's guide
-is `doc/integration_migration.md`.
-
-- **Claim the legacy `entity_id` at entity creation.** A rename onto an id the
-  recorder already knows is refused, with only a log line.
-- **Every ported entity keeps the unit class and `state_class`** of the YAML
-  entry it replaces, or long-term statistics freeze flat.
-- **A second inverter's slot is measured, never guessed, and `None` is not
-  `""`.** A slot that could not be answered claims no legacy ids.
-- **The `_inv_<n>` suffix goes on the name, not the id**, and the serial
-  lookup uses platform `modbus`.
-
-## Hard constraint: a real serial number is never published
-
-**No real device serial or address goes into anything this repository
-tracks**: not a diagnosis, a fixture, a docstring, a commit message, a comment or
-a wiki page. Most of them belong to other people.
-
-- Published documents carry the stand-in `serial_anonymized_hashed`; the
-  real serial reaches only the gitignored transcript.
-- `tests/test_no_real_serials.py` matches the shape of a serial over every
-  tracked file, `.wiki/` included. In tests use `A123456789` (and
-  `A987654321` where two must differ); in prose, the stand-in a device's
-  diagnoses publish. A serial can also hide as register words in a fixture,
-  which the shape test misses.
-- A document carries `ip_address_last_two_octets` only with its owner's
-  consent; the wiki carries no address (`tests/test_wiki.py`).
-- A stand-in serial is not consent: ask an owner before publishing readings.
-
-How: [serial anonymization](.wiki/wiki/concepts/serial-anonymization.md).
-
-## Local-only context
-
-The maintainer's inverter details live in their own `secrets.yaml`
-(`sungrow_modbus_host_ip`, `sungrow_modbus_device_address`), never here. Use
-the simulator on `localhost:5020` unless you need real hardware. The
-container reaches a LAN inverter outbound with no setup; multicast does not
-cross the bridge, so mDNS runs on the host (`real_hardware` in
-`doc/development.yaml`).
+**Ingest is part of the work**: a new diagnosis, capability test or hardware
+finding updates its pages, the index and `log.md` in the same change. The
+rest — what counts as evidence, which sources are immutable, naming, the lint
+— is `.wiki/AGENTS.md`.

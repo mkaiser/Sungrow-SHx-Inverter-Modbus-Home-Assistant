@@ -374,6 +374,10 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   id.
 - **Nothing is removed from an existing install silently.** Capabilities grow
   an entry by reloading; they never remove an entity.
+- **Never catch `Exception` without a traceback.** `_LOGGER.exception` says
+  where it came from; a bare message costs the one piece of evidence a bug
+  report carries. The short form is for what a user reads in a dialog, which
+  is never the only place the failure is recorded.
 
 ## Decisions
 

@@ -1,0 +1,95 @@
+"""Every rule is written down once.
+
+`AGENTS.md` is the index of the rules: each line there is the whole rule, and
+beside it the one document that carries the evidence and the how. A rule
+copied into a third document drifts from the other two, and an agent then
+obeys whichever copy it happened to read.
+
+So each marker phrase below may appear in `AGENTS.md` -- which states the
+rule -- and in the document that owns it, and nowhere else among the
+hand-written documents. If this test fails, the fix is a link to the owner,
+not a third copy.
+
+Excluded, because they are history or frozen evidence rather than rules:
+`.wiki/raw/` and `device-diagnosis/results/` (immutable sources),
+`.wiki/wiki/log.md` (the only place wiki history goes), and `plans/`, whose
+files are working documents deleted when their work is done.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+import subprocess
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+
+INDEX = "AGENTS.md"
+
+# marker phrase -> the document that owns the rule, relative to the root.
+OWNERS: dict[str, str] = {
+    "git add -A": "workflow.md",
+    "20 setup errors": "doc/development.md",
+    "PYTHONPATH": "doc/development.md",
+    "catch `Exception`": "doc/architecture.md",
+    "never budgeted": ".wiki/wiki/concepts/capability-test-restore.md",
+    "snapshot file for a day": ".wiki/wiki/concepts/capability-test-restore.md",
+    "at entity creation": ".wiki/wiki/concepts/legacy-id-adoption.md",
+    "ip_address_last_two_octets": ".wiki/wiki/concepts/serial-anonymization.md",
+}
+
+EXCLUDED_PREFIXES = (
+    ".wiki/raw/",
+    ".wiki/wiki/log.md",
+    "device-diagnosis/results/",
+    "plans/",
+    "tests/",
+)
+
+# A rule may also be quoted where it is carried out rather than stated: a
+# procedure the maintainer follows, or a wiki page citing the code's
+# behaviour in evidence for something else.
+ALLOWED_ELSEWHERE: dict[str, frozenset[str]] = {
+    "ip_address_last_two_octets": frozenset({"device-diagnosis/reference.md"}),
+}
+
+
+def _documents() -> list[str]:
+    """Every tracked `.md` file that states rules, newest checkout or not."""
+    out = subprocess.run(
+        ["git", "ls-files", "-z", "*.md"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        check=True,
+    ).stdout
+    return sorted(
+        name
+        for name in out.split("\0")
+        if name and not name.startswith(EXCLUDED_PREFIXES)
+    )
+
+
+@pytest.mark.parametrize("phrase", sorted(OWNERS))
+def test_a_rule_lives_in_its_index_and_its_owner_only(phrase: str) -> None:
+    owner = OWNERS[phrase]
+    allowed = {INDEX, owner} | set(ALLOWED_ELSEWHERE.get(phrase, frozenset()))
+
+    found = {
+        name
+        for name in _documents()
+        if phrase in (ROOT / name).read_text(encoding="utf-8", errors="ignore")
+    }
+
+    assert owner in found, (
+        f"{owner} no longer states the rule marked by {phrase!r}. "
+        "Either it moved, in which case update OWNERS, or it was lost."
+    )
+
+    strays = sorted(found - allowed)
+    assert not strays, (
+        f"{phrase!r} is a rule owned by {owner}, and is repeated in: "
+        f"{', '.join(strays)}. Link to {owner} instead of restating it "
+        f"(AGENTS.md, 'Each rule is written down once')."
+    )
