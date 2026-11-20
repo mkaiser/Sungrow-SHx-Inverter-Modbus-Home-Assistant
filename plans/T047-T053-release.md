@@ -18,15 +18,19 @@ integration. Of the 38 files on today's `main` (`doc/images/` and
 `LICENSE`, `README.md`, `doc/attribution.md`. The rest 404 from every
 link ever written, `modbus_sungrow.yaml` included, and so do the two
 links printed in the header of every installed copy of the package:
-`doc/installation.md` and `doc/migration_guide.md`.
+`doc/installation.md` and `doc/migration_guide.md`. Those two 404s are
+accepted (the maintainer, 2026-11-20), because the line above them in the
+same header -- `From github.com/mkaiser/...`, added with T066 -- lands a
+reader at the repository, whose README carries the move.
 
 GitHub's branch-rename redirect does not help. It applies to links naming
 the *old* name, only while no branch of that name exists, and a real
 `main` shadows it at once; raw links never follow it. The only way to
 control what a `main` link finds is a file at that path.
 
-Decided (the maintainer, 2026-11-20): today's `main` becomes `yaml-2026`;
-`2025-legacy` keeps its name; **one** path gets a file on the new `main`,
+Decided (the maintainer, 2026-11-20): today's `main` becomes
+`2026-legacy`, pairing with `2025-legacy`, which keeps its name and holds
+the pre-2026 line; **one** path gets a file on the new `main`,
 `modbus_sungrow.yaml`, and everything else 404s. A re-download then stops
 a working install until its owner reads the file -- accepted, as the
 price of retiring the package. Tag the final state
@@ -41,8 +45,8 @@ the only path still answering:
 ```yaml
 # modbus_sungrow.yaml has moved, and is superseded.
 #
-# The YAML package is on the yaml-2026 branch:
-#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/yaml-2026/modbus_sungrow.yaml
+# The YAML package is on the 2026-legacy branch:
+#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/modbus_sungrow.yaml
 # Its installation and migration guides moved with it, under doc/ there.
 #
 # What replaces it is the Sungrow Modbus integration, on this branch:

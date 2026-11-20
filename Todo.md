@@ -371,7 +371,7 @@ entries made while it was offered.
 
 **T068. What a `main` link finds after the merge** --
 [plan](plans/T047-T053-release.md), which has the decision and the file to
-commit. Today's `main` becomes `yaml-2026`, `2025-legacy` keeps its name, and
+commit. Today's `main` becomes `2026-legacy`, `2025-legacy` keeps its name, and
 of the 38 paths on today's `main` exactly one gets a file on the new `main`:
 `modbus_sungrow.yaml`, comments only, saying the package moved and is
 superseded. Everything else 404s, GitHub's rename redirect cannot change that,
