@@ -35,11 +35,11 @@ be tested with is `doc/capability_tests.md`. Left:
     Assistant on 2026-11-15 (0.1.0a40, three runs, 26 of 53 checks
     settled, 0 failed); its diagnostics download is kept locally and is
     **still to ingest**, and the history was cleared for a fresh start.
-    The dev instance's collection was re-armed and has run since
-    2026-11-16. Read on 2026-11-19 it stands at **35 of 54** established
-    (22 of 31 on the write side, 13 of 23 plausibility), and what it is
-    still waiting for says what the collection needs rather than what the
-    code owes:
+    The dev instance's collection has run since 2026-11-16, re-armed
+    2026-11-19 21:30 CET on `e8f1c84`. Read after that night's midnight it
+    stands at **37 of 55** established (22 of 31 on the write side, 15 of
+    24 plausibility), 0 failed, and what it is still waiting for says what
+    the collection needs rather than what the code owes:
       - **export power limit** -- "export, or a battery to discharge into
         the grid"; **charge ceiling** -- "the battery charging, above
         55 %"; **upper bound of `battery_min_soc`** -- "the battery above
@@ -51,11 +51,12 @@ be tested with is `doc/capability_tests.md`. Left:
         `forced_charge_discharge_power`, `charging_start_power`,
         `discharging_start_power`) -- each "a run", so auto repeat takes
         them as budget frees;
-      - **ten plausibility checks**, which no run can force: three want
+      - **nine plausibility checks**, which no run can force: three want
         three kilowatt-hours of flow (daily exported, battery charge,
-        battery discharge), five want 2 kWh on a daily counter, "battery
-        level follows its power" wants 1 kWh through the pack, and "daily
-        counters reset at midnight" wants a midnight (T017).
+        battery discharge), five want 2 kWh on a daily counter, and
+        "battery level follows its power" wants 1 kWh through the pack.
+        *Daily counters reset at midnight* and *lifetime battery counters
+        contain each other* are answered (wiki: eight in one poll).
     So a re-armed auto repeat **will** want writing runs again -- there is
     real work left, which is worth knowing before parking it;
   - **anything on a WiNet-S beyond one run**, and any T-series cable.
@@ -81,9 +82,13 @@ be tested with is `doc/capability_tests.md`. Left:
      (`continuous_runs_started` 0 throughout), with the status line
      reading *waiting for changed test conditions: waiting for the
      inverter to run*. The inverter stirred once by itself at 22:48 for
-     fifteen seconds and that was not enough to open a slot either. The other half did not show: *Diagnosis: next
-     attempt* stayed `unknown` with the reason only in its `waiting_for`
-     attribute, because what it waits on is a condition and not a slot.
+     fifteen seconds and that was not enough to open a slot either. **The
+     night of 2026-11-19 to 11-20 repeated it**: zero runs from 21:30 to
+     00:25 CET, battery at 0 %, the same status line (wiki: eight in one
+     poll). So that half is measured twice and settled. The other half
+     still did not show: *Diagnosis: next attempt* stayed `unknown` with
+     the reason only in its `waiting_for` attribute, because what it waits
+     on is a condition and not a slot.
      Decide whether that sensor should name a time at all when nothing is
      scheduled, or say what it is waiting for in its state. Runs are kept
      with no cap, so a long collection grows the stored ledger and the
@@ -115,3 +120,9 @@ be tested with is `doc/capability_tests.md`. Left:
      together in the order `doc/entity_names.md` shows (the frontend's
      collation was not checked in the container), and that the
      counters read sensibly after a day's runs.
+
+## Status log
+
+| When | Status |
+| --- | --- |
+| 2026-11-20 | **The night ran and T017 is answered.** Home Assistant was restarted at 21:29 CET on 2026-11-19 so that `e8f1c84`'s revision-2 midnight check was loaded, and auto repeat re-armed at 21:30 (the leave never survives a restart). At the inverter's midnight **eight daily counters fell to zero in one poll**, none standing: the reset is atomic here, which is what T017 asked, and the row that had failed three nights on Home Assistant's UTC clock now passes. `lifetime battery counters contain each other` settled too, 175 passes, the first time anywhere; the house stands at **37 of 55, 0 failed**, 11 runs kept. Ingested as `.wiki/raw/mkaiser-midnight-reset-answered-2026-11-20.md` with its source page, the SH-RT, P020, mkaiser and capability-test pages, the index and `log.md`. **Zero runs started for the second night running** (battery 0 %, low-SoC Standby), so item 4.1's lower half is settled and only the *Diagnosis: next attempt* wording is left. The collection is still armed and observing; nothing here is uncommitted. What it waits on now is a **charged battery**, for the nine write-side rows, and a dusk for `TWO_MOMENTS`. |

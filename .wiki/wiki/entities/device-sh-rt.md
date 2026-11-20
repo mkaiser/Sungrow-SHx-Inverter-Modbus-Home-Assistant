@@ -43,6 +43,12 @@ the integration knows was measured on these.
 - **Inverter-reported load misses another generator.** `load_power` is the
   inverter's own output plus grid import; see
   [external generator](../concepts/external-generator.md).
+- **The daily counters reset together**, at the inverter's own midnight: eight of them fell to
+  zero in one one-minute poll on an SH10RT on P020, with none left standing
+  ([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)). One
+  device, one reset, so a staggered reset elsewhere is not ruled out -- which is why
+  `daily_consumed_energy` keeps its floor at zero
+  (`src/sungrow_modbus/hybrid_inverter/derived.py`).
 
 ## Diagnoses
 

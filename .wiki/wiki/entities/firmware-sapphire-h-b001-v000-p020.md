@@ -27,6 +27,11 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
   read back ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).
   The same holds on [P023](firmware-sapphire-h-b001-v000-p023.md)
   ([peter-sm](installation-peter-sm.md)).
+- **The eight daily counters reset in one poll**, at the inverter's own midnight and to zero, with
+  none left standing: `pv_generation` 4.9, `imported_energy` 12, `exported_energy` 0.2,
+  `battery_charge` 1.8, `battery_discharge` 1.6, `exported_energy_from_pv` 0.2,
+  `battery_charge_from_pv` 1.5 and `direct_energy_consumption` 3.2, each to 0 at mkaiser
+  ([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)).
 - **The plausibility checks match**: power balance (median 0.828), tracker V×I (0.934), the meter's
   phases (0.999) and the meter against export (1.000), over 67 observations at mkaiser
   ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).

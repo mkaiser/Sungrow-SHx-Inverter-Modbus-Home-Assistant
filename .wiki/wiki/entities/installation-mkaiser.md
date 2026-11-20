@@ -94,8 +94,22 @@ inverter's clock, against 4.4 to 0 at 00:04 the night before. So this inverter's
 reset on time and to zero, measured twice
 ([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
 **The check judges on the inverter's clock since 2026-11-19**, and raising its revision drops
-what it judged by the old one, so the row clears itself here without the ledger being touched
-([the capability test](../concepts/capability-test.md)).
+what it judged by the old one, so the row cleared itself here without the ledger being touched
+([the capability test](../concepts/capability-test.md)). At the next midnight it **passed, and
+answered what the first two nights could not**: eight daily counters fell to zero in the same
+one-minute poll -- `pv_generation` 4.9, `imported_energy` 12, `exported_energy` 0.2,
+`battery_charge` 1.8, `battery_discharge` 1.6, `exported_energy_from_pv` 0.2,
+`battery_charge_from_pv` 1.5, `direct_energy_consumption` 3.2 -- with none left standing, at
+00:09 by the inverter's clock against 23:09 by Home Assistant's. So **this inverter resets its
+daily counters in one step**. The day before had put 12 kWh through the meter, which is what gave
+the reset eight counters to lose where the earlier nights had only one
+([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)).
+`lifetime battery counters contain each other` settled in the same stretch, 175 passes and no
+failure, the first time anywhere, and its first field being read on that boot is what moved the
+house's total from 54 checks to 55. It now stands at **37 of 55, none failing**: fewer than the
+39 below, because the bound checks' own revision was raised on 2026-11-17 and six
+`upper bound of ...` rows went back to waiting with it, each needing a charged battery
+([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)).
 Beside it, the two checks that wait for **a day of polls** reached their minimum here, the first
 time either has anywhere: over 1470 observations spanning 30 hours, `lifetime counters never fall`
 passed on 1464 judged steps with none going backwards, and `running states` passed on four codes,

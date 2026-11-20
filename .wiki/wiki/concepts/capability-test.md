@@ -240,14 +240,18 @@ difference between the two recorded a clean reset at the inverter's 00:04 as a f
 ([the midnight reset](../sources/mkaiser-midnight-reset-2026-11-17-summary.md)). **It is judged on
 the inverter's clock now**, from the six `system_clock_*` fields the `clock` component already
 polls, and the sentence prints both readings where they differ -- two measured times rather than
-an offset, which a clock read every 600 s would understate.
+an offset, which a clock read every 600 s would understate. **On the corrected check the same
+house passes**, at the first midnight after the restart that loaded it
+([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)), so no
+readings check is failing anywhere.
 
 **A failed readings check keeps judging, and cannot recover.** `EventCheck.observe` appends each
 *distinct* failure sentence and keeps the last five, while `verdict()` returns the failure for as
-long as any is held, whatever `passes` reaches. The midnight check at mkaiser's shows what that
+long as any is held, whatever `passes` reaches. The midnight check at mkaiser's showed what that
 costs when the cause recurs: a second night added a second sentence, because each carries that
-day's kWh figure, and the row will take one more every night
-([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)).
+day's kWh figure, and the row took one more every night
+([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)). Only the
+revision below cleared it, which is the point of carrying one.
 
 **A readings check carries a revision of its own**, since 2026-11-19 and the clock fix.
 `CHECK_REVISIONS` in `src/sungrow_modbus/capability_test/plausibility.py` -- not the table of the
@@ -276,8 +280,12 @@ reset and some not read a day's energy as a deep negative on the YAML package
 ([#708](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/708),
 [#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797)). The
 integration holds that sum at zero, so the answer no longer changes what a user sees -- it says
-whether the device has the behaviour at all. **Unmeasured so far**: the two nights observed at
-mkaiser's named only `daily_pv_generation`, so neither atomic nor staggered is established.
+whether the device has the behaviour at all. **Measured, and atomic on the one device that has
+answered**: at mkaiser's, eight daily counters fell to zero in the same one-minute poll with none
+left standing, on a day that had put 12 kWh through the meter and so had eight counters to lose
+([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)). The
+clamp stays: it is the floor under that sum at every house, including the ones nobody has
+observed.
 
 **A tracker check has now answered on a second house, and answered wrong.** At
 [Maximo101](../entities/installation-maximo101.md)'s SH10RS both `mppt3 carries a string` and

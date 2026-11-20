@@ -1909,3 +1909,18 @@ Beside them, from the same session: the managed wallbox's user current is now bo
 rating the wallbox reports at input 21263 rather than a flat 32 A, and
 [the restore](wiki/concepts/capability-test-restore.md) carries the rule a watch broke on
 2026-11-17 -- a restore that depends on a credential which can expire is not a restore.
+
+## [2026-11-20] ingested | the daily counters reset in one step
+
+`.wiki/raw/mkaiser-midnight-reset-answered-2026-11-20.md`, the third night of auto
+repeat at mkaiser's SH10RT on P020 and the first on the corrected midnight check.
+**Eight daily counters fell to zero in the same one-minute poll**, none left
+standing, at 00:09 by the inverter's clock against 23:09 by Home Assistant's: this
+inverter resets them in one step, which is what T017 asked. The check passes where
+three nights had failed on a clock, and the row cleared itself when its revision
+rose rather than needing the ledger wiped. `lifetime battery counters contain each
+other` settled in the same stretch, 175 passes, the first time anywhere. A second
+night of auto repeat in low-SoC Standby started zero runs, as designed
+([eight in one poll](wiki/sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md),
+[the capability test](wiki/concepts/capability-test.md),
+[SH-RT](wiki/entities/device-sh-rt.md), [mkaiser](wiki/entities/installation-mkaiser.md)).

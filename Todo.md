@@ -99,7 +99,7 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
-**At the maintainer's SH10RT** (T001, T002, T007, T017) one instance serves
+**At the maintainer's SH10RT** (T001, T002, T007) one instance serves
 them all: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
 a restart costs an armed auto repeat). Its entities are prefixed
@@ -130,18 +130,11 @@ house that refuses 5214 (T046).
 maintainer's SH10RT**, then ingest -- the new checks on hardware, the
 auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
 names on a real device page -- [plan](plans/T007-diagnosis-and-capability-tests.md).
-*Needs*: the run started and left alone -- armed since 2026-11-16 and
-collecting, 35 of 54 established on 2026-11-19, what is left in the plan. The
+*Needs*: a **charged battery**, which is what the nine write-side rows left
+waiting all ask for, and a dusk for `ledger.TWO_MOMENTS`; the collection is
+armed and observing, 37 of 55 established and none failing. The
 forced-startup mode on other firmware is T063, which this house cannot
 answer.
-
-**T017. One midnight at the maintainer's SH10RT on 0.1.0a44 or later**,
-which answers whether the inverter resets its daily counters in one step --
-[plan](plans/T017-daily-counter-reset.md).
-*Needs*: the development instance observing over a midnight -- T007's
-collection is doing it, and its *daily counters reset at midnight* check
-still reads "needs a midnight". Its clock no longer matters: the check reads
-the inverter's own (T016).
 
 **T025. The site import limit (32998) at fwitten's master, when it is
 reachable** (SH10RT-V112, P023, SBR096, cable -- ulfben's exact hardware,
