@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Field tools for a wallbox an inverter manages: watch it, and switch its charge.
 
-What `plans/T003-T004-wallbox_tests.md` (sections 5 and 6) runs on site or
+What `plans/T003-T004-T020-T039-T040-T059-wallbox.md` (sections 8 and 9) runs on site or
 over a VPN, on this tree's library. Every command reads only, except
 `charge`, which writes the inverter's EV charger block, watches the car, and
 puts back the snapshot it flushed to disk first, checked by read. Nothing

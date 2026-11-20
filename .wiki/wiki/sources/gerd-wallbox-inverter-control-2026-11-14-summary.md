@@ -45,7 +45,7 @@ What did not answer: what energy purchase (33550) changes in a session (a minimu
 quantity-and-time mode (162), not tried.
 
 Two writes of 21203 on the wallbox itself were made in breach of the
-stop on wallbox writes then in force (its rules are now `plans/T003-T004-wallbox_tests.md`, section 3) (only 21203, nothing under 6 A, no enable and no
+stop on wallbox writes then in force (its rules are now `plans/T003-T004-T020-T039-T040-T059-wallbox.md`, section 2) (only 21203, nothing under 6 A, no enable and no
 start/stop); both were overwritten by the inverter and put back.
 
 What it changed: the wallbox [capability test](../concepts/capability-test.md) now writes nothing

@@ -63,7 +63,7 @@ be tested with is `doc/capability_tests.md`. Left:
   The night re-check and the plausibility checks need one auto-repeat
   collection at the maintainer's SH10RT over a day and a night, which
   may catch a slow PV charge for the threshold too; then ingest. The
-  wallbox's tests are planned in `plans/T003-T004-wallbox_tests.md`.
+  wallbox's tests are planned in `plans/T003-T004-T020-T039-T040-T059-wallbox.md`.
 3. **Outside the repository**: issue #786's title still says survey, and
   the repository variable `SURVEY_ISSUE` keeps its name.
 4. **Capability test runs over a day.** Home Assistant folds every run

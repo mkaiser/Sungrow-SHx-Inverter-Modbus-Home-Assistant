@@ -58,4 +58,4 @@ Register numbers here; the raw note gives protocol addresses, one lower.
 Nothing in `src/` or `custom_components/` yet. The managed test's restore (`src/sungrow_modbus/wallbox/managed_test.py`) needs to wait for the inverter to settle after a mode change and check the car again after that, or it reports a house back that is not. For the inverter's EV charger controls
 (`src/sungrow_modbus/hybrid_inverter/ev_charger.py`): a *Wallbox charge mode* change to or from user defined
 ends a charging session, and charging on has to follow it, as the select already writes. `Todo.md` (Wallbox
-item 3) and `plans/T003-T004-wallbox_tests.md` are updated with what is left.
+item 3) and `plans/T003-T004-T020-T039-T040-T059-wallbox.md` are updated with what is left.

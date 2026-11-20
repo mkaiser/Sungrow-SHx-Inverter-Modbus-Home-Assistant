@@ -25,5 +25,5 @@ What is known at [gerd](../entities/installation-gerd.md):
 
 What would answer it: read the inverter's holding 33501-33600 during a one-phase session (PV
 surplus, energy purchase off, a small surplus, the battery above its minimum) and compare with the
-three-phase baseline of 2026-11-14 (`plans/T003-T004-wallbox_tests.md`, test 5). If 33538 or 33539 moves
+three-phase baseline of 2026-11-14 (`plans/T003-T004-T020-T039-T040-T059-wallbox.md`, section 9, test 5). If 33538 or 33539 moves
 then, it reports the phases rather than sets them, as far as writes have shown.

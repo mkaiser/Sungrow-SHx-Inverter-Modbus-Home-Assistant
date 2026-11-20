@@ -157,7 +157,8 @@ def mode_writes(mode: int, *, charge: bool) -> list[tuple[int, int]]:
     user-defined mode while charging ended the session too, and the inverter
     switched its word off up to 16 s after a mode change, so charging on
     written straight after the mode can be overwritten. A watched run from
-    Home Assistant decides the change (`plans/T003-T004-wallbox_tests.md`, section 7).
+    Home Assistant decides the change
+    (`plans/T003-T004-T020-T039-T040-T059-wallbox.md`, section 10).
     """
     if mode not in MODES:
         raise ValueError(f"{mode} is not a charging mode")
