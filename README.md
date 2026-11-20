@@ -77,6 +77,7 @@ If available on your inverter, connect the inverter to the Home Assistant networ
 - [Changelog](doc/changelog.md)
 - [Usage Instructions](doc/usage.md)
 - [FAQ](doc/faq.md)
+- [Reuse and attribution](doc/attribution.md)
 
 # 3. Support
 
@@ -150,3 +151,14 @@ If you have any questions, feature requests, found any bugs or have some hints h
 # 9. Acknowledgements
 
 **Thanks to all the people, who are actively contributing to this project! Special thanks to Gnarfoz, Louisbertelsmann, dylan09, elektrinis and many more!**
+
+# 10. Reuse and attribution
+
+MIT: use this, change it, ship it commercially. Beyond the licence, one
+request — **name where it came from** when a register, a sensor definition, a
+dashboard or a measurement from here reaches your project or your answer to
+somebody's question. The addresses were mostly not read off a datasheet: they
+were measured on real installations, by their owners, and attribution is the
+thread back to the firmware each finding was tested on.
+[doc/attribution.md](doc/attribution.md) says it in full, agents included, and
+`modbus_sungrow.yaml` carries the one line it asks you to keep.
