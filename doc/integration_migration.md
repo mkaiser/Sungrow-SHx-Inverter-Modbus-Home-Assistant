@@ -238,6 +238,9 @@ Open the integration's options and change **Entity IDs**. The next page says
 how many entities move and where, before anything does; nothing is copied and
 nothing is deleted, and the names, areas and settings you gave the entities
 go with them.
+This is also the way onto the YAML package's IDs when your entities came up on
+device-scoped ones although you meant to migrate -- such as
+`sensor.<area>_<device>_load_power` where you had `sensor.load_power`.
 
 - **To device-scoped IDs**, each entity is renamed and its history and
   statistics move with it.

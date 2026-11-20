@@ -533,6 +533,17 @@ def async_claim_legacy_ids(
             suggested_object_id=legacy_id.split(".", 1)[1],
             config_entry=entry,
         )
+        if created.entity_id != legacy_id and _async_free(hass, registry, legacy_id):
+            # The registry brought back an entry this unique id had before:
+            # an earlier entry for the same inverter, set up on device-scoped
+            # ids and deleted, leaves its id in `deleted_entities`, and that id
+            # wins over `suggested_object_id` (#798). The owner asked for the
+            # YAML package's id this time, and it is free, so move the entry
+            # there. Rows recorded under the device-scoped id stay where they
+            # are; the recorder refuses to merge them into the legacy id's.
+            created = registry.async_update_entity(
+                created.entity_id, new_entity_id=legacy_id
+            )
         if created.entity_id != legacy_id:
             # The id was taken after all. Leaving the entry behind would ship
             # the `_2` suffix this whole mechanism exists to avoid, so drop it
@@ -548,6 +559,16 @@ def async_claim_legacy_ids(
         claimed.append(legacy_id)
 
     return claimed
+
+
+@callback
+def _async_free(
+    hass: HomeAssistant, registry: er.EntityRegistry, entity_id: str
+) -> bool:
+    """Whether nothing holds `entity_id`: no registry entry and no live state."""
+    return not registry.async_is_registered(entity_id) and not _async_provided(
+        hass, entity_id
+    )
 
 
 @callback

@@ -48,7 +48,11 @@ from homeassistant.components.recorder.util import session_scope
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import (
+    area_registry as ar,
+    device_registry as dr,
+    entity_registry as er,
+)
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
@@ -248,6 +252,40 @@ async def test_modern_to_legacy_continues_the_yaml_history(
     assert _states(hass, start, LEGACY_ID)[:2] == ["1000.0", "1002.0"]
     assert _states(hass, start, LEGACY_ID)[-1] == "1003.0"
     assert MODERN_ID in _meta(hass)
+
+
+async def test_modern_to_legacy_from_ids_with_an_area_in_them(
+    hass: HomeAssistant,
+    recorder: None,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """#798: a device in an area, its ids recreated with the area in front.
+
+    That is what Home Assistant builds once the device has an area, and the
+    switch to legacy ids still takes them -- they are the ids the integration
+    gave, not ones the owner typed.
+    """
+    _yaml_package_was_here(entity_registry)
+    entry = await _setup(hass, sungrow_unit, ENTITY_IDS_NEW)
+    area = ar.async_get(hass).async_create("Keller Waschküche")
+    devices = dr.async_get(hass)
+    device = devices.async_get_device_by_identifier((DOMAIN, SERIAL), entry.entry_id)
+    assert device is not None
+    devices.async_update_device(device.id, area_id=area.id)
+    current = _where(entity_registry)
+    assert current is not None
+    recreated = entity_registry.async_regenerate_entity_id(
+        entity_registry.async_get(current)
+    )
+    entity_registry.async_update_entity(current, new_entity_id=recreated)
+    assert (
+        _where(entity_registry) == "sensor.keller_waschkuche_sh10rt_total_pv_generation"
+    )
+
+    await _switch(hass, entry, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    assert _where(entity_registry) == LEGACY_ID
 
 
 async def test_legacy_to_modern_moves_the_series_and_drops_the_raw_sensors(

@@ -1947,3 +1947,9 @@ The last hour at gerd's ([the source](sources/gerd-wallbox-2026-11-20-test4-summ
 `raw/gerd-wallbox-2026-11-20-test4.md`): the window's start switches charging on; the window takes a write only in
 mode 163 as one four-word write; the block put back as found. Test 4 did not run (the car unplugged).
 `entities/device-wallbox.md` updated.
+
+## [2026-11-20] updated | legacy-id-adoption
+
+#798: a re-added entry's entity ids come back from the registry's deleted entities ahead of the claim's
+`suggested_object_id`; the claim now renames onto a free legacy id. Area-prefixed device-scoped ids still
+switch to legacy ids. [Adopting the legacy entity ids](concepts/legacy-id-adoption.md).

@@ -120,6 +120,29 @@ async def test_migrate_mode_claims_the_legacy_id(
     assert _entity_id(entity_registry, "total_pv_generation") == LEGACY_ID
 
 
+async def test_migrating_after_a_deleted_new_entry_still_claims_the_legacy_id(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """#798: an entry set up on new ids and deleted does not decide the next one.
+
+    Deleting an entry leaves its entities in the registry's deleted entities,
+    and Home Assistant hands a re-created unique id its old entity id back,
+    ahead of `suggested_object_id`. The owner asked for the YAML package's id
+    this time, and it is free, so it is the one they get.
+    """
+    _register_yaml_package(entity_registry)
+    first = await _setup(hass, sungrow_unit, ENTITY_IDS_NEW)
+    assert _entity_id(entity_registry, "total_pv_generation") == MODERN_ID
+    assert await hass.config_entries.async_remove(first.entry_id)
+    await hass.async_block_till_done()
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    assert _entity_id(entity_registry, "total_pv_generation") == LEGACY_ID
+
+
 async def test_new_mode_leaves_the_legacy_id_alone(
     hass: HomeAssistant,
     sungrow_unit: MockModbusUnit,

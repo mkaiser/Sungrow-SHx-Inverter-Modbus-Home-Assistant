@@ -83,13 +83,19 @@ diagnosis (T005, T006, T042).
 ## Integration and tooling
 
 **T071. A migration that did not claim the legacy entity ids**
-([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): an SH10RT-V112 on
-P020, on its LAN port through a Modbus proxy, the YAML package of 2026-03-09 disabled first; the integration came
-up on the new ids (`sensor.<device>_load_power` for `sg_load_power`), and *Total DC power* was missing. The hard
-constraint of `AGENTS.md`: find whether the entity-ids question was asked and how it was answered, whether the
-slot was measured, and what the proxy changes -- `doc/integration_migration.md`,
-`tests/test_recorder_migration.py`.
-*Needs*: the user's diagnostics download and the answer they gave, asked on the issue.
+([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
+is found and fixed, not yet confirmed by the user. An entry first set up on device-scoped ids and deleted leaves
+its ids in the registry's deleted entities, and re-adding to migrate got them back ahead of the claim; the claim
+now renames onto the free legacy id (`tests/test_migration.py`). The user's own way back is **Configure ->
+Entity IDs -> the YAML package's**, which also takes area-prefixed ids (`tests/test_entity_id_switch.py`). Left:
+the user's answer whether they had set it up before, and the fix released to the preview.
+*Needs*: the maintainer posting the reply below on #798, then a release.
+
+> Correction: choosing "migrate" should have kept your old IDs, so this is a bug. Had you added the
+> integration once before and deleted it? Home Assistant then hands the deleted entities' new-style IDs
+> back, ahead of the migration; the next preview fixes that. To get your old IDs now: Settings -> Devices &
+> Services -> Sungrow Modbus -> **Configure** -> **Entity IDs**: the YAML package's IDs. Your old history
+> continues on them. *Total DC power* is there as *Total PV input power* (`sensor.total_dc_power` on the old IDs).
 
 **T070. Retire the comparison with the YAML package** --
 [plan](plans/T070-retire-the-yaml-comparison.md). The port is finished and the

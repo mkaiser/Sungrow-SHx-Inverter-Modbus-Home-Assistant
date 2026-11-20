@@ -26,6 +26,17 @@ the [legacy entity map](../sources/legacy-entity-map-summary.md).
   afterwards.
 - **Adoption needs the legacy id free** in the registry *and* in the state
   machine, or the registry silently appends `_2`.
+- **A deleted entry's ids come back ahead of the claim.** Deleting a config
+  entry keeps its entities in the registry's deleted entities, and
+  `async_get_or_create` for the same unique id restores the old entity id
+  rather than the `suggested_object_id` passed in. So an inverter first set up
+  on device-scoped ids, deleted, and added again to migrate came back on the
+  device-scoped ids (#798, Home Assistant 2026.11.2). The claim then renames
+  the entry onto the legacy id when that id is free
+  (`custom_components/sungrow_modbus/migration.py`, `tests/test_migration.py`).
+- **A device in an area gets the area in front of a device-scoped id**
+  (`sensor.<area>_<device>_<entity>`) when its ids are recreated; the switch to
+  legacy ids in the options still moves those (`tests/test_entity_id_switch.py`).
 - **Both directions are reversible.** A rename moves the row, so the round
   trip returns history to the legacy id. Where that id is still occupied,
   archive the occupant under another name first. Nothing is copied and
