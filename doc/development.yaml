@@ -181,6 +181,16 @@ real_hardware:
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
       the web_gui section below, and needs work on the Windows side.
+    - >-
+      The VPN itself. A site's WireGuard tunnel runs in here (wg, wg-quick
+      and NET_ADMIN are present) or on the host, never both: two tunnels with
+      one key steal each other's handshake. In here, from a copy of the
+      owner's config with AllowedIPs cut to the site's /24 and no DNS line:
+        sudo wg-quick up <copy>.conf     # down, then up, when it is dead
+        sudo wg show                     # the last handshake
+        timeout 8 bash -c 'echo > /dev/tcp/<site-host>/502'
+      A timeout means packets left and nothing answered; "connection refused"
+      means something did.
 
   connect:
     where: Settings -> Devices & Services -> Add integration -> Sungrow Modbus

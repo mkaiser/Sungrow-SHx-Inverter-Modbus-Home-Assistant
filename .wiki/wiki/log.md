@@ -1924,3 +1924,26 @@ night of auto repeat in low-SoC Standby started zero runs, as designed
 ([eight in one poll](wiki/sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md),
 [the capability test](wiki/concepts/capability-test.md),
 [SH-RT](wiki/entities/device-sh-rt.md), [mkaiser](wiki/entities/installation-mkaiser.md)).
+
+## [2026-11-20] ingested | gerd-wallbox-2026-11-20
+
+An afternoon at gerd's over a tunnel from the devcontainer, a car charging
+([the source](sources/gerd-wallbox-2026-11-20-summary.md), raw `raw/gerd-wallbox-2026-11-20.md`). Mode 162
+mapped (scheduled charging: target and departure words, minimum or full power, ends at its target); a stopped
+car restarted by charging on; a charging off reads back on for about 10 s; the mode select's writes ended no
+session with one client per path. `entities/device-wallbox.md` and the query
+`queries/why-does-a-managed-wallbox-stop-charging.md` updated.
+
+## [2026-11-20] ingested | gerd-wallbox-2026-11-20-user-window
+
+The evening at gerd's ([the source](sources/gerd-wallbox-2026-11-20-user-window-summary.md), raw
+`raw/gerd-wallbox-2026-11-20-user-window.md`): 33546-33549 mapped as the user-defined mode's daily window, its end
+ending a session; an hour of the block through the WiNet-S with none lost. `entities/device-wallbox.md` and the
+query `queries/why-does-a-managed-wallbox-stop-charging.md` updated.
+
+## [2026-11-20] ingested | gerd-wallbox-2026-11-20-test4
+
+The last hour at gerd's ([the source](sources/gerd-wallbox-2026-11-20-test4-summary.md), raw
+`raw/gerd-wallbox-2026-11-20-test4.md`): the window's start switches charging on; the window takes a write only in
+mode 163 as one four-word write; the block put back as found. Test 4 did not run (the car unplugged).
+`entities/device-wallbox.md` updated.

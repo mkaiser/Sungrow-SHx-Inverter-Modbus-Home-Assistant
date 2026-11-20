@@ -236,6 +236,21 @@ tree.
 
 Each of these is verified in a container or against hardware.
 
+- **A remote owner's WireGuard tunnel runs in here, or on the host, never in
+  both.** The container has `wg` and `wg-quick` and the NET_ADMIN that
+  `runArgs` grants, so `sudo wg-quick up <copy>.conf` brings a site's tunnel
+  up inside the container alone. Use a copy of the owner's config with
+  `AllowedIPs` cut to the site's `/24` and its `DNS` line removed: as handed
+  out (`0.0.0.0/0`, the site's DNS) it would send all of the container's
+  traffic through the owner's router. **Two tunnels with one key -- this one
+  and the host's -- steal each other's handshake**, and the site's devices
+  time out at random (gerd's cable, 2026-11-20); take the host's down first.
+  A tunnel does not recover by itself
+  ([remote link loss](../.wiki/wiki/concepts/remote-link-loss.md)): down,
+  then up. Read the failure, not the silence -- a TCP connect that **times
+  out** means packets left and nothing answered, where *connection refused*
+  means something did; and `sudo wg show` names the last handshake.
+
 - **`All checks passed!` is *ruff's* line, not the gate's.** `make check`
   runs ruff first, and ruff prints that on its own success while pytest, mypy
   and `gen-check` are still to come -- so a scrollback ending in it says

@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T071.** Numbers are minted in order, never reused and
+**Next free item number: T073.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -35,9 +35,16 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 ## Inverter
 
-Nothing can start now. What the maintainer's own inverter can answer is a
-planned test below (T001, T002); the rest waits on other firmware or other
-houses.
+**T072. Daily import (13036) stuck at 0 at night on an SH6.0RS**
+([#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797), whose "13035" is the
+protocol address): with the battery empty and the house on the grid the daily import did not count, so the daily
+consumption stalled (its midnight spike is already clamped, `src/sungrow_modbus/hybrid_inverter/derived.py`).
+Compare 13036 with the total import (13037/13038) over a night on an RS; icefest's SH6.0RS download on #786
+(2026-11-20 01:16 UTC, not yet ingested, T061) may carry both.
+*Needs*: that download ingested, or a night's readings from an RS.
+
+What the maintainer's own inverter can answer is a planned test below (T001,
+T002); the rest waits on other firmware or other houses.
 
 ## Battery
 
@@ -45,15 +52,22 @@ Nothing can start now (T038, T064).
 
 ## Wallbox
 
-**The gerd session is the one to run, as soon as the tunnel is up and a car is
-plugged in** -- [the plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md),
-section 9. Nine tests wait on that one window: four of them need the owner at
-his app, and two (phase switching, PV surplus) need a bright hour, which the
-season is spending. What can start here meanwhile is the plan's section 10,
-above all **pairing a TLS wallbox entry with the inverter that manages it** --
-without it the managed test cannot run from Home Assistant at gerd's at all --
-then T059's retaken screenshot and a wiki source page for the 2026-11-13 run.
-T003 and T004 themselves still wait on a standalone wallbox (T040).
+**Finish the pairing of a TLS wallbox entry with its inverter**, built
+2026-11-20 and untested: tests for the option, the reloads and `managing_entry`
+from a cable entry, then the managed test from Home Assistant at gerd's -- the
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 10. Beside it
+in section 10: the charging switch's read-back (an off reads on for ~10 s),
+T059's retaken screenshot and a wiki source page for the 2026-11-13 run.
+*Needs*: nothing; the hardware run needs gerd's tunnel and a car charging.
+
+**The rest of the gerd session** (section 9): test 4 (a mode change from the
+app while charging) needs a car plugged in (tried 2026-11-20, unplugged);
+7 needs the owner at the car, 5 and 6 a bright hour. Tests 1, 3 and 9 were done 2026-11-20, and the
+user-defined mode's daily window (33546-33549) was mapped; section 10 now asks
+what Home Assistant does with it. The tunnel now runs from the
+devcontainer (`doc/development.md`, *Pitfalls*). gerd's integration was
+disabled for that session: re-enable it only when told. T003 and T004
+themselves still wait on a standalone wallbox (T040).
 
 ## Logger
 
@@ -67,6 +81,15 @@ Nothing can start now: an owner running the preview, and a second unit's
 diagnosis (T005, T006, T042).
 
 ## Integration and tooling
+
+**T071. A migration that did not claim the legacy entity ids**
+([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): an SH10RT-V112 on
+P020, on its LAN port through a Modbus proxy, the YAML package of 2026-03-09 disabled first; the integration came
+up on the new ids (`sensor.<device>_load_power` for `sg_load_power`), and *Total DC power* was missing. The hard
+constraint of `AGENTS.md`: find whether the entity-ids question was asked and how it was answered, whether the
+slot was measured, and what the proxy changes -- `doc/integration_migration.md`,
+`tests/test_recorder_migration.py`.
+*Needs*: the user's diagnostics download and the answer they gave, asked on the issue.
 
 **T070. Retire the comparison with the YAML package** --
 [plan](plans/T070-retire-the-yaml-comparison.md). The port is finished and the
@@ -286,6 +309,13 @@ the behaviour `scripts/generate/tables/writes.py` already predicts.
 
 ## Wallbox
 
+**T003. Controlling the wallbox**: the managed test from Home Assistant once the
+pairing is tested (Next steps), the user-defined window and scheduled charging
+(162) in the controls, a standalone wallbox, and the first writing run --
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), sections 10 and 11.
+*Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
+stopped; or a standalone wallbox, which nobody has offered (T040).
+
 **T020. Whether the standalone inference is right**: it is built, shown and
 asked for, so what is left is measuring it where it matters --
 [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 1.
@@ -301,12 +331,6 @@ wallbox restart would show whether 21267 falls to near zero --
 identify the unit -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 6.
 *Unblocked by*: the masking publishing a stand-in per masked block, plus a
 terminal diagnosis carrying those blocks.
-
-**T003. Controlling the wallbox**: the mode select's timing, pairing a TLS
-wallbox entry with the inverter that manages it, a standalone wallbox, and
-the first writing run -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 11.
-*Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
-stopped; or a standalone wallbox, which nobody has offered (T040).
 
 **T004. The wallbox's settings as entities** (21298, 21299, 21313): whether
 any of them may be written -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 12.

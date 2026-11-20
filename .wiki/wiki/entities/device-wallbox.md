@@ -25,7 +25,7 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   it ramps from 6 A by about 1.4 A every 5 s, and **the car follows it**, which settles 21203 at
   0.1 A per count.
 - **The control is the inverter's holding block at unit 1**: 33540 charging on (0xAA) / off
-  (0x55), 33541 the mode (160 fast, 161 PV surplus, 163 user defined), 33545 the user-defined
+  (0x55), 33541 the mode (160 fast, 161 PV surplus, 162 scheduled, 163 user defined), 33545 the user-defined
   current at 0.1 A per count, writable only in user-defined mode, 6 A to (at least) the rating.
   Switching the mode can end a session; charging on starts it again. Over the cable and through
   the WiNet-S alike. The library's map is `src/sungrow_modbus/hybrid_inverter/ev_charger.py`; the
@@ -57,6 +57,20 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   was cut to 6-8 A and ramped back four times right after house load spikes, within one session. The managed
   test cannot run from Home Assistant where the inverter entry is on the LAN cable: the link between the
   wallbox entry and its inverter entry is made only through the dongle probe.
+- **The afternoon of 2026-11-20** ([the afternoon](../sources/gerd-wallbox-2026-11-20-summary.md)):
+  **162 is *scheduled charging*** (*Terminiertes Laden*): 33542 is its target in 0.1 kWh and 33543/33544
+  its departure, a u32 low word first holding the local time as if it were UTC; it charges at the minimum
+  or at full power, not at a computed rate, keeps its choice through a mid-session change, and ends the
+  session at its target. A car stopped for 15 minutes starts again on charging on over Modbus, no replug.
+  **A charging off reads back on for about 10 s** before it reads off, and a stop reaches the car 10-18 s
+  before the inverter's word reads off. With one client per path a mode change ended no session.
+  **33546-33549 are the user-defined mode's daily window** (start and end, local time as if UTC; midnight to
+  midnight is a whole day): its end ends the session and moves the window to the next day, its start did not
+  hold back a charge the save switched on ([the evening](../sources/gerd-wallbox-2026-11-20-user-window-summary.md)).
+  Through the WiNet-S the block read 360 times in an hour at 10 s with none lost.
+  **The window's start switches charging on by itself** as its end switches it off, a daily schedule; and each
+  mode's words take a write only in that mode -- the window only in 163 and only as one four-word write
+  ([18:20](../sources/gerd-wallbox-2026-11-20-test4-summary.md)).
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written. In Home
