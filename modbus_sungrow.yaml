@@ -1,5 +1,6 @@
+# A Home Assistant YAML package for Sungrow devices by mkaiser.
 # From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT).
-# Please keep this line with any copy -- see doc/attribution.md.
+# Please keep these lines with any copy -- see doc/attribution.md.
 # Release date 2026-06-19
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
