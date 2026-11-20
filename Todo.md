@@ -26,6 +26,11 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 - Investigate / future: How to properly organize the code base after release. CI/CD from github. restrict main branch to PR only. Assumption: Automated CI/CD depends on how much can the tests be stripped down.
 
+- can folder legacy/ be deleted?
+
+- deactivate the automatic / bot closing of issues
+
+
 # Next steps
 
 ## Inverter
@@ -40,8 +45,15 @@ Nothing can start now (T038, T064).
 
 ## Wallbox
 
-Nothing can start now (T003, T004); a standalone wallbox is what unblocks
-both (T040).
+**The gerd session is the one to run, as soon as the tunnel is up and a car is
+plugged in** -- [the plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md),
+section 9. Nine tests wait on that one window: four of them need the owner at
+his app, and two (phase switching, PV surplus) need a bright hour, which the
+season is spending. What can start here meanwhile is the plan's section 10,
+above all **pairing a TLS wallbox entry with the inverter that manages it** --
+without it the managed test cannot run from Home Assistant at gerd's at all --
+then T059's retaken screenshot and a wiki source page for the 2026-11-13 run.
+T003 and T004 themselves still wait on a standalone wallbox (T040).
 
 ## Logger
 
