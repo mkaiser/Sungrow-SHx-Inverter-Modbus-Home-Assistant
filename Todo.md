@@ -374,7 +374,8 @@ entries made while it was offered.
 commit. Today's `main` becomes `2026-legacy`, `2025-legacy` keeps its name, and
 of the 38 paths on today's `main` exactly one gets a file on the new `main`:
 `modbus_sungrow.yaml`, comments only, saying the package moved and is
-superseded. Everything else 404s, GitHub's rename redirect cannot change that,
+superseded; the header's two deep links move to `2026-legacy` in the same
+motion. Everything else 404s, GitHub's rename redirect cannot change that,
 and a re-download stops a working install until its owner reads the file.
 *Needs*: T047's merge.
 

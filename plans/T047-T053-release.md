@@ -37,6 +37,25 @@ price of retiring the package. Tag the final state
 `yaml-package-2026-06-19` (its release date) at the same time, so the
 bytes stay addressable if the branch is ever deleted.
 
+Three steps, all at the merge and none before it. The rename is safe to
+do early -- no workflow on `main` names a branch, and until the new `main`
+exists GitHub's redirect sends every `main` link to `2026-legacy` -- but
+early costs the default branch of the repository thousands of people
+install from changing weeks before anything arrives there, so it waits.
+
+1. Rename `main` to `2026-legacy`.
+2. Commit the file below at `modbus_sungrow.yaml` on the new `main`.
+3. Rewrite the two deep links in the YAML's own header --
+   `blob/main/doc/installation.md` and `blob/main/doc/migration_guide.md`
+   -- to `blob/2026-legacy/...`, in `2026-legacy`'s copy and in
+   `legacy/modbus_sungrow.yaml` on the new `main`, which keeps the two
+   byte-identical. Everyone who downloads after the merge then has live
+   links, and only copies already installed carry the dead ones.
+
+The tag waits with them, or for T053: the header says *Release date
+2026-06-19* but `main` has moved since, so there is no final state to
+tag yet.
+
 The file is comments only, which is why it stops the install: Home
 Assistant has no package to load, setup fails, and the owner opens the
 file. It carries the links its own header used to carry, because it is
