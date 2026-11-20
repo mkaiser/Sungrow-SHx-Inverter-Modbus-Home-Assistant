@@ -1,6 +1,6 @@
 # The texts, for review
 
-**338 texts**: everything in `strings.json` that is not an entity name, by its
+**341 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1355,7 +1355,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (105)
+## Options flow (108)
 
 ### `options.step.init.title`
 
@@ -1951,6 +1951,12 @@ and bold are kept.
 
 > **DE** Verwaltet kein Wechselrichter diese Wallbox?
 
+### `options.step.wallbox.sections.capability_test.data.wallbox_managed_by`
+
+> **EN** Which inverter manages this wallbox?
+
+> **DE** Welcher Wechselrichter verwaltet diese Wallbox?
+
 ### `options.step.wallbox.sections.capability_test.data.wallbox_max_amps`
 
 > **EN** The highest charging current the wallbox test may offer
@@ -1968,6 +1974,12 @@ and bold are kept.
 > **EN** Off until you switch it on, and your answer rather than a guess. Where an inverter manages the wallbox (its EV charger in iSolarCloud) it rewrites the wallbox's own output current within seconds, so writing those registers measures nothing -- the test writes that inverter's settings instead. Switch this on only for a wallbox nothing else drives, and the test may then write the wallbox's own registers: its charging current, its phases and a stop and start. What the integration itself makes of this is on the device page, as the `management` attribute of *Diagnosis: test summary*: "managed" means it saw the setting move while a car charged, "standalone" that it held still through a charge, and "unknown" that no car has charged since Home Assistant started.
 
 > **DE** Aus, bis du es einschaltest, und deine Antwort statt einer Vermutung. Verwaltet ein Wechselrichter die Wallbox (sein E-Auto-Ladegerät in iSolarCloud), überschreibt er ihren eigenen Ladestrom innerhalb von Sekunden; diese Register zu schreiben misst dann nichts, und der Test schreibt stattdessen die Einstellungen dieses Wechselrichters. Schalte dies nur für eine Wallbox ein, die nichts anderes steuert -- dann darf der Test ihre eigenen Register schreiben: Ladestrom, Phasen sowie Stopp und Start. Was die Integration selbst erkennt, steht auf der Geräteseite im Attribut `management` von *Diagnose: Testübersicht*: "managed" heißt, die Einstellung hat sich während einer Ladung geändert, "standalone", dass sie eine Ladung lang unverändert blieb, und "unknown", dass seit dem Start von Home Assistant kein Auto geladen hat.
+
+### `options.step.wallbox.sections.capability_test.data_description.wallbox_managed_by`
+
+> **EN** The inverter whose EV charger this wallbox is in iSolarCloud. Needed only where that inverter is set up here over its own LAN cable: behind a WiNet-S the inverter finds the wallbox on its bus by itself, over the cable it never sees it. Named here, the inverter's EV charger controls appear on its device, and the wallbox test writes that inverter's settings rather than the wallbox's. Leave it empty for a wallbox no inverter manages.
+
+> **DE** Der Wechselrichter, dessen E-Auto-Ladegerät diese Wallbox in iSolarCloud ist. Nur nötig, wo dieser Wechselrichter hier über sein eigenes LAN-Kabel eingerichtet ist: Hinter einem WiNet-S findet der Wechselrichter die Wallbox selbst auf seinem Bus, über das Kabel sieht er sie nie. Hier angegeben, erscheinen die E-Auto-Ladegerät-Steuerungen auf seinem Gerät, und der Wallbox-Test schreibt die Einstellungen dieses Wechselrichters statt die der Wallbox. Leer lassen für eine Wallbox, die kein Wechselrichter verwaltet.
 
 ### `options.step.wallbox.sections.capability_test.data_description.wallbox_max_amps`
 
@@ -2040,6 +2052,12 @@ and bold are kept.
 > **EN** This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here.
 
 > **DE** In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war, die alten IDs könnten also die eines anderen Wechselrichters sein. Aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann, starte erneut und komm hierher zurück.
+
+### `options.error.wallbox_standalone_and_managed`
+
+> **EN** This wallbox is declared as one no inverter manages, and an inverter is named as managing it. Answer one of the two.
+
+> **DE** Diese Wallbox ist als eine angegeben, die kein Wechselrichter verwaltet, und zugleich ist ein Wechselrichter genannt, der sie verwaltet. Beantworte nur eine der beiden Fragen.
 
 ### `options.progress.running_diagnosis`
 

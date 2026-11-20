@@ -121,6 +121,7 @@ from .const import (
     CONF_REPORTER,
     CONF_TLS,
     CONF_UNIT_ID,
+    CONF_WALLBOX_MANAGED_BY,
     CONF_WALLBOX_MAX_AMPS,
     CONF_WALLBOX_STANDALONE,
     CONF_WIFI_MODULE,
@@ -2280,6 +2281,8 @@ class SungrowOptionsFlow(OptionsFlow):
         may write to a wallbox: one read through an inverter's dongle stays
         read only (`wallbox_capability_test.consented`).
         """
+        errors: dict[str, str] = {}
+        inverters = self._inverter_entries()
         if user_input is not None:
             tests = user_input[SECTION_CAPABILITY_TEST]
             options: dict[str, Any] = {
@@ -2290,10 +2293,21 @@ class SungrowOptionsFlow(OptionsFlow):
             if CONF_WALLBOX_MAX_AMPS not in tests:
                 # An optional field left empty is a cap taken back.
                 options.pop(CONF_WALLBOX_MAX_AMPS, None)
-            return self.async_create_entry(data=options)
+            if not tests.get(CONF_WALLBOX_MANAGED_BY):
+                # Left empty, no inverter is named.
+                options.pop(CONF_WALLBOX_MANAGED_BY, None)
+            if options.get(CONF_WALLBOX_STANDALONE) and options.get(
+                CONF_WALLBOX_MANAGED_BY
+            ):
+                # Two answers that contradict each other: one says nothing
+                # drives the wallbox, the other names what does.
+                errors["base"] = "wallbox_standalone_and_managed"
+            else:
+                return self.async_create_entry(data=options)
         current = self.config_entry.options
         return self.async_show_form(
             step_id="wallbox",
+            errors=errors,
             data_schema=probatio.Schema(
                 {
                     probatio.Required(SECTION_CAPABILITY_TEST): section(
@@ -2313,6 +2327,22 @@ class SungrowOptionsFlow(OptionsFlow):
                                         DEFAULT_WALLBOX_STANDALONE,
                                     ),
                                 ): BooleanSelector(),
+                                probatio.Optional(
+                                    CONF_WALLBOX_MANAGED_BY,
+                                    description={
+                                        "suggested_value": current.get(
+                                            CONF_WALLBOX_MANAGED_BY
+                                        )
+                                    },
+                                ): SelectSelector(
+                                    SelectSelectorConfig(
+                                        options=[
+                                            SelectOptionDict(value=serial, label=title)
+                                            for serial, title in inverters
+                                        ],
+                                        mode=SelectSelectorMode.DROPDOWN,
+                                    )
+                                ),
                                 probatio.Optional(
                                     CONF_WALLBOX_MAX_AMPS,
                                     description={
@@ -2355,6 +2385,24 @@ class SungrowOptionsFlow(OptionsFlow):
                 }
             ),
         )
+
+    def _inverter_entries(self) -> list[tuple[str, str]]:
+        """Return (serial, title) of every inverter entry that could manage a wallbox.
+
+        Every entry of this integration that is an inverter -- not a wallbox,
+        not an iHomeManager, Logger or other unit-247 device -- with a serial
+        to be named by. Which one manages the wallbox is the owner's to say:
+        an inverter's EV charger block reads its factory state on houses with
+        no wallbox at all, so nothing read here could choose for them.
+        """
+        return [
+            (str(other.unique_id), other.title)
+            for other in self.hass.config_entries.async_entries(DOMAIN)
+            if other.entry_id != self.config_entry.entry_id
+            and other.unique_id
+            and other.data.get(CONF_KIND) != KIND_WALLBOX
+            and other.data.get(CONF_KIND) not in UNIT_247_KINDS
+        ]
 
     def _entity_id_style(self) -> str:
         """Return which ids this entry's entities are on now."""

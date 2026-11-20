@@ -1808,11 +1808,13 @@
             "data": {
               "capability_test_wallbox": "May it write to the wallbox, with a car charging?",
               "wallbox_standalone": "Does no inverter manage this wallbox?",
+              "wallbox_managed_by": "Which inverter manages this wallbox?",
               "wallbox_max_amps": "The highest charging current the wallbox test may offer"
             },
             "data_description": {
               "capability_test_wallbox": "Off until you switch it on. A wallbox a hybrid inverter manages (its EV charger in iSolarCloud) ignores writes to its own settings, so where the inverter is set up here too, the test writes the **inverter's** EV charger settings instead: user-defined mode, a charging current of 6, 8 and 10 A (never above the highest charging current below), 5 A for the inverter to refuse, and a stop and start. It watches what the car draws and puts the inverter's settings back, the charge included. **A charge in progress changes current and is stopped for about 15 seconds.** A wallbox with no inverter set up here is not written. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every 15 minutes in *Extended test (auto repeat)* until each question has an answer.",
               "wallbox_standalone": "Off until you switch it on, and your answer rather than a guess. Where an inverter manages the wallbox (its EV charger in iSolarCloud) it rewrites the wallbox's own output current within seconds, so writing those registers measures nothing -- the test writes that inverter's settings instead. Switch this on only for a wallbox nothing else drives, and the test may then write the wallbox's own registers: its charging current, its phases and a stop and start. What the integration itself makes of this is on the device page, as the `management` attribute of *Diagnosis: test summary*: \"managed\" means it saw the setting move while a car charged, \"standalone\" that it held still through a charge, and \"unknown\" that no car has charged since Home Assistant started.",
+              "wallbox_managed_by": "The inverter whose EV charger this wallbox is in iSolarCloud. Needed only where that inverter is set up here over its own LAN cable: behind a WiNet-S the inverter finds the wallbox on its bus by itself, over the cable it never sees it. Named here, the inverter's EV charger controls appear on its device, and the wallbox test writes that inverter's settings rather than the wallbox's. Leave it empty for a wallbox no inverter manages.",
               "wallbox_max_amps": "The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take."
             }
           },
@@ -1836,7 +1838,8 @@
     "error": {
       "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.",
       "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant and try again.",
-      "legacy_slot_unknown": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here."
+      "legacy_slot_unknown": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here.",
+      "wallbox_standalone_and_managed": "This wallbox is declared as one no inverter manages, and an inverter is named as managing it. Answer one of the two."
     },
     "progress": {
       "running_diagnosis": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."

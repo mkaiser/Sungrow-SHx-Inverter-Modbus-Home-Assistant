@@ -168,7 +168,13 @@ and never to the wallbox's own registers: an inverter that manages a wallbox
 overwrites them. Where an inverter entry left the wallbox to it
 (`managing_entry`), the wallbox entry's test writes that inverter entry's EV
 charger block instead (`sungrow_modbus.wallbox.managed_test`), holding both
-entries' polling off; with no such entry it writes nothing. One
+entries' polling off; with no such entry it writes nothing. An inverter entry
+on its LAN cable never sees the wallbox on its bus, so **the owner names it**:
+the wallbox entry's option `CONF_WALLBOX_MANAGED_BY` holds the managing
+inverter entry's serial, and that entry sets `wallbox_elsewhere` at setup as
+if it had found the wallbox behind a dongle (`_wallbox_managed_by`); changing
+the answer reloads both inverters. Nothing read decides it: the EV charger
+block reads its factory state where there is no wallbox at all. One
 read through a dongle stays read only, which also leaves the dongle's few
 sessions to the inverter. No history is carried between the two devices: the
 YAML package never had a wallbox. The wallbox entry has a

@@ -65,6 +65,7 @@ from .const import (
     CONF_MODE,
     CONF_TLS,
     CONF_UNIT_ID,
+    CONF_WALLBOX_MANAGED_BY,
     CONF_WIFI_MODULE,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
@@ -1008,18 +1009,23 @@ async def _async_wallbox(
     self-validating where a code has to be matched against a three-entry
     table, and reading the name keeps a serial out of the probe entirely.
 
-    Finding nothing is the common case and never fails the entry.
+    Finding nothing is the common case and never fails the entry. Where
+    nothing answers here but a wallbox entry names this inverter as the one
+    that manages it (`CONF_WALLBOX_MANAGED_BY`, the owner's answer), that
+    wallbox is left to its entry just as one found behind the dongle is: an
+    inverter on its LAN cable never sees the wallbox on its bus.
     """
+    paired = _wallbox_managed_by(hass, entry)
     unit_for = _unit_factory(hass, entry)
     try:
         wallbox_unit = await wallbox_probe_units(unit_for, WALLBOX_UNITS)
     except (ModbusConnectionError, ModbusError) as err:
         _LOGGER.debug("%s: could not probe for a wallbox: %s", entry.title, err)
-        return None, None
+        return None, paired
 
     if wallbox_unit is None:
         _LOGGER.debug("%s: no Sungrow wallbox on this endpoint", entry.title)
-        return None, None
+        return None, paired
 
     device = SungrowWallbox(unit_for(wallbox_unit), wallbox_unit)
     coordinator = SungrowWallboxCoordinator(
@@ -1039,7 +1045,7 @@ async def _async_wallbox(
             entry.title,
             wallbox_unit,
         )
-        return None, None
+        return None, paired
 
     if (own := coordinator.own_serial) is not None and _wallbox_entry_for(hass, own):
         # Read at its own address by an entry of its own: not here as well.
@@ -1058,6 +1064,24 @@ async def _async_wallbox(
         device.model or "not named",
     )
     return coordinator, None
+
+
+def _wallbox_managed_by(hass: HomeAssistant, entry: SungrowConfigEntry) -> str | None:
+    """Return the serial of the wallbox entry that names this inverter, or None.
+
+    The owner's answer in that wallbox's **Configure**: read from its options,
+    so it holds whichever of the two entries loads first.
+    """
+    if not entry.unique_id:
+        return None
+    for other in hass.config_entries.async_entries(DOMAIN):
+        if (
+            other.data.get(CONF_KIND) == KIND_WALLBOX
+            and other.unique_id
+            and other.options.get(CONF_WALLBOX_MANAGED_BY) == entry.unique_id
+        ):
+            return other.unique_id
+    return None
 
 
 def _wallbox_entry_for(hass: HomeAssistant, serial: str) -> bool:
@@ -1180,6 +1204,15 @@ async def _async_options_changed(
     built_from = entry.runtime_data.built_from
     if built_from is not None and built_from == _built_from(entry):
         return
+    if built_from is not None and entry.data.get(CONF_KIND) == KIND_WALLBOX:
+        # The inverter it is paired with, before and after, is set up anew:
+        # each decides at setup whether it manages a wallbox entry.
+        before = built_from[1].get(CONF_WALLBOX_MANAGED_BY)
+        after = entry.options.get(CONF_WALLBOX_MANAGED_BY)
+        if before != after:
+            for other in hass.config_entries.async_entries(DOMAIN):
+                if other.unique_id and other.unique_id in (before, after):
+                    hass.config_entries.async_schedule_reload(other.entry_id)
     await hass.config_entries.async_reload(entry.entry_id)
 
 

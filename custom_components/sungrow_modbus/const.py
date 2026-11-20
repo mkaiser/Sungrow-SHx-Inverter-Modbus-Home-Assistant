@@ -199,6 +199,13 @@ DEFAULT_WALLBOX_MAX_AMPS = 10.0
 CONF_WALLBOX_STANDALONE = "wallbox_standalone"
 DEFAULT_WALLBOX_STANDALONE = False
 
+#: The inverter entry that manages a wallbox entry, by the inverter's serial
+#: (its `unique_id`): the owner's answer, asked in the wallbox's **Configure**.
+#: Behind a WiNet-S the inverter entry finds the wallbox on its own bus and
+#: needs no answer; an inverter entry on the LAN cable never sees the wallbox,
+#: and this is the only way it learns it manages one. Absent, nobody is named.
+CONF_WALLBOX_MANAGED_BY = "wallbox_managed_by"
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a
