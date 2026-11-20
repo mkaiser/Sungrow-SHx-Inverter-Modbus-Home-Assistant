@@ -22,10 +22,16 @@
 
 ## Trying it
 
-It needs Home Assistant 2026.11 or later. Install it through **Settings →
-Marketplace → Add from link** from the preview channel,
-`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`: the Marketplace reads a
-repository's default branch, and this one's is the YAML package.
+It needs Home Assistant 2026.11 or later. This badge opens your own instance
+at the preview channel:
+
+[![Open your Home Assistant instance and open the preview channel in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=mkaiser&repository=Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview&category=integration)
+
+If your browser does not know your instance, add the channel by hand instead:
+**Settings → Marketplace → Add from link**,
+`https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`,
+type *Integration*. The Marketplace reads a repository's default branch, and
+this one's is the YAML package.
 [doc/installing_a_preview.md](doc/installing_a_preview.md) has the steps;
 [doc/integration_options.md](doc/integration_options.md) lists every option
 under *Configure*, and [doc/integration_help.md](doc/integration_help.md) the

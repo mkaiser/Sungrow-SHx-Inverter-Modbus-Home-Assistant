@@ -24,6 +24,10 @@ YAML package. Four steps; the third is the one people forget.
 
 ## 1. Add the preview channel to the Marketplace
 
+[![Open your Home Assistant instance and open the preview channel in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=mkaiser&repository=Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview&category=integration)
+
+The badge opens your own instance at the channel. If your browser has never
+been told where your instance is, it asks once and remembers. By hand it is
 **Settings → Marketplace → Add from link**:
 
 | Field | Value |

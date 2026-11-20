@@ -56,15 +56,17 @@ diagnosis (T005, T006, T042).
 
 ## Integration and tooling
 
-**T067. An *Add to Home Assistant* badge at the top of the README**, on this
-branch: my.home-assistant.io's `hacs_repository` redirect opens the reader's
-own instance at *Add custom repository*, with the owner, the repository and
-*Integration* already filled in -- the steps
-[`doc/installing_a_preview.md`](doc/installing_a_preview.md) currently spells
-out by hand, for `mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`.
-The `config_flow` badge (`?domain=sungrow_modbus`) belongs beside it only
-after the merge, since it does nothing until the integration is installed.
-*Needs*: nothing.
+**T067. The *Add integration* badge, once the merge lands**: the preview
+channel's badge (`marketplace_repository`, owner, repository and *Integration*
+prefilled) is in the README and in step 1 of
+[`doc/installing_a_preview.md`](doc/installing_a_preview.md). What is left is
+`config_flow_start` (`?domain=sungrow_modbus`), which does nothing until the
+integration is installed, so it belongs beside the install instructions on
+`main` rather than above them here. The redirect is `marketplace_repository`,
+not HACS's old `hacs_repository`, and *add integration* is
+`config_flow_start`, not `config_flow` (my.home-assistant.io's FAQ lists
+them).
+*Needs*: T047's merge.
 
 **T069. Retire the stale remote branches**: all of them go except
 `2025-legacy`, which holds the pre-2026 YAML line. Ahead/behind `main`,
