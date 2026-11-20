@@ -516,8 +516,32 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     await runner.async_load_ledger()
     await _async_check_wallbox_capability_test(hass, entry)
     _async_preview_notice(hass)
+    answered = {"named": entry.options.get(CONF_WALLBOX_MANAGED_BY)}
+    entry.async_on_unload(
+        entry.add_update_listener(partial(_async_wallbox_options_changed, answered))
+    )
     await hass.config_entries.async_forward_entry_setups(entry, WALLBOX_PLATFORMS)
     return True
+
+
+async def _async_wallbox_options_changed(
+    answered: dict[str, str | None], hass: HomeAssistant, entry: SungrowConfigEntry
+) -> None:
+    """Set up anew the inverters a change of `CONF_WALLBOX_MANAGED_BY` concerns.
+
+    Each inverter entry decides at setup whether it manages this wallbox
+    (`_wallbox_managed_by`), so the one named before and the one named now
+    are reloaded -- and only when the answer changed: the wallbox entry reads
+    its other options as it goes, and an inverter holding the wallbox through
+    its dongle is not set up anew for a change to the test's cap.
+    """
+    before, named = answered["named"], entry.options.get(CONF_WALLBOX_MANAGED_BY)
+    if before == named:
+        return
+    answered["named"] = named
+    for other in hass.config_entries.async_entries(DOMAIN):
+        if other.unique_id and other.unique_id in (before, named):
+            hass.config_entries.async_schedule_reload(other.entry_id)
 
 
 async def _async_read_ihomemanager(entry: SungrowConfigEntry, unit: Any) -> Any:
@@ -1204,15 +1228,6 @@ async def _async_options_changed(
     built_from = entry.runtime_data.built_from
     if built_from is not None and built_from == _built_from(entry):
         return
-    if built_from is not None and entry.data.get(CONF_KIND) == KIND_WALLBOX:
-        # The inverter it is paired with, before and after, is set up anew:
-        # each decides at setup whether it manages a wallbox entry.
-        before = built_from[1].get(CONF_WALLBOX_MANAGED_BY)
-        after = entry.options.get(CONF_WALLBOX_MANAGED_BY)
-        if before != after:
-            for other in hass.config_entries.async_entries(DOMAIN):
-                if other.unique_id and other.unique_id in (before, after):
-                    hass.config_entries.async_schedule_reload(other.entry_id)
     await hass.config_entries.async_reload(entry.entry_id)
 
 

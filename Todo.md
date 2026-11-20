@@ -52,13 +52,12 @@ Nothing can start now (T038, T064).
 
 ## Wallbox
 
-**Finish the pairing of a TLS wallbox entry with its inverter**, built
-2026-11-20 and untested: tests for the option, the reloads and `managing_entry`
-from a cable entry, then the managed test from Home Assistant at gerd's -- the
-[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 10. Beside it
-in section 10: the charging switch's read-back (an off reads on for ~10 s),
-T059's retaken screenshot and a wiki source page for the 2026-11-13 run.
-*Needs*: nothing; the hardware run needs gerd's tunnel and a car charging.
+**The charging switch's read-back** (an off reads on for ~10 s), then T059's
+retaken screenshot and a wiki source page for the 2026-11-13 run -- the
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 10. The pairing
+of a TLS wallbox entry with its inverter is built and tested; its run at
+gerd's (the managed test from Home Assistant) needs his tunnel and a car charging.
+*Needs*: nothing.
 
 **The rest of the gerd session** (section 9): test 4 (a mode change from the
 app while charging) needs a car plugged in (tried 2026-11-20, unplugged);
