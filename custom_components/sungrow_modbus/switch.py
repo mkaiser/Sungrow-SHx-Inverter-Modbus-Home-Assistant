@@ -149,6 +149,15 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
             self._end_hold()
         super()._handle_coordinator_update()
 
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; a running hold is not keyed on the id.
+
+        Defining it opts this class's remove hook out of Home Assistant's
+        remove-and-re-add on a rename (2026.11 to 2027.11).
+        """
+        super().async_entity_id_changed(old_entity_id)
+
     async def async_will_remove_from_hass(self) -> None:
         """Cancel a running hold's timer with the entity."""
         self._end_hold()
