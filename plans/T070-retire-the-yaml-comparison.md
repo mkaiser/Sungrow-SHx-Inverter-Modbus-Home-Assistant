@@ -110,3 +110,9 @@ the folder means deleting those pages and the links together, in one change.
 5. Rewrite the rule in `AGENTS.md` and the six other places that state it.
 6. `pytest -q --cov` -> read the new coverage figure, set `fail_under` to it.
 7. `make check`, which is the only thing that proves the gate survived.
+
+## Status log
+
+| When | Status |
+| --- | --- |
+| 2026-11-20 | **Written, nothing executed.** The decision is the maintainer's, taken today: whole files, and the refactor in the same change rather than deferred. Measured while planning, so the next session need not: `scripts/generate/descriptions.py` reads the map at lines 54, 66, 79, 90, 368 and emits `legacy_unique_id`, `state_class` and `native_unit_of_measurement` at 422, 434, 438, 465, 476, 480, 577 and 1007; `doc/legacy_entity_map.json` holds 302 entities with no `min`/`max`/`step` and no `scene` domain, which is why `test_writes.py` and `test_scenes_doc.py` read the YAML directly and cannot simply be repointed. The generator that built the map, `scripts/generate_entity_map.py`, was retired in `bf58897` and is recoverable from git if extending it ever beats deleting it. Nothing is uncommitted. **Start at step 1**: the field move, with `git diff --exit-code custom_components/sungrow_modbus/` after `make gen` as the gate on whether it was faithful. |

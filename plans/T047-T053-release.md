@@ -180,7 +180,9 @@ multi-inverter files, announce it, point every `legacy/doc/` page at the
 integration and `doc/integration_migration.md`, and set a date after
 which the YAML package gets no further changes.
 
-Retiring does not end migration, so the legacy-id adoption, its guards
-and `tests/test_sensor_descriptions.py` stay as long as migration is
-offered. `tests/test_registers.py`'s comparison with the YAML can then be
-anchored to the specification instead; its scan-interval check goes first.
+Retiring does not end migration: the legacy-id adoption and its guards
+stay as long as migration is offered. The guards are no longer the
+comparison with the YAML, though -- `tests/test_registers.py` and
+`tests/test_sensor_descriptions.py` go with
+[T070](T070-retire-the-yaml-comparison.md), which also says what `legacy/`
+waits on before the folder itself can go.
