@@ -19,11 +19,16 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 
 # Incoming items by maintainer
 
-Where the maintainer drops anything, in any form. A holding area, not a queue:
-nothing here has priority, and it is taken in only when they ask, at a
-housekeeping ([`workflow.md`](workflow.md)).
+A holding area, not a queue: taken in only when the maintainer asks
+([`workflow.md`](workflow.md)).
 
-*(empty)*
+- Release: Add "Add Integration to Home assistant" banner to readme.md on top
+ -Release: Rename current main branch to legacy-branch-2, and the current legacy branch to legacy-branch-1. Make better suggestions for names.
+- Check current main branches, I guess some of them are obsolete, e.g. self consumption?
+
+- Investigate / future: The make checks are very long (30 minutes). Can we cut that down?
+
+- Investigate / future: How to properly organize the code base after release. CI/CD from github. restrict main branch to PR only. Assumption: Automated CI/CD depends on how much can the tests be stripped down.
 
 # Next steps
 
@@ -395,13 +400,6 @@ Modbus session of its own -- [plan](plans/T060-evcc-integration.md), which has t
 route (evcc's `homeassistant` templates) and what is left to write
 (`doc/evcc.md`).
 *Needs*: nothing; no integration code changes.
-
-**T066. Provenance in the YAML package's files**: the same two-line
-attribution as the maps, in `legacy/modbus_sungrow.yaml` and the other files
-under `legacy/`, the most-copied code here and the one place `doc/attribution.md`
-does not yet reach -- [attribution](doc/attribution.md).
-*Needs*: parity, since the YAML package stays untouched until the integration
-replaces it; the same change that next touches `main`.
 
 ## T061. Recurrent: new diagnoses to ingest (daily, after noon)
 

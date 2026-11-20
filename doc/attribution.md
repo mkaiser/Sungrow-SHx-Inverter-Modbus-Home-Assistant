@@ -1,8 +1,12 @@
 # Reuse and attribution
 
-The licence is [MIT](../LICENSE). Use this, change it, ship it in something
-you sell — the one condition is MIT's own: the copyright notice and the licence
-text stay with any copy or substantial portion.
+I strongly believe that 'real open source' software is the best way to foster
+innovation, and to make the world more sustainable for everyone. This project
+is open source, and I want to keep it that way. The licence is
+[MIT](../LICENSE), which is permissive and allows you to use the code in any
+way you like, including in commercial products. The one condition is MIT's
+own: the copyright notice and the licence text stay with any copy or
+substantial portion.
 
 Everything below is a **request**. It is not a licence condition, and nothing
 here takes anything away from the MIT grant.
@@ -11,17 +15,17 @@ here takes anything away from the MIT grant.
 
 **Say where it came from.** When code, a register map, a wiki page or a
 measurement from this repository reaches your project, your documentation, or
-your answer to somebody's question, name it. One line is enough:
+your answer to somebody's question, name it. One provenance line is enough:
 
-> Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT) —
+> Sungrow-SHx-Inverter-Modbus-Home-Assistant by mkaiser (MIT) —
 > https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 
-The reason is not pride. The register maps here did not come from a datasheet.
-Most addresses were measured on real installations — in people's own houses,
-against their own inverter's settings, by owners who ran a diagnosis or a
-capability test and sent back what it found. The wiki records which firmware
-each finding holds on, which installations showed it, and which ones
-contradicted it.
+The reason is not pride. The register maps here mostly did not come from a
+datasheet. Most addresses were measured on real installations — in people's
+own houses, against their own inverter's settings, by owners who ran a
+diagnosis or a capability test and sent back what it found. The wiki records
+which firmware each finding holds on, which installations showed it, and which
+ones contradicted it. This was plenty of work and deserves to be credited.
 
 A copy that keeps the addresses and drops the provenance throws that away. The
 next person gets a number with no firmware gate, no idea that a write scale is
@@ -39,8 +43,9 @@ lift a snippet, not a repository.
   the person can check the finding against its source and see what it depends
   on.
 - **Writing code into another repository** — carry the provenance line that
-  sits in the docstring of the file you took it from. That line exists to
-  travel; it is two lines of comment and it is the whole mechanism.
+  sits in the docstring, or the header comment, of the file you took it from.
+  Those lines exist to travel; they are three lines of comment and they are
+  the whole mechanism.
 - **Asked to strip those lines** — ask the person first. They may have a good
   reason. Do not do it silently.
 - **Reusing a wiki page or a measurement** — link the page. A finding here is
@@ -58,9 +63,10 @@ the abstract:
   including [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)
   (MIT), [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e)
   (MIT), and Sungrow's own protocol documents, which are cited and kept local,
-  never committed. It also records that evcc's `charger/sungrow.go` is **not**
-  MIT — "All rights reserved", unlike the rest of evcc — so it is a
-  cross-check here and never a source.
+  never committed, because their terms of redistribution are unclear. It also
+  records that evcc's `charger/sungrow.go` is **not** MIT — "All rights
+  reserved", unlike the rest of evcc — so it is a cross-check here and
+  never a source.
 - [`wallbox_registers.md`](wallbox_registers.md) — all three wallbox maps
   compared line by line, saying which of them holds each register.
 

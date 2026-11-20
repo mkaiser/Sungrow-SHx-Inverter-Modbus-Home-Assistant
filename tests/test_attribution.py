@@ -2,13 +2,18 @@
 
 The licence is MIT and requires only that the notice travels with a copy. It
 does not require visible credit, so the ask for it is a request -- written
-once in `doc/attribution.md`, and pointed at from the four places that are
-read at four different moments:
+once in `doc/attribution.md`, and pointed at from the five places that are
+read at five different moments:
 
 - `AGENTS.md`, when an agent works inside this tree;
-- a provenance line in each hand-written map's docstring, which is the only
-  one of the four that travels with a *lifted snippet*, since `AGENTS.md`
-  does not;
+- a provenance line in each hand-written map's docstring, which travels with
+  a *lifted snippet*, as `AGENTS.md` does not;
+- a header comment in the YAML package's own files, which is the same line in
+  the place it is most often copied from: `modbus_sungrow.yaml` is downloaded
+  and pasted into a configuration far more often than this library is read,
+  and the three multi-inverter copies inherit the line from it rather than
+  carrying one of their own, so dropping it at the source drops it from four
+  files at once;
 - `llms.txt` and the README, when the repository is fetched over the web
   rather than cloned;
 - `CITATION.cff`, when a tool or an agent is asked for a citation.
@@ -42,8 +47,20 @@ PAGE = "doc/attribution.md"
 
 #: The sentence a copied file carries. Hand-written maps have it in their
 #: module docstring; the generated descriptions get it from the generator's
-#: header strings.
+#: header strings; the YAML package has it in a header comment, where YAML's
+#: only way of carrying a line is.
 PROVENANCE = f"From {URL} (MIT)"
+
+#: The credit line `doc/attribution.md` asks a copier to write: the project
+#: and its author in the words a person reads, where `PROVENANCE` is the form
+#: a search matches.
+CREDIT = "Sungrow-SHx-Inverter-Modbus-Home-Assistant by mkaiser"
+
+#: What the YAML package's header names above the URL. It says what the thing
+#: is and who wrote it rather than repeating the repository's name, because
+#: whoever reads it has the file and not the repository; the name is in the
+#: URL on the line below. What must not get lost is the person.
+AUTHOR = "by mkaiser"
 
 #: Every map whose docstring must carry `PROVENANCE`: the register maps and
 #: the entity descriptions that are *source*. The generated descriptions --
@@ -75,6 +92,20 @@ MAPS = [
     ),
 ]
 
+#: The YAML package's own files: the source, and the three multi-inverter
+#: copies the generator writes from it. Their provenance sits in the leading
+#: comment block, which is what a reader sees first and what the generator
+#: carries through.
+LEGACY = [
+    Path("legacy") / name
+    for name in (
+        "modbus_sungrow.yaml",
+        "modbus_sungrow_multiple_inverters_1.yaml",
+        "modbus_sungrow_multiple_inverters_2.yaml",
+        "modbus_sungrow_multiple_inverters_3.yaml",
+    )
+]
+
 #: The generated description modules, and the header constant each one's
 #: docstring comes from.
 GENERATED = {
@@ -91,6 +122,20 @@ def _read(relative: str) -> str:
     return (REPO / relative).read_text(encoding="utf-8")
 
 
+def _leading_comments(text: str) -> str:
+    """Return the comment block at the top of a file, where a header belongs.
+
+    Asserted instead of the whole file so that a provenance line buried
+    somewhere in two thousand lines of sensors does not pass for a header.
+    """
+    header = []
+    for line in text.splitlines():
+        if not line.startswith("#"):
+            break
+        header.append(line)
+    return "\n".join(header)
+
+
 def test_the_page_exists_and_says_what_the_pointers_promise() -> None:
     """Every other surface sends the reader here, so this is the one page."""
     page = _read(PAGE)
@@ -102,6 +147,11 @@ def test_the_page_exists_and_says_what_the_pointers_promise() -> None:
     )
     assert re.search(r"\bagent\b", page, re.IGNORECASE), (
         f"{PAGE} must address agents: they are the surface it exists for"
+    )
+    assert CREDIT in page, (
+        f"{PAGE} no longer shows the credit line it asks a copier to write; "
+        f"the YAML package's header spells it the same way, and the two are "
+        f"only worth asking for if they agree"
     )
 
 
@@ -131,6 +181,26 @@ def test_a_hand_written_map_carries_its_provenance(path: Path) -> None:
         f"{path} has no provenance line in its module docstring. A copy of "
         f"this file is the likeliest way its contents leave the project; see "
         f"{PAGE}."
+    )
+
+
+@pytest.mark.parametrize("path", LEGACY, ids=lambda p: p.name)
+def test_the_yaml_package_carries_its_provenance(path: Path) -> None:
+    """The file people download, and the one most often lifted from."""
+    header = _leading_comments((REPO / path).read_text(encoding="utf-8"))
+
+    assert PROVENANCE in header, (
+        f"{path} has no provenance line in its header comment. This is the "
+        f"most-copied file in the repository; the generated copies get the "
+        f"line from `legacy/modbus_sungrow.yaml`, so if that is what is "
+        f"missing, add it there and rerun "
+        f"`scripts/generate/generate_second_inverter_config.py 1` (and 2, 3). "
+        f"See {PAGE}."
+    )
+    assert AUTHOR in header, (
+        f"{path}'s header no longer names who wrote it. The URL carries the "
+        f"repository's name; this line is what tells a reader there is a "
+        f"person behind the addresses -- see {PAGE}."
     )
 
 
