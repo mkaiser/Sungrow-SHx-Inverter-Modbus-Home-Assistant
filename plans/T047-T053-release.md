@@ -2,7 +2,7 @@
 
 What the first stable release needs, and what follows it: `main`, the
 catalog, the preview channel, the production database and the YAML track.
-Todo items T047-T053.
+Todo items T047-T053 and T068.
 
 ## T047 - When to merge into `main`.** The merge retires the preview channel
 and opens the HACS default store, which also needs the brand in
@@ -10,6 +10,50 @@ and opens the HACS default store, which also needs the brand in
 At the merge, the links that name the `proper-ha-integration` branch move
 to `main` (`grep -rn proper-ha-integration custom_components`: the Energy
 dashboard guide and the preview repair's entity names).
+
+## T068 - What a `main` link finds after the merge.** `main` changes
+meaning at the merge: today the YAML package's root, afterwards the
+integration. Of the 38 files on today's `main` (`doc/images/` and
+`.github/` aside), **four** paths exist on this branch -- `.gitignore`,
+`LICENSE`, `README.md`, `doc/attribution.md`. The rest 404 from every
+link ever written, `modbus_sungrow.yaml` included, and so do the two
+links printed in the header of every installed copy of the package:
+`doc/installation.md` and `doc/migration_guide.md`.
+
+GitHub's branch-rename redirect does not help. It applies to links naming
+the *old* name, only while no branch of that name exists, and a real
+`main` shadows it at once; raw links never follow it. The only way to
+control what a `main` link finds is a file at that path.
+
+Decided (the maintainer, 2026-11-20): today's `main` becomes `yaml-2026`;
+`2025-legacy` keeps its name; **one** path gets a file on the new `main`,
+`modbus_sungrow.yaml`, and everything else 404s. A re-download then stops
+a working install until its owner reads the file -- accepted, as the
+price of retiring the package. Tag the final state
+`yaml-package-2026-06-19` (its release date) at the same time, so the
+bytes stay addressable if the branch is ever deleted.
+
+The file is comments only, which is why it stops the install: Home
+Assistant has no package to load, setup fails, and the owner opens the
+file. It carries the links its own header used to carry, because it is
+the only path still answering:
+
+```yaml
+# modbus_sungrow.yaml has moved, and is superseded.
+#
+# The YAML package is on the yaml-2026 branch:
+#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/yaml-2026/modbus_sungrow.yaml
+# Its installation and migration guides moved with it, under doc/ there.
+#
+# What replaces it is the Sungrow Modbus integration, on this branch:
+# Settings -> Devices & services -> Add integration. Your recorder
+# history, statistics and dashboards survive the switch --
+# doc/integration_migration.md says how, and how to go back.
+#
+# This file is this notice and nothing else, so Home Assistant has
+# nothing to load here and the package fails to set up. Your inverter is
+# fine; the file you meant to download is the link above.
+```
 
 ## T048 - Submitting to the catalog, when the merge is decided.** The catalog
 is `hacs/default`, run by the HACS team and read by the Marketplace; a PR

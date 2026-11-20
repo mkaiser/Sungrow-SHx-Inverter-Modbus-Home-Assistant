@@ -79,6 +79,11 @@ deleted branch's are not.
 [T002's plan](plans/T002-inverter-self-consumption.md) for anything the branch
 still holds alone; the other three can go today.
 
+--> maintainer: delete `experimental-archived, inverter_self_consumption, wrap-string-registers and dev
+
+archive 2025-legacy to archive/2025-legacy
+current main (last yaml version) to archive/
+
 **T008. Why the search missed the maintainer's inverter**: one measurement
 left -- the same sweep run from the production machine, where a modbus-proxy
 holds the session -- [plan](plans/T008-search-missed-the-inverter.md).
@@ -363,16 +368,14 @@ entries made while it was offered.
 *Needs*: the brand in `home-assistant/brands`, and the
 `proper-ha-integration` links moved to `main`.
 
-**T068. What the YAML branches are called after the merge**: today's `main`
-becomes `yaml-2026`, pairing with `2025-legacy`, which holds the pre-2026 line
-and keeps its name. The names are the easy half. Five years of installation
-instructions, forum answers and issues link `blob/main/modbus_sungrow.yaml`,
-and those links keep saying `main` -- which will then be the integration.
-GitHub redirects links to a branch that was *renamed*; it does not redirect
-links that still name `main`. So the item is what those links should find: the
-file kept at the root of the new `main`, a stub pointing at `yaml-2026`, or
-neither.
-*Needs*: T047's merge decision.
+**T068. What a `main` link finds after the merge** --
+[plan](plans/T047-T053-release.md), which has the decision and the file to
+commit. Today's `main` becomes `yaml-2026`, `2025-legacy` keeps its name, and
+of the 38 paths on today's `main` exactly one gets a file on the new `main`:
+`modbus_sungrow.yaml`, comments only, saying the package moved and is
+superseded. Everything else 404s, GitHub's rename redirect cannot change that,
+and a re-download stops a working install until its owner reads the file.
+*Needs*: T047's merge.
 
 **T048. Submit to the HACS catalog once the merge is decided** --
 [plan](plans/T047-T053-release.md). *Needs*: at least one full (non-pre) GitHub release;
