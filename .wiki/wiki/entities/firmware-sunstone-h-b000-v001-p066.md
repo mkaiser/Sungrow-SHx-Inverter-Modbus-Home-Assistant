@@ -11,8 +11,10 @@ created: '2026-11-06'
 [icefest](installation-icefest.md) through a [WiNet-S](device-winet-s.md) and over RS485.
 
 - [Register 13074](register-13074.md) stores a written word as handed (1:1).
-- [Register 31211](register-31211.md) answers 0x55; the PV cut has not been watched here (PV
-  under 500 W).
+- [Register 31211](register-31211.md) answers 0x55, and **the PV cut is watched**: 811 W of DC power,
+  0 W during, 576 W after, over RS485 on 2026-11-20 ([the reading](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)).
+- [Register 32998](register-32998.md), the site import limit, **holds**: a 520 W cap took import from
+  1040 W to 528 W, and 1029 W after (the same reading).
 - The forced-charging window's days word, holding 33209, refuses a write with 0x04, on both paths.
 - The forced charge acts as commanded; a restart takes about 2 s to stop and 150-165 s to run.
 - The charging start powers do not answer.
@@ -21,3 +23,4 @@ created: '2026-11-06'
 
 - [SH6.0RS, B000.V001.P066, icefest, a WiNet-S on Ethernet](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md)
 - [SH6.0RS, B000.V001.P066, icefest, RS485 through a Waveshare converter](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)
+- [SH6.0RS, B000.V001.P066, icefest, RS485 again: the PV cut and the import limit watched](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)

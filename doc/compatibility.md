@@ -89,6 +89,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger` | code-imstillalive | SH25T (`0x0E28`) | Logger (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | yes?[^dongle] | yes | yes |
 | `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2` | icefest | SH6.0RS (`0x0D10`) | direct LAN port (reported) | SBR192 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | no | no | yes | — | yes | yes | no |
 | `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan` | icefest | SH6.0RS (`0x0D10`) | direct LAN port | SBR192 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | no | no | yes | — | yes | yes | no |
 | `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan` | icefest | SH6.0RS (`0x0D10`) | WiNet-S, wired (reported) | SBR192 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | — |
 | `sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet` | anonymous | SH6.0RS (`0x0D10`) | WiNet-S (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
@@ -243,6 +244,7 @@ that has only one would make the next pair.
 | SH25T | logger | B000.V000.P067 (1 reading) |
 | SH5.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH5.0RT-V112 | winet_wlan | B001.V000.P023 (1 reading) |
+| SH6.0RS | direct_lan | B000.V001.P066 (1 reading) |
 | SH6.0RS | unstated | B000.V001.P066 (1 reading) |
 | SH6.0RS | winet | B000.V001.P068 (1 reading) |
 | SH6.0RS | winet_lan | B000.V001.P066 (1 reading) |

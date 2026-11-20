@@ -566,11 +566,15 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # during, 3641 W after. The dongle's readback is a stale cache there, so
     # the behavioural leg is the whole evidence -- which is what it is for.
     #   sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan.json
+    # icefest's SH6.0RS over RS485 through a Waveshare converter, 2026-11-20:
+    # 811 W before, 0 W during, 576 W after; 31211 read 0x55 after each run.
+    #   sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2.json  # noqa: E501
     Capability.PV_GENERATION_CUT_CONTROL: frozenset(
         {
             "PEARL-H_B000.V000.P071",
             "SAPPHIRE-H_B001.V000.P022",
             "SAPPHIRE-H_B001.V000.P023",
+            "SUNSTONE-H_B000.V001.P066",
             "SUNSTONE-H_B000.V002.P065",
             "SUNSTONE-H_B000.V002.P067",
         }
@@ -584,12 +588,16 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # Watched writes of 32998 under a charge from the grid: the maintainer's
     # SH10RT on P020 (cable), gerd's SH8.0RT on P022 (cable and WiNet-S) and
     # bar12's SH10RT-20 on P023 (cable and WiNet-S, EMS and schedule); the
-    # cap held each time (wiki: register-32998).
+    # cap held each time (wiki: register-32998). And icefest's SH6.0RS on P066
+    # over RS485, 2026-11-20: a 520 W cap took import from 1040 W to 528 W,
+    # 1029 W after, the house's 10.0 kW read back after each run.
+    #   sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2.json  # noqa: E501
     Capability.SITE_IMPORT_LIMIT_CONTROL: frozenset(
         {
             "SAPPHIRE-H_B001.V000.P020",
             "SAPPHIRE-H_B001.V000.P022",
             "SAPPHIRE-H_B001.V000.P023",
+            "SUNSTONE-H_B000.V001.P066",
         }
     ),
     # The discharge windows, watched twice by moving every window away from

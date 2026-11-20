@@ -145,6 +145,9 @@ def test_confirmed_firmware_grants_the_control_where_the_register_answers(
 WATCHED_IN_DIAGNOSES: dict[Capability, str] = {
     Capability.PV_GENERATION_CUT_CONTROL: "PV generation cut",
     Capability.DISCHARGE_SCHEDULE_CONTROL: "discharge windows away from now",
+    # The SH-RT's firmware from raw notes, the SH-RS's P066 from icefest's
+    # capability test (2026-11-20).
+    Capability.SITE_IMPORT_LIMIT_CONTROL: "site import limit",
 }
 
 #: The other place a watched write is recorded: the wiki's raw notes of one-off

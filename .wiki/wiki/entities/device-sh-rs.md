@@ -53,6 +53,8 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
 - **Neither start-power register answers on any SH-RS**: 33149 and 33150 are absent, which is
   what #743 concluded and what the P067 capability test states outright.
 - [13074](register-13074.md) **stores a written word as handed** on P065, P057 and P066.
+- **The PV cut is watched on P065, P066 and P067**, and the site import limit (32998) on P066
+  ([icefest](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)) -- the first SH-RS on which it was.
 - **[Register 32998](register-32998.md) limits grid import**, at 0.01 kW, on Jam3s97's SH10RS by
   the owner's meter trace; every SH-RS diagnosed reads 1300 (13.00 kW).
 - **13250 answers on every SH-RS read**, so the firmware strings are available here, against

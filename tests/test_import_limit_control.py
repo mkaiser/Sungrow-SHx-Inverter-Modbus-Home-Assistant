@@ -33,6 +33,8 @@ CONFIRMED = (
     "SAPPHIRE-H_B001.V000.P020",
     "SAPPHIRE-H_B001.V000.P022",
     "SAPPHIRE-H_B001.V000.P023",
+    # The SH-RS's, watched in icefest's capability test (2026-11-20).
+    "SUNSTONE-H_B000.V001.P066",
 )
 UNCONFIRMED = "SAPPHIRE-H_01011.95.03"
 KEY = "site_import_power_limit"
@@ -57,7 +59,7 @@ def _entity_id(hass: HomeAssistant, domain: str) -> str | None:
     return er.async_get(hass).async_get_entity_id(domain, DOMAIN, f"{SERIAL}_{KEY}")
 
 
-def test_the_three_watched_firmwares_are_confirmed() -> None:
+def test_the_watched_firmwares_are_confirmed() -> None:
     assert capabilities.CONFIRMED_ON_FIRMWARE[
         Capability.SITE_IMPORT_LIMIT_CONTROL
     ] == frozenset(CONFIRMED)

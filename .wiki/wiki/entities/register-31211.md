@@ -51,7 +51,9 @@ It also holds the SH-RS's P065, confirmed through a WiNet-S at
 the behaviour is the evidence a dongle cannot spoil. **And the SH-RS's P067**, confirmed the same
 way at [bigz2012](installation-bigz2012.md)'s through a WiNet-S2 (3467 W, 0 W, 3641 W;
 [the diagnosis](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)),
-where the owner ran the test in daylight with the restart left out. And the SH-T's P071, through a
+where the owner ran the test in daylight with the restart left out. **And the SH-RS's P066**, over
+RS485 through a Waveshare converter at [icefest](installation-icefest.md)'s (811 W, 0 W, 576 W;
+[the diagnosis](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)). And the SH-T's P071, through a
 dongle again at [ra1k-0](installation-ra1k-0.md)'s SH20T (20421 W, 28 W, 20395 W;
 [the diagnosis](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)). The cut stops all PV, whatever the house draws. See [firmware gating](../concepts/firmware-gating.md).
 

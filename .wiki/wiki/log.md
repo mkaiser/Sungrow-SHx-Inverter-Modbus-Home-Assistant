@@ -1953,3 +1953,12 @@ mode 163 as one four-word write; the block put back as found. Test 4 did not run
 #798: a re-added entry's entity ids come back from the registry's deleted entities ahead of the claim's
 `suggested_object_id`; the claim now renames onto a free legacy id. Area-prefixed device-scoped ids still
 switch to legacy ids. [Adopting the legacy entity ids](concepts/legacy-id-adoption.md).
+
+## [2026-11-20] ingested | sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2
+
+icefest's third reading, over RS485 through a Waveshare converter, a diagnostics download posted on #786
+([the source](sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)).
+The PV cut (811 W, 0 W, 576 W) and the site import limit (1040 W, 528 W at 520 W, 1029 W) watched on
+`SUNSTONE-H_B000.V001.P066`; the forced-charging window refused again. `installation-icefest.md`,
+`firmware-sunstone-h-b000-v001-p066.md`, `register-31211.md`, `register-32998.md` and `device-sh-rs.md`
+updated; P066 added to both controls' `CONFIRMED_ON_FIRMWARE`.

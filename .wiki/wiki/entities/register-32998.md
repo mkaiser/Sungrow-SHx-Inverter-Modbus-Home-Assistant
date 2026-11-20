@@ -63,6 +63,10 @@ in kW. The diagnosis's register dump reads it too.
   [the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
   and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
   That is the model of the one report against it.
+- **On an [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) it holds**, the
+  first SH-RS watched: at [icefest](installation-icefest.md)'s, over RS485, a 520 W cap took import from
+  1040 W to 528 W, 1029 W after; the house's own setting is 10.0 kW (word 1000)
+  ([the diagnosis](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)).
 - **On [`01011.95.03`](firmware-sapphire-h-01011-95-03.md) it did not hold**, the first measured
   failure: at [swo14](installation-swo14.md)'s SH10RT-20 a 520 W cap against 1030 W of import
   under a forced charge moved nothing (992 W during, 1020.5 W after). That battery was at 3.3 %
@@ -81,6 +85,7 @@ in kW. The diagnosis's register dump reads it too.
 | 2000 | 20.00 | every SH-RT dump on P020, P022 and P023 except peter-sm: [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md), [bar12](installation-bar12.md), [fwitten](installation-fwitten.md), [mahagon](installation-mahagon.md), [robbensonmio](installation-robbensonmio.md) and two published as `anonymous` |
 | 950, then 990 | 9.50, 9.90 | [peter-sm](installation-peter-sm.md), whose owner sets it |
 | 1300 | 13.00 | all four SH-RS dumps: [Jam3s97](installation-jam3s97.md), [brendan](installation-brendan.md) and two published as `anonymous` |
+| 1000 | 10.00 | [icefest](installation-icefest.md)'s SH6.0RS on P066 (its readings; a download has no dump) |
 | 4347 | 43.47 | [ra1k-0](installation-ra1k-0.md)'s [SH20T](device-sh-t.md) |
 
 On [swo14](installation-swo14.md)'s cluster both inverters read 2000 as well, the slave included
@@ -94,11 +99,11 @@ the cable and a WiNet-S alike where a house has both.
 ## For the integration
 
 A control needs a write watched by this repository, per firmware
-([firmware gating](../concepts/firmware-gating.md)): P022 has two (gerd), P023 three (bar12), P020 three, the last by the
+([firmware gating](../concepts/firmware-gating.md)): P022 has two (gerd), P023 three (bar12), the SH-RS's P066 one (icefest), P020 three, the last by the
 [capability test](../concepts/capability-test.md)'s `--import-limit` check, which is how other
 firmware gets one.
 
-So on P020, P022 and P023 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
+So on P020, P022, P023 and the SH-RS's P066 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
 in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
 SH10RT and the SH10RS accept. There the read-only sensor is not created. Elsewhere the sensor
 stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the

@@ -22,8 +22,12 @@ converter.
 - **RS485 reads as "direct"**: register 6100 answers on it, so transport detection cannot tell it
   from the LAN port.
 - The first SBR192 read on a direct link.
+- **On 2026-11-20, over RS485 again, the PV cut and the import limit were watched**: 811 W of PV to
+  0 W and back, and a 520 W import cap taking 1040 W to 528 W and back
+  ([the third reading](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)).
 
 ## Diagnoses
 
 - [SH6.0RS, B000.V001.P066, icefest, a WiNet-S on Ethernet](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md)
 - [SH6.0RS, B000.V001.P066, icefest, RS485 through a Waveshare converter](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)
+- [SH6.0RS, B000.V001.P066, icefest, RS485 again: the PV cut and the import limit watched](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2-summary.md)

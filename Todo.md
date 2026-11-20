@@ -39,9 +39,9 @@ A holding area, not a queue: taken in only when the maintainer asks
 ([#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797), whose "13035" is the
 protocol address): with the battery empty and the house on the grid the daily import did not count, so the daily
 consumption stalled (its midnight spike is already clamped, `src/sungrow_modbus/hybrid_inverter/derived.py`).
-Compare 13036 with the total import (13037/13038) over a night on an RS; icefest's SH6.0RS download on #786
-(2026-11-20 01:16 UTC, not yet ingested, T061) may carry both.
-*Needs*: that download ingested, or a night's readings from an RS.
+Compare 13036 with the total import (13037/13038) over a night on an RS; icefest's latest download
+(ingested 2026-11-20) was read at midday and does not answer it.
+*Needs*: a night's readings from an RS, the reporter's or icefest's.
 
 What the maintainer's own inverter can answer is a planned test below (T001,
 T002); the rest waits on other firmware or other houses.
@@ -498,15 +498,14 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-19T17:45:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-19T17:45:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-20T19:45:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-20T19:45:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-19 17:45 UTC**: nothing new since that morning, whose
-one document (Maximo101's SH10RS, committed as `-2`) left two findings, both
-since fixed and closed: `mppt4 carries a string` answered wrong, and a broken
-`total_battery_charge` high word on every P067 machine. Their
+Last checked **2026-11-20 19:45 UTC**: one document, icefest's SH6.0RS over RS485
+(a download, committed as `-direct-lan-2`): the PV cut and the site import limit
+watched on `SUNSTONE-H_B000.V001.P066`, which now offers both controls. Maximo101's
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
 `"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
 entry's download hands over the last run's document from memory
