@@ -267,27 +267,28 @@ the behaviour `scripts/generate/tables/writes.py` already predicts.
 
 **T020. Whether the standalone inference is right**: it is built, shown and
 asked for, so what is left is measuring it where it matters --
-[plan](plans/T020-managed-vs-standalone-wallbox.md), step 5.
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 1.
 *Unblocked by*: a standalone wallbox, which nobody has offered (T003, T040).
 
 **T039. A wallbox charging negative, or past 32.7 kW**, which settles whether
 21308/21310 are signed. Input 21313 and input 21365 are still unnamed, and a
-wallbox restart would show whether 21267 falls to near zero.
+wallbox restart would show whether 21267 falls to near zero --
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 7.
 *Unblocked by*: a wallbox seen charging under those conditions.
 
 **T040. A second wallbox's diagnosis**, which settles whether 21211-21214
-identify the unit -- [plan](plans/T040-wallbox-identity-blocks.md).
+identify the unit -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 6.
 *Unblocked by*: the masking publishing a stand-in per masked block, plus a
 terminal diagnosis carrying those blocks.
 
 **T003. Controlling the wallbox**: the mode select's timing, pairing a TLS
 wallbox entry with the inverter that manages it, a standalone wallbox, and
-the first writing run -- [plan](plans/T003-T004-wallbox_tests.md), section 8.
+the first writing run -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 11.
 *Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
 stopped; or a standalone wallbox, which nobody has offered (T040).
 
 **T004. The wallbox's settings as entities** (21298, 21299, 21313): whether
-any of them may be written -- [plan](plans/T003-T004-wallbox_tests.md), section 9.
+any of them may be written -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 12.
 *Unblocked by*: the standalone wallbox of T003.
 
 ## Logger
@@ -425,7 +426,7 @@ Prometheus, MQTT statestream, Node-RED) --
 and the guide exist.
 
 **T059. The wallbox: the direct connection first** --
-[plan](plans/T059-wallbox-direct-connection.md). *Needs*: gerd's two entries side
+[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 5. *Needs*: gerd's two entries side
 by side, and a retaken options screenshot.
 
 **T060. Hand inverter and wallbox readings to evcc**, so it need not open a
