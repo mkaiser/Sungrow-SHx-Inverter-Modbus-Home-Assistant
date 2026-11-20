@@ -30,9 +30,14 @@ morning, reporting its Internet connection not established
 
 **The afternoon of 2026-11-17**: the EV charger controls from Home Assistant with a car charging, two mode
 changes that did not end the session, four load-driven cutbacks with nothing written, and the managed
-test's second pass with a restore that held; from Home Assistant the managed test cannot run here, the
-inverter entry being on the cable
+test's second pass with a restore that held
 ([the afternoon](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md)).
+
+**The evening of 2026-11-20**, no car: the wallbox entry names the inverter entry on the cable as the one
+that manages it, and that entry gets the EV charger controls; an inverter entry through the WiNet-S gives
+the wallbox up to its own entry and takes it back when that entry is deleted
+([the pairing](../sources/gerd-wallbox-2026-11-20-pairing-summary.md)). The managed test from Home
+Assistant is left to run with leave and a car charging.
 
 ## Diagnoses
 
@@ -50,6 +55,8 @@ inverter entry being on the cable
 - [AC22E-01 wallbox, gerd, TLS, while charging](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md), 2026-11-03
 - [The TLS certificate of the WiNet-S and the wallbox](../sources/gerd-tls-certificate-2026-11-06-summary.md), 2026-11-06, one certificate
 - [The wallbox capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car
+- [The wallbox capability test's first writing run](../sources/gerd-wallbox-capability-test-2026-11-13-summary.md), 2026-11-13, left the wallbox disabled
 - [What the devices advertise over mDNS, and their web pages](../sources/gerd-mdns-2026-11-11-summary.md), 2026-11-11
 - [The wallbox controlled through the inverter](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md), 2026-11-14, a car charging, on site
 - [The EV charger controls from Home Assistant, and the managed test again](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md), 2026-11-17, a car charging, over VPN
+- [The wallbox entry paired with the inverter entry](../sources/gerd-wallbox-2026-11-20-pairing-summary.md), 2026-11-20 evening, no car, over VPN

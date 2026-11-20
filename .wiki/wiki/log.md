@@ -1962,3 +1962,20 @@ The PV cut (811 W, 0 W, 576 W) and the site import limit (1040 W, 528 W at 520 W
 `SUNSTONE-H_B000.V001.P066`; the forced-charging window refused again. `installation-icefest.md`,
 `firmware-sunstone-h-b000-v001-p066.md`, `register-31211.md`, `register-32998.md` and `device-sh-rs.md`
 updated; P066 added to both controls' `CONFIRMED_ON_FIRMWARE`.
+
+## [2026-11-20] ingested | gerd-wallbox-capability-test-2026-11-13
+
+The wallbox capability test's first writing run at gerd's
+([the source](sources/gerd-wallbox-capability-test-2026-11-13-summary.md)), frozen in `raw/` since that
+day and now given its page: a disable ended the session and writing the enable back did not undo it; no
+write of 21203 changed the car's draw, the inverter managing the wallbox. Linked from
+`installation-gerd.md` and `device-wallbox.md`; nothing on them changes, the later sessions already carry
+what it settled.
+
+## [2026-11-20] ingested | gerd-wallbox-2026-11-20-pairing
+
+The evening at gerd's with no car ([the source](sources/gerd-wallbox-2026-11-20-pairing-summary.md)), read
+only: the pairing of a TLS wallbox entry with the inverter entry on the cable works on hardware, and an
+inverter entry through the WiNet-S gives the wallbox up to its own entry and takes it back when that is
+deleted (T059's step 2). `installation-gerd.md` and `device-wallbox.md` updated.
+

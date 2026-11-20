@@ -104,7 +104,7 @@ Plug&Play 21298, the offline current 21299 (0.1 A) and the power limit 21313 (0.
 maximum current at input 21263 and the nominal power at 21273 follow); a disabled charger reads
 status **8** ([the app's settings](../sources/gerd-wallbox-app-settings-2026-11-14-summary.md)). A disable written
 over Modbus on 2026-11-13 ended a charge that the enable written back did not resume, and offers
-of 5 A and 0 left the wallbox suspended; the capability test no longer writes either.
+of 5 A and 0 left the wallbox suspended ([the run](../sources/gerd-wallbox-capability-test-2026-11-13-summary.md)); the capability test no longer writes either.
 
 ## Two ways in
 
@@ -127,6 +127,11 @@ whose read-only mode writes the same wallbox document as `wallbox_direct.py`
 (`custom_components/sungrow_modbus/device_diagnosis.py`), and a capability
 test of its own in the extended modes, with its own leave and cap in the
 entry's options (`custom_components/sungrow_modbus/wallbox_diagnosis.py`).
+An inverter entry on the LAN cable never sees the wallbox, so the wallbox
+entry's options ask which inverter manages it; the named entry then gets the
+EV charger controls and runs the managed test's writes (`CONF_WALLBOX_MANAGED_BY`,
+`tests/test_wallbox_pairing.py`; on hardware:
+[the pairing](../sources/gerd-wallbox-2026-11-20-pairing-summary.md)).
 Never reachable through the inverter's own LAN port
 (every unit 0-255 swept). It needs no [iHomeManager](device-ihomemanager.md),
 and sweeping for one cannot find it. Where an iHomeManager is installed it
