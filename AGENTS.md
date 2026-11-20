@@ -82,7 +82,7 @@ failing test.
 | The traps this container sets: `custom_components/` on `PYTHONPATH`, a stale editable install breaking *Add integration*, a noisy first boot that is not a bug | `doc/development.md`, *Pitfalls* and *First boot* |
 | The diagnosis's PEP 723 header is its whole install, so it can use only what the pinned wheel has. Read this before touching `device-diagnosis/scripts/` | `device-diagnosis/reference.md` |
 | The maintainer's inverter details live in their own `secrets.yaml`, never here; use the simulator unless you need real hardware | `doc/development.md`, `doc/development.yaml`'s `real_hardware` |
-| **Reuse from this tree is named**: carry a copied map's or page's provenance line with it, and name the project in an answer drawn from here. A request, not a licence condition | `doc/attribution.md` |
+| **Reuse from this tree is named**: carry a copied map's, page's or YAML file's provenance line with it, and name the project in an answer drawn from here. A request, not a licence condition | `doc/attribution.md` |
 
 ## Do not hand-edit
 

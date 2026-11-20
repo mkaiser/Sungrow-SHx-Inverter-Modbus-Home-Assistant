@@ -475,14 +475,17 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 - **The brand mark is original**, not Sungrow's.
 - **Attribution is asked, never required.** The licence stays MIT, untouched,
   with its notice clause as the only binding condition; the ask to name this
-  project is written as a request on the four surfaces that are read at four
+  project is written as a request on the five surfaces that are read at five
   different moments ([attribution.md](attribution.md),
   `tests/test_attribution.py`). Dual-licensing the wiki under CC-BY, where
   credit would be a condition, was weighed and rejected: a second licence to
   explain would cost more friction for other MIT projects than a condition
-  nobody is going to litigate is worth. The one measure that survives an LLM
-  lifting a snippet is the provenance line in each map's docstring, because an
-  instruction file does not travel with the code.
+  nobody is going to litigate is worth. The measures that survive an LLM
+  lifting a snippet are the provenance line in each map's docstring and the
+  three-line header of `legacy/modbus_sungrow.yaml`, which is the fifth
+  surface and the most-copied file here; `main` carries the identical header,
+  so the two copies stay byte-identical. An instruction file travels with
+  neither.
 
 ## Register sources
 

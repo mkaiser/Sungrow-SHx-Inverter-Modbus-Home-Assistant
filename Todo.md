@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T067.** Numbers are minted in order, never reused and
+**Next free item number: T070.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -21,10 +21,6 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 
 A holding area, not a queue: taken in only when the maintainer asks
 ([`workflow.md`](workflow.md)).
-
-- Release: Add "Add Integration to Home assistant" banner to readme.md on top
- -Release: Rename current main branch to legacy-branch-2, and the current legacy branch to legacy-branch-1. Make better suggestions for names.
-- Check current main branches, I guess some of them are obsolete, e.g. self consumption?
 
 - Investigate / future: The make checks are very long (30 minutes). Can we cut that down?
 
@@ -59,6 +55,27 @@ Nothing can start now: an owner running the preview, and a second unit's
 diagnosis (T005, T006, T042).
 
 ## Integration and tooling
+
+**T067. An *Add to Home Assistant* badge at the top of the README**, on this
+branch: my.home-assistant.io's `hacs_repository` redirect opens the reader's
+own instance at *Add custom repository*, with the owner, the repository and
+*Integration* already filled in -- the steps
+[`doc/installing_a_preview.md`](doc/installing_a_preview.md) currently spells
+out by hand, for `mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`.
+The `config_flow` badge (`?domain=sungrow_modbus`) belongs beside it only
+after the merge, since it does nothing until the integration is installed.
+*Needs*: nothing.
+
+**T069. Retire the stale remote branches**: all of them go except
+`2025-legacy`, which holds the pre-2026 YAML line. Ahead/behind `main`,
+measured 2026-11-20: `experimental-archived` 17/424, last touched 2023-10-15;
+`dev` 25/108 and `inverter_self_consumption` 28/108, both 2026-01-05;
+`wrap-string-registers` 5/7, 2026-06-02. Tag each `archive/<name>` before
+deleting it: a tag costs nothing and keeps the commits reachable, where a
+deleted branch's are not.
+*Needs*: `inverter_self_consumption` read against
+[T002's plan](plans/T002-inverter-self-consumption.md) for anything the branch
+still holds alone; the other three can go today.
 
 **T008. Why the search missed the maintainer's inverter**: one measurement
 left -- the same sweep run from the production machine, where a modbus-proxy
@@ -343,6 +360,17 @@ entries made while it was offered.
 **T047. When to merge into `main`** -- [plan](plans/T047-T053-release.md).
 *Needs*: the brand in `home-assistant/brands`, and the
 `proper-ha-integration` links moved to `main`.
+
+**T068. What the YAML branches are called after the merge**: today's `main`
+becomes `yaml-2026`, pairing with `2025-legacy`, which holds the pre-2026 line
+and keeps its name. The names are the easy half. Five years of installation
+instructions, forum answers and issues link `blob/main/modbus_sungrow.yaml`,
+and those links keep saying `main` -- which will then be the integration.
+GitHub redirects links to a branch that was *renamed*; it does not redirect
+links that still name `main`. So the item is what those links should find: the
+file kept at the root of the new `main`, a stub pointing at `yaml-2026`, or
+neither.
+*Needs*: T047's merge decision.
 
 **T048. Submit to the HACS catalog once the merge is decided** --
 [plan](plans/T047-T053-release.md). *Needs*: at least one full (non-pre) GitHub release;
