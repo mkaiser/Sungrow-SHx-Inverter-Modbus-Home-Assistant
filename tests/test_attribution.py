@@ -8,12 +8,12 @@ read at five different moments:
 - `AGENTS.md`, when an agent works inside this tree;
 - a provenance line in each hand-written map's docstring, which travels with
   a *lifted snippet*, as `AGENTS.md` does not;
-- a header comment in the YAML package's own files, which is the same line in
-  the place it is most often copied from: `modbus_sungrow.yaml` is downloaded
-  and pasted into a configuration far more often than this library is read,
-  and the three multi-inverter copies inherit the line from it rather than
-  carrying one of their own, so dropping it at the source drops it from four
-  files at once;
+- a header comment in the YAML files, which is the same line in the place it
+  is most often copied from: `modbus_sungrow.yaml` is downloaded and pasted
+  into a configuration far more often than this library is read. Two carry it
+  here -- the package, kept under `legacy/` as the integration's reference
+  copy, and the notice at the repository root that answers the links five
+  years of instructions point at;
 - `llms.txt` and the README, when the repository is fetched over the web
   rather than cloned;
 - `CITATION.cff`, when a tool or an agent is asked for a citation.
@@ -92,18 +92,15 @@ MAPS = [
     ),
 ]
 
-#: The YAML package's own files: the source, and the three multi-inverter
-#: copies the generator writes from it. Their provenance sits in the leading
-#: comment block, which is what a reader sees first and what the generator
-#: carries through.
+#: The two YAML files whose leading comment block is read by somebody
+#: holding the file and not the repository: the package itself, kept here as
+#: the integration's reference copy, and the notice at the repository root
+#: that answers the links five years of instructions point at (T068). The
+#: multi-inverter copies the generator writes are not committed here; they
+#: live on the YAML package's own branch.
 LEGACY = [
-    Path("legacy") / name
-    for name in (
-        "modbus_sungrow.yaml",
-        "modbus_sungrow_multiple_inverters_1.yaml",
-        "modbus_sungrow_multiple_inverters_2.yaml",
-        "modbus_sungrow_multiple_inverters_3.yaml",
-    )
+    Path("legacy") / "modbus_sungrow.yaml",
+    Path("modbus_sungrow.yaml"),
 ]
 
 #: The generated description modules, and the header constant each one's
@@ -190,12 +187,9 @@ def test_the_yaml_package_carries_its_provenance(path: Path) -> None:
     header = _leading_comments((REPO / path).read_text(encoding="utf-8"))
 
     assert PROVENANCE in header, (
-        f"{path} has no provenance line in its header comment. This is the "
-        f"most-copied file in the repository; the generated copies get the "
-        f"line from `legacy/modbus_sungrow.yaml`, so if that is what is "
-        f"missing, add it there and rerun "
-        f"`scripts/generate/generate_second_inverter_config.py 1` (and 2, 3). "
-        f"See {PAGE}."
+        f"{path} has no provenance line in its header comment. These are the "
+        f"most-copied files in the repository, and a copy of one is the "
+        f"likeliest way its contents leave the project. See {PAGE}."
     )
     assert AUTHOR in header, (
         f"{path}'s header no longer names who wrote it. The URL carries the "

@@ -98,12 +98,9 @@ Edit the source, not the output (`workflow.md`). Here that means:
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
 - `doc/entity_names.md` and `plans/_gen_text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;
-- `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
-  `generate_second_inverter_config.py`; CI regenerates and commits it,
-  overwriting any hand edit.
 
-`make gen` rewrites them all; `make gen-check` (and CI) fails on a hand edit
-of the first five. `pyproject.toml`'s version and `manifest.json`'s pin move
+`make gen` rewrites them all, and `make gen-check` (and CI) fails on a hand
+edit of any of them. `pyproject.toml`'s version and `manifest.json`'s pin move
 only through `scripts/release/sync_version.py --set X.Y.Z`.
 
 **`registers.py` and `sensor_descriptions.py` are source**, held field by

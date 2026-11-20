@@ -31,6 +31,13 @@ This will:
 - read:  ../legacy/modbus_sungrow.yaml
 - write: ../legacy/modbus_sungrow_multiple_inverters_2.yaml
 
+Its output is **not committed on this branch**: the multi-inverter files live
+with the YAML package, on its own branch, and running `main()` here recreates
+files this tree deliberately does not keep (T068). What this copy is for is
+`tests/test_legacy_slot.py`, which imports the transforms below and applies
+them in memory to prove the `_inv_<n>` slot the integration's migration
+relies on.
+
 It performs conservative, line-based transformations to preserve formatting.
 Only single-line scalars on the same line as `- name:` are modified.
 

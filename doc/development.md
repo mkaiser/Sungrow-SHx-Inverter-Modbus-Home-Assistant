@@ -216,7 +216,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `generate_devices_wanted.py` | Rewrite the coverage table of `device-diagnosis/devices-wanted.md` (and so of the pinned diagnosis issue) from the committed diagnoses, each device counted once by its stand-in serial; the wanted list above it stays hand-written |
 | `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
 | `generate_simulator_registers.py` | The simulator's seed, from the entity map |
-| `generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
+| `generate_second_inverter_config.py` | The YAML package's multi-inverter files, which are committed on its own branch and not here; `tests/test_legacy_slot.py` runs its transforms to prove the `_inv_<n>` slot the migration relies on |
 | **`scripts/release/`** | **Release gates** |
 | `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |

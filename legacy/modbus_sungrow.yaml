@@ -3,10 +3,10 @@
 # Please keep these lines with any copy -- see doc/attribution.md.
 # Release date 2026-06-19
 #
-# INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
+# INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/installation.md
 #
 # MIGRATING GUIDE from version earlier than 2026 of modbus_sungrow.yaml to this version.
-# see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/migration_guide.md
+# see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/migration_guide.md
 
 modbus:
   - name: &sg_hub_name SungrowSHx

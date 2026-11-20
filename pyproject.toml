@@ -67,6 +67,7 @@ ignore = ["ASYNC109", "D203", "D213"]
 # version's isort rejects the other's output and CI fails on a ruff upgrade.
 "tests/test_firmware_attribution.py" = ["D100", "D103", "E402"]
 "tests/test_firmware_support.py" = ["D100", "D103", "E402"]
+"tests/test_legacy_slot.py" = ["D100", "D103", "E402"]
 
 [tool.ruff.lint.isort]
 # Mirrors Home Assistant core's isort settings, so the integration reads the

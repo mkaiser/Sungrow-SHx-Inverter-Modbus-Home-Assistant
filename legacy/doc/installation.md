@@ -21,7 +21,7 @@ It is recommended to use the Visual Studio Code Server add-on for configuration.
 
 ## Users with multi-inverter setups: 
 
-if you have more than one Sungrow inverter, you should download specialized yaml files for your use case. These are ```modbus_sungrow_multiple_inverters_x.yaml```, where x is the number of the used inverter (1..3). 
+if you have more than one Sungrow inverter, you should download specialized yaml files for your use case. These are ```modbus_sungrow_multiple_inverters_x.yaml```, where x is the number of the used inverter (1..3). They are generated from `modbus_sungrow.yaml` on the YAML package's own branch, and that is where they are downloaded from: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/modbus_sungrow_multiple_inverters_1.yaml (and _2, _3). 
 
 If you are adding another inverter to your existing modbus_sungrow installation, you should just use the inverter_2 files in addition the modbus_sungrow.yaml to keep your history of the first inverter. 
 

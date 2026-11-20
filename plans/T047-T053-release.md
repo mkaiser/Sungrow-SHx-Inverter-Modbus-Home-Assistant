@@ -43,14 +43,26 @@ exists GitHub's redirect sends every `main` link to `2026-legacy` -- but
 early costs the default branch of the repository thousands of people
 install from changing weeks before anything arrives there, so it waits.
 
-1. Rename `main` to `2026-legacy`.
-2. Commit the file below at `modbus_sungrow.yaml` on the new `main`.
-3. Rewrite the two deep links in the YAML's own header --
+1. Rename `main` to `2026-legacy`. **Left to do.**
+2. The file below, at `modbus_sungrow.yaml`. **Done early**, on
+   `proper-ha-integration`, which is what becomes the new `main` -- so the
+   merge needs no file work. With it went the three generated
+   multi-inverter files and the two workflows that committed into
+   `legacy/` (`auto-generate-multiple-inverter_configs.yml`,
+   `generate-sensor-list.yml`). `scripts/generate/generate_second_inverter_config.py`
+   stays: `tests/test_legacy_slot.py` now runs its transforms in memory to
+   prove the `_inv_<n>` slot, where it used to read the committed output.
+3. The two deep links in the YAML's own header --
    `blob/main/doc/installation.md` and `blob/main/doc/migration_guide.md`
-   -- to `blob/2026-legacy/...`, in `2026-legacy`'s copy and in
-   `legacy/modbus_sungrow.yaml` on the new `main`, which keeps the two
-   byte-identical. Everyone who downloads after the merge then has live
-   links, and only copies already installed carry the dead ones.
+   -- to `blob/2026-legacy/...`. **Done early** in
+   `legacy/modbus_sungrow.yaml`; **left to do** is the same edit in
+   `2026-legacy`'s own copy at the rename, which makes the two identical
+   again. Everyone who downloads after that has live links, and only copies
+   already installed carry the dead ones.
+
+Until the rename, every `2026-legacy` link written for steps 2 and 3 is
+dead. That is the accepted cost of doing them early, and it costs nothing
+today: nobody installs the YAML package from this branch.
 
 The tag waits with them, or for T053: the header says *Release date
 2026-06-19* but `main` has moved since, so there is no final state to

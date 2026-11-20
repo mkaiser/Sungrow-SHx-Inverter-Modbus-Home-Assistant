@@ -16,8 +16,20 @@ these tests are mostly about keeping those two apart.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "scripts" / "generate"))
+
+from generate_second_inverter_config import (
+    suffix_automation_ids,
+    suffix_entity_ids,
+    suffix_sungrow_secrets,
+    suffix_unique_ids,
+    transform_text,
+)
 from pytest_homeassistant.components.recorder.common import (
     async_recorder_block_till_done,
     async_wait_recording_done,
@@ -153,26 +165,39 @@ async def test_the_lookup_uses_the_platform_that_registered_the_sensor(
     assert async_legacy_suffix(hass, FIRST) is None
 
 
+def _multi_inverter_package(number: str) -> str:
+    """Return what the generator makes of the package for inverter `number`.
+
+    `scripts/generate/generate_second_inverter_config.py`'s own transforms, in
+    the order its `main()` applies them, against `legacy/modbus_sungrow.yaml`.
+    The three outputs are no longer committed -- they live on the YAML
+    package's own branch -- so the generator is run here instead of its
+    output being read, which is a claim about live behaviour rather than
+    about a file somebody could have hand-edited.
+    """
+    text = (REPO / "legacy" / "modbus_sungrow.yaml").read_text(encoding="utf-8")
+    text, _ = transform_text(text, suffix=f" inv {number}")
+    text, _ = suffix_entity_ids(text, inv_number=number)
+    text, _ = suffix_unique_ids(text, inv_number=number)
+    text, _ = suffix_automation_ids(text, inv_number=number)
+    text, _ = suffix_sungrow_secrets(text, inv_number=number)
+    return text
+
+
 @pytest.mark.parametrize("suffix", [s for s in LEGACY_SUFFIXES if s])
-def test_the_serial_unique_id_is_really_in_the_generated_package(
+def test_the_serial_unique_id_is_really_what_the_generator_writes(
     suffix: str,
 ) -> None:
     """Read out of the YAML the generator writes, not asserted about it.
 
-    This is the assertion that keeps the detector honest. Every part of it is
-    a claim about a file in this repository -- that
-    `modbus_sungrow_multiple_inverters_<n>.yaml` exists, and that the serial
-    sensor in it carries `sg_inverter_serial_inv_<n>` -- so a change to the
-    generator's suffix scheme fails here rather than in somebody's migration.
+    This is the assertion that keeps the detector honest: the serial sensor of
+    inverter `<n>` carries `sg_inverter_serial_inv_<n>`, and it is read from
+    what the generator actually produces, so a change to its suffix scheme
+    fails here rather than in somebody's migration.
     """
     number = suffix.removeprefix("_inv_")
-    package = (
-        Path(__file__).resolve().parent.parent
-        / "legacy"
-        / f"modbus_sungrow_multiple_inverters_{number}.yaml"
-    )
-    assert package.exists(), f"{package.name} is generated and committed"
-    assert f"{LEGACY_SERIAL_UNIQUE_ID}{suffix}" in package.read_text(encoding="utf-8")
+
+    assert f"{LEGACY_SERIAL_UNIQUE_ID}{suffix}" in _multi_inverter_package(number)
 
 
 def test_the_plain_package_carries_the_unsuffixed_serial() -> None:

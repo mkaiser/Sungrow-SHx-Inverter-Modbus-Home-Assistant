@@ -1,0 +1,21 @@
+# modbus_sungrow.yaml has moved, and is superseded.
+#
+# A Home Assistant YAML package for Sungrow devices by mkaiser.
+# From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT).
+# Please keep these lines with any copy -- see doc/attribution.md.
+#
+# The YAML package is on the 2026-legacy branch:
+#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/modbus_sungrow.yaml
+# Its installation and migration guides moved with it, under doc/ there.
+#
+# What replaces it is the Sungrow Modbus integration, which this branch
+# holds: Settings -> Devices & services -> Add integration. Your recorder
+# history, statistics and dashboards survive the switch --
+# doc/integration_migration.md says how, and how to go back.
+#
+# The copy under legacy/ in this repository is a frozen reference, kept for
+# the integration's tests and its migration. Do not install from it.
+#
+# This file is this notice and nothing else, so Home Assistant has nothing
+# to load here and the package fails to set up. Your inverter is fine; the
+# file you meant to download is the link above.

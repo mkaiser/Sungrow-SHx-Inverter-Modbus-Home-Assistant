@@ -25,7 +25,7 @@ the integration is actually ready to replace it.
 | | |
 | --- | --- |
 | `modbus_sungrow.yaml` | The package itself. **Edit this one.** |
-| `modbus_sungrow_multiple_inverters_{1,2,3}.yaml` | Generated from it by CI — do not hand-edit |
+| `modbus_sungrow_multiple_inverters_{1,2,3}.yaml` | Not here: generated from it on the YAML package's own branch, where it is installed from |
 | `secrets.yaml` | The keys the package expects, with comments |
 | `additional_sensors/` | SBR battery, multi-inverter aggregates |
 | `dashboards/` | The default dashboard and the HACS card variants |

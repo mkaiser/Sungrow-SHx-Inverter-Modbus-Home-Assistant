@@ -562,7 +562,9 @@ generated_files:
     - script: scripts/generate/generate_simulator_registers.py
       writes: scripts/dev/simulator_registers.json   # also on every simulate.sh
     - script: scripts/generate/generate_second_inverter_config.py
-      writes: legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml
+      writes: nothing committed here; the YAML package's multi-inverter files
+        live on its own branch. tests/test_legacy_slot.py runs its transforms
+        in memory to prove the _inv_<n> slot
       checked: >-
         not by gen-check -- it has no --check. CI regenerates and commits the
         three files on a change to legacy/modbus_sungrow.yaml.
