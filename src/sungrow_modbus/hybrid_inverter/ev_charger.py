@@ -23,7 +23,7 @@ medium tier. The four words are writable; the integration's write table
   within a second; writing on starts one within about ten seconds, the car
   ramped up from 6 A as the inverter raises the wallbox's offer.
 * 33541, charging mode: 160 fast charge, 161 PV surplus, 163 user defined
-  (162 quantity and time, by the ioBroker thread, not seen). Switching has
+  (162 scheduled charging, set from the app at gerd's on 2026-11-20). Switching has
   side effects: **to user defined from off switches charging on** (the car
   starts at 6 A); **while charging, to user defined, from user defined to
   fast charge, and from fast charge to PV surplus, end the session**. The
@@ -38,6 +38,12 @@ medium tier. The four words are writable; the integration's write table
   took 33.0 A on a 32 A wallbox, so the cap at the rating is the caller's. A
   lower current applied within six seconds, a higher one was ramped (8 to
   12 A in about 20 s). The car drew about 0.5 A under the setting.
+* 33546-33549, user-defined mode's daily window: its start and its end, each a
+  U32 low word first, seconds since 1970 of the **local** time written as if
+  it were UTC. The app's save writes it with mode 163; its end ends a session
+  and moves the window a day on, its start switches charging on by itself.
+  Writable only in mode 163, and only as one four-word write (gerd's,
+  2026-11-20). Read here, not written.
 * 33550, surplus from the grid: 0x55 no, 0xAA yes. It is the app's energy
   purchase (*Netzbezug*) in PV surplus: switched in the app, it followed within
   5 s both ways. Set to yes with PV surplus, the inverter still ended the
@@ -47,7 +53,9 @@ medium tier. The four words are writable; the integration's write table
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, integer
+from datetime import UTC, datetime, timedelta
+
+from modbus_connection.model import Component, gauge, integer, uint32
 
 from ..addresses import reg
 
@@ -100,6 +108,24 @@ class EvChargerControl(Component):
     """Whether PV-surplus charging may buy from the grid: the app's *Netzbezug*
     (energy purchase). Measured here: it followed the app's switch both ways."""
 
+    ev_charger_window_start_raw = uint32(
+        reg(33546), word_order="little", nan=0xFFFFFFFF
+    )
+    """User-defined mode's daily window, its start: local time as if UTC."""
+
+    ev_charger_window_end_raw = uint32(reg(33548), word_order="little", nan=0xFFFFFFFF)
+    """User-defined mode's daily window, its end: local time as if UTC."""
+
+    @property
+    def ev_charger_window(self) -> tuple[str, str] | None:
+        """The user-defined window as two wall-clock times, or None.
+
+        `window_times` says how the words are read.
+        """
+        return window_times(
+            self.ev_charger_window_start_raw, self.ev_charger_window_end_raw
+        )
+
     @property
     def ev_charger_charging(self) -> bool | None:
         """Whether charging is switched on; None for a word that is neither."""
@@ -118,6 +144,29 @@ CHARGING = reg(33540)
 MODE = reg(33541)
 USER_CURRENT = reg(33545)
 GRID_SURPLUS = reg(33550)
+
+
+def window_times(start: int | None, end: int | None) -> tuple[str, str] | None:
+    """Return a daily window's start and end as "HH:MM", or None.
+
+    Each word pair is the local wall-clock time stored as if it were UTC, so
+    it is read back as UTC and never converted. The window repeats daily and
+    moves a day on at its end, so only the times are shown, not the dates. An
+    end on the day after its start at midnight is "24:00": midnight to
+    midnight is a whole day, which "00:00" to "00:00" would hide. A pair that
+    reads 0, or an end not after its start, is no window anybody set (a
+    dongle's 0 is not evidence; wiki: zero-means-absent).
+    """
+    if not start or not end or end <= start:
+        return None
+    begins = datetime.fromtimestamp(start, UTC)
+    ends = datetime.fromtimestamp(end, UTC)
+    if ends - begins > timedelta(days=1):
+        return None
+    until = ends.strftime("%H:%M")
+    if until == "00:00" and ends.date() > begins.date():
+        until = "24:00"
+    return begins.strftime("%H:%M"), until
 
 
 def manages_a_wallbox(mode_raw: int | None) -> bool | None:

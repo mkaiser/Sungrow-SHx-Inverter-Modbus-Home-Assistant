@@ -113,6 +113,20 @@ class EvChargerModeSelect(SungrowSelect):
     off is still to be watched from Home Assistant.
     """
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str] | None:
+        """User-defined mode's daily window, as the inverter holds it.
+
+        Attributes, not entities: the window means something only in user
+        defined, and it is the app that sets it. Wall-clock times
+        (`ev_charger.window_times`); none while the words hold no window.
+        """
+        block = self.coordinator.device.component(self.entity_description.component)
+        window = getattr(block, "ev_charger_window", None)
+        if window is None:
+            return None
+        return {"window_start": window[0], "window_end": window[1]}
+
     async def async_select_option(self, option: str) -> None:
         """Write the mode, then charging as it was, then read the block back."""
         description = self.entity_description

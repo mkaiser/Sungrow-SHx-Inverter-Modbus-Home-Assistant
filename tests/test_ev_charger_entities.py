@@ -8,13 +8,17 @@ mode reads a named code and the firmware is one the writes were watched on.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from unittest.mock import patch
 
+from freezegun.api import FrozenDateTimeFactory
+from modbus_connection import ServerDeviceFailureError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
-from pytest_homeassistant.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
+from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 from homeassistant.components.number import (
     ATTR_VALUE,
     DOMAIN as NUMBER_DOMAIN,
@@ -32,7 +36,7 @@ from homeassistant.components.switch import (
 )
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from sungrow_modbus.hybrid_inverter import capabilities, ev_charger as ev
 from sungrow_modbus.hybrid_inverter.capabilities import Capability, probe, resolve
@@ -204,6 +208,149 @@ async def test_the_charging_switch_writes_the_on_and_off_words(
         SWITCH_DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: entity_id}, blocking=True
     )
     assert sungrow_unit.holding[ev.CHARGING] == ev.ON
+
+
+def _reads_on_after_off(unit: MockModbusUnit):
+    """Return a write that takes 33540's off and leaves the word reading on.
+
+    What gerd's inverter did on 2026-11-20: the car stops, the word reads
+    0xAA for about 10 s more.
+    """
+    original = unit.write_register
+
+    async def write(address: int, value: int, *args: object, **kwargs: object) -> None:
+        await original(address, value, *args, **kwargs)
+        if address == ev.CHARGING and value == ev.OFF:
+            unit.holding[ev.CHARGING] = ev.ON
+
+    return write
+
+
+async def _switch_charging(hass: HomeAssistant, service: str, entity_id: str) -> None:
+    await hass.services.async_call(
+        SWITCH_DOMAIN, service, {ATTR_ENTITY_ID: entity_id}, blocking=True
+    )
+
+
+async def test_an_off_is_held_through_the_word_reading_on_after_it(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, freezer: FrozenDateTimeFactory
+) -> None:
+    """The read-back and the next poll read on; the switch shows the off."""
+    entry = await _setup(hass, sungrow_unit)
+    entity_id = _entity_id(hass, "switch", "ev_charger_charging")
+    assert entity_id is not None
+
+    with patch.object(
+        sungrow_unit, "write_register", _reads_on_after_off(sungrow_unit)
+    ):
+        await _switch_charging(hass, SERVICE_TURN_OFF, entity_id)
+    assert hass.states.get(entity_id).state == "off"
+
+    freezer.tick(timedelta(seconds=10))
+    await entry.runtime_data.coordinator_for("ev_charger").async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "off"
+
+    # Past the hold, a word still reading on is the state: someone, or the
+    # inverter, switched charging on again.
+    freezer.tick(timedelta(seconds=11))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_a_read_of_off_ends_the_hold(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Once the word has caught up, an on read inside the window is believed."""
+    entry = await _setup(hass, sungrow_unit)
+    entity_id = _entity_id(hass, "switch", "ev_charger_charging")
+    assert entity_id is not None
+    coordinator = entry.runtime_data.coordinator_for("ev_charger")
+
+    with patch.object(
+        sungrow_unit, "write_register", _reads_on_after_off(sungrow_unit)
+    ):
+        await _switch_charging(hass, SERVICE_TURN_OFF, entity_id)
+    sungrow_unit.holding[ev.CHARGING] = ev.OFF
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "off"
+
+    sungrow_unit.holding[ev.CHARGING] = ev.ON
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_an_on_ends_the_hold_and_shows_on(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    await _setup(hass, sungrow_unit)
+    entity_id = _entity_id(hass, "switch", "ev_charger_charging")
+    assert entity_id is not None
+
+    with patch.object(
+        sungrow_unit, "write_register", _reads_on_after_off(sungrow_unit)
+    ):
+        await _switch_charging(hass, SERVICE_TURN_OFF, entity_id)
+    await _switch_charging(hass, SERVICE_TURN_ON, entity_id)
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_a_failed_off_holds_nothing(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A refused write leaves the switch showing what the word reads."""
+    await _setup(hass, sungrow_unit)
+    entity_id = _entity_id(hass, "switch", "ev_charger_charging")
+    assert entity_id is not None
+
+    async def refuse(address: int, value: int, *args: object, **kwargs: object) -> None:
+        raise ServerDeviceFailureError(0x04)
+
+    with (
+        patch.object(sungrow_unit, "write_register", refuse),
+        pytest.raises(HomeAssistantError),
+    ):
+        await _switch_charging(hass, SERVICE_TURN_OFF, entity_id)
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_the_mode_select_shows_the_user_defined_window(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """33546-33549 as gerd's inverter held them: a whole day from midnight."""
+    sungrow_unit.holding.update(
+        {
+            ev.CHARGING + 6: 36224,
+            ev.CHARGING + 7: 27391,
+            ev.CHARGING + 8: 57088,
+            ev.CHARGING + 9: 27392,
+        }
+    )
+    await _setup(hass, sungrow_unit)
+    state = hass.states.get(_entity_id(hass, "select", "ev_charger_mode"))
+
+    assert state.attributes["window_start"] == "00:00"
+    assert state.attributes["window_end"] == "24:00"
+
+
+async def test_no_window_attributes_while_the_words_hold_none(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    await _setup(hass, sungrow_unit)
+    state = hass.states.get(_entity_id(hass, "select", "ev_charger_mode"))
+
+    assert "window_start" not in state.attributes
+
+
+def test_only_the_charging_word_is_held() -> None:
+    """The hold is 33540's, measured; every other switch believes its reads."""
+    held = {
+        d.key: d.hold_off_seconds for d in SWITCH_DESCRIPTIONS if d.hold_off_seconds
+    }
+    assert held == {"ev_charger_charging": 20.0}
 
 
 async def _select(hass: HomeAssistant, option: str) -> None:

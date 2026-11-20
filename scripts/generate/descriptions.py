@@ -776,6 +776,8 @@ def render_switches() -> str:
         if also_off := row.get("also_off"):
             words = ", ".join(f"{word:#04x}" for word in also_off)
             lines.append(f"        also_off=({words},),")
+        if hold := row.get("hold_off_seconds"):
+            lines.append(f"        hold_off_seconds={float(hold)!r},")
         lines.append("        entity_category=EntityCategory.CONFIG,")
         lines.append("    ),")
 

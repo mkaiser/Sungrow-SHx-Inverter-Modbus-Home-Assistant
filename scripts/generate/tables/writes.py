@@ -329,6 +329,10 @@ class Switch(TypedDict):
     #: Words the register holds that mean off but cannot be written: a
     #: factory value outside the two the specification defines.
     also_off: NotRequired[tuple[int, ...]]
+    #: Seconds after an off is written for which a read of the on word is
+    #: not believed: a register that keeps reading on for a while after it
+    #: took the off.
+    hold_off_seconds: NotRequired[float]
 
 
 #: Step 3: the three mode flags. Each is one holding register holding 0xAA or
@@ -422,13 +426,18 @@ SWITCHES: tuple[Switch, ...] = (
     # Charging on/off: watched at gerd's on P022, off stopped the car within a
     # second, on started it within 7-15 s. Energy purchase (*Netzbezug*) in
     # PV surplus: followed the app's switch both ways. Both gated by
-    # `EV_CHARGER_CONTROL`, granted per watched firmware.
+    # `EV_CHARGER_CONTROL`, granted per watched firmware. An off written while
+    # a car charges reads back on for about 10 s (3-4 s after the write the
+    # word reads 0xAA until about +13 s, the car at 0 A throughout; three
+    # stops in four at gerd's, 2026-11-20), so the switch holds the off it
+    # wrote for 20 s rather than show on for a poll.
     {
         "field": "ev_charger_charging_raw",
         "key": "ev_charger_charging",
         "requires": "EV_CHARGER_CONTROL",
         "on": 0xAA,
         "off": 0x55,
+        "hold_off_seconds": 20,
     },
     {
         "field": "ev_charger_grid_purchase_raw",

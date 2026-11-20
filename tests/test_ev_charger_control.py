@@ -39,6 +39,54 @@ def test_the_block_decodes_what_was_read() -> None:
     assert block.ev_charger_grid_purchase_raw == ev.OFF
 
 
+def test_the_user_defined_window_is_read_as_wall_clock_times() -> None:
+    """Gerd's at 22:40 on 2026-11-20: the app's whole-day window, as left at 18:40.
+
+    33538-33550 read 85, 161, 170, 160, 19, 29188, 27392, 160, 36224, 27391,
+    57088, 27392, 85: 2026-11-20 00:00 to 2026-11-21 00:00, local time stored
+    as if it were UTC.
+    """
+    words = [170, 160, 19, 29188, 27392, 160, 36224, 27391, 57088, 27392, 85]
+    unit = MockModbusConnection().for_unit(1)
+    unit.holding = {ev.CHARGING + i: word for i, word in enumerate(words)}
+    block = ev.EvChargerControl(unit)
+    asyncio.run(block.async_update())
+
+    assert block.ev_charger_window == ("00:00", "24:00")
+    assert block.ev_charger_user_current == pytest.approx(16.0)
+
+
+#: 2026-11-20 00:00, as the inverter stores it.
+MIDNIGHT = 1795132800
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "times"),
+    [
+        (MIDNIGHT + 18 * 3600 + 1800, MIDNIGHT + 22 * 3600, ("18:30", "22:00")),
+        (MIDNIGHT + 22 * 3600, MIDNIGHT + 30 * 3600, ("22:00", "06:00")),
+        (MIDNIGHT, MIDNIGHT + 86400, ("00:00", "24:00")),
+    ],
+)
+def test_a_window_is_its_two_times(start: int, end: int, times: tuple) -> None:
+    assert ev.window_times(start, end) == times
+
+
+@pytest.mark.parametrize(
+    ("start", "end"),
+    [
+        (0, 0),
+        (None, None),
+        (MIDNIGHT, MIDNIGHT),
+        (MIDNIGHT + 3600, MIDNIGHT),
+        (MIDNIGHT, MIDNIGHT + 2 * 86400),
+    ],
+)
+def test_no_window_anybody_set_is_none(start: int | None, end: int | None) -> None:
+    """A dongle's 0, an end not after the start, or longer than a day."""
+    assert ev.window_times(start, end) is None
+
+
 @pytest.mark.parametrize(
     ("amps", "word"), [(6.0, 60), (8.0, 80), (10.0, 100), (12.0, 120), (32.0, 320)]
 )

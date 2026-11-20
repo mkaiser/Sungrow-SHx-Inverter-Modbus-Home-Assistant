@@ -240,6 +240,10 @@ class SungrowSwitchDescription(SungrowEntityDescription, SwitchEntityDescription
     #: The minutes written with `on_value` and `off_value` on such a switch.
     on_minute: int = 0
     off_minute: int = 0
+    #: Seconds after this switch writes off for which a read of `on_value` is
+    #: taken for the register catching up rather than for the state: 33540
+    #: reads on for about 10 s after it took an off. 0 believes every read.
+    hold_off_seconds: float = 0.0
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -11,15 +11,23 @@ What is *not* kept is the YAML's assumption that any value other than the
 "unavailable" sentinel is neither on nor off, and saying "off" to that is how
 a user concludes a feature is disabled when in fact their model does not have
 it.
+
+One register reads back late: the wallbox's charging word (33540) reads on for
+about 10 s after it took an off. Its switch holds the off it wrote for
+`hold_off_seconds` against a read of on, so the read-back does not flip it
+back for a poll (`SungrowSwitch.is_on`).
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.event import async_call_later
 
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
@@ -69,6 +77,9 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
 
     entity_description: SungrowSwitchDescription
 
+    #: Cancels the timer that ends a hold on a written off, while one runs.
+    _release_hold: Callable[[], None] | None = None
+
     @property
     def is_on(self) -> bool | None:
         """Return whether the flag is set, or None if it is neither.
@@ -84,7 +95,9 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
             return None
         value = int(raw)
         if value == self.entity_description.on_value:
-            return True
+            # The register catching up with an off this switch wrote, not
+            # the state: the hold ends at its timer or at a read of off.
+            return self._release_hold is None
         if self.entity_description.minute_field is not None:
             # A window's end: any hour but 24 is a time the `time` entity
             # beside this one holds, so the switch is simply off. There is no
@@ -101,16 +114,56 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Set the flag, or a window's end to the end of the day."""
         description = self.entity_description
+        self._end_hold()
         await self._async_write(
             *self._writes(description.on_value, description.on_minute)
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Clear the flag, or hand a window's end back to its time entity."""
+        """Clear the flag, or hand a window's end back to its time entity.
+
+        Where the register reads on for a while after it took an off
+        (`hold_off_seconds`), the off is held from the moment it is written,
+        so the read-back that follows the write already shows it. A write
+        that fails ends the hold: nothing was taken to wait for.
+        """
         description = self.entity_description
-        await self._async_write(
-            *self._writes(description.off_value, description.off_minute)
-        )
+        if description.hold_off_seconds > 0:
+            self._end_hold()
+            self._release_hold = async_call_later(
+                self.hass, description.hold_off_seconds, self._hold_expired
+            )
+        try:
+            await self._async_write(
+                *self._writes(description.off_value, description.off_minute)
+            )
+        except BaseException:
+            self._end_hold()
+            raise
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """End a hold once a read agrees with the off it held."""
+        raw = self.native_value_source
+        if raw is not None and int(raw) != self.entity_description.on_value:
+            self._end_hold()
+        super()._handle_coordinator_update()
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Cancel a running hold's timer with the entity."""
+        self._end_hold()
+        await super().async_will_remove_from_hass()
+
+    @callback
+    def _hold_expired(self, _now: datetime) -> None:
+        """Show what the register reads once the hold is over."""
+        self._release_hold = None
+        self.async_write_ha_state()
+
+    def _end_hold(self) -> None:
+        if self._release_hold is not None:
+            self._release_hold()
+            self._release_hold = None
 
     def _writes(self, hour: int, minute: int) -> tuple[tuple[str, float], ...]:
         """Return the register writes for one side of this switch.

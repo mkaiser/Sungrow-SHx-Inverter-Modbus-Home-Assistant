@@ -106,6 +106,7 @@ SWITCH_DESCRIPTIONS: tuple[SungrowSwitchDescription, ...] = (
         requires=Capability.EV_CHARGER_CONTROL,
         on_value=0xAA,
         off_value=0x55,
+        hold_off_seconds=20.0,
         entity_category=EntityCategory.CONFIG,
     ),
     SungrowSwitchDescription(
