@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T070.** Numbers are minted in order, never reused and
+**Next free item number: T071.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -67,6 +67,15 @@ Nothing can start now: an owner running the preview, and a second unit's
 diagnosis (T005, T006, T042).
 
 ## Integration and tooling
+
+**T070. Retire the comparison with the YAML package** --
+[plan](plans/T070-retire-the-yaml-comparison.md). The port is finished and the
+YAML is maintained by hand, so the scaffolding comes down: six test modules
+and `doc/legacy_entity_map.json`. The map is a generator input as well as a
+test oracle, so the legacy ids, units and state classes move into
+`scripts/generate/tables/` first, proven by `make gen` leaving every generated
+file byte-identical. It is what `legacy/` waits on.
+*Needs*: nothing.
 
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
