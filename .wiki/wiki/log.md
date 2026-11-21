@@ -2060,3 +2060,11 @@ The inverter self-consumption estimate over 2.5 h of Standby at the maintainer's
 One day of *MPPTn energy* against *Daily PV generation* at the maintainer's SH10RT over the cable
 ([the source](sources/mkaiser-mppt-energy-day-2026-11-21-summary.md)): 22.93 against 23.3 kWh, a ratio
 of 0.984; hourly ratios 0.88-1.04 because 13002 steps on a slow tier. Whether 13002 is DC or AC is open.
+
+## [2026-11-22] ingested | fwitten-import-limit-engine
+
+The capability test's `--import-limit` check at fwitten's master SH10RT-V112 on P023, over the cable
+after dark ([the source](sources/fwitten-import-limit-engine-2026-11-22-summary.md)): a 1090 W cap
+under a 1250 W forced charge left import at 1718 W, the first failure of register 32998 on P023 and
+a contradiction of peter-sm on the same model and firmware. `register-32998.md`, the forced-charge
+query, `installation-fwitten.md` and the P023 page say so; both failures on record are cluster masters.

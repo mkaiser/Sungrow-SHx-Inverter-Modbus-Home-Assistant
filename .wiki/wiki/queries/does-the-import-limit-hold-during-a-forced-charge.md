@@ -4,7 +4,7 @@ title: "Does the site import limit hold during a forced charge on an SH-RT?"
 tags: [register-32998, import-limit, sh-rt, forced-charge, open]
 created: '2026-11-07'
 query: "Does register 32998 cap grid import while an SH-RT force-charges its battery, and does it depend on how the charge is commanded?"
-results_count: 9
+results_count: 10
 ---
 
 # Does the site import limit hold during a forced charge on an SH-RT?
@@ -48,6 +48,13 @@ And P022 obeys, over the cable and through a WiNet-S, EMS and schedule
 ([gerd](../sources/gerd-import-limit-2026-11-08-summary.md),
 [the schedule](../sources/gerd-import-limit-schedule-2026-11-08-summary.md)). So on P020, P022 and P023, cable and
 dongle, EMS and schedule, the cap has held every charge this repository commanded.
+
+**Except at a cluster master, so far.** At [fwitten](../entities/installation-fwitten.md)'s master
+SH10RT-V112 on P023, the charge commanded through 13050 and 13051 by the capability test, a 1090 W
+cap left import at 1718 W against 1724 W before; the charge obeyed and the battery sat well above
+its floor ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)). The other
+failure on record, swo14's on 01011.95.03, is a cluster master too. Whether ulfben's house is a
+cluster is not known, and it is now worth asking.
 
 What would answer it: how ulfben's charge is commanded (iSolarCloud's own forced charge is not
 among those tried), his B001 firmware, and whether a cap was set at all when it charged. The model

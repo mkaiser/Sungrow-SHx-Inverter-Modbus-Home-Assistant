@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T078.** Numbers are minted in order, never reused and
+**Next free item number: T079.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -196,14 +196,14 @@ armed and observing, 37 of 55 established and none failing. The
 forced-startup mode on other firmware is T063, which this house cannot
 answer.
 
-**T025. The site import limit (32998) at fwitten's master, when it is
-reachable** (SH10RT-V112, P023, SBR096, cable -- ulfben's exact hardware,
-#546): what it adds is the engine's own `--import-limit` check on P023.
-How: `sungrow_capability_test.py <host> --import-limit --allow-dark
---no-restart` from this checkout, a dry run first, the stand-in read before
-any write; their Home Assistant stays connected, so expect retries. After
-dark, battery under 90 %, not in Standby. Then ingest.
-*Needs*: fwitten's addresses to answer (they did not on 2026-11-07).
+**T078. Decide whether a cluster master is offered the Grid import limit**,
+now that 32998 failed on P023 at fwitten's master while it held at three
+single inverters
+([the run](.wiki/wiki/sources/fwitten-import-limit-engine-2026-11-22-summary.md)):
+first rerun the check there once, with 32998 read back during the cap and through the WiNet-S too,
+and ask on #546 whether ulfben's house is a cluster.
+*Needs*: fwitten's tunnel from the maintainer's host (the container has no
+IPv6 for that endpoint), after dark, battery under 90 %.
 
 # Blockers
 

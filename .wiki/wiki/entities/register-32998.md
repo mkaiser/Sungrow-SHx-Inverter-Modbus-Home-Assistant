@@ -71,6 +71,14 @@ in kW. The diagnosis's register dump reads it too.
   [the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
   and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
   That is the model of the one report against it.
+- **At [fwitten](installation-fwitten.md)'s master SH10RT-V112 on P023 it did not hold**, which
+  contradicts peter-sm on the same model and firmware: over the cable, after dark, a 1090 W cap
+  under the engine's 1250 W forced charge left import at 1718 W (1724 W before, 1710 W after),
+  with the charge itself obeying, the battery at 15.2 % against a 7 % floor and PV at 0 W
+  ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)). The range words
+  answered as everywhere: 0 and 5001 refused with 0x04, 5000 taken. Neither house is wrong;
+  what differs is open. The one difference on record: fwitten's master leads a **cluster**, as
+  swo14's did where it failed below, and every house where it held is a single inverter.
 - **On an [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) it holds**, the
   first SH-RS watched: at [icefest](installation-icefest.md)'s, over RS485, a 520 W cap took import from
   1040 W to 528 W, 1029 W after; the house's own setting is 10.0 kW (word 1000)
@@ -82,6 +90,8 @@ in kW. The diagnosis's register dump reads it too.
   SH-RT that obeyed is on P020, P022 or P023, and the integration offers the control there only
   ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md)).
   The range words answered there as at mkaiser: 0 and 5001 refused with 0x04, 5000 taken.
+  That house is a cluster master too, like fwitten's, where the cap failed on P023 with the
+  battery well above its floor; so the low battery may not be the whole explanation here.
 - **On one other SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
@@ -113,6 +123,8 @@ firmware gets one.
 
 So on P020, P022, P023 and the SH-RS's P066 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
 in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
-SH10RT and the SH10RS accept. There the read-only sensor is not created. Elsewhere the sensor
+SH10RT and the SH10RS accept. There the read-only sensor is not created. On P023 one watched write has now failed, at a cluster
+master ([fwitten](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)), against three that
+held at single inverters: whether a cluster master should be offered the control is open. Elsewhere the sensor
 stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the
 register refuses 0, so a 0 is a dongle answering for nothing).
