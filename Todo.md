@@ -94,15 +94,6 @@ the user's answer whether they had set it up before, and the fix released to the
 > Services -> Sungrow Modbus -> **Configure** -> **Entity IDs**: the YAML package's IDs. Your old history
 > continues on them. *Total DC power* is there as *Total PV input power* (`sensor.total_dc_power` on the old IDs).
 
-**T070. Retire the comparison with the YAML package** --
-[plan](plans/T070-retire-the-yaml-comparison.md). The port is finished and the
-YAML is maintained by hand, so the scaffolding comes down: six test modules
-and `doc/legacy_entity_map.json`. The map is a generator input as well as a
-test oracle, so the legacy ids, units and state classes move into
-`scripts/generate/tables/` first, proven by `make gen` leaving every generated
-file byte-identical. It is what `legacy/` waits on.
-*Needs*: nothing.
-
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
 prefilled) is in the README and in step 1 of

@@ -181,8 +181,7 @@ integration and `doc/integration_migration.md`, and set a date after
 which the YAML package gets no further changes.
 
 Retiring does not end migration: the legacy-id adoption and its guards
-stay as long as migration is offered. The guards are no longer the
-comparison with the YAML, though -- `tests/test_registers.py` and
-`tests/test_sensor_descriptions.py` go with
-[T070](T070-retire-the-yaml-comparison.md), which also says what `legacy/`
-waits on before the folder itself can go.
+stay as long as migration is offered. The guards are no longer a
+comparison with the YAML: the legacy ids, units and state classes live in
+`scripts/generate/tables/legacy_entities.py`, and `legacy/` is gone from this
+branch (T070).

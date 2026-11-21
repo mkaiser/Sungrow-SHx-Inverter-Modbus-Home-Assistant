@@ -2042,3 +2042,9 @@ held the Python to the YAML were removed. The source page and its index entry
 went with the file; `legacy-id-adoption.md`, `legacy-slot.md`,
 `device-sbr-battery.md` and `register-13074.md` now cite the table, the
 readings or the register map instead of the removed tests.
+
+## [2026-11-21] updated | capability-test check revisions
+
+`capability-test.md` says what voids a kept run: firmware, transport, a
+simulated run, age, or a raised `CHECK_REVISIONS` entry, never an update by
+itself; and that 0.1.0a48 raised three checks after the signed stop fix.

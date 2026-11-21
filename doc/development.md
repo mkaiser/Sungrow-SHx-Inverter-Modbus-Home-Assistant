@@ -219,7 +219,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `generate_simulator_registers.py` | The simulator's seed, from the library's inverter map |
 | **`scripts/release/`** | **Release gates** |
 | `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
-| `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
+| `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases. It reads the **working tree**, so another agent's uncommitted library change fails it too; to judge a release, run it in a clean `git worktree` of the tag |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/_gen_text_translation_review.md`); `--check` fails when either file has drifted |

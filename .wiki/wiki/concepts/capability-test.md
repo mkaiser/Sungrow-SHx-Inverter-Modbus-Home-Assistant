@@ -266,6 +266,17 @@ revision has moved, **that check alone**: a corrected check forgets what it judg
 no longer runs, while its neighbours keep days of ratios and trails. Nothing has to be pressed
 afterwards, because ordinary polling fills a dropped row again.
 
+**An update voids no kept run by itself.** The integration's ledger starts again only on a new
+firmware, another transport, a simulated run, or runs older than 30 days
+(`custom_components/sungrow_modbus/capability_test.py`). A fix to a behavioural check's verdict
+reaches a house only through `CHECK_REVISIONS` in `coverage.py`: a raised number makes the check's
+kept rows stop counting as established, so it is measured again once, while every row stays in
+`runs`. That matters because `NO_EFFECT` ranks as established and is never asked again. The stop
+fix of 2026-11-21, signed power where `abs` took a charging battery for a discharge ignored
+([gerd's auto repeat](../sources/gerd-auto-repeat-2026-11-21-summary.md)), raised the charge
+ceiling, the discharge windows away from now and the discharging start threshold to 2 in 0.1.0a48;
+the PV cut shares the branch but PV power is never negative.
+
 The heavier instruments are still there and still mean what they meant: *Diagnosis: tests, clear
 history* (`async_clear_ledger` removes the plausibility store with the ledger), and raising
 `plausibility.SCHEMA`, which drops every check's evidence at every house.
