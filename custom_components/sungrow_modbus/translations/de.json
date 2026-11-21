@@ -843,6 +843,9 @@
       "inverter_self_consumption": {
         "name": "Wechselrichter Eigenbedarf (geschätzt)"
       },
+      "inverter_self_consumption_energy": {
+        "name": "Wechselrichter Eigenbedarf Energie (geschätzt)"
+      },
       "inverter_temperature": {
         "name": "Gerätetemperatur"
       },

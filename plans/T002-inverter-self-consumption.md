@@ -20,3 +20,32 @@ showing and a single minute is not: a longer window, or the energy
 counterpart, is the form that reads well. Left besides: the Standby
 decision above; the 13022 path on a house that refuses 5214; the energy
 counterpart.
+
+## Decisions
+
+- **Fifteen-minute mean, and an energy entity beside it** -- the maintainer,
+  2026-11-21. `BALANCED`'s window is 900 s; *Inverter self consumption
+  energy (estimated)* (`BALANCED_ENERGY`) integrates the raw balance at every
+  poll, signed, reporting the signed sum's highest value
+  (`EnergyIntegral(signed=True)`), so a dip neither inflates the total nor
+  reads as a meter reset.
+
+- **Standby keeps the number** -- the maintainer, 2026-11-21, after being
+  told it cannot see the standby draw: in Standby the balance is import
+  minus load (22:24, 1990 - 1986 W = 4.6 W; 20:00-22:30 median 0.6 W, range
+  -181 to 174 W), and the inverter counts its own draw in *load*. Written
+  into `Derived.inverter_self_consumption`'s docstring; wiki:
+  mkaiser-self-consumption-standby-2026-11-21.
+
+## Status log
+
+- 2026-11-21, later: Standby decided (keeps the number), docstring and
+  wiki done. Left: commit; the 13022 path on a house that refuses 5214
+  (T046).
+- 2026-11-21: the 900 s window and the energy entity are built, with tests
+  (`tests/test_mppt_energy.py`, the signed cases); `make gen` run. Uncommitted:
+  `energy_integral.py`, `entity.py`, `sensor.py`, `derived.py`,
+  `scripts/generate/descriptions.py`, `tables/naming.py`,
+  `tests/test_entity_wiring.py`, `tests/test_mppt_energy.py` and the
+  generated files. Next: the Standby decision above, then the wiki page and
+  the commit.

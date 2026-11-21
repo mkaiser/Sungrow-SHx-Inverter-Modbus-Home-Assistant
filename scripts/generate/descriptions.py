@@ -297,7 +297,9 @@ INTEGRATED: dict[str, str] = {
 #: Power by energy balance, shown only as a time-weighted mean: key to (the
 #: value on `Derived`, the registers it reads, the window in seconds). Its
 #: inputs are read in different blocks at different moments, so a single
-#: reading mixes moments and swings; a minute's mean is what is worth showing.
+#: reading mixes moments and swings. Fifteen minutes, the maintainer's call
+#: (2026-11-21): at the maintainer's SH10RT a single one-minute mean ran from
+#: -178 to 601 W by day while hourly medians held at 143-365 W.
 #: New, with no YAML predecessor: #626 tried it as a template and never
 #: shipped it, so it claims no legacy id.
 BALANCED: dict[str, tuple[str, tuple[str, ...], float]] = {
@@ -312,8 +314,18 @@ BALANCED: dict[str, tuple[str, tuple[str, ...], float]] = {
             "battery_power_unsigned",
             "power_flow_status",
         ),
-        60,
+        900,
     ),
+}
+
+#: The energy each balanced power adds up to: key to the `BALANCED` key it
+#: integrates. Signed (`EnergyIntegral`, `signed`), since the single
+#: readings swing either side of the true value and clamping them would
+#: bias the total upwards; `total_increasing` all the same, because what is
+#: reported is the signed sum's highest value. The integral reads the raw
+#: balance at every poll, not the mean, which would only lag it.
+BALANCED_ENERGY: dict[str, str] = {
+    "inverter_self_consumption_energy": "inverter_self_consumption",
 }
 
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
@@ -507,6 +519,22 @@ def render_derived() -> str:
         lines.append("        state_class=SensorStateClass.MEASUREMENT,")
         lines.append('        native_unit_of_measurement="W",')
         lines.append("        suggested_display_precision=0,")
+        lines.append("    ),")
+
+    for key, balanced in BALANCED_ENERGY.items():
+        field, depends, _ = BALANCED[balanced]
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{field}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append("        integrated=True,")
+        lines.append("        signed_integral=True,")
+        lines.append("        device_class=SensorDeviceClass.ENERGY,")
+        lines.append("        state_class=SensorStateClass.TOTAL_INCREASING,")
+        lines.append('        native_unit_of_measurement="kWh",')
+        lines.append("        suggested_display_precision=2,")
         lines.append("    ),")
 
     for key, source in INTEGRATED.items():

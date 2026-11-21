@@ -535,9 +535,16 @@ class Derived:
 
         Signed, and not clamped at zero: the inputs are read in different
         blocks at different moments, so one reading can come out negative,
-        and the sensor shows a one-minute mean, which clamping would bias
-        upwards. YAML package #626 tried it as a template and never shipped
-        it, so there is no entity id to adopt.
+        and the sensor shows a fifteen-minute mean and a signed energy
+        integral, both of which clamping would bias upwards. YAML package
+        #626 tried it as a template and never shipped it, so there is no
+        entity id to adopt.
+
+        **It cannot see a Standby draw.** In Standby PV and battery read 0,
+        so this is import less load; the inverter's own draw comes through
+        the meter and is counted in the load it reports, and the value
+        centres on zero (median 0.6 W over 2.5 h at an SH10RT). Kept as a
+        number there all the same, the maintainer's call (2026-11-21).
         """
         values = self._floats("total_dc_power", "export_power_raw", "load_power")
         battery = self._battery_discharge_w()

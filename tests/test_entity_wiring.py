@@ -93,6 +93,7 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     sys.path.insert(0, str(scripts / "tables"))
     from descriptions import (
         BALANCED,
+        BALANCED_ENERGY,
         DISCHARGE_SCHEDULE,
         HISTORY,
         INTEGRATED,
@@ -116,7 +117,7 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     # The trackers' energy: no register counts it, so the YAML had none.
     integrated = {f"sensor.{key}" for key in INTEGRATED}
     # Powers by energy balance: #626 tried one as a template, never shipped.
-    balanced = {f"sensor.{key}" for key in BALANCED}
+    balanced = {f"sensor.{key}" for key in (*BALANCED, *BALANCED_ENERGY)}
     assert not (
         ported
         - expected

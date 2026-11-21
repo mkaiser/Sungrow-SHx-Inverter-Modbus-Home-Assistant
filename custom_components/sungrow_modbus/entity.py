@@ -164,6 +164,14 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     see `sungrow_modbus.energy_integral`.
     """
 
+    signed_integral: bool = False
+    """Integrate readings below zero too, reporting the sum's highest value.
+
+    For a power by energy balance, whose single readings swing either side
+    of the true value: clamping them at zero would bias the total upwards
+    (`EnergyIntegral`, `signed`). Only with `integrated`.
+    """
+
     smoothed_over: float | None = None
     """Report a moving average over this many seconds, not the raw reading.
 

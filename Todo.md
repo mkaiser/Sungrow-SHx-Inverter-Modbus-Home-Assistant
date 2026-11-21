@@ -41,8 +41,8 @@ Compare 13036 with the total import (13037/13038) over a night on an RS; icefest
 (ingested 2026-11-20) was read at midday and does not answer it.
 *Needs*: a night's readings from an RS, the reporter's or icefest's.
 
-What the maintainer's own inverter can answer is a planned test below (T001,
-T002); the rest waits on other firmware or other houses.
+What the maintainer's own inverter can answer is a planned test below
+(T001); the rest waits on other firmware or other houses.
 
 ## Battery
 
@@ -168,7 +168,7 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
-**At the maintainer's SH10RT** (T001, T002, T007) one instance serves
+**At the maintainer's SH10RT** (T001, T007) one instance serves
 them all: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
 a restart costs an armed auto repeat). Its entities are prefixed
@@ -185,15 +185,6 @@ surplus. How: `sungrow_capability_test.py <host> --import-limit` from this
 checkout, a dry run first.
 *Needs*: a bright enough hour. The forced startup (13017) on firmware other
 than P020 is not testable here and is T063.
-
-**T002. *Inverter self consumption (estimated)* by day, at the maintainer's
-SH10RT** -- [plan](plans/T002-inverter-self-consumption.md). It reads about
--1.9 W in Standby at night, where every term but the load's noise is zero;
-what is left is the daytime look -- whether the mean is steady and plausible
-while the inverter works -- and from that, whether Standby should read
-`unknown` instead of a number near zero.
-*Needs*: the inverter working in daylight. The 13022 path still waits on a
-house that refuses 5214 (T046).
 
 **T007. A day and a night of *Extended test (auto repeat)* at the
 maintainer's SH10RT**, then ingest -- the new checks on hardware, the
@@ -385,7 +376,9 @@ single write of 33213's held value.
 
 **T046. Battery power where 5214 is refused** (#655, #770). The fallback to
 13022 is built on ten firmwares' evidence but has never met a house that
-refuses 5214; then decide whether the *Battery power* entity falls back too.
+refuses 5214; then decide whether the *Battery power* entity falls back too,
+and check *Inverter self consumption (estimated)* on that path
+([T002's plan](plans/T002-inverter-self-consumption.md)).
 Not to be asked for on #655 (maintainer, 2026-11-11).
 *Unblocked by*: a diagnosis of an SH8.0RS on #655's firmware, or of SAPPHIRE
 51.0x. **A third-party battery is not enough**: the maintainer's is one and

@@ -34,33 +34,47 @@ class EnergyIntegral:
 
     Power below zero counts as zero: a tracker does not consume, and a
     total that fell would read as a meter reset.
+
+    **`signed=True` integrates power below zero too**, for a power by
+    energy balance (`Derived.inverter_self_consumption`), whose single
+    readings swing either side of the true value. Counting the negatives as
+    zero would bias the total upwards by every swing below; so the running
+    sum is signed, and what is reported is its highest value so far. The
+    report never falls, and it is above the signed sum only by the depth of
+    the current dip, which the next minutes above the line make good -- an
+    error bounded by one dip, where clamping adds up every one of them.
     """
 
-    def __init__(self, total_kwh: float = 0.0, *, max_gap: float) -> None:
+    def __init__(
+        self, total_kwh: float = 0.0, *, max_gap: float, signed: bool = False
+    ) -> None:
         """Start from `total_kwh`, the value restored after a restart."""
         self._total = total_kwh
+        self._peak = total_kwh
         self.max_gap = max_gap
+        self.signed = signed
         self._last: tuple[float, float] | None = None
 
     @property
     def total_kwh(self) -> float:
-        """Energy so far, in kWh."""
-        return self._total
+        """Energy so far, in kWh: the signed sum's highest value, if signed."""
+        return self._peak
 
     def update(self, now: float, power_w: float | None) -> float:
         """Feed the power read at `now`, in W, and return the total."""
         if power_w is None:
             self._last = None
-            return self._total
-        power = max(power_w, 0.0)
+            return self._peak
+        power = power_w if self.signed else max(power_w, 0.0)
         if self._last is not None:
             then, before = self._last
             elapsed = now - then
             if elapsed <= 0:
                 # The same moment twice: keep the newer reading, add nothing.
                 self._last = (then, power)
-                return self._total
+                return self._peak
             if elapsed <= self.max_gap:
                 self._total += (before + power) / 2 * elapsed / _WS_PER_KWH
+                self._peak = max(self._peak, self._total)
         self._last = (now, power)
-        return self._total
+        return self._peak

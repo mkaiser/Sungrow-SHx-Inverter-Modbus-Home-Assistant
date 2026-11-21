@@ -308,7 +308,11 @@ class _IntegratesPower(RestoreSensor):
                 total = 0.0
         interval = self._update_interval()
         polls = 3 * interval.total_seconds() if interval else 0.0
-        self._integral = EnergyIntegral(total, max_gap=max(polls, _MIN_GAP))
+        self._integral = EnergyIntegral(
+            total,
+            max_gap=max(polls, _MIN_GAP),
+            signed=getattr(self.entity_description, "signed_integral", False),
+        )
         self._sample()
 
     @callback

@@ -52,12 +52,13 @@ it is tested only where a column pools more than one of the models.
 
 What moves between firmware versions of one platform, over one kind of link:
 
-- **PEARL-H, dongle** (B000.V000.P067, B000.V000.P071, B001.V001.P038): 5 differ.
+- **PEARL-H, dongle** (B000.V000.P067, B000.V000.P071, B001.V001.P038): 6 differ.
   - Communication module firmware version: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Export power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Export power signed: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Import power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Inverter self consumption (estimated): B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
+  - Inverter self consumption energy (estimated): B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
 - **SAPPHIRE-H, direct** (01011.95.03, B001.V000.P020, B001.V000.P022, B001.V000.P023): 6 differ.
   - Backup frequency: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
   - Firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
@@ -425,6 +426,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Direct consumption this month | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Direct consumption this year | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Inverter self consumption (estimated) | read | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Inverter self consumption energy (estimated) | read | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control mode *(select)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control mode enable code | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

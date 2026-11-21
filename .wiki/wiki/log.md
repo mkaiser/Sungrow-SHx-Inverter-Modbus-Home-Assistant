@@ -2048,3 +2048,9 @@ readings or the register map instead of the removed tests.
 `capability-test.md` says what voids a kept run: firmware, transport, a
 simulated run, age, or a raised `CHECK_REVISIONS` entry, never an update by
 itself; and that 0.1.0a48 raised three checks after the signed stop fix.
+
+## [2026-11-21] ingested | mkaiser-self-consumption-standby
+
+The inverter self-consumption estimate over 2.5 h of Standby at the maintainer's SH10RT
+([the source](sources/mkaiser-self-consumption-standby-2026-11-21-summary.md)): median 0.6 W, range
+-181 to 174 W, since in Standby it is import minus load and the inverter counts its own draw as load.

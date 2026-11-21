@@ -415,9 +415,13 @@ OVERRIDES: dict[str, str] = {
     # What the inverter uses and loses itself. "Inverter" names the subject,
     # against the house's self-consumption, so it may lead
     # (`DEVICE_WORD_FIRST`). A balance of four readings taken at different
-    # moments, not a reading, so "(estimated)". Shown only as a one-minute
-    # mean (`BALANCED` in `descriptions.py`).
+    # moments, not a reading, so "(estimated)". Shown only as a fifteen-minute
+    # mean (`BALANCED` in `descriptions.py`); its energy is the same balance
+    # integrated at every poll (`BALANCED_ENERGY`).
     "inverter_self_consumption": "Inverter self consumption (estimated)",
+    "inverter_self_consumption_energy": (
+        "Inverter self consumption energy (estimated)"
+    ),
     # `(delayed)` for the same reason and in the same grammar: the seven
     # binary sensors below report true only once the condition has held for
     # sixty seconds. `(delay)` is a noun, and reads as though the entity were
@@ -898,6 +902,9 @@ GERMAN: dict[str, str] = {
         "Tägliche Energieaufnahme Verbraucher (geglättet)"
     ),
     "inverter_self_consumption": "Wechselrichter Eigenbedarf (geschätzt)",
+    "inverter_self_consumption_energy": (
+        "Wechselrichter Eigenbedarf Energie (geschätzt)"
+    ),
     "daily_direct_energy_consumption": "Täglicher Direktverbrauch",
     "daily_exported_energy": "Täglich eingespeiste Energie",
     "daily_exported_energy_from_pv": "Täglich aus PV eingespeiste Energie",
@@ -1279,7 +1286,9 @@ def modern_name(key: str, legacy_name: str) -> str:
 #: Keys whose name may start with a device word, because there it names the
 #: subject, not the device: the inverter's own consumption, against the
 #: house's ("Self-consumption of today"). The maintainer's call, 2026-11-11.
-DEVICE_WORD_FIRST = frozenset({"inverter_self_consumption"})
+DEVICE_WORD_FIRST = frozenset(
+    {"inverter_self_consumption", "inverter_self_consumption_energy"}
+)
 
 
 def violations(key: str, name: str, diagnostic: bool) -> list[str]:

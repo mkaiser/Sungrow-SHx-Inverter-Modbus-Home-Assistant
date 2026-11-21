@@ -843,6 +843,9 @@
       "inverter_self_consumption": {
         "name": "Inverter self consumption (estimated)"
       },
+      "inverter_self_consumption_energy": {
+        "name": "Inverter self consumption energy (estimated)"
+      },
       "inverter_temperature": {
         "name": "Device temperature"
       },

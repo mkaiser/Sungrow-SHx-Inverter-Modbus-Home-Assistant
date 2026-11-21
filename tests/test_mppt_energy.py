@@ -75,6 +75,33 @@ def test_the_total_never_falls() -> None:
     assert integral.total_kwh == 5.0
 
 
+def test_a_signed_integral_takes_back_a_dip_before_it_counts_again() -> None:
+    # A balance swinging either side of 100 W: clamping the -100 W minute at
+    # zero would count 1/3 more than the true mean.
+    integral = EnergyIntegral(max_gap=120, signed=True)
+    for minute, power in enumerate((300.0, 300.0, -100.0, -100.0, 300.0, 300.0)):
+        integral.update(minute * 60, power)
+    # Trapezoids: 300, 100, -100, 100, 300 W for a minute each.
+    assert integral.total_kwh == pytest.approx(700 * 60 / 3_600_000)
+
+
+def test_a_signed_integral_never_reports_a_fall() -> None:
+    integral = EnergyIntegral(5.0, max_gap=60, signed=True)
+    integral.update(0, 3600.0)
+    integral.update(10, 3600.0)
+    assert integral.total_kwh == pytest.approx(5.01)
+    integral.update(20, -3600.0)
+    integral.update(30, -3600.0)
+    # The signed sum is now below 5.01; the report holds its peak ...
+    assert integral.total_kwh == pytest.approx(5.01)
+    # ... and moves again only once the dip is made good.
+    integral.update(40, 3600.0)
+    integral.update(50, 3600.0)
+    assert integral.total_kwh == pytest.approx(5.01)
+    integral.update(60, 3600.0)
+    assert integral.total_kwh == pytest.approx(5.02)
+
+
 def test_the_same_moment_twice_adds_nothing() -> None:
     integral = EnergyIntegral(max_gap=60)
     integral.update(0, 1000.0)
