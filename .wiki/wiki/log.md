@@ -2025,3 +2025,11 @@ local build of 0.1.0a46 with them ([the source](sources/gerd-t076-2026-11-21-sum
 restart permission off and the test history cleared, one run: exit 0, the discharge window confirmed
 (533.5 W, 0 W, 468 W) and the discharging start threshold confirmed, overturning the morning's
 "not supported". `installation-gerd.md` and `firmware-sapphire-h-b001-v000-p022.md` updated.
+
+## [2026-11-21] ingested | pvsonnenfreund-sbr096-cell-registers-788
+
+An owner's raw-socket reads of the SBR cell block on an SBR096 of three modules, BCU `.01.30`, behind an
+SH10RT-V112 on P023 ([the source](sources/pvsonnenfreund-sbr096-cell-registers-788-summary.md)): the
+per-module cell extremes hold in 12 of 12 reads, the module serials carry data on this BCU, and two
+mismatched frames past the cell block (protocol addresses 10750 for 41 words, and 10791 alone). New page
+`installation-pvsonnenfreund.md`; `device-sbr-battery.md` and `padded-frames.md` updated.

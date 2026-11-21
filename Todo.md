@@ -500,14 +500,14 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-20T19:45:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-20T19:45:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-21T18:55:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-21T18:55:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-20 19:45 UTC**: one document, icefest's SH6.0RS over RS485
-(a download, committed as `-direct-lan-2`): the PV cut and the site import limit
-watched on `SUNSTONE-H_B000.V001.P066`, which now offers both controls. Maximo101's
+Last checked **2026-11-21 18:55 UTC**: no new diagnosis. PVSonnenfreund's comment on #788 (an SBR096's
+cell block on BCU `.01.30`, its module serials, two mismatched frames) is ingested as a wiki source.
+Maximo101's
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
 `"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
 entry's download hands over the last run's document from memory

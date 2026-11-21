@@ -102,7 +102,8 @@ presence flag with one meaning.
 Registers 10765-10772 are each module's **highest** cell and 10773-10780 each module's
 **lowest**, not sixteen single cells (`max_cell_voltage_module_n`, `min_cell_voltage_module_n`).
 The owner of the SBR256 showed it in 7 of 7 samples
-([issue #788](../sources/robbensonmio-sbr-cell-registers-788-summary.md)), and every cable SBR
+([issue #788](../sources/robbensonmio-sbr-cell-registers-788-summary.md)), an SBR096 owner in 12 of 12
+block reads ([an SBR096 on BCU `.01.30`](../sources/pvsonnenfreund-sbr096-cell-registers-788-summary.md)), and every cable SBR
 reading in the corpus agrees: the pack's highest cell equals the module word of the module its
 position names, and likewise the lowest (`tests/test_sbr_pack.py` holds it to the corpus). So the
 pack-wide spread is the pack's highest cell less its lowest, which the integration shows as **Cell
@@ -110,4 +111,5 @@ voltage spread** in mV (`SbrBatteryCells.cell_voltage_spread`). Each fitted modu
 and lowest cell are diagnostic entities, disabled by default, created only for the modules
 `SbrBatteryModules.fitted_modules` names: those whose cell type is non-zero, which on every cable
 reading are exactly the modules that read a voltage (`tests/test_sbr_pack.py`). The block is
-polled only while one of them is enabled. Per-module serials at 10822-10885 read NUL bytes on the SBR256.
+polled only while one of them is enabled. Per-module serials at 10822-10885 read NUL bytes on the SBR256
+(BCU `.01.27`) and carry data on [an SBR096 on BCU `.01.30`](../sources/pvsonnenfreund-sbr096-cell-registers-788-summary.md).
