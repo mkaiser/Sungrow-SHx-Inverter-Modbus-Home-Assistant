@@ -90,15 +90,21 @@ CHECK_REVISIONS: dict[str, int] = {
     RESTART: 1,
     "forced charge": 1,
     "forced discharge": 1,
-    "charge ceiling": 1,
+    # 2 since 2026-11-21, with the two below: a stop verdict compared the
+    # absolute power, so a battery charging while a discharge was to stop (or
+    # discharging while a charge was) read as power the inverter failed to
+    # stop. `NO_EFFECT` counts as established, so the wrong answer would
+    # never be asked again. The PV cut shares the branch, but PV power is
+    # never negative, and keeps its evidence.
+    "charge ceiling": 2,
     "export power limit": 1,
     "PV generation cut": 1,
     "forced-charging window": 2,
-    "discharge windows away from now": 1,
+    "discharge windows away from now": 2,
     "site import limit": 1,
     "forced startup under low SoC": 1,
     "charging start threshold": 1,
-    "discharging start threshold": 1,
+    "discharging start threshold": 2,
     **dict.fromkeys(WRITE_PATH_CHECKS, 1),
     # 2 since 2026-11-17: the upper-bound check used to call any readback
     # word below the one written a clamp, without asking whether the stored
