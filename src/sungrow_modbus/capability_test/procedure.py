@@ -1615,7 +1615,8 @@ def export_cap() -> float:
     where 1250 was asked -- binds harder and reads `EFFECT_SCALED`. A write
     that lands a decade *large* binds on nothing and reads `NO_EFFECT`,
     indistinguishable from an ignored write; leg B sees that from the raw word,
-    and `tests/test_writes.py` fails on the library's half of it at commit time.
+    and `tests/test_write_safety.py` fails on the library's half of it at
+    commit time.
     """
     return FORCED_EFFECT_W
 

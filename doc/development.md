@@ -135,7 +135,7 @@ contention warning, and the network-search caveat.
 
 `scripts/generate/generate_simulator_registers.py` reads every Modbus sensor
 and switch in `legacy/modbus_sungrow.yaml`, plus the specification registers
-in `doc/legacy_entity_map.json` the YAML never read, and writes a register
+in `scripts/generate/tables/legacy_entities.py` the YAML never read, and writes a register
 seed to `scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
 serves that seed over Modbus TCP, unit 1, input and holding spaces apart.
 Seeding from committed records means the simulator cannot drift away from the
@@ -208,15 +208,16 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `managed_wallbox_field.py` | Watch a wallbox an inverter manages, on this tree's library: its block, energy, a session, a phase switch, a scan of the inverter's 33501-33600; `charge` writes charging on/off and puts it back. Addresses as arguments; see `plans/T003-T004-T020-T039-T040-T059-wallbox.md` |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, `german`, or all eight with no argument (`strings` and `german` last, since they read the others) |
-| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
+| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions |
+| `tables/legacy_entities.py` | **Input table**: every entity the YAML package defines, plus the specification registers it never read: entity id, unique id, name, unit, state class, address. Feeds the legacy ids, units and state classes of the generated descriptions, the simulator seed, `review_names.py` and `scripts/dev/seed_migration_testbed.py`; a row is added, never changed |
 | `tables/naming.py` | **Input table**: the entity-name convention, and the German name for every key (`GERMAN`). Feeds `strings.json`, `translations/de.json`, `review_names.py` and the Influx helper |
 | `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`plans/_gen_text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
 | `generate_devices_wanted.py` | Rewrite the coverage table of `device-diagnosis/devices-wanted.md` (and so of the pinned diagnosis issue) from the committed diagnoses, each device counted once by its stand-in serial; the wanted list above it stays hand-written |
 | `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
-| `generate_simulator_registers.py` | The simulator's seed, from the entity map |
-| `generate_second_inverter_config.py` | The YAML package's multi-inverter files, which are committed on its own branch and not here; `tests/test_legacy_slot.py` runs its transforms to prove the `_inv_<n>` slot the migration relies on |
+| `generate_simulator_registers.py` | The simulator's seed, from the YAML package and `tables/legacy_entities.py` |
+| `generate_second_inverter_config.py` | The YAML package's multi-inverter files, which are committed on its own branch and not here |
 | **`scripts/release/`** | **Release gates** |
 | `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
@@ -363,8 +364,7 @@ writes (`address: 4989 # reg 4990`); `tests/test_addresses.py` fails on any
 other spelling. Each component is one poll interval in one register space,
 and neighbouring fields inside it are pooled into block reads, so grouping
 fields by how often they should be polled matters more than grouping them by
-address. `tests/test_registers.py` holds every field to
-`doc/legacy_entity_map.json`.
+address.
 
 ## Reviewing the migration by hand
 
@@ -389,7 +389,7 @@ $ scripts/dev/develop.sh
 Home Assistant must be **stopped** while it runs: it writes the entity
 registry and the recorder database directly. `--reset` undoes it, so the same
 instance can be used to try the other answer. `--from <snapshot>` uses a
-registry exported from a real instance instead of the generated entity map —
+registry exported from a real instance instead of `scripts/generate/tables/legacy_entities.py` —
 more faithful, but such a file belongs in `.testdata/`, never in the repo.
 
 ## Testing the install a user actually gets

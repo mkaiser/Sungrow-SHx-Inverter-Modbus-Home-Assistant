@@ -15,7 +15,7 @@ Get this wrong and years of history and every dashboard card break silently.
 
 Settled and asserted in `tests/test_recorder_migration.py`. The user's guide
 is `doc/integration_migration.md`, and the record of what the YAML produces is
-the [legacy entity map](../sources/legacy-entity-map-summary.md).
+`scripts/generate/tables/legacy_entities.py`.
 
 - **A registry rename carries raw history and long-term statistics**, and a
   `total_increasing` sum keeps climbing across it.
@@ -45,8 +45,9 @@ the [legacy entity map](../sources/legacy-entity-map-summary.md).
 - **Every ported entity keeps the unit class and `state_class`** of the YAML
   entry it replaces. With the unit class wrong, long-term statistics freeze
   flat, repeating the last value forever, while raw history keeps filling, so
-  nothing looks broken. `tests/test_sensor_descriptions.py` holds this field
-  by field.
+  nothing looks broken. `scripts/generate/tables/legacy_entities.py` records
+  both, and the generated descriptions take them from it; the hand-written
+  `sensor_descriptions.py` has no test holding it there.
 
 - **Adoption on a production instance** held at [gerd](../entities/installation-gerd.md)'s: 150 ids
   adopted from `restored` placeholders, and an id the owner's own template sensors held stayed `_2`

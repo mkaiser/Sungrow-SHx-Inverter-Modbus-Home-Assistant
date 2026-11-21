@@ -66,8 +66,8 @@ never asked, and the export check's write was refused too.
 - `registers.AsymmetricNumberField` holds the common case:
   `write_units_per_count=10`, and `scale` 1 because that is what the register
   contains. It cannot live in `modbus-connection`, whose `NumberField`
-  shares one scale by design. The difference from the YAML is declared in
-  `tests/test_writes.py`.
+  shares one scale by design. The difference from the YAML is declared on
+  the field, in `src/sungrow_modbus/hybrid_inverter/registers.py`.
 - **`sungrow_modbus.hybrid_inverter.export_scale` asks the inverter** with one
   write that changes nothing on either firmware. It writes the held word back
   when ten times that word would be out of range, or a tenth of it when that

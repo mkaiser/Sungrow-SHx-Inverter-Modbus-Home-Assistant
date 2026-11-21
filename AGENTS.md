@@ -103,13 +103,15 @@ Edit the source, not the output (`workflow.md`). Here that means:
 edit of any of them. `pyproject.toml`'s version and `manifest.json`'s pin move
 only through `scripts/release/sync_version.py --set X.Y.Z`.
 
-**`registers.py` and `sensor_descriptions.py` are source**, held field by
-field to `doc/legacy_entity_map.json` (the record of what the YAML package
-produces; never regenerated) by `tests/test_registers.py` and
-`tests/test_sensor_descriptions.py`. A field that must differ is declared
-where the test can see it (`layout.COUNTS`, `write_units_per_count`), never
-made silently. `battery_`, `wallbox_` and `external_descriptions.py` are
-source too.
+**`registers.py` and `sensor_descriptions.py` are source**, and no test
+holds them to the YAML package: an address, scale or `state_class` is right
+because it was reviewed. `scripts/generate/tables/legacy_entities.py` is the
+record of what the YAML package produces, the legacy ids, units and state
+classes the generated descriptions are built from; a row is added, never
+changed, because a changed one detaches somebody's history. Where hardware
+contradicts the YAML, the difference is declared (`layout.COUNTS`,
+`write_units_per_count`), never made silently. `battery_`, `wallbox_` and
+`external_descriptions.py` are source too.
 
 ## The wiki
 

@@ -1,18 +1,17 @@
 """Entity descriptions for an SBR pack, hand-written for a stated reason.
 
-`sensor_descriptions.py` is held field by field to
-`doc/legacy_entity_map.json`, the record of what `legacy/modbus_sungrow.yaml`
-produces -- the inverter's map. The pack's registers are not in it, because they live in
+`scripts/generate/tables/legacy_entities.py` records what
+`legacy/modbus_sungrow.yaml` produces -- the inverter's map. The pack's
+registers are not in it, because they live in
 `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, an opt-in file a
-user copies in by hand. So there is no record to hold these to, exactly as
-there was none for `sungrow_modbus.battery.registers`, and they are guarded
-the same way instead:
+user copies in by hand. So there is no record to hold these to, and they are
+guarded this way instead:
 `tests/test_battery_entities.py` checks every `field` here against a real
 field or property on the components.
 
 **No `legacy_name`, and that is a decision.** The migration reproduces the
 YAML package's entity ids, and these are not in it -- the additional file is
-not part of the package, is not in the entity map, and is installed by
+not part of the package, is not in the legacy record, and is installed by
 copy-paste rather than by including a file. A user who did copy it in has ids
 like `sensor.sg_battery_1_max_voltage_of_cell`, and those are **not**
 adopted here. Recorded in `Todo.md` as an open decision with

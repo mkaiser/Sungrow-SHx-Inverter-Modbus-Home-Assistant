@@ -43,7 +43,6 @@ human document staying as it was:
 | --- | --- | --- |
 | inverter diagnoses | `device-diagnosis/results/inverter/*.json` | `sungrow_diagnosis.py --save`, a contributor's upload |
 | wallbox documents | `device-diagnosis/results/wallbox/*.json` | the same |
-| the YAML package's entity record | `doc/legacy_entity_map.json` | by hand; tests read it |
 | register documents, issue findings, portal readings | `raw/*.md` | copied in at ingest; `doc/` keeps the living copy |
 
 A source page's `source_path` is relative to `.wiki/`, as llmwiki's ingest
@@ -97,8 +96,8 @@ keep reading the pages.
 - **Every claim cites its evidence**: a source page link, or a repository
   path in backticks (`src/sungrow_modbus/hybrid_inverter/layout.py`,
   `tests/test_export_scale.py`). A claim with no evidence is a query.
-- **Raw sources are immutable**: `device-diagnosis/results/`,
-  `doc/legacy_entity_map.json` and `raw/`. Read them, cite them, never
+- **Raw sources are immutable**: `device-diagnosis/results/` and
+  `raw/`. Read them, cite them, never
   rewrite them. The `doc/` pages are for people and are edited like any
   document, which is why the wiki cites its own frozen copy in `raw/` rather
   than the page itself.

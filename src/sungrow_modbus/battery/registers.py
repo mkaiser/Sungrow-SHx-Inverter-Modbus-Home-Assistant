@@ -1,13 +1,10 @@
 """The SBR battery's own registers, which are not the inverter's.
 
-In its own module because it is the battery's map, not the inverter's:
-`registers.py` is held field by field to `doc/legacy_entity_map.json`, the
-inverter's record, and these components have no entry there.
+In its own module because it is the battery's map, not the inverter's.
 
 The source here is
 `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, proven by years
-of use, and `tests/test_sbr_pack.py` checks every address and scale against
-it -- the same protection `registers.py` gets from `tests/test_registers.py`.
+of use.
 
 **Not on the inverter's unit.** Which unit the pack answers on depends on the
 transport: 200 over the inverter's own LAN port, 2 through a WiNet-S. See

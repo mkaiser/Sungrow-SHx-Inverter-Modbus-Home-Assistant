@@ -517,10 +517,6 @@ BANNED_WORDS: dict[str, str] = {
 #: Each one **names what replaces it**, and that is the whole discipline
 #: here: a clean cut removes duplication, not capability, and the only way to
 #: know which is being removed is to say where the reading went instead.
-#: `tests/test_sensor_descriptions.py` checks every replacement exists among
-#: the entities modern mode does create, by name rather than by a heuristic
-#: that would guess.
-#:
 #: Two kinds, both a second copy of something the user already has:
 #:
 #: * **Nine read-only sensors duplicating a `number`.** A Home Assistant
@@ -536,8 +532,7 @@ BANNED_WORDS: dict[str, str] = {
 #:
 #: A field named here loses its *sensor* and keeps its switch, select or
 #: number: its description in `sensor_descriptions.py` carries
-#: `legacy_only=True`, which `tests/test_sensor_descriptions.py` holds to
-#: exactly this table.
+#: `legacy_only=True`, for exactly the fields in this table.
 LEGACY_ONLY_SENSORS: dict[str, str] = {
     # A `number` of the same name shows the value and sets it.
     "battery_charging_start_power": "number.battery_charging_start_power",

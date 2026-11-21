@@ -9,8 +9,8 @@ The same is true of Prometheus, MQTT statestream and Node-RED.
 
 So this exists, and its limits are the point:
 
-* it **never connects to anything**. It reads the entity map in this
-  repository and prints text;
+* it **never connects to anything**. It reads the entity descriptions in
+  this repository and prints text;
 * what it prints is **for review**, not for piping into a shell. Rewriting
   someone's time-series database is not a thing to do on the strength of a
   script that has never seen their data;

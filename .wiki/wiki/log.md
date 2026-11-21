@@ -2033,3 +2033,12 @@ SH10RT-V112 on P023 ([the source](sources/pvsonnenfreund-sbr096-cell-registers-7
 per-module cell extremes hold in 12 of 12 reads, the module serials carry data on this BCU, and two
 mismatched frames past the cell block (protocol addresses 10750 for 41 words, and 10791 alone). New page
 `installation-pvsonnenfreund.md`; `device-sbr-battery.md` and `padded-frames.md` updated.
+
+## [2026-11-21] retired | legacy_entity_map.json
+
+The YAML package's entity record moved from `doc/legacy_entity_map.json` into
+`scripts/generate/tables/legacy_entities.py`, row for row, and the tests that
+held the Python to the YAML were removed. The source page and its index entry
+went with the file; `legacy-id-adoption.md`, `legacy-slot.md`,
+`device-sbr-battery.md` and `register-13074.md` now cite the table, the
+readings or the register map instead of the removed tests.

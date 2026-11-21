@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 # `strings` imports the integration's descriptions to name them.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from legacy_entities import ENTITIES
 from naming import (
     CONNECTION_LABELS,
     DIAGNOSIS_MODE_LABELS,
@@ -51,22 +52,18 @@ from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
 from sungrow_modbus.hybrid_inverter.registers import COMPONENTS
 
 REPO = Path(__file__).resolve().parents[2]
-ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
 COMPONENT = REPO / "custom_components" / "sungrow_modbus"
 
 TIER_NAMES = {5: "realtime", 10: "fast", 60: "medium", 600: "slowest"}
 
 
 # --------------------------------------------------------------------------
-# Shared: the entity map, and how a register row names its component
+# Shared: the legacy entities, and how a register row names its component
 
 
 def _entities() -> list[dict[str, Any]]:
-    """Return every entity the YAML package defines, from the frozen map."""
-    entities: list[dict[str, Any]] = json.loads(ENTITY_MAP.read_text(encoding="utf-8"))[
-        "entities"
-    ]
-    return entities
+    """Return every entity the YAML package defines, from the legacy table."""
+    return list(ENTITIES)
 
 
 def _registers() -> dict[str, dict]:
@@ -150,7 +147,7 @@ def _formatted(text: str, filename: str) -> str:
 # Assistant entity each computed value becomes, carrying the same unit, state
 # class and legacy name as the `template:` sensor it replaces.
 #
-# The one thing that cannot be read out of the entity map is which registers a
+# The one thing that cannot be read out of the legacy entities is which registers a
 # derived value depends on, because the YAML expresses that as a Jinja
 # template over other entities. It is declared below, and it earns its keep
 # twice: it decides which coordinator writes the entity -- the fastest tier it
@@ -329,7 +326,7 @@ DELAY_ON = 60
 #:
 #: Its unit, device class and state class come from the **source**, because
 #: that is where Home Assistant's own filter sensor gets them -- it copies
-#: them off the source state at runtime, so the entity map has none recorded
+#: them off the source state at runtime, so the legacy entities have none recorded
 #: for it. Copying the wrong ones freezes long-term statistics flat while raw
 #: history keeps filling, which is the failure mode this project watches for.
 SMOOTHED: dict[str, tuple[str, float]] = {
@@ -1002,7 +999,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     )
 
     # A specification addition has no legacy name, so its name comes from the
-    # entity map, where it was written down from V1.1.11. Falling back to the
+    # legacy entities, where it was written down from V1.1.11. Falling back to the
     # key instead loses whatever the key cannot carry -- "Feed-in" came out as
     # "Feed in", because a slug has no hyphens.
     added = {

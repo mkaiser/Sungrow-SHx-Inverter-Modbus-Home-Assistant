@@ -38,7 +38,7 @@ lean on them.
   run `make gen`; if its content is wrong, fix the generator or its input.
   Never hand-edit (`make gen-check` fails).
 - **Raw sources**, which are immutable: `device-diagnosis/results/`,
-  `doc/legacy_entity_map.json`, `.wiki/raw/`.
+  `.wiki/raw/`.
 - **The YAML package's documents**: `legacy/` and everything under it. Its
   truth is `legacy/modbus_sungrow.yaml`, which is not being changed.
 - **Device facts** in the wiki (what a register does, what a WiNet-S

@@ -33,6 +33,7 @@ import pytest
 sys.path.insert(0, "scripts/generate/tables")
 sys.path.insert(0, "scripts/generate")
 
+from legacy_entities import ENTITIES
 from naming import (
     DIAGNOSTIC,
     GERMAN,
@@ -78,7 +79,6 @@ REPLACED_SENSORS = frozenset(
 
 REPO = Path(__file__).resolve().parent.parent
 COMPONENT = REPO / "custom_components" / "sungrow_modbus"
-ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
 
 DESCRIPTIONS = {
     # The battery's are here for the reason they most need to be: they are
@@ -235,7 +235,7 @@ def test_legacy_names_are_untouched() -> None:
     """
     legacy = {
         (entity["domain"], entity["unique_id"]): entity["name"]
-        for entity in json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
+        for entity in ENTITIES
         # A specification addition has no YAML entity behind it, so it has no
         # legacy name to preserve -- and must not claim one.
         if entity["layer"] not in {"specification", "observed"}

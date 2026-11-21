@@ -7,7 +7,7 @@ battery that charges to the wrong percentage, and grows once the mechanism is
 proven.
 
 **Writability is declared here and nowhere else.** `registers.py` marks
-exactly these fields `writable=True` -- `tests/test_writes.py` fails if the two
+exactly these fields `writable=True` -- `tests/test_write_safety.py` fails if the two
 disagree -- so the library refuses a write to anything this table does not
 name, and `scripts/generate/descriptions.py` builds the entities from the same
 rows. A register the integration cannot write is a
@@ -15,8 +15,7 @@ register it cannot write by accident.
 
 Every bound was read from two sources that agree: the YAML package's own
 `number:` templates, which are field-proven, and *Communication Protocol of
-Residential Hybrid Inverter* V1.1.11. `tests/test_writes.py` re-extracts the
-YAML's bounds and fails if this table drifts from them.
+Residential Hybrid Inverter* V1.1.11.
 
 Not here yet, deliberately:
 

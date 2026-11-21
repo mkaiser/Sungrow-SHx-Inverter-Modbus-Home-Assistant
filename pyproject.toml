@@ -67,7 +67,6 @@ ignore = ["ASYNC109", "D203", "D213"]
 # version's isort rejects the other's output and CI fails on a ruff upgrade.
 "tests/test_firmware_attribution.py" = ["D100", "D103", "E402"]
 "tests/test_firmware_support.py" = ["D100", "D103", "E402"]
-"tests/test_legacy_slot.py" = ["D100", "D103", "E402"]
 
 [tool.ruff.lint.isort]
 # Mirrors Home Assistant core's isort settings, so the integration reads the
@@ -103,7 +102,7 @@ implicit_reexport = true
 source = ["custom_components/sungrow_modbus", "src/sungrow_modbus"]
 
 [tool.coverage.report]
-fail_under = 93
+fail_under = 93.9
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

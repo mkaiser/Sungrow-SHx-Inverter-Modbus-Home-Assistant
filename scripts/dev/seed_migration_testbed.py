@@ -22,7 +22,7 @@ The entity id question is asked only in devices mode, which this release
 does not offer (`ONLY_DIAGNOSIS_MODE` in the integration's `const.py`). Set
 it to False locally to review the migration, and do not commit it.
 
-By default the entities come from `doc/legacy_entity_map.json`, the
+By default the entities come from `scripts/generate/tables/legacy_entities.py`, the
 record of what the YAML package produces, which carries no personal data.
 `--from` reads a registry snapshot exported from a real instance instead, which
 is more faithful
@@ -46,12 +46,15 @@ import sqlite3
 import sys
 import uuid
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "generate" / "tables"))
+
+from legacy_entities import ENTITIES
+
 REPO = Path(__file__).resolve().parents[2]
 CONFIG = REPO / "config"
 STORAGE = CONFIG / ".storage"
 REGISTRY = STORAGE / "core.entity_registry"
 DATABASE = CONFIG / "home-assistant_v2.db"
-ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
 
 #: Platforms whose entities the YAML package owns. `homeassistant` entries in
 #: a real snapshot are the user's own helpers and are left alone.
@@ -76,7 +79,7 @@ SEEDED: dict[str, tuple[str, str, str, str | None]] = {
 
 
 def _entities(source: Path | None) -> list[dict]:
-    """Return the registry entries to seed, from a snapshot or the entity map."""
+    """Return the registry entries to seed, from a snapshot or the legacy entities."""
     if source is not None:
         snapshot = json.loads(source.read_text(encoding="utf-8"))
         entries = (
@@ -84,7 +87,6 @@ def _entities(source: Path | None) -> list[dict]:
         )
         return [e for e in entries if e.get("platform") in YAML_PLATFORMS]
 
-    mapped = json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
     return [
         {
             "entity_id": entity["entity_id"],
@@ -94,7 +96,7 @@ def _entities(source: Path | None) -> list[dict]:
             "unit_of_measurement": entity.get("unit_of_measurement"),
             "device_class": entity.get("device_class"),
         }
-        for entity in mapped
+        for entity in ENTITIES
         if entity.get("unique_id")
     ]
 
@@ -342,7 +344,7 @@ def main() -> int:
         "--from",
         dest="source",
         type=Path,
-        help="registry snapshot from a real instance, instead of the entity map",
+        help="registry snapshot from a real instance, instead of the legacy entities",
     )
     parser.add_argument("--reset", action="store_true", help="undo a previous seed")
     args = parser.parse_args()

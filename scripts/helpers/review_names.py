@@ -43,6 +43,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "generate" / "tables"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from legacy_entities import ENTITIES
 from naming import (
     GERMAN,
     GERMAN_TEXTS,
@@ -54,9 +55,8 @@ from naming import (
 REPO = Path(__file__).resolve().parents[2]
 STRINGS = REPO / "custom_components" / "sungrow_modbus" / "strings.json"
 DATASHEET = REPO / "scripts" / "generate" / "tables" / "datasheet_names.json"
-LEGACY_MAP = REPO / "doc" / "legacy_entity_map.json"
 
-#: The entity map's layers that are the YAML package itself. The others are
+#: The legacy entities' layers that are the YAML package itself. The others are
 #: what the specification and the diagnoses added, which the YAML never had.
 YAML_LAYERS = frozenset({"modbus", "template", "filter"})
 
@@ -299,14 +299,13 @@ def _legacy_ids() -> dict[tuple[str, str], str]:
 def _not_ported() -> list[tuple[str, str]]:
     """Return (entity id, name) for each YAML entity no description claims.
 
-    From the entity map rather than a list, so an entity a change stops
+    From the legacy entities rather than a list, so an entity a change stops
     claiming turns up here instead of vanishing from the sheet.
     """
     claimed = set(_legacy_ids().values())
-    entities = json.loads(LEGACY_MAP.read_text(encoding="utf-8"))["entities"]
     return sorted(
         (entity["entity_id"], entity["name"])
-        for entity in entities
+        for entity in ENTITIES
         if entity["layer"] in YAML_LAYERS
         and entity["domain"] != "attribute"
         and entity["entity_id"] not in claimed

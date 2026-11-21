@@ -2274,7 +2274,7 @@ def test_what_the_stated_cap_gives_up_is_named_precisely() -> None:
     The lost case is a build whose compensation is broken or removed, against a
     firmware that decuples anyway. The cap then lands at 12500 W, binds on
     nothing, and reads `NO_EFFECT` -- the same answer an ignored write gives.
-    Leg B sees it from the raw word and `tests/test_writes.py` fails on it at
+    Leg B sees it from the raw word and `tests/test_write_safety.py` fails on it at
     commit time, which is why this is affordable.
     """
     from sungrow_modbus.capability_test import FORCED_EFFECT_W, export_cap

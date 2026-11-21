@@ -313,8 +313,8 @@ real_hardware:
 
   prefer_the_simulator: >-
     scripts/dev/simulate.sh serves the whole register map on localhost:5020,
-    seeded from legacy/modbus_sungrow.yaml and doc/legacy_entity_map.json, so
-    it cannot drift from the map. Use real hardware only when the point is to
+    seeded from legacy/modbus_sungrow.yaml and
+    scripts/generate/tables/legacy_entities.py, so it cannot drift from them. Use real hardware only when the point is to
     verify real-hardware behaviour.
 
 # ---------------------------------------------------------------------------
@@ -573,8 +573,7 @@ generated_files:
       writes: scripts/dev/simulator_registers.json   # also on every simulate.sh
     - script: scripts/generate/generate_second_inverter_config.py
       writes: nothing committed here; the YAML package's multi-inverter files
-        live on its own branch. tests/test_legacy_slot.py runs its transforms
-        in memory to prove the _inv_<n> slot
+        live on its own branch
       checked: >-
         not by gen-check -- it has no --check. CI regenerates and commits the
         three files on a change to legacy/modbus_sungrow.yaml.
@@ -588,9 +587,11 @@ generated_files:
   # asserts the two agree.
   source_not_generated: >-
     src/sungrow_modbus/hybrid_inverter/registers.py and
-    custom_components/sungrow_modbus/sensor_descriptions.py are edited by hand.
-    doc/legacy_entity_map.json is the record of what the YAML package
-    produces, and tests hold both files to it.
+    custom_components/sungrow_modbus/sensor_descriptions.py are edited by hand
+    and reviewed; no test holds them to the YAML package.
+    scripts/generate/tables/legacy_entities.py is the record of what the YAML
+    package produces, and the generated descriptions take their legacy ids,
+    units and state classes from it.
 
 version:
   single_source: scripts/release/sync_version.py

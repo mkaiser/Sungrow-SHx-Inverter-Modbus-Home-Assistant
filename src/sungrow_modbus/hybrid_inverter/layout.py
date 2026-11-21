@@ -54,9 +54,8 @@ one 31-register request and fail again.
 
 `registers.py` is where the isolation actually happens: each group below is
 its own `Component` there, and its docstring says why. This module is the
-record of the measurement behind each one, and `tests/test_registers.py`
-fails if `registers.py` stops honouring it -- a field listed here pooled back
-into its tier, or a count reverted.
+record of the measurement behind each one. A field listed here pooled back
+into its tier, or a count reverted, fails the read on hardware again.
 
 The YAML package never hit the second part because it reads every register in
 its own request; it hits the first, and its Sungrow Version 3 is unavailable

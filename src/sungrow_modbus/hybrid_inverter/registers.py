@@ -1,12 +1,10 @@
 """Sungrow inverter registers.
 
-**Source, edited by hand.**
-[doc/legacy_entity_map.json](../../doc/legacy_entity_map.json) is the record
-of what the YAML package produces, and `tests/test_registers.py` holds every
-field here to it -- address, type, scale, word order and poll interval -- so a
-scale off by ten fails on the commit that introduces it. A field that must
-differ from the YAML says so where a test can see it -- `layout.COUNTS` for a
-string length, `write_units_per_count` for a write scale -- never silently.
+**Source, edited by hand**, and reviewed against Sungrow's document or a
+measurement: no test holds a field's address, type, scale, word order or poll
+interval to the YAML package, so a scale off by ten is caught by reading it.
+A field that differs from the YAML says so -- `layout.COUNTS` for a string
+length, `write_units_per_count` for a write scale -- never silently.
 Other register knowledge lives beside it: the identity and start/stop blocks
 in `components.py`, decoded enumerations and derived values in `derived.py`,
 the fault bits in `faults.py`; why some fields sit in components of their own
@@ -46,9 +44,9 @@ from . import ev_charger
 
 #: Unavailable sentinels the YAML package does not declare, by field name.
 #:
-#: `tests/test_registers.py` holds every field's `nan` to the YAML's, so a
-#: sentinel added here is a declared difference rather than a silent one.
-#: Each is a value no real reading can take.
+#: Declared here rather than on the field, so a sentinel the YAML lacks is a
+#: stated difference rather than a silent one. Each is a value no real reading
+#: can take.
 #:
 #: `battery_level`: a cluster slave without a battery, on SAPPHIRE-H
 #: B001.V000.P023, answers 0xFFFF at 13023 beside battery voltage 0 (fwitten's,
@@ -1005,8 +1003,7 @@ def _energy_history(
     `monthly` and `yearly` are register numbers, as `reg()` takes them.
     Built rather than written out because the three quantities differ only
     in their addresses, and twenty-seven hand-typed fields each is where an
-    address typo would hide; `tests/test_registers.py` still holds every
-    field to its row in the entity map.
+    address typo would hide.
     """
     fields: dict[str, Any] = {
         f"{quantity}_month_{month:02d}": gauge(

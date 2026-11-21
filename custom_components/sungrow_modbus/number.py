@@ -65,8 +65,8 @@ EV_CHARGER_MODE_KEY = "ev_charger_mode"
 WALLBOX_RATED_CURRENT = "rated_current"
 
 #: An entity's unit against its field's, where the two differ on purpose.
-#: Register 32998 is kept in kW, as the YAML-era map records it
-#: (`tests/test_registers.py`), and shown in W like every other power setting.
+#: Register 32998 is kept in kW, as the YAML package reads it, and shown in W
+#: like every other power setting.
 UNIT_FACTORS: dict[tuple[str | None, str | None], float] = {("kW", "W"): 1000.0}
 
 

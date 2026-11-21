@@ -9,8 +9,7 @@ never did.
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import sys
 
 from custom_components.sungrow_modbus.coordinator import (
     COMPONENT_TIERS,
@@ -23,7 +22,9 @@ from custom_components.sungrow_modbus.derived_descriptions import (
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from sungrow_modbus import DEFAULT_INTERVALS, Capability
 
-ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
+sys.path.insert(0, "scripts/generate/tables")
+
+from legacy_entities import ENTITIES
 
 ALL_DERIVED = (*DERIVED_SENSORS, *DERIVED_BINARY_SENSORS)
 ALL = (*SENSOR_DESCRIPTIONS, *ALL_DERIVED)
@@ -56,7 +57,7 @@ def test_a_derived_value_is_never_slower_than_its_inputs() -> None:
 def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     """Every YAML entity computed rather than read has a replacement.
 
-    Derived from the entity map rather than counted, because a count says
+    Derived from the legacy entities rather than counted, because a count says
     nothing about *which* one went missing -- and because the number moved
     twice: once when the seven delayed twins were ported, once when the
     filtered sensor was.
@@ -65,10 +66,9 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     `button` entities are its workaround for having no write-then-read, and
     they became real writable platforms and two admin actions instead.
     """
-    entities = json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
     expected = {
         entity["entity_id"]
-        for entity in entities
+        for entity in ENTITIES
         if entity["layer"] in {"template", "filter"}
         and entity["domain"] in {"sensor", "binary_sensor"}
     }

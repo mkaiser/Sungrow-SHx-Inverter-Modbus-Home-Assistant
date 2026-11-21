@@ -369,19 +369,12 @@ async def test_every_legacy_id_matches_the_generated_map() -> None:
     Derived by slugifying `legacy_name` rather than read from a table, so this
     is what stops the two drifting apart.
     """
-    import json
-    from pathlib import Path
+    import sys
 
-    mapped = {
-        entity["entity_id"]
-        for entity in json.loads(
-            (
-                Path(__file__).resolve().parent.parent
-                / "doc"
-                / "legacy_entity_map.json"
-            ).read_text(encoding="utf-8")
-        )["entities"]
-    }
+    sys.path.insert(0, "scripts/generate/tables")
+    from legacy_entities import ENTITIES
+
+    mapped = {entity["entity_id"] for entity in ENTITIES}
     assert legacy_entity_ids() <= mapped
 
 

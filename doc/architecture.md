@@ -25,8 +25,8 @@ flowchart TD
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_capability_test: audience set per entry,<br/>admins only by default<br/>run_diagnosis: anyone"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select/time/button: generated from<br/>the library's derived module and scripts/generate/tables"]
-        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>string_inverter_descriptions.py, external_descriptions.py<br/>source: none of them is in the entity map"]
+        gen["sensor_descriptions.py: source, edited by hand<br/>derived/number/switch/select/time/button: generated from<br/>the library's derived module and scripts/generate/tables"]
+        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>string_inverter_descriptions.py, external_descriptions.py<br/>source: none of them is in the legacy record"]
         ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
         links["links<br/>the wallbox's own address:<br/>Modbus inside TLS, unverified"]
     end
@@ -238,18 +238,17 @@ the entity-id question is finally put.
 
 ## At build time
 
-The inverter's register map and its sensor descriptions are source, held by
-tests to the record of what the YAML package produces. A mistyped address or a
-scale off by ten gives a plausible-looking wrong number, which is the failure
-this project can least afford, so every field is checked against that record
-rather than trusted.
+The inverter's register map and its sensor descriptions are source, edited by
+hand and reviewed rather than tested against the YAML package. A mistyped
+address or a scale off by ten gives a plausible-looking wrong number, which is
+the failure this project can least afford, so a change to either is read
+against Sungrow's document or a measurement before it is committed.
 
 ```mermaid
 flowchart LR
-    map["doc/legacy_entity_map.json<br/>record of the YAML package:<br/>entity_id, unique_id, unit, state class"]
-
     subgraph tables["scripts/generate/tables: judgement, one fact per table"]
         direction TB
+        legacy["legacy_entities.py<br/>record of the YAML package:<br/>entity_id, unique_id, unit, state class"]
         writes["writes.py<br/>what is writable,<br/>and what is held back"]
         naming["naming.py<br/>the naming convention"]
     end
@@ -267,27 +266,22 @@ flowchart LR
         strings["strings.json<br/>translations/en.json, de.json"]
     end
 
-    map -. "tests" .-> regs
-    map -. "tests" .-> sensors
-    layout -. "tests" .-> regs
-    writes -. "tests" .-> regs
-    map --> descs
+    layout --> regs
+    legacy --> descs
     writes --> descs
     naming --> strings
     descs --> strings
     sensors --> strings
 ```
 
-A solid arrow is `scripts/generate/descriptions.py`, whose `--check` runs in CI
-**and** in pytest, so a generated file cannot drift from what it was derived
-from. A dotted arrow is a test: `tests/test_registers.py` holds every field of
-`registers.py` to its entity-map entry — address, type, scale, word order,
-poll interval — and to `layout.py`'s isolation;
-`tests/test_sensor_descriptions.py` holds every sensor to the YAML entity it
-replaces — legacy name and id, unit, state class, category, component; and
-`tests/test_writes.py` holds the writable set to `writes.py`. So a hand edit
-is free, and a hand edit that breaks one of those properties fails on its own
-commit.
+An arrow into the generated files is `scripts/generate/descriptions.py`, whose
+`--check` runs in CI **and** in pytest, so a generated file cannot drift from
+what it was derived from. `layout.py` feeds `registers.py` by import: a count
+or an isolation measured on hardware is read from there, not retyped. Nothing
+checks the hand-written files against the YAML package: `legacy_entities.py`
+keeps the legacy ids, units and state classes existing users have, and
+`tests/test_legacy_entities.py` holds its invariants, but a field of
+`registers.py` or `sensor_descriptions.py` is right because it was reviewed.
 
 The tables are where judgement lives, and each records why rather than just
 what: `writes.py` says why a register is exposed or held back, `naming.py`
@@ -295,19 +289,19 @@ states the convention a test then enforces, and `layout.py` carries
 measurements from real hardware where the YAML turned out to be wrong about a
 register's length or a block's readability.
 
-**The battery and wallbox maps have no entity-map record.** The SBR's
+**The battery and wallbox maps have no legacy record.** The SBR's
 registers are in an opt-in file a user copy-pastes, and the wallbox's are in
 no Sungrow document at all, so `battery/registers.py`, `wallbox/registers.py`
 and their description modules are checked like this:
 
 | Hand-written | Checked against |
 | --- | --- |
-| `battery/registers.py` | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, address and scale per field — all forty of its sensors |
+| `battery/registers.py` | the decoded pack readings of the committed diagnoses, replayed into `doc/firmware_support.md` |
 | `wallbox/registers.py` | the raw words and the readings in a committed diagnosis: the document decoder must reproduce the readings, and the components must read the same values from the same words |
 | `battery_descriptions.py`, `wallbox_descriptions.py` | every `field` resolves to a real field or property; no key collides across devices |
 
-That is the same discipline as the inverter's map: where nothing generates a
-file, a test or a measurement says whether it is right.
+Where nothing generates a file, a test, a measurement or a review says whether
+it is right.
 
 ## Why the library has no Home Assistant imports
 
@@ -507,7 +501,8 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 
 The inverter map is audited against V1.1.16: every addition since V1.1.2 is
 read, gated by a capability where the remarks column limits it, and marked
-`layer: "specification"` in the entity map because it has no legacy id.
+`layer: "specification"` in `scripts/generate/tables/legacy_entities.py`
+because it has no legacy id.
 `DEVICE_TYPES` matches Appendix 1 (`tests/test_device_types.py`), and
 `family_for` classifies by model name, not code range. **SH50-125CX is named
 but not supported** (ten MPP trackers against a map that stops at four).

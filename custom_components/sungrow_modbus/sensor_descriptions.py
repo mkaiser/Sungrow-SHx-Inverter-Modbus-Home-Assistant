@@ -1,9 +1,9 @@
 """Sensor descriptions for the inverter's registers.
 
-**Source, edited by hand.** `doc/legacy_entity_map.json` is the record of what
-the YAML package produces, and `tests/test_sensor_descriptions.py` holds this
-file to it: every YAML sensor must have a description here, with the same
-legacy identity, unit, state class, category and component.
+**Source, edited by hand.** `scripts/generate/tables/legacy_entities.py` is the
+record of what the YAML package produces; every YAML sensor has a description
+here with the same legacy identity, unit, state class, category and
+component, and keeping it so is a review, not a test.
 
 Every entry that replaces a YAML sensor carries its unit and state class,
 because a replacement in a different unit class silently freezes long-term

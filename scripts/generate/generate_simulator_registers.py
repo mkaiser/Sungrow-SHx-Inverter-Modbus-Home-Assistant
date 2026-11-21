@@ -4,7 +4,7 @@
 Seeded from what is already committed rather than from a second hand-kept
 list that would drift: every modbus sensor and switch in
 `legacy/modbus_sungrow.yaml`, plus every specification-layer register in
-`doc/legacy_entity_map.json` the YAML never read, contributes its address,
+`tables/legacy_entities.py` the YAML never read, contributes its address,
 width and a plausible value. That is enough for the integration to read
 something sensible back during development.
 
@@ -25,6 +25,10 @@ import sys
 from typing import Any
 
 import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
+
+from legacy_entities import ENTITIES
 
 REPO = Path(__file__).resolve().parents[2]
 SOURCE = REPO / "legacy" / "modbus_sungrow.yaml"
@@ -218,12 +222,9 @@ def collect() -> dict[str, dict[str, list[int]]]:
             spaces[space][int(address)] = _default_value(entry, width)
 
     # Registers the specification defines, or hardware was observed to answer,
-    # and the YAML never read. Their one source is the entity map, so they
+    # and the YAML never read. Their one source is the legacy entities, so they
     # cannot drift from the descriptions generated beside them.
-    entity_map = json.loads(
-        (REPO / "doc" / "legacy_entity_map.json").read_text(encoding="utf-8")
-    )
-    for entry in entity_map["entities"]:
+    for entry in ENTITIES:
         if (
             entry["layer"] not in {"specification", "observed"}
             or entry.get("address") is None
