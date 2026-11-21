@@ -1997,3 +1997,12 @@ every readback matched. The site import limit held with PV below the load (engin
 passing clouds, with PV above it; the engine's fixed 1250 W charge cannot take the PV-above-load case.
 Through the proxy the entry read 6100 while its *Connection* stayed unknown. `register-32998.md`,
 `installation-mkaiser.md` and `does-a-modbus-proxy-carry-6100.md` updated.
+
+## [2026-11-21] ingested | mkaiser-production-sweep-2026-11-20
+
+The setup search from the maintainer's production Home Assistant, with the modbus-proxy running and the
+YAML package polling through it, found the inverter's own LAN port and the proxy as one inverter
+([the source](sources/mkaiser-production-sweep-2026-11-20-summary.md)), with the sweep code unchanged
+since the a40 that missed it. `why-did-the-search-miss-mkaisers-inverter.md` answered (does not
+reproduce), `installation-mkaiser.md` updated. The dialog's summary came in the system language beside
+an English step.

@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T075.** Numbers are minted in order, never reused and
+**Next free item number: T076.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -140,10 +140,15 @@ still holds alone; the other three can go today.
 archive 2025-legacy to archive/2025-legacy
 current main (last yaml version) to archive/
 
-**T008. Why the search missed the maintainer's inverter**: one measurement
-left -- the same sweep run from the production machine, where a modbus-proxy
-holds the session -- [plan](plans/T008-search-missed-the-inverter.md).
-*Needs*: a sweep from the production machine with the proxy running.
+**T075. The setup dialog speaks two languages** when Home Assistant's system
+language differs from the viewer's profile language: the *Devices found*
+summary comes from `texts.py` in `hass.config.language` (German at the
+maintainer's), while the step text renders in the profile language and the
+row labels are built in English (wiki: mkaiser-production-sweep-2026-11-20).
+Decide one rule for backend-built sentences -- English rows and summary
+together, or the summary moved into the translated step text as
+placeholders -- and apply it to every `texts()` caller in the flows.
+*Needs*: nothing; a test with system `de` and the strings in `en`.
 
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."

@@ -70,8 +70,10 @@ Its own LAN port **takes a second TCP
 session from the address already polling it**: with the dev container's Home Assistant polling it
 without a break, 12 of 12 connects were accepted and two full sweeps from that same container
 found it ([the run](../sources/mkaiser-second-session-2026-11-17-summary.md)), so contention does
-not explain why the production instance's sweep missed it
-([open](../queries/why-did-the-search-miss-mkaisers-inverter.md)). From the Windows host, which is on the
+not explain why the production instance's sweep missed it; on 2026-11-20 the same search from the
+production machine, proxy running, found it and the proxy as one inverter, so the miss does not
+reproduce ([the sweep](../sources/mkaiser-production-sweep-2026-11-20-summary.md),
+[the query](../queries/why-did-the-search-miss-mkaisers-inverter.md)). From the Windows host, which is on the
 house's segment, the cache does separate them: the inverter's own LAN port carries Sungrow's
 `AC:19:9F` and the proxy a locally administered prefix
 ([the prefixes](../sources/mkaiser-mac-prefixes-2026-11-16-summary.md),
