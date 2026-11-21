@@ -271,6 +271,16 @@ NO_WINDOW = "no probe value can show a decade error here"
 #: repeat never waits for it (`ledger.NEEDS_LEAVE`).
 UNCURABLE = "which waiting cannot change"
 
+#: Why a control is left out of a run although it read and has bounds: the
+#: house's own value lies outside them, and the device refused that value
+#: written back to itself, so a restore could not put it back. At gerd's
+#: SH8.0RT on P022 13052 held 10000 W, above the 8000 W an 8 kW model takes;
+#: the run wrote it, could not restore it, and ended with exit 5.
+UNRESTORABLE = (
+    "not written: the house's own value is one the device does not take "
+    "back now, so a restore could not return it"
+)
+
 #: Why a readback through a WiNet-S that showed the old value settles nothing:
 #: the dongle answers with the word it held before it forwarded the write. No
 #: moment of the day makes that answer fresh, so auto repeat does not wait for

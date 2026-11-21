@@ -106,6 +106,10 @@ class CapabilityTestBase:
         self._last_refused: str | None = None
         self._word_error: str | None = None
         """The exception the last failed `_write_word` came back with."""
+        self.unrestorable: dict[str, str] = {}
+        """Field name to why it is never written: its own value would not go
+        back (`procedure.UNRESTORABLE`). `_write` and `_write_word` refuse
+        these without touching the register, whoever asks."""
         self.refusals: dict[str, str] = {}
         """Field name to the exception a write came back with, verbatim.
 
@@ -382,6 +386,8 @@ class CapabilityTestBase:
         """
         if self.options.dry_run:
             return None
+        if probe.field in self.unrestorable:
+            return REFUSED
         await self._touch(probe.field)
         if probe.raw_only:
             # A value, like every other write: the register's own counts are
@@ -439,6 +445,8 @@ class CapabilityTestBase:
         """
         if self.options.dry_run:
             return None
+        if probe.field in self.unrestorable:
+            return REFUSED
         await self._touch(probe.field)
         component = self.inverter.component(probe.component)
         resolved = component.resolved_fields.get(probe.field)

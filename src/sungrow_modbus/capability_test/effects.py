@@ -1324,6 +1324,12 @@ class EffectSteps(ReadbackSteps):
                 "was not exporting on its own"
             )
             return None
+        if "battery_forced_charge_discharge_power" in self.unrestorable:
+            self._note(
+                "could not make the house export: the forced power is left out, "
+                "because its own value would not go back"
+            )
+            return None
 
         soc = self.conditions.get("soc_percent")
         floor = float(self.snapshot.values.get("battery_min_soc") or 0.0)

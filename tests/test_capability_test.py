@@ -79,6 +79,7 @@ from sungrow_modbus.capability_test.procedure import (
     STALE_READBACK,
     UNCHANGED,
     UNCURABLE,
+    UNRESTORABLE,
     _admissible,
 )
 
@@ -818,6 +819,58 @@ async def test_a_whole_run_writes_checks_and_puts_everything_back(
     assert not outcome.findings
     assert outcome.not_restored == ()
     assert _same(full_unit.holding, before)
+
+
+#: 13052, the forced power, as a protocol address.
+FORCED_POWER_ADDRESS = 13051
+
+
+async def test_a_value_the_device_will_not_take_back_is_never_written(
+    full_unit: MockModbusUnit,
+) -> None:
+    """At gerd's, an SH8.0RT on P022 held 10000 W in 13052; it takes 8000 W.
+
+    Run 1 wrote over it, could not put it back (exception 0x04), and ended with
+    exit 5 on a house it had changed. Now the out-of-bounds value is written
+    back to itself first; refused, the control is left out of the run, every
+    later write of it is refused before it reaches the wire, and nothing is
+    left to restore.
+    """
+    full_unit.holding[FORCED_POWER_ADDRESS] = 10000
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    full_unit.fail_write(
+        FORCED_POWER_ADDRESS, ServerDeviceFailureError("exception 0x04")
+    )
+    writes: list[Any] = []
+    full_unit.on_write(writes.append)
+    run = CapabilityTest(inverter, clock=FakeClock())
+
+    outcome = await run.async_run()
+
+    assert full_unit.holding[FORCED_POWER_ADDRESS] == 10000
+    assert outcome.not_restored == ()
+    assert "battery_forced_charge_discharge_power" in run.unrestorable
+    assert any(UNRESTORABLE in note for note in run.unestablished)
+    assert all(
+        getattr(event, "address", None) != FORCED_POWER_ADDRESS for event in writes
+    )
+
+
+async def test_an_out_of_bounds_value_the_device_takes_back_is_tested(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Above the battery's bound is not enough: one step over it is stored."""
+    full_unit.holding[FORCED_POWER_ADDRESS] = 8000
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = CapabilityTest(inverter, clock=FakeClock())
+
+    outcome = await run.async_run()
+
+    assert run.unrestorable == {}
+    assert outcome.not_restored == ()
+    assert full_unit.holding[FORCED_POWER_ADDRESS] == 8000
 
 
 async def test_the_forced_power_is_the_stated_constant(

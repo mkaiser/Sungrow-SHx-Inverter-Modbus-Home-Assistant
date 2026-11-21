@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 
+from modbus_connection import ModbusError
+
 from ..battery import ceiling as battery_ceiling
 from ..hybrid_inverter.capabilities import Capability, with_sungrow_battery
 from ..hybrid_inverter.derived import RUNNING_STATES
+from .base import refused
 from .procedure import (
     ENUMERATIONS,
     FORCED_STARTUP,
@@ -19,6 +22,7 @@ from .procedure import (
     SNAPSHOT_PAUSE,
     SOC_MARGIN,
     STATE_COMPONENTS,
+    UNRESTORABLE,
     Guard,
     Probe,
     Snapshot,
@@ -166,6 +170,61 @@ class PreflightSteps(RestoreSteps):
                 "a start could not be put down to the register."
             )
 
+    async def _leave_out_unrestorable(self) -> None:
+        """Leave out a control whose own value the device would not take back.
+
+        A value outside the control's bounds is one some other path put there
+        -- an app, an older firmware -- and a run that writes over it can find
+        its restore refused: exit 5, a house left changed, and a repair whose
+        fix fails the same way. So that value is written back to itself first,
+        which changes nothing either way, and a control that refuses it is
+        never written. Through a dongle the answer cannot be trusted, so an
+        out-of-bounds control is left out there without asking.
+        """
+        if self.options.dry_run:
+            return
+        kept: list[Probe] = []
+        for probe in self.plan:
+            low, high = self.snapshot.bounds[probe.field]
+            value = float(self.snapshot.values[probe.field])
+            if low <= value <= high:
+                kept.append(probe)
+                continue
+            why = await self._refuses_its_own(probe, value, low, high)
+            if why is None:
+                kept.append(probe)
+                continue
+            self.unrestorable[probe.field] = why
+            self._note(f"{probe.field}: {UNRESTORABLE} ({why})")
+            self._worst(3)
+        self.plan = tuple(kept)
+
+    async def _refuses_its_own(
+        self, probe: Probe, value: float, low: float, high: float
+    ) -> str | None:
+        """Write a control's own word back to it; say why not, or None if it took it."""
+        held = (
+            f"the house holds {value:g} {probe.unit}, outside {low:g}-{high:g} "
+            f"{probe.unit}"
+        )
+        if self.direct is not True:
+            return f"{held}, and through a dongle a write of it cannot be checked"
+        resolved = self.inverter.component(probe.component).resolved_fields.get(
+            probe.field
+        )
+        word = self.snapshot.raw.get(probe.field)
+        if resolved is None or resolved.count != 1 or word is None:
+            return f"{held}, and it is not one register word to write back"
+        try:
+            await self.inverter.async_write_word(resolved.address, int(word))
+        except (ModbusError, TimeoutError, OSError) as err:
+            answer = "refused" if refused(err) else "lost"
+            return (
+                f"{held}, and writing it back to itself was {answer}: "
+                f"{type(err).__name__}: {err}"
+            )
+        return None
+
     async def _snapshot_read(
         self, probe: Probe
     ) -> tuple[float | int | None, int | None]:
@@ -291,3 +350,4 @@ class PreflightSteps(RestoreSteps):
             # house that has already been changed.
             await self._on_snapshot(snapshot)
         self._step("the before-state is saved")
+        await self._leave_out_unrestorable()

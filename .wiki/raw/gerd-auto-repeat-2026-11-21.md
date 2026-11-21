@@ -69,5 +69,9 @@ Written through the proxy on the cable path, one session, EMS mode 0 (self-consu
 - A run that could not put something back **raises the repair at once**, not only at the next setup.
 - **Auto repeat stops** after such a run, or when a run is refused over a kept snapshot, with "a run could
   not put everything back; see Settings -> Repairs, then start again".
-- Still open: a restore the firmware refuses because the owner's value is out of its range (10000 W on an
-  8 kW model) still ends as exit 5 and a repair whose fix will fail the same way.
+- **A control whose own value lies outside its bounds is written back to itself before the run touches
+  it** (library, preflight). Refused, as 13052's 10000 W would be here, the control is left out of the
+  run with "not written: the house's own value is one the device does not take back now", every later
+  write of it is refused before it reaches the wire, and the forced checks and the manufactured export,
+  which command through it, are skipped. Taken (8000 W here), the run goes on as before. Through a
+  dongle such a control is left out without asking, since its write cannot be checked.
