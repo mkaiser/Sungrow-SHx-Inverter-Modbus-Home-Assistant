@@ -11,6 +11,27 @@ import pytest
 SERIAL = "A123456789"
 
 
+def english_texts():
+    """Return the flows' sentences in English, read from `strings.json`.
+
+    For tests that call a label builder directly, without a flow to fetch
+    the translation through.
+    """
+    import json
+    from pathlib import Path
+
+    from custom_components.sungrow_modbus.texts import KEY, PREFIX, Texts
+
+    strings = Path(__file__).resolve().parents[1] / (
+        "custom_components/sungrow_modbus/strings.json"
+    )
+    options = json.loads(strings.read_text(encoding="utf-8"))["selector"][KEY][
+        "options"
+    ]
+    table = {PREFIX + key: text for key, text in options.items()}
+    return Texts(table, table)
+
+
 def encode_string(text: str, registers: int) -> list[int]:
     """Encode an ASCII string into null-padded 16-bit registers."""
     raw = text.encode("ascii").ljust(registers * 2, b"\x00")

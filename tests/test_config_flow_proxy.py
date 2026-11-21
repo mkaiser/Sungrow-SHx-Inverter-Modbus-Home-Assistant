@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
-from custom_components.sungrow_modbus.config_flow_schemas import _described
+from custom_components.sungrow_modbus import config_flow_schemas
 from custom_components.sungrow_modbus.const import (
     CONF_MODE,
     CONF_UNIT_ID,
@@ -32,7 +32,13 @@ from custom_components.sungrow_modbus.wifi_module import (
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
+from .conftest import english_texts
 from .test_config_flow_topology import SERIAL_A, _house
+
+
+def _described(found, local=()):
+    return config_flow_schemas._described(found, local, texts=english_texts())
+
 
 #: Home Assistant's own address, where a proxy add-on listens.
 PROXY = "192.168.176.125"

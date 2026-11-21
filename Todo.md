@@ -81,13 +81,6 @@ diagnosis (T005, T006, T042).
 
 ## Integration and tooling
 
-**T073. Adding an inverter by address aborts with "already in progress" while a discovery card for the same
-inverter is pending**: the manual step ends the flow instead of continuing the card's or taking its place (a
-WiNet-S announcement, 2026-11-21 --
-[the source](.wiki/wiki/sources/gerd-ha-migration-2026-11-21-summary.md); `async_step_manual` in
-`custom_components/sungrow_modbus/config_flow.py`).
-*Needs*: nothing; a session can start it.
-
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
 is found and fixed, not yet confirmed by the user. An entry first set up on device-scoped ids and deleted leaves
@@ -139,16 +132,6 @@ still holds alone; the other three can go today.
 
 archive 2025-legacy to archive/2025-legacy
 current main (last yaml version) to archive/
-
-**T075. The setup dialog speaks two languages** when Home Assistant's system
-language differs from the viewer's profile language: the *Devices found*
-summary comes from `texts.py` in `hass.config.language` (German at the
-maintainer's), while the step text renders in the profile language and the
-row labels are built in English (wiki: mkaiser-production-sweep-2026-11-20).
-Decide one rule for backend-built sentences -- English rows and summary
-together, or the summary moved into the translated step text as
-placeholders -- and apply it to every `texts()` caller in the flows.
-*Needs*: nothing; a test with system `de` and the strings in `en`.
 
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."

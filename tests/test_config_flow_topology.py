@@ -697,7 +697,9 @@ def test_an_unmeasured_route_is_not_reported_as_a_dongle() -> None:
         },
     }
 
-    described = _described(found)
+    from .conftest import english_texts
+
+    described = _described(found, texts=english_texts())
 
     for host, entry in described.items():
         assert "WiNet-S" not in entry["label"], host

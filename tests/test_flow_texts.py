@@ -80,3 +80,34 @@ async def test_the_yaml_question_s_status_is_german_on_a_german_system(
     assert free["status"] == GERMAN["package_not_loaded"]
     assert "läuft noch" in held["status"]
     assert "running" not in free["status"] + held["status"]
+
+
+async def test_the_picker_s_rows_are_german_on_a_german_system(
+    hass: HomeAssistant,
+) -> None:
+    """The maintainer's dialog, 2026-11-20: a German summary over English rows.
+
+    The rows are built in code, so they follow the summary into the system's
+    language rather than staying English beneath it.
+    """
+    from custom_components.sungrow_modbus.config_flow_schemas import _described
+
+    from .test_config_flow_proxy import CABLE, PROXY, _found
+
+    hass.config.language = "de"
+    texts = await async_texts(hass)
+    described = _described(
+        {
+            PROXY: _found(PROXY, direct=True, mac=None),
+            CABLE: _found(CABLE, direct=True),
+        },
+        {PROXY},
+        texts=texts,
+    )
+
+    proxy, cable = described[PROXY]["label"], described[CABLE]["label"]
+    assert GERMAN["row_proxy_local"] in proxy
+    assert GERMAN["row_route_direct"] in cable
+    assert "Seriennummer" in cable
+    for english in ("own LAN port", "the same inverter", "serial", " at "):
+        assert english not in proxy + cable

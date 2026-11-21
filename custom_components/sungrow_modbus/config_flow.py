@@ -490,6 +490,21 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: the owner did not pick (`_async_offer_the_rest`).
         self._offered: dict[str, Any] = {}
 
+    async def _async_take_unique_id(self, unique_id: str) -> None:
+        """Set the flow's unique id, ahead of any card offering the same device.
+
+        A flow the owner started from *Add integration* goes on past a
+        discovery card waiting for the same device -- a WiNet-S announcing the
+        inverter, a search's offer -- instead of ending in "already in
+        progress": the owner asked for this device now, and the card is only
+        an offer. Home Assistant drops the card itself once this flow creates
+        the entry. A card's own flow keeps the default and gives way to
+        whichever flow holds the device first.
+        """
+        await self.async_set_unique_id(
+            unique_id, raise_on_progress=self.source != SOURCE_USER
+        )
+
     async def _async_claim(
         self, serial: str, endpoint: Mapping[str, Any], direct: bool | None
     ) -> ConfigFlowResult | None:
@@ -502,7 +517,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         entity id and all of their history: they belong to the inverter, not
         to the address it was reached through.
         """
-        await self.async_set_unique_id(serial)
+        await self._async_take_unique_id(serial)
         existing = self.hass.config_entries.async_entry_for_domain_unique_id(
             DOMAIN, serial
         )
@@ -893,7 +908,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_HOST: host,
                     "model": model,
                     "serial": serial,
-                    "label": f"{model} (wallbox) at {host}",
+                    "label": (await _flow_texts(self))(
+                        "row_wallbox_at", model=model, host=host
+                    ),
                 }
             }
             return await self._async_add_wallbox(host)
@@ -972,6 +989,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=_scan_schema(
                 await self._async_default_network() if not self._tried else "",
                 self._tried,
+                texts=texts,
             ),
             errors=errors,
             description_placeholders={
@@ -1164,7 +1182,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_HOST: host,
                 "model": model,
                 "serial": serial,
-                "label": f"{model} (wallbox) at {hostname or host}",
+                "label": texts("row_wallbox_at", model=model, host=hostname or host),
             }
         _LOGGER.debug(
             "Identified %s wallbox(es) on %s: %s",
@@ -1197,8 +1215,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_TLS: tls,
                 CONF_KIND: who.kind,
                 "model": model,
-                "label": f"{model} at {hostname or host}, port {port}"
-                + ("" if who.kind == KIND_IHOMEMANAGER else " (diagnosis only)"),
+                "label": texts(
+                    "row_unit_247_at", model=model, host=hostname or host, port=port
+                )
+                + (
+                    ""
+                    if who.kind == KIND_IHOMEMANAGER
+                    else " " + texts("row_diagnosis_only")
+                ),
             }
         _LOGGER.debug(
             "Identified %s device(s) at unit 247 on %s: %s",
@@ -1322,10 +1346,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # The search can identify a real inverter that is not the one the user
         # meant -- a neighbour's, on a shared network, or the second of two.
         # Without this the only way out of the list is to abandon the flow.
-        options.append(
-            SelectOptionDict(value=NOT_LISTED, label="None of these — let me choose")
-        )
         texts = await _flow_texts(self)
+        options.append(SelectOptionDict(value=NOT_LISTED, label=texts("pick_none")))
         # **Devices, not rows.** Inverters are counted by serial, because one
         # inverter on a cable and a dongle -- or beside a Modbus proxy --
         # answers at two addresses and is one device; the list below still
@@ -1496,7 +1518,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         (`_async_wallbox` in `__init__.py`).
         """
         wallbox = self._wallboxes[host]
-        await self.async_set_unique_id(wallbox["serial"])
+        await self._async_take_unique_id(wallbox["serial"])
         self._abort_if_unique_id_configured(updates={CONF_HOST: host})
         return self.async_create_entry(
             title=wallbox["model"],
@@ -1518,7 +1540,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         device = self._unit_247[key]
         unique_id = f"{device[CONF_KIND]}-{device[CONF_HOST]}-{device[CONF_PORT]}"
-        await self.async_set_unique_id(unique_id)
+        await self._async_take_unique_id(unique_id)
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
             title=device["model"],
@@ -1621,7 +1643,6 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 # `network_records.py` asks it the same way for the diagnosis.
                 mac_prefix = await async_mac_prefix(host)
                 code = inverter.device_type_code
-                model = _model_of(inverter) or DEFAULT_NAME
                 found[host] = {
                     CONF_HOST: host,
                     CONF_PORT: port,
@@ -1635,10 +1656,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "battery": battery,
                     # Rebuilt by `_described`, which is the only place that
                     # knows whether this address shares a serial with another.
-                    "label": f"{model} at {hostname or host}",
+                    "label": "",
                 }
                 break
-        return _described(found, await _async_local_addresses(self.hass))
+        local = await _async_local_addresses(self.hass)
+        return _described(found, local, texts=await _flow_texts(self))
 
     async def async_step_manual(
         self, user_input: dict[str, Any] | None = None

@@ -59,6 +59,7 @@ from .const import (
     ROLE_MASTER,
     ROLE_SLAVE,
 )
+from .texts import Texts
 from .wifi_module import is_locally_administered, is_sungrow_mac, virtual_nic_vendor
 
 STEP_USER_DATA_SCHEMA = probatio.Schema(
@@ -101,7 +102,9 @@ COMMON_NETWORKS = (
 )
 
 
-def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
+def _network_options(
+    detected: str, tried: list[str], texts: Texts
+) -> list[SelectOptionDict]:
     """Return the ranges worth offering, best first and nothing repeated.
 
     What was detected comes first when there is one, then the common
@@ -115,10 +118,9 @@ def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
     return [
         SelectOptionDict(
             value=network,
-            label=(
-                f"{network} — this machine's own network"
-                if network == detected
-                else f"{network} — a common router default"
+            label=texts(
+                "network_own" if network == detected else "network_common",
+                network=network,
             ),
         )
         for network in seen
@@ -126,7 +128,7 @@ def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
 
 
 def _scan_schema(
-    default_network: str, tried: list[str] | None = None
+    default_network: str, tried: list[str] | None = None, *, texts: Texts
 ) -> probatio.Schema:
     """Return the search form: a range to pick or type.
 
@@ -144,7 +146,7 @@ def _scan_schema(
     after this integration could not detect one at all, which is what Home
     Assistant in a container looks like.
     """
-    options = _network_options(default_network, tried or [])
+    options = _network_options(default_network, tried or [], texts)
     return probatio.Schema(
         {
             probatio.Required(
@@ -347,7 +349,7 @@ def _testimony_schema(
 
 
 def _roles(
-    found: dict[str, dict[str, Any]], by_serial: dict[str, list[str]]
+    found: dict[str, dict[str, Any]], by_serial: dict[str, list[str]], texts: Texts
 ) -> dict[str, tuple[str | None, str]]:
     """Work out each inverter's role in the house, and say how it is known.
 
@@ -382,7 +384,7 @@ def _roles(
     for serial in slaves:
         roles[serial] = (
             ROLE_SLAVE,
-            f"cluster slave, measured: device address {address(serial)}",
+            texts("role_slave_measured", address=address(serial)),
         )
     if len(by_serial) < 2:
         return roles
@@ -397,7 +399,7 @@ def _roles(
         (master,) = rest
         roles[master] = (
             ROLE_MASTER,
-            "cluster master, inferred: device address 1 beside a slave",
+            texts("role_master_beside_slave"),
         )
         return roles
 
@@ -406,21 +408,19 @@ def _roles(
     if len(with_pack) == 1 and len(with_pack) + len(without) == len(rest):
         roles[with_pack[0]] = (
             ROLE_MASTER,
-            "probably the cluster master, inferred: it has the battery",
+            texts("role_master_has_battery"),
         )
         for serial in without:
             roles[serial] = (
                 ROLE_SLAVE,
-                "probably a cluster slave, inferred: no battery of its own",
+                texts("role_slave_no_battery"),
             )
         return roles
 
     for serial in rest:
         roles[serial] = (
             None,
-            "device address 1, so a master or an inverter on its own"
-            if serial in on_cable
-            else "role not readable: a dongle hides the device address",
+            texts("role_address_1" if serial in on_cable else "role_unreadable"),
         )
     return roles
 
@@ -444,7 +444,10 @@ def _address_order(host: str) -> tuple[int, bytes, str]:
 
 
 def _described(
-    found: dict[str, dict[str, Any]], local: Collection[str] = ()
+    found: dict[str, dict[str, Any]],
+    local: Collection[str] = (),
+    *,
+    texts: Texts,
 ) -> dict[str, dict[str, Any]]:
     """Work out what the set of answers means, and say it in the labels.
 
@@ -509,7 +512,7 @@ def _described(
     by_serial: dict[str, list[str]] = {}
     for host, entry in found.items():
         by_serial.setdefault(entry["serial"], []).append(host)
-    roles = _roles(found, by_serial)
+    roles = _roles(found, by_serial, texts)
 
     for serial, hosts in by_serial.items():
         for host in hosts:
@@ -520,47 +523,38 @@ def _described(
             # matters: the two routes do not answer the same registers.
             direct = entry.get("direct")
             notes.append(
-                "the inverter's own LAN port"
-                if direct is True
-                else "through a WiNet-S or Logger"
-                if direct is False
-                else "route not measured -- 6100 neither answered nor refused"
+                texts(
+                    "row_route_direct"
+                    if direct is True
+                    else "row_route_dongle"
+                    if direct is False
+                    else "row_route_unknown"
+                )
             )
             # Said straight after the route, because it qualifies it: a proxy
             # forwards 6100, so the line above describes what is *behind*
             # this address rather than this address itself.
             if host in local:
                 entry["proxy"] = True
-                notes.append("Home Assistant's own address, so a Modbus proxy")
+                notes.append(texts("row_proxy_local"))
             prefix = entry.get("mac_prefix")
             hypervisor = virtual_nic_vendor(prefix) if prefix else None
             if hypervisor:
                 entry["proxy"] = True
                 notes.append(
-                    f"{prefix} is {hypervisor}'s, which issues it to a port it "
-                    "invented, so what answers here is a host relaying: a "
-                    "Modbus proxy"
+                    texts("row_proxy_hypervisor", prefix=prefix, hypervisor=hypervisor)
                 )
             elif prefix and is_locally_administered(prefix):
                 entry["proxy"] = True
-                notes.append(
-                    f"{prefix} is a locally administered prefix -- software "
-                    "invented this address rather than a maker issuing it, so "
-                    "what answers here is a host relaying, not a Sungrow port: "
-                    "a Modbus proxy"
-                )
+                notes.append(texts("row_proxy_locally_administered", prefix=prefix))
             elif prefix and not is_sungrow_mac(prefix):
-                notes.append(
-                    f"the hardware at this address is {prefix}, not Sungrow's "
-                    "AC:19:9F, so something here is relaying: a Modbus proxy, "
-                    "or a forwarded port"
-                )
+                notes.append(texts("row_foreign_prefix", prefix=prefix))
             if serial in roles:
                 entry["role"], note = roles[serial]
                 notes.append(note)
             if len(hosts) > 1:
                 others = ", ".join(other for other in sorted(hosts) if other != host)
-                notes.append(f"the same inverter as {others}")
+                notes.append(texts("row_same_inverter", others=others))
                 # Two addresses, one serial, and **both** behind a dongle: its
                 # Ethernet socket and its WiFi radio. Which is which cannot be
                 # told from here, and saying so beats leaving somebody to
@@ -579,12 +573,15 @@ def _described(
                     entry["same_dongle"] = True
             entry["notes"] = notes
             entry["label"] = " -- ".join(
-                [f"{model} at {entry.get('hostname') or host}", *notes]
+                [
+                    texts("row_at", model=model, host=entry.get("hostname") or host),
+                    *notes,
+                ]
             )
             # Serial last, and always: it is printed on the unit's label, so
             # it is the one identifier somebody can walk up to the hardware
             # and check. A model and an address mean nothing on a roof.
-            entry["label"] += f" (serial {serial})"
+            entry["label"] += " " + texts("row_serial", serial=serial)
 
     # A direct path first, so the default selection is the better one -- and
     # it is measurably better rather than a preference: measured twice, a

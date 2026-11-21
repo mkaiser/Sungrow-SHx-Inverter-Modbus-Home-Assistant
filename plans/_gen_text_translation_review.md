@@ -1,6 +1,6 @@
 # The texts, for review
 
-**341 texts**: everything in `strings.json` that is not an entity name, by its
+**363 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -693,7 +693,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (82)
+## Selector options (104)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -1194,6 +1194,138 @@ and bold are kept.
 > **EN** A disabled wallbox answers no write, and the car may need replugging. Set these in the app as listed, then try again; this repair stays open until the wallbox reads as it should.
 
 > **DE** Eine deaktivierte Ladestation nimmt keinen Schreibbefehl an, und das Auto muss eventuell neu eingesteckt werden. Stelle diese Werte in der App wie aufgeführt ein und versuche es dann erneut; diese Reparatur bleibt offen, bis die Ladestation wieder richtig meldet.
+
+### `selector.flow_text.options.network_own`
+
+> **EN** {network} — this machine's own network
+
+> **DE** {network} — das eigene Netz dieses Rechners
+
+### `selector.flow_text.options.network_common`
+
+> **EN** {network} — a common router default
+
+> **DE** {network} — eine übliche Router-Voreinstellung
+
+### `selector.flow_text.options.pick_none`
+
+> **EN** None of these — let me choose
+
+> **DE** Keins davon — ich wähle selbst
+
+### `selector.flow_text.options.row_at`
+
+> **EN** {model} at {host}
+
+> **DE** {model} unter {host}
+
+### `selector.flow_text.options.row_serial`
+
+> **EN** (serial {serial})
+
+> **DE** (Seriennummer {serial})
+
+### `selector.flow_text.options.row_wallbox_at`
+
+> **EN** {model} (wallbox) at {host}
+
+> **DE** {model} (Wallbox) unter {host}
+
+### `selector.flow_text.options.row_unit_247_at`
+
+> **EN** {model} at {host}, port {port}
+
+> **DE** {model} unter {host}, Port {port}
+
+### `selector.flow_text.options.row_diagnosis_only`
+
+> **EN** (diagnosis only)
+
+> **DE** (nur Diagnose)
+
+### `selector.flow_text.options.row_route_direct`
+
+> **EN** the inverter's own LAN port
+
+> **DE** der eigene LAN-Anschluss des Wechselrichters
+
+### `selector.flow_text.options.row_route_dongle`
+
+> **EN** through a WiNet-S or Logger
+
+> **DE** über einen WiNet-S oder Logger
+
+### `selector.flow_text.options.row_route_unknown`
+
+> **EN** route not measured -- 6100 neither answered nor refused
+
+> **DE** Weg nicht gemessen -- 6100 weder beantwortet noch abgelehnt
+
+### `selector.flow_text.options.row_proxy_local`
+
+> **EN** Home Assistant's own address, so a Modbus proxy
+
+> **DE** die eigene Adresse von Home Assistant, also ein Modbus-Proxy
+
+### `selector.flow_text.options.row_proxy_hypervisor`
+
+> **EN** {prefix} is {hypervisor}'s, which issues it to a port it invented, so what answers here is a host relaying: a Modbus proxy
+
+> **DE** {prefix} gehört {hypervisor}, das ihn an einen erfundenen Anschluss vergibt; hier antwortet also ein weiterleitender Rechner: ein Modbus-Proxy
+
+### `selector.flow_text.options.row_proxy_locally_administered`
+
+> **EN** {prefix} is a locally administered prefix -- software invented this address rather than a maker issuing it, so what answers here is a host relaying, not a Sungrow port: a Modbus proxy
+
+> **DE** {prefix} ist ein lokal verwaltetes Präfix -- Software hat diese Adresse erfunden, kein Hersteller hat sie vergeben; hier antwortet also ein weiterleitender Rechner, kein Sungrow-Anschluss: ein Modbus-Proxy
+
+### `selector.flow_text.options.row_foreign_prefix`
+
+> **EN** the hardware at this address is {prefix}, not Sungrow's AC:19:9F, so something here is relaying: a Modbus proxy, or a forwarded port
+
+> **DE** die Hardware unter dieser Adresse ist {prefix}, nicht Sungrows AC:19:9F; hier leitet also etwas weiter: ein Modbus-Proxy oder eine Portweiterleitung
+
+### `selector.flow_text.options.row_same_inverter`
+
+> **EN** the same inverter as {others}
+
+> **DE** derselbe Wechselrichter wie {others}
+
+### `selector.flow_text.options.role_slave_measured`
+
+> **EN** cluster slave, measured: device address {address}
+
+> **DE** Cluster-Slave, gemessen: Geräteadresse {address}
+
+### `selector.flow_text.options.role_master_beside_slave`
+
+> **EN** cluster master, inferred: device address 1 beside a slave
+
+> **DE** Cluster-Master, gefolgert: Geräteadresse 1 neben einem Slave
+
+### `selector.flow_text.options.role_master_has_battery`
+
+> **EN** probably the cluster master, inferred: it has the battery
+
+> **DE** wahrscheinlich der Cluster-Master, gefolgert: er hat die Batterie
+
+### `selector.flow_text.options.role_slave_no_battery`
+
+> **EN** probably a cluster slave, inferred: no battery of its own
+
+> **DE** wahrscheinlich ein Cluster-Slave, gefolgert: keine eigene Batterie
+
+### `selector.flow_text.options.role_address_1`
+
+> **EN** device address 1, so a master or an inverter on its own
+
+> **DE** Geräteadresse 1, also ein Master oder ein einzelner Wechselrichter
+
+### `selector.flow_text.options.role_unreadable`
+
+> **EN** role not readable: a dongle hides the device address
+
+> **DE** Rolle nicht lesbar: ein Dongle verbirgt die Geräteadresse
 
 
 ## Repairs (14)

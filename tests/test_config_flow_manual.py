@@ -121,3 +121,53 @@ async def test_reconfigure_refuses_an_inverter_without_a_serial(
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "no_serial_number"}
     assert entry.data[CONF_HOST] == "192.0.2.5"
+
+
+async def test_an_address_typed_while_a_card_offers_the_same_inverter_goes_on(
+    hass: HomeAssistant,
+) -> None:
+    """A WiNet-S card waiting for the inverter does not end the owner's flow.
+
+    gerd's migration, 2026-11-21: the dongle's announcement was waiting as a
+    card, and adding the inverter by address aborted "already in progress".
+    The owner's flow takes the device; the card goes once the entry exists.
+    """
+    from homeassistant.config_entries import SOURCE_ZEROCONF
+
+    from .test_config_flow_zeroconf import _dongle
+
+    card = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_ZEROCONF}, data=_dongle()
+    )
+    assert card["step_id"] == "discovery_confirm"
+
+    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
+        result = await _submit(hass, {"return_value": (_inverter(), True, None)})
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["context"]["unique_id"] == SERIAL
+    assert result["data"][CONF_HOST] == ADDRESS[CONF_HOST]
+    assert not [
+        flow
+        for flow in hass.config_entries.flow.async_progress()
+        if flow["flow_id"] == card["flow_id"]
+    ]
+
+
+async def test_a_second_card_for_the_same_inverter_still_gives_way(
+    hass: HomeAssistant,
+) -> None:
+    """Only a flow the owner started takes a device a card holds."""
+    from homeassistant.config_entries import SOURCE_ZEROCONF
+
+    from .test_config_flow_zeroconf import _dongle
+
+    first = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_ZEROCONF}, data=_dongle()
+    )
+    second = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_ZEROCONF}, data=_dongle()
+    )
+    assert first["step_id"] == "discovery_confirm"
+    assert second["type"] is FlowResultType.ABORT
+    assert second["reason"] == "already_in_progress"
