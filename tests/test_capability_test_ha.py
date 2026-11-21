@@ -860,6 +860,30 @@ async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     assert hass.states.get("sensor.sh10rt_diagnosis_next_attempt").state == "unknown"
 
 
+async def test_auto_repeat_says_what_it_waits_for_as_soon_as_a_run_ends(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Not "a run is in progress" until the next tick, as at gerd's (T077).
+
+    Looking again at the end of a run cannot start the next one early: both
+    the inverter's and the wallbox's paths keep the quiet after a run first.
+    """
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+
+    await _auto_repeat(hass, True)
+
+    assert runner._task.done()
+    assert runner.continuous.runs_started == 1
+    # What it waits for next -- this slot has had its run -- rather than the
+    # last thing a tick said while the run went: "running for ..." or "a run
+    # is in progress".
+    assert runner.continuous.waiting.startswith("the next run at")
+    assert hass.states.get(STEP).state.startswith(
+        "waiting for changed test conditions: the next run at"
+    )
+
+
 async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:

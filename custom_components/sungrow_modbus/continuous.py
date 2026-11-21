@@ -130,6 +130,15 @@ class ContinuousCapabilityTest:
         self.waiting = why
         self.runner.async_notify()
 
+    @callback
+    def async_run_ended(self) -> None:
+        """Say what it waits for now, rather than at the next tick.
+
+        Only ever after a run: the quiet that follows one (`QUIET`) keeps this
+        tick from starting another.
+        """
+        self._async_tick(dt_util.utcnow())
+
     def live(self) -> ledger.Live:
         """Return the house now, from what the coordinators last polled."""
         device = self.entry.runtime_data.inverter_coordinator.device

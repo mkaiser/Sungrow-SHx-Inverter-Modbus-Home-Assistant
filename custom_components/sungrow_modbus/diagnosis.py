@@ -413,9 +413,19 @@ class DiagnosisRunner:
 
     @callback
     def _set(self, **changes: Any) -> None:
-        """Replace the state and tell the entities, in that order."""
+        """Replace the state and tell the entities, in that order.
+
+        A run ending is the moment auto repeat's line goes stale: it said
+        "running for ..." or "a run is in progress", and would keep saying it
+        until the next tick. So it looks again at once (T077). That cannot
+        start the next run early: every way a run ends sets `finished`, and
+        both of its paths keep the quiet after a run before starting one.
+        """
+        ended = self.state.running and changes.get("running") is False
         self.state = replace(self.state, **changes)
         async_dispatcher_send(self.hass, self.signal)
+        if ended and self.continuous.active:
+            self.continuous.async_run_ended()
 
     @callback
     def async_start(

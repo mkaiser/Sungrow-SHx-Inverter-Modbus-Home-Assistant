@@ -35,13 +35,6 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 ## Inverter
 
-**T077. The step sensor says "a run is in progress" after the run has finished**: at gerd's on
-2026-11-21, twice, auto repeat's text stayed "waiting for changed test conditions: a run is in
-progress" with progress at 100 % and *last finished* moved, until the next tick
-([the evening](.wiki/wiki/sources/gerd-t076-2026-11-21-summary.md)). The continuous tick should say
-what it waits for again as soon as a run ends.
-*Needs*: nothing; a fix in `continuous.py` with a test.
-
 **T072. Daily import (13036) stuck at 0 at night on an SH6.0RS**
 ([#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797), whose "13035" is the
 protocol address): with the battery empty and the house on the grid the daily import did not count, so the daily

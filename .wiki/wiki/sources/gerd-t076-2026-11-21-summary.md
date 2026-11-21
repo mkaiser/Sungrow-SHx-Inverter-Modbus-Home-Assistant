@@ -28,7 +28,7 @@ history cleared and the restart not allowed. Source: `raw/gerd-t076-2026-11-21.m
 | The five power limits store a step over their maximum, `battery_max_soc` refuses 101 % with 0x04, again | the run's upper-bound rows |
 | 13052's 8000 W, outside its battery-derived bounds, was written back to itself and taken, so the run tested it as before | the run, 13052 restored "already holding its original value" |
 | A URL requirement in a custom integration's manifest is always passed to the installer, so a local wheel can stand in for a release | `homeassistant.util.package.is_installed` |
-| After a run the step sensor keeps "a run is in progress" until the next tick | the sensor against *last finished* |
+| After a run the step sensor kept what the last tick said during it ("a run is in progress") for up to a minute, until the next tick; now it looks again as the run ends | the sensor against *last finished* |
 
 Exit 0, everything restored, no restart. The morning's "discharge windows: not supported"
 ([the day](gerd-auto-repeat-2026-11-21-summary.md)) is overturned: it was a procedure error, and this run
