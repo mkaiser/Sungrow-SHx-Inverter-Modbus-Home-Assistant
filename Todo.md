@@ -26,8 +26,6 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 - Investigate / future: How to properly organize the code base after release. CI/CD from github. restrict main branch to PR only. Assumption: Automated CI/CD depends on how much can the tests be stripped down.
 
-- can folder legacy/ be deleted?
-
 - deactivate the automatic / bot closing of issues
 
 

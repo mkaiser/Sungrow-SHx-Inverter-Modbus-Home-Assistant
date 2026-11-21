@@ -113,14 +113,14 @@ way they are.
 
 ## The YAML package
 
-It lives in [legacy/](legacy/) on this branch, and at the repository root on
-`main`, which is where users should get it.
+It lives on the [`2026-legacy`](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/2026-legacy) branch,
+which is where users should get it.
 
-- [Installation / Configuration](legacy/doc/installation.md)
-- [Migration from versions before 2026](legacy/doc/migration_guide.md)
-- [Usage](legacy/doc/usage.md) · [FAQ](legacy/doc/faq.md) ·
-  [Help / Troubleshooting](legacy/doc/help.md)
-- [Changelog](legacy/doc/changelog.md)
+- [Installation / Configuration](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/installation.md)
+- [Migration from versions before 2026](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/migration_guide.md)
+- [Usage](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/usage.md) · [FAQ](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/faq.md) ·
+  [Help / Troubleshooting](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/help.md)
+- [Changelog](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/changelog.md)
 
 ## Register documentation
 

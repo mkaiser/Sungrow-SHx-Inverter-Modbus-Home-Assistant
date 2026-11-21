@@ -65,7 +65,7 @@ already there.
    you pick it.
 4. **The old entities can stay in the registry, or not — either works.**
    After the restart they show as unavailable, and
-   [cleanup_entities.md](../legacy/doc/cleanup_entities.md) tells you to delete
+   [cleanup_entities.md](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/cleanup_entities.md) tells you to delete
    them. If you leave them, the integration releases each entry as it takes the
    ID over. If you already deleted them, it asks the recorder instead, which
    still has the rows. Deleting them never touches your history — the recorder

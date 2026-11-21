@@ -1,9 +1,9 @@
 """Entity descriptions for an SBR pack, hand-written for a stated reason.
 
-`scripts/generate/tables/legacy_entities.py` records what
-`legacy/modbus_sungrow.yaml` produces -- the inverter's map. The pack's
+`scripts/generate/tables/legacy_entities.py` records what the YAML package's
+`modbus_sungrow.yaml` produces -- the inverter's map. The pack's
 registers are not in it, because they live in
-`legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, an opt-in file a
+its `additional_sensors/modbus_sungrow_SBR_battery.yaml`, an opt-in file a
 user copies in by hand. So there is no record to hold these to, and they are
 guarded this way instead:
 `tests/test_battery_entities.py` checks every `field` here against a real

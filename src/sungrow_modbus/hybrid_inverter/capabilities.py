@@ -749,7 +749,8 @@ EV_CHARGER_CODES_ONLY: frozenset[Capability] = frozenset({Capability.EV_CHARGER}
 #: **grow**, so the first non-zero reading creates the entities -- an inverter
 #: set up after dark gets its MPPT3 sensors at sunrise. Granting on zero has
 #: no such recovery: nothing ever removes an entity, and a permanently empty
-#: one is what `legacy/doc/cleanup_entities.md` exists to help people delete.
+#: one is what the YAML package's `doc/cleanup_entities.md` exists to help
+#: people delete.
 #:
 #: Deliberately not conditional on the transport, though the transport is
 #: knowable (register 6100). A rule that reads the same everywhere is easier

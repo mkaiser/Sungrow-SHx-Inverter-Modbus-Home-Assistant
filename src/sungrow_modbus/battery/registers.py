@@ -3,7 +3,8 @@
 In its own module because it is the battery's map, not the inverter's.
 
 The source here is
-`legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, proven by years
+the YAML package's
+`additional_sensors/modbus_sungrow_SBR_battery.yaml`, proven by years
 of use.
 
 **Not on the inverter's unit.** Which unit the pack answers on depends on the
@@ -33,7 +34,8 @@ class SbrBatteryPack(Component):
     device type code alongside -- a slave answers that and a battery does not.
     See `sungrow_modbus.battery.probe_units`.
 
-    Ported from `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`,
+    Ported from the YAML package's
+    `additional_sensors/modbus_sungrow_SBR_battery.yaml`,
     whose addresses and scales are field-proven; the values below were read
     off an SBR096 while it was working.
     """
@@ -279,7 +281,8 @@ class SbrBatteryModules(Component):
     Pooled with the pack summary, either of those would take the state of
     charge down with it.
 
-    Ported from `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`,
+    Ported from the YAML package's
+    `additional_sensors/modbus_sungrow_SBR_battery.yaml`,
     whose addresses are right and whose *comments* are not -- four
     consecutive entries there are all labelled "reg 10777, Min. Cell Voltage
     of Module 5" and three more all say "Cell Type of Module 5". Every

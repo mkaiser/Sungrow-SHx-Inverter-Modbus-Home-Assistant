@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Derive a Modbus register seed for the simulator from the register records.
+"""Derive a Modbus register seed for the simulator from the register map.
 
-Seeded from what is already committed rather than from a second hand-kept
-list that would drift: every modbus sensor and switch in
-`legacy/modbus_sungrow.yaml`, plus every specification-layer register in
-`tables/legacy_entities.py` the YAML never read, contributes its address,
-width and a plausible value. That is enough for the integration to read
-something sensible back during development.
+Seeded from the library's own map rather than from a second hand-kept list
+that would drift: every field of `sungrow_modbus.hybrid_inverter.registers`
+contributes its address, width and a plausible value, in the register space
+its component reads. That is enough for the integration to read something
+sensible back during development.
+
+The inverter-managed wallbox (`ev_charger`) is left out: the simulator is a
+house without one, so its capability is not granted and no wallbox entity is
+created against words nobody measured.
 
 Writes scripts/dev/simulator_registers.json, which is committed: the tests read
 it to prove every ported register decodes, so it is a fixture rather than a
@@ -24,18 +27,15 @@ from pathlib import Path
 import sys
 from typing import Any
 
-import yaml
+from modbus_connection.model.fields import StringField
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
-
-from legacy_entities import ENTITIES
+from sungrow_modbus.hybrid_inverter.registers import COMPONENTS
 
 REPO = Path(__file__).resolve().parents[2]
-SOURCE = REPO / "legacy" / "modbus_sungrow.yaml"
 TARGET = REPO / "scripts" / "dev" / "simulator_registers.json"
 
-# Registers per data type. Anything not listed occupies a single register.
-WIDTHS = {"uint16": 1, "int16": 1, "uint32": 2, "int32": 2, "float32": 2}
+#: Components the simulated house does not have.
+ABSENT = frozenset({"ev_charger"})
 
 # Values chosen so the derived sensors land in a believable range for an
 # SH10RT on a sunny afternoon rather than reading zero everywhere.
@@ -143,26 +143,15 @@ STRINGS = {
 }
 
 
-class _SecretLoader(yaml.SafeLoader):
-    """Load the package without needing a real secrets.yaml."""
-
-
-def _secret(loader: yaml.SafeLoader, node: yaml.Node) -> str:
-    return f"!secret {loader.construct_scalar(node)}"  # type: ignore[arg-type]
-
-
-_SecretLoader.add_constructor("!secret", _secret)
-
-
 def _string_words(text: str, registers: int) -> list[int]:
     """Encode an ASCII string into null-padded 16-bit registers."""
     raw = text.encode("ascii")[: registers * 2].ljust(registers * 2, b"\x00")
     return [int.from_bytes(raw[i : i + 2], "big") for i in range(0, registers * 2, 2)]
 
 
-def _default_value(entry: dict[str, Any], width: int) -> list[int]:
-    """Return a plausible raw value for one sensor."""
-    if entry.get("data_type") == "string":
+def _default_value(field: Any, width: int) -> list[int]:
+    """Return a plausible raw value for one field."""
+    if isinstance(field, StringField):
         return [0] * width
     # Signed types get a small positive value; a zero everywhere would hide
     # scaling mistakes behind a plausible-looking result.
@@ -207,33 +196,15 @@ def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
 
 
 def collect() -> dict[str, dict[str, list[int]]]:
-    """Walk the YAML package and build the seed."""
-    document = yaml.load(SOURCE.read_text(encoding="utf-8"), Loader=_SecretLoader)
+    """Walk the register map and build the seed."""
     spaces: dict[str, dict[int, list[int]]] = {"input": {}, "holding": {}}
 
-    for hub in document.get("modbus", []):
-        for entry in hub.get("sensors", []) + hub.get("switches", []):
-            address = entry.get("address")
-            if address is None:
-                continue
-            space = "input" if entry.get("input_type") == "input" else "holding"
-            data_type = entry.get("data_type", "uint16")
-            width = int(entry.get("count", WIDTHS.get(data_type, 1)))
-            spaces[space][int(address)] = _default_value(entry, width)
-
-    # Registers the specification defines, or hardware was observed to answer,
-    # and the YAML never read. Their one source is the legacy entities, so they
-    # cannot drift from the descriptions generated beside them.
-    for entry in ENTITIES:
-        if (
-            entry["layer"] not in {"specification", "observed"}
-            or entry.get("address") is None
-        ):
+    for name, component in COMPONENTS.items():
+        if name in ABSENT:
             continue
-        space = "input" if entry.get("input_type") == "input" else "holding"
-        data_type = entry.get("data_type", "uint16")
-        width = int(entry.get("count", WIDTHS.get(data_type, 1)))
-        spaces[space][int(entry["address"])] = _default_value(entry, width)
+        space = component.register_space
+        for field in component.declared_fields.values():
+            spaces[space][field.address] = _default_value(field, field.count)
 
     _apply_fixtures(spaces)
     return {

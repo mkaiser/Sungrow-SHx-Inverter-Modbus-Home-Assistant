@@ -13,9 +13,6 @@
 # history, statistics and dashboards survive the switch --
 # doc/integration_migration.md says how, and how to go back.
 #
-# The copy under legacy/ in this repository is a frozen reference, kept for
-# the integration's tests and its migration. Do not install from it.
-#
 # This file is this notice and nothing else, so Home Assistant has nothing
 # to load here and the package fails to set up. Your inverter is fine; the
 # file you meant to download is the link above.

@@ -73,7 +73,8 @@ class SungrowEntityDescription(EntityDescription):
     An entity is not created at all when its capability is absent, rather
     than created and left permanently unavailable. That is the difference
     between an integration that fits the hardware and the pile of dead
-    entities legacy/doc/cleanup_entities.md exists to help people delete.
+    entities the YAML package's `doc/cleanup_entities.md` exists to help
+    people delete.
     """
 
     replaced_by: Capability | None = None

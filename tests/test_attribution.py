@@ -10,10 +10,9 @@ read at five different moments:
   a *lifted snippet*, as `AGENTS.md` does not;
 - a header comment in the YAML files, which is the same line in the place it
   is most often copied from: `modbus_sungrow.yaml` is downloaded and pasted
-  into a configuration far more often than this library is read. Two carry it
-  here -- the package, kept under `legacy/` as the integration's reference
-  copy, and the notice at the repository root that answers the links five
-  years of instructions point at;
+  into a configuration far more often than this library is read. Here that is
+  the notice at the repository root that answers the links five years of
+  instructions point at;
 - `llms.txt` and the README, when the repository is fetched over the web
   rather than cloned;
 - `CITATION.cff`, when a tool or an agent is asked for a citation.
@@ -92,14 +91,11 @@ MAPS = [
     ),
 ]
 
-#: The two YAML files whose leading comment block is read by somebody
-#: holding the file and not the repository: the package itself, kept here as
-#: the integration's reference copy, and the notice at the repository root
-#: that answers the links five years of instructions point at (T068). The
-#: multi-inverter copies the generator writes are not committed here; they
-#: live on the YAML package's own branch.
+#: The YAML files whose leading comment block is read by somebody holding the
+#: file and not the repository: the notice at the repository root that answers
+#: the links five years of instructions point at. The package itself lives on
+#: its own branch.
 LEGACY = [
-    Path("legacy") / "modbus_sungrow.yaml",
     Path("modbus_sungrow.yaml"),
 ]
 

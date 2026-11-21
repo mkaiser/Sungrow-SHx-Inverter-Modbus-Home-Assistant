@@ -36,8 +36,8 @@ def _seeded_unit():
     """Return a mock unit answering like the simulator does.
 
     The same seed `scripts/dev/simulate.sh` serves, so this is the inverter both
-    paths are compared against -- and it covers every ported address, because
-    `generate_simulator_registers.py` derives it from the YAML package.
+    paths are compared against -- and it covers every polled address, because
+    `generate_simulator_registers.py` derives it from the register map.
     """
     unit = MockModbusConnection().for_unit(1)
     unit.input = {int(a): v for a, v in SEED.get("input", {}).items()}

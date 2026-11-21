@@ -20,9 +20,9 @@ links to it.
 
 ## Two tracks
 
-1. **The YAML package** (`legacy/modbus_sungrow.yaml`) — shipping, in use by
-   many people, on `main`. Treat as production. Until the integration reaches
-   parity, it stays untouched.
+1. **The YAML package** (`modbus_sungrow.yaml`) — shipping, in use by many
+   people, on `main`, which becomes `2026-legacy` at the release. Treat as
+   production, maintained by hand there; this branch carries no copy of it.
 2. **The Home Assistant integration** (`custom_components/sungrow_modbus` +
    the library `src/sungrow_modbus`) — on branch `proper-ha-integration`, an
    MVP that will **supersede** the YAML package.

@@ -1,10 +1,11 @@
 """Every ported register decodes against the simulator's seed.
 
-The register map is generated, so the addresses match the YAML by
-construction. What that cannot catch is a register whose *width* or *space* is
-wrong — a uint32 read as one register, or an input register looked for among
-the holding ones. Both produce an entity that is simply never populated, which
-on real hardware looks like an unsupported model rather than a bug.
+The seed is derived from the register map, so every address is in it, in
+its component's space and at its width. What this catches is the path
+between: a block plan that misses a field, or a field that cannot decode the
+words it is handed. Either produces an entity that is simply never
+populated, which on real hardware looks like an unsupported model rather than
+a bug.
 
 So this drives the whole map against the seed the simulator uses, and requires
 every field to come back with a value.

@@ -7,7 +7,7 @@ the history graph really is continuous afterwards, whether the Energy
 dashboard keeps its numbers — those are things you have to look at.
 
 So this fabricates the starting state: the entity registry entries
-`legacy/modbus_sungrow.yaml` leaves behind, and a month of recorded readings
+the YAML package leaves behind, and a month of recorded readings
 and hourly statistics under the entity ids it used. Home Assistant must be
 **stopped** while it runs, because it writes the registry and the recorder
 database directly.

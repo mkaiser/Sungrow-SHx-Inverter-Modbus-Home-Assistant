@@ -94,8 +94,8 @@ OVERRIDES: dict[str, str] = {
     # -- the SBR pack, which is its own device on its own unit ------------
     #
     # These have no legacy name to derive from: the registers live in
-    # `legacy/additional_sensors/`, an opt-in file, and are not in the entity
-    # map. So every one is written out here.
+    # the YAML package's `additional_sensors/`, an opt-in file, and are not in
+    # `legacy_entities.py`. So every one is written out here.
     #
     # `Pack` rather than nothing, and it is not redundancy. Two of the bare
     # names would collide with the inverter's -- `inverter_temperature` is
@@ -170,7 +170,7 @@ OVERRIDES: dict[str, str] = {
     # -- the wallbox, its own device on its own unit ----------------------
     #
     # No legacy name to derive from: the YAML package never covered a wallbox
-    # at all, not even in `legacy/additional_sensors/`. So every one is
+    # at all, not even in its `additional_sensors/`. So every one is
     # written out, and none carries a `Wallbox` prefix -- Home Assistant
     # already says `AC22E-01` in front of it, and the uniqueness rule is
     # scoped per device precisely so a second device need not invent a word

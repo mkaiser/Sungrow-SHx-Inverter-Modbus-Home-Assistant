@@ -482,18 +482,18 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   explain would cost more friction for other MIT projects than a condition
   nobody is going to litigate is worth. The measures that survive an LLM
   lifting a snippet are the provenance line in each map's docstring and the
-  three-line header of `legacy/modbus_sungrow.yaml`, which is the fifth
-  surface and the most-copied file here; `main` carries the identical header,
-  so the two copies stay byte-identical. An instruction file travels with
+  three-line header of `modbus_sungrow.yaml`, which is the fifth surface and
+  the most-copied file: the package on `main` carries it, and so does the
+  notice at this branch's root that answers links to the old location. An instruction file travels with
   neither.
 
 ## Register sources
 
 | Device | Map from | Licence |
 | --- | --- | --- |
-| Inverter | `legacy/modbus_sungrow.yaml` plus Sungrow's *Communication Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16** | MIT, this repo |
+| Inverter | the YAML package's `modbus_sungrow.yaml` (`2026-legacy`) plus Sungrow's *Communication Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16** | MIT, this repo |
 | SG string inverters | [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s `sungrow_sg_dynamic.yaml` (commit `4a1e662`), built from Sungrow's *Communication Protocol of Residential and Commercial PV Grid-Connected Inverters* **V1.1.53**; `src/sungrow_modbus/string_inverter/registers.py` | MIT (ha-modbus-manager) |
-| SBR battery | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, input 10740-10788 | MIT, this repo |
+| SBR battery | the YAML package's `additional_sensors/modbus_sungrow_SBR_battery.yaml`, input 10740-10788 | MIT, this repo |
 | SBH battery | nothing yet | — |
 | iHomeManager | Sungrow's *Communication Protocol of iHomeManager* V1.0.1/V1.0.2, [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s 53-register map, and what evcc's users read off theirs (`.wiki/raw/cross-reference-evcc.md`) | MIT (ha-modbus-manager, evcc's templates) |
 | Wallbox | Our own AC22E-01 measurement, [wallbox_registers.md](wallbox_registers.md), against [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) and Louisbertelsmann's map | MIT (KevinD987); Louisbertelsmann's used with permission, for meanings only. [evcc's `charger/sungrow.go`](https://github.com/evcc-io/evcc/blob/master/charger/sungrow.go) is **not** MIT ("All rights reserved", unlike the rest of evcc) and derives from Louisbertelsmann's: a cross-check, never a source |

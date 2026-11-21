@@ -15,7 +15,6 @@ on:
       - "pyproject.toml"
       - "requirements_dev.txt"
       - "hacs.json"
-      - "legacy/modbus_sungrow.yaml"
       # Every script, generators, tables, the diagnosis and the pin guard
       # alike, so a new one is covered without being listed here.
       - "scripts/**"
@@ -85,7 +84,7 @@ jobs:
         run: python scripts/generate/generate_firmware_support.py --check
       - name: The devices-wanted coverage table matches the diagnoses
         run: python scripts/generate/generate_devices_wanted.py --check
-      - name: The simulator seed matches the YAML package and the legacy entities
+      - name: The simulator seed matches the register map
         run: python scripts/generate/generate_simulator_registers.py --check
       - name: The entity name review sheet matches the descriptions
         run: python scripts/helpers/review_names.py --check

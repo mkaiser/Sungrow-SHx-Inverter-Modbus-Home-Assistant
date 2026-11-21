@@ -31,8 +31,8 @@ packages = ["src/sungrow_modbus"]
 # be built and understood, nothing else.
 [tool.hatch.build.targets.sdist]
 # Anchored with a leading slash. Hatchling treats these as gitignore-style
-# patterns, so a bare "README.md" matches at every depth and sweeps the
-# dashboard READMEs under legacy/ into the library's sdist.
+# patterns, so a bare "README.md" matches at every depth and sweeps every
+# other README into the library's sdist.
 include = [
     "/src/sungrow_modbus",
     "/tests/test_device.py",
@@ -44,10 +44,7 @@ include = [
 
 [tool.ruff]
 target-version = "py313"
-# The YAML package's helper scripts -- legacy/debug and the multi-inverter
-# generator -- predate this tooling; linting them is a separate job from the
-# integration's.
-extend-exclude = [".reference", "debug", "scripts/generate/generate_second_inverter_config.py"]
+extend-exclude = [".reference"]
 
 [tool.ruff.lint]
 select = [

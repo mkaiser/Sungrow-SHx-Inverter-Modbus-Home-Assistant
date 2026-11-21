@@ -41,7 +41,7 @@ secrets:
 
   home_assistant_yaml_package:
     what: >-
-      The YAML package (legacy/modbus_sungrow.yaml) reads its connection details from
+      The YAML package (modbus_sungrow.yaml, on main) reads its connection details from
       the user's own secrets.yaml. If you point the dev instance at a real
       inverter you need the same keys.
     file: config/secrets.yaml          # gitignored along with the rest of config/
@@ -313,8 +313,7 @@ real_hardware:
 
   prefer_the_simulator: >-
     scripts/dev/simulate.sh serves the whole register map on localhost:5020,
-    seeded from legacy/modbus_sungrow.yaml and
-    scripts/generate/tables/legacy_entities.py, so it cannot drift from them. Use real hardware only when the point is to
+    seeded from the library's inverter map, so it cannot drift from it. Use real hardware only when the point is to
     verify real-hardware behaviour.
 
 # ---------------------------------------------------------------------------
@@ -571,12 +570,6 @@ generated_files:
       writes: device-diagnosis/devices-wanted.md   # the coverage table between its markers only
     - script: scripts/generate/generate_simulator_registers.py
       writes: scripts/dev/simulator_registers.json   # also on every simulate.sh
-    - script: scripts/generate/generate_second_inverter_config.py
-      writes: nothing committed here; the YAML package's multi-inverter files
-        live on its own branch
-      checked: >-
-        not by gen-check -- it has no --check. CI regenerates and commits the
-        three files on a change to legacy/modbus_sungrow.yaml.
     - script: scripts/helpers/review_names.py --markdown
       writes: doc/entity_names.md                     # --check is in gen-check
     - script: scripts/helpers/review_names.py --texts
@@ -637,6 +630,6 @@ packaging:
     pyproject.toml pins the sdist contents to the library, its two portable
     tests, the README, the licence and pyproject.toml itself. The patterns are
     anchored with a leading slash: hatchling reads them gitignore-style, so a
-    bare "README.md" matches at every depth and sweeps the dashboard READMEs
-    under legacy/ into the package. Without any include list at all it sweeps
+    bare "README.md" matches at every depth and sweeps every other README
+    into the package. Without any include list at all it sweeps
     in everything not gitignored and passes 6 MB.

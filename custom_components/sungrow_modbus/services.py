@@ -29,7 +29,7 @@ actions.
 
 Hiding and showing the control stays a dashboard concern, which is where the
 YAML package already solves it well — see
-`legacy/dashboards/DefaultDashboard`, whose danger-mode toggle is the pattern
+its `dashboards/DefaultDashboard`, whose danger-mode toggle is the pattern
 to copy.
 """
 

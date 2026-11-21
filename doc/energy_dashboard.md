@@ -2,7 +2,7 @@
 
 > **Still a preview.** The integration creates these sensors and they are
 > yours to pick, but it has not had a stable release yet. For the YAML
-> package, see [legacy/doc/dashboard.md](../legacy/doc/dashboard.md).
+> package, see [its dashboard guide](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/dashboard.md).
 
 Home Assistant's Energy dashboard (**Settings → Dashboards → Energy**, then
 the pencil at the top right) asks you to pick sensors. The integration

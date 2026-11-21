@@ -655,7 +655,7 @@ BUTTONS: tuple[Button, ...] = ()
 #:
 #: Hiding and showing it stays a dashboard concern, which is what the YAML's
 #: own danger-mode toggle already does well -- see
-#: `legacy/dashboards/DefaultDashboard`.
+#: its `dashboards/DefaultDashboard`.
 #: Note the space. Register 13000 is in **both** of Sungrow's tables: Table 3
 #: is read-only over function code 0x04, where reading it gives the running
 #: state, and Table 4 is read/write over 0x03/0x06/0x10, where it is

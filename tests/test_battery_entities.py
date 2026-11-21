@@ -1,8 +1,8 @@
 """The SBR pack as its own device, and the two gates in front of its entities.
 
-The pack's registers are not in the YAML package's entity map, because they
-live in `legacy/additional_sensors/`, an opt-in file a user copies in by hand,
-so the inverter's tests against that map do not cover them. This file does.
+The pack's registers are not in the YAML package's main file, because they
+live in its `additional_sensors/`, an opt-in file a user copies in by hand.
+This file holds the pack's descriptions to its components.
 
 The two gates are the substance. A pack answers or it does not, and
 *separately* its cell block answers or it does not -- measured on one SBR096

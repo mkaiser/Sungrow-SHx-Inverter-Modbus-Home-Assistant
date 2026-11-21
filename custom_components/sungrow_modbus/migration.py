@@ -103,7 +103,7 @@ _SERIAL_DESCRIPTION = next(
 
 #: The suffixes a YAML install can have used, in the order they are tried.
 #:
-#: `legacy/modbus_sungrow.yaml` carries none;
+#: `modbus_sungrow.yaml` carries none;
 #: `modbus_sungrow_multiple_inverters_<n>.yaml` appends ` inv <n>` to every
 #: name and `_inv_<n>` to every unique_id. Both shapes exist in the wild for a
 #: first inverter: the generator makes an `_inv_1` file, so a two-inverter
@@ -387,7 +387,7 @@ async def async_legacy_ids_with_history(
     """Return legacy ids the recorder still holds rows for.
 
     The registry lookup is the good path, but it is not the only evidence that
-    a YAML package was here. `legacy/doc/cleanup_entities.md` has told users for years
+    a YAML package was here. Its `doc/cleanup_entities.md` has told users for years
     to delete the orphaned entries a removed YAML platform leaves behind, and
     plenty have. Their registry is then clean while the recorder still holds
     years of rows under those ids — history that is perfectly migratable and

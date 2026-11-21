@@ -1,8 +1,8 @@
 # Developing the Home Assistant integration
 
 This is about the **new custom integration** (`custom_components/sungrow_modbus`)
-and its device library (`src/sungrow_modbus`), not the YAML package. The
-YAML package in `legacy/modbus_sungrow.yaml` is unaffected by anything here.
+and its device library (`src/sungrow_modbus`), not the YAML package, which lives on
+`main` (`2026-legacy` after the release) and is unaffected by anything here.
 
 ## Getting a dev environment
 
@@ -133,10 +133,10 @@ contention warning, and the network-search caveat.
 
 ## The simulator
 
-`scripts/generate/generate_simulator_registers.py` reads every Modbus sensor
-and switch in `legacy/modbus_sungrow.yaml`, plus the specification registers
-in `scripts/generate/tables/legacy_entities.py` the YAML never read, and writes a register
-seed to `scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
+`scripts/generate/generate_simulator_registers.py` reads every field of the
+library's inverter map, `sungrow_modbus.hybrid_inverter.registers`, but the
+inverter-managed wallbox's, and writes a register seed to
+`scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
 serves that seed over Modbus TCP, unit 1, input and holding spaces apart.
 Seeding from committed records means the simulator cannot drift away from the
 register map; the seed is committed because tests decode it, and `make
@@ -216,8 +216,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
 | `generate_devices_wanted.py` | Rewrite the coverage table of `device-diagnosis/devices-wanted.md` (and so of the pinned diagnosis issue) from the committed diagnoses, each device counted once by its stand-in serial; the wanted list above it stays hand-written |
 | `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
-| `generate_simulator_registers.py` | The simulator's seed, from the YAML package and `tables/legacy_entities.py` |
-| `generate_second_inverter_config.py` | The YAML package's multi-inverter files, which are committed on its own branch and not here |
+| `generate_simulator_registers.py` | The simulator's seed, from the library's inverter map |
 | **`scripts/release/`** | **Release gates** |
 | `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
@@ -344,8 +343,8 @@ Each of these is verified in a container or against hardware.
 
 ## Porting registers
 
-`legacy/modbus_sungrow.yaml` translates to `Component` fields almost one for
-one:
+The YAML package's `modbus_sungrow.yaml` translates to `Component` fields
+almost one for one:
 
 | YAML | Library field |
 | --- | --- |
@@ -372,7 +371,7 @@ The migration is the one feature a unit test cannot fully judge. Whether the
 setup dialog explains the choice well enough to make it, and whether the
 history graph really is continuous afterwards, are things you have to look at.
 `scripts/dev/seed_migration_testbed.py` fabricates the starting state — the
-registry entries `legacy/modbus_sungrow.yaml` leaves behind, plus a month of
+registry entries the YAML package leaves behind, plus a month of
 recorded readings and hourly statistics under the ids it used:
 
 ```console
