@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 from datetime import timedelta
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
@@ -361,6 +362,110 @@ async def test_an_unfinished_run_becomes_a_repair_rather_than_a_log_line(
     assert issue is not None
     assert issue.is_fixable
     assert "battery_min_soc" in issue.translation_placeholders["registers"]
+
+
+#: A snapshot an earlier run kept: `battery_min_soc` not put back.
+KEPT = {
+    "taken_at": 1.0,
+    "values": {"battery_min_soc": 10.0},
+    "raw": {"battery_min_soc": 100},
+    "bounds": {},
+    "unreadable": {},
+    "battery_ceiling": 5000,
+    "stopped_at": None,
+}
+
+
+async def test_a_kept_snapshot_refuses_the_next_run_and_raises_the_repair(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A run over a kept snapshot would save its own over it before writing.
+
+    At gerd's on 2026-11-21 auto repeat went on after a run that could not put
+    13052 back, and the next run's snapshot took the test's value for the
+    owner's. So the run refuses, writes nothing, raises the repair at once and
+    stops auto repeat; the kept snapshot is left exactly as it was.
+    """
+    from custom_components.sungrow_modbus.capability_test import _store
+    from custom_components.sungrow_modbus.repairs import issue_id
+
+    entry = await _setup(hass, ready_unit)
+    await _store(hass, entry).async_save(KEPT)
+    writes: list[Any] = []
+    ready_unit.on_write(writes.append)
+
+    await _auto_repeat(hass, True)
+
+    runner = entry.runtime_data.diagnosis
+    assert writes == []
+    assert await _store(hass, entry).async_load() == KEPT
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id(entry)) is not None
+    assert not runner.continuous.active
+    assert "UnfinishedRestoreError" in runner.state.error
+
+
+async def test_a_failed_restore_raises_the_repair_at_once(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Not at the next setup: auto repeat keeps the session going meanwhile."""
+    from custom_components.sungrow_modbus.capability_test import CapabilityTestRunner
+    from custom_components.sungrow_modbus.repairs import issue_id
+    from sungrow_modbus.capability_test import Snapshot
+
+    entry = await _setup(hass, ready_unit)
+
+    class LeavesOne:
+        def __init__(self, *_args: Any, on_snapshot: Any, **_kwargs: Any) -> None:
+            self.on_snapshot = on_snapshot
+
+        def request_stop(self) -> None:
+            pass
+
+        async def async_run(self) -> Any:
+            await self.on_snapshot(Snapshot.from_dict(KEPT))
+            return SimpleNamespace(
+                not_restored=(SimpleNamespace(field="battery_min_soc"),)
+            )
+
+    runner = CapabilityTestRunner(hass, entry)
+    with (
+        patch(
+            "custom_components.sungrow_modbus.capability_test.CapabilityTest",
+            LeavesOne,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.capability_test.document",
+            return_value={},
+        ),
+    ):
+        await runner.async_run()
+
+    assert runner.left_changed
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, issue_id(entry))
+    assert issue is not None
+    assert "battery_min_soc" in issue.translation_placeholders["registers"]
+
+
+async def test_a_run_that_left_something_changed_stops_auto_repeat(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The next run would snapshot the test's values as the owner's."""
+    from custom_components.sungrow_modbus import capability_test as ct
+
+    real = ct.CapabilityTestRunner.async_run
+
+    async def left(self: Any, on_progress: Any = None) -> dict[str, Any]:
+        block = await real(self, on_progress)
+        self.left_changed = True
+        return block
+
+    entry = await _setup(hass, ready_unit)
+    with patch.object(ct.CapabilityTestRunner, "async_run", left):
+        await _auto_repeat(hass, True)
+
+    runner = entry.runtime_data.diagnosis
+    assert not runner.continuous.active
+    assert "could not put everything back" in runner.continuous.waiting
 
 
 async def test_a_finished_run_leaves_no_repair_behind(

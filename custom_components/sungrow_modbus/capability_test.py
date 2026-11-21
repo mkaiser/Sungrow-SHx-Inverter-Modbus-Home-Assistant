@@ -30,6 +30,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HassJob, HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import CapabilityTest, Options, Snapshot, document
@@ -52,6 +53,16 @@ if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class UnfinishedRestoreError(HomeAssistantError):
+    """A run refused because an earlier one has not put everything back.
+
+    Its snapshot holds the owner's values, and a new run would save its own
+    over it before the first write: the test's values would become "the
+    owner's", and the repair would offer to put back the wrong thing.
+    """
+
 
 #: One store per config entry, because one entry is one endpoint and a house
 #: may have two. Version 1; a future shape change bumps it and migrates, which
@@ -223,6 +234,8 @@ class CapabilityTestRunner:
         self._remove_shutdown_job: Any = None
         self._test: CapabilityTest | None = None
         self._stop_requested = False
+        #: Whether the run ended with something it could not put back.
+        self.left_changed = False
 
     def request_stop(self) -> None:
         """End the run at its next check; everything is still put back.
@@ -338,9 +351,18 @@ class CapabilityTestRunner:
 
     async def async_run(self, on_progress: Any = None) -> dict[str, Any]:
         """Run the procedure and return the block for the diagnosis document."""
+        from .repairs import async_raise
+
         runtime = self.entry.runtime_data
         coordinator = next(iter(runtime.coordinators.values()))
         store = _store(self.hass, self.entry)
+        if (leftover := await async_leftover(self.hass, self.entry)) is not None:
+            async_raise(self.hass, self.entry, leftover)
+            raise UnfinishedRestoreError(
+                "an earlier capability test did not put back "
+                + ", ".join(leftover.values)
+                + "; see Settings -> Repairs before running another"
+            )
 
         async def keep(snapshot: Snapshot) -> None:
             # Before the first write, and awaited rather than scheduled: a
@@ -373,15 +395,20 @@ class CapabilityTestRunner:
         finally:
             self._disarm_shutdown_guard()
 
+        self.left_changed = bool(outcome.not_restored)
         if outcome.not_restored:
-            # Left deliberately. The next setup turns it into a repair, which
-            # is the only thing that still works after the run is gone.
+            # Left deliberately: the repair below is raised from it, and the
+            # next setup raises it again if this session ends first.
             _LOGGER.error(
                 "%s: the capability test could not put %s back; the snapshot is kept "
                 "so this can be repaired",
                 self.entry.title,
                 ", ".join(row.field for row in outcome.not_restored),
             )
+            # Now rather than at the next setup: auto repeat goes on running in
+            # this session, and the owner is owed the repair while it does.
+            if (leftover := await async_leftover(self.hass, self.entry)) is not None:
+                async_raise(self.hass, self.entry, leftover)
         else:
             await store.async_remove()
 
