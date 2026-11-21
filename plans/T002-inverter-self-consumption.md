@@ -39,9 +39,12 @@ counterpart.
 
 ## Status log
 
+- 2026-11-21, close: all of it committed (aeecd62). Left only the 13022
+  path, on a house that refuses 5214, now carried by T046 in `Todo.md`.
+  The full gate was not run on it (the maintainer's call); `make quick`
+  and the touched tests passed.
 - 2026-11-21, later: Standby decided (keeps the number), docstring and
-  wiki done. Left: commit; the 13022 path on a house that refuses 5214
-  (T046).
+  wiki done.
 - 2026-11-21: the 900 s window and the energy entity are built, with tests
   (`tests/test_mppt_energy.py`, the signed cases); `make gen` run. Uncommitted:
   `energy_integral.py`, `entity.py`, `sensor.py`, `derived.py`,
