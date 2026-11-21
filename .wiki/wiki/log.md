@@ -2017,3 +2017,11 @@ discharge, the export limit, the charging start threshold and the charge ceiling
 discharge-window verdict was a procedure error (charging read as a discharge). New page
 `register-13052.md`; `installation-gerd.md`, `firmware-sapphire-h-b001-v000-p022.md` and
 `capability-test.md` updated.
+
+## [2026-11-21] ingested | gerd-t076-2026-11-21
+
+The day's three capability-test fixes installed on gerd's Home Assistant over a new SSH add-on, as a
+local build of 0.1.0a46 with them ([the source](sources/gerd-t076-2026-11-21-summary.md)). With the
+restart permission off and the test history cleared, one run: exit 0, the discharge window confirmed
+(533.5 W, 0 W, 468 W) and the discharging start threshold confirmed, overturning the morning's
+"not supported". `installation-gerd.md` and `firmware-sapphire-h-b001-v000-p022.md` updated.

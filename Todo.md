@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T077.** Numbers are minted in order, never reused and
+**Next free item number: T078.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -35,15 +35,12 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 ## Inverter
 
-**T076. Put the capability test's three fixes of 2026-11-21 on gerd's Home Assistant, then clear his
-runs**: `cb4f198` (no run over a kept snapshot; a failed restore raises the repair and stops auto
-repeat), `ee3c739` (a control whose own value would not go back is left out) and `663cafa` (charging
-is nothing to stop). Two are in the library, so it needs a wheel over SSH or a release. Then *Diagnosis:
-tests: clear history*, because run 4's false "discharge windows: not supported" counts as established,
-and one run with the battery discharging 500 W or more re-asks it; the discharging start threshold
-(200-800 W through the battery) is the other check left
-([the day](.wiki/wiki/sources/gerd-auto-repeat-2026-11-21-summary.md)).
-*Needs*: the terminal route to gerd's Home Assistant (an SSH add-on and a working port forward).
+**T077. The step sensor says "a run is in progress" after the run has finished**: at gerd's on
+2026-11-21, twice, auto repeat's text stayed "waiting for changed test conditions: a run is in
+progress" with progress at 100 % and *last finished* moved, until the next tick
+([the evening](.wiki/wiki/sources/gerd-t076-2026-11-21-summary.md)). The continuous tick should say
+what it waits for again as soon as a run ends.
+*Needs*: nothing; a fix in `continuous.py` with a test.
 
 **T072. Daily import (13036) stuck at 0 at night on an SH6.0RS**
 ([#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797), whose "13035" is the

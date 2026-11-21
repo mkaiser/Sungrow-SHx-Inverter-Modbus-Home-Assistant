@@ -23,6 +23,8 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)).
   ([the day](../sources/gerd-auto-repeat-2026-11-21-summary.md)).
 - Forced discharge (1250 W, 1251 W measured), the export limit through the feed-in ratio (1250 W cap,
   1243 W), the charging start threshold and the charge ceiling did as told, from Home Assistant at gerd.
+- The discharge windows obey (533.5 W to 0 W and back), and the discharging start threshold stops a
+  discharge under it ([the evening](../sources/gerd-t076-2026-11-21-summary.md)).
 
 ## Diagnoses
 

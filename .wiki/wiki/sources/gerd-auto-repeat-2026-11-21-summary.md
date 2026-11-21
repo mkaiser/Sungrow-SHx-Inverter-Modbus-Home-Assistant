@@ -46,5 +46,6 @@ production Home Assistant, the inverter entry on the cable path through a modbus
   run if refused (the library's preflight).
 - A stop check compares signed power, so charging is "nothing to stop" (the library's effects).
 
-The discharge window's earlier confirmation at gerd over the cable (3799 W to 0 W) stands; run 4's
-result is wrong, and stays in gerd's ledger until the runs are cleared.
+The discharge window's earlier confirmation at gerd over the cable (3799 W to 0 W) stands, and the run
+on the fixed procedure that evening confirmed it again ([the evening](gerd-t076-2026-11-21-summary.md));
+run 4's result left gerd's ledger when the runs were cleared.

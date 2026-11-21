@@ -44,6 +44,9 @@ none failed. 13052 held 10000 W, above the 8000 W this model accepts, so the fir
 back (exit 5); it was set to 8000 W by hand. Forced discharge, the export limit, the charging start
 threshold and the charge ceiling were confirmed
 ([the day](../sources/gerd-auto-repeat-2026-11-21-summary.md)).
+In the evening the day's three fixes went in over SSH (a local build, not a release), and one run on them
+confirmed the discharge window and the discharging start threshold; the restart permission is left off
+([the evening](../sources/gerd-t076-2026-11-21-summary.md)).
 
 ## Diagnoses
 
