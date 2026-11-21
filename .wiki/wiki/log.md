@@ -2054,3 +2054,9 @@ itself; and that 0.1.0a48 raised three checks after the signed stop fix.
 The inverter self-consumption estimate over 2.5 h of Standby at the maintainer's SH10RT
 ([the source](sources/mkaiser-self-consumption-standby-2026-11-21-summary.md)): median 0.6 W, range
 -181 to 174 W, since in Standby it is import minus load and the inverter counts its own draw as load.
+
+## [2026-11-21] ingested | mkaiser-mppt-energy-day
+
+One day of *MPPTn energy* against *Daily PV generation* at the maintainer's SH10RT over the cable
+([the source](sources/mkaiser-mppt-energy-day-2026-11-21-summary.md)): 22.93 against 23.3 kWh, a ratio
+of 0.984; hourly ratios 0.88-1.04 because 13002 steps on a slow tier. Whether 13002 is DC or AC is open.

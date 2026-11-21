@@ -441,8 +441,9 @@ store.
 
 Wanted, not scheduled.
 
-**T054. How far the MPPT energy drifts** -- [plan](plans/T054-mppt-energy-drift.md).
-*Needs*: a house running it a few days, on a cable and through a WiNet-S.
+**T054. How far the MPPT energy drifts** -- [plan](plans/T054-mppt-energy-drift.md)
+(one cable day: 0.984 of *Daily PV generation*).
+*Needs*: more days from the production recorder, and a house through a WiNet-S.
 
 **T055. A generated dashboard** -- [plan](plans/T055-generated-dashboard.md).
 *Needs*: the question of one default dashboard over houses that differ.
