@@ -313,7 +313,7 @@ class EffectSteps(ReadbackSteps):
         if (
             expect_stop
             and after_mid_ is not None
-            and min(abs(before_mid), abs(after_mid_)) >= STOP_BRACKET_W
+            and min(before_mid, after_mid_) >= STOP_BRACKET_W
             and abs(during_mid) <= STOPPED_W
         ):
             return measured._replace(verdict=CONFIRMED)
@@ -357,11 +357,15 @@ class EffectSteps(ReadbackSteps):
             # against and no decade to be off by -- zero has no decades -- so
             # the question is only whether the quantity went away and came
             # back. `before` doubles as the significance floor: stopping a
-            # charge that was never running establishes nothing.
-            if abs(before_mid) < STOPPED_W:
+            # charge that was never running establishes nothing. **Signed**:
+            # every observable here is positive while the thing to stop runs,
+            # and at gerd's on 2026-11-21 a battery *charging* 550 W read as
+            # -550 W of discharge, which `abs` took for a discharge to stop and
+            # the window check then reported as one the inverter ignored.
+            if before_mid < STOPPED_W:
                 self._worst(3)
                 self._note(
-                    f"{check}: not measured -- {observable_label} was only "
+                    f"{check}: not measured -- {observable_label} was "
                     f"{before_mid:.0f} W to begin with, so there was nothing to stop"
                 )
                 return measured._replace(detail="there was nothing to stop")

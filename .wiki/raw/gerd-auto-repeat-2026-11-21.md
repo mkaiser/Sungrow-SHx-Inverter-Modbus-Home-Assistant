@@ -75,3 +75,32 @@ Written through the proxy on the cable path, one session, EMS mode 0 (self-consu
   write of it is refused before it reaches the wire, and the forced checks and the manufactured export,
   which command through it, are skipped. Taken (8000 W here), the run goes on as before. Through a
   dongle such a control is left out without asking, since its write cannot be checked.
+
+## Run 3 (10:07-10:08)
+
+- Exit 0, every planned check ran and every readback matched. With the battery at 13.3 % (floor 10 %),
+  `battery_min_soc` and `battery_reserved_soc_for_backup` read back their probes: 26/55 passed, 31/55
+  established, 0 failed. 13052 untouched, still 8000 W.
+
+## Run 4 (10:37-10:43): the discharge window marked "not supported", wrongly
+
+- 27/55 passed (`phase voltage times current` added), 3 inconclusive (forced discharge and export power
+  limit, each "the house was 179 W / 1001 W different afterwards"; the charging start threshold), 6 not
+  supported: **`discharge windows away from now`, "nothing measurable happened"**, against this same
+  inverter's cable diagnosis, where moving the windows stopped a 3799 W discharge to 0 W.
+- The run's own numbers (diagnostics download): battery discharge power before **-549.5 W**, during
+  -617.5 W, after -544 W. Negative is charging: there was no discharge to stop. The precheck had sampled
+  1339 W of discharge, the tail of the run's own manufactured export (the pack accepted 3220 W of a 3224 W
+  ask) moments before.
+- **A procedure bug, not a finding**: the stop verdict compared `abs(before)` with its floor, so 550 W of
+  charge counted as 550 W of discharge to stop, and "carried on at -618 W" came out as the windows being
+  ignored. Fixed (signed comparison, both the bracketed-stop branch and the floor); a replay of these
+  numbers now reads "nothing to stop".
+- The wrong `NO_EFFECT` is in gerd's ledger now and counts as established, so auto repeat will not ask
+  again on this firmware until the runs are cleared (*Diagnosis: tests: clear history*) or the fix is
+  installed and the history cleared. Readings history is unaffected.
+- Run 4's other numbers: forced discharge commanded 1250 W read before -448, during 816, after -627 W
+  (drift); the export limit at 1250 W held export at 1248 W during, from 3006 W before and 2005 W after
+  (drift 1001 W, so "could not tell", though the during figure sits on the cap). 13087 feed-in limitation
+  off (0x55), so the export limit's write scale was again not asked. Inverter clock 10:40:36 at 09:40 UTC:
+  CET, as known.

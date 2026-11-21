@@ -297,6 +297,38 @@ async def test_a_battery_not_discharging_is_not_written(house: MockModbusUnit) -
     assert any("discharging 0 W" in note for note in run.unestablished)
 
 
+async def test_a_battery_charging_in_the_bracket_is_not_a_window_ignored(
+    house: MockModbusUnit,
+) -> None:
+    """At gerd's (P022) on 2026-11-21 the precheck saw 1339 W of discharge.
+
+    It was the tail of the run's own manufactured export; by the bracket the
+    battery was charging, -549.5 / -617.5 / -544 W as discharge power. The
+    absolute value took that for a discharge, and the check reported the
+    windows as ignored ("not supported") on a firmware where they had stopped
+    a 3799 W discharge to 0 W. Charging is nothing to stop.
+    """
+    run = await _run(house, discharge_window=True)
+    values = iter([1339.0, *[-549.5] * 10, *[-617.5] * 10, *[-544.0] * 10])
+
+    async def sample() -> Sample:
+        return Sample(
+            at=run.clock.monotonic(),
+            pv=1200.0,
+            battery=next(values, -544.0),
+            export=0.0,
+            load=700.0,
+            soc=17.7,
+        )
+
+    run._sample = sample  # type: ignore[method-assign]
+
+    [result] = await run._discharge_window_effect()
+
+    assert result.verdict != NO_EFFECT
+    assert any("nothing to stop" in note for note in run.unestablished)
+
+
 # -- the start bracket -----------------------------------------------------------
 
 
