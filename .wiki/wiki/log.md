@@ -2006,3 +2006,14 @@ YAML package polling through it, found the inverter's own LAN port and the proxy
 since the a40 that missed it. `why-did-the-search-miss-mkaisers-inverter.md` answered (does not
 reproduce), `installation-mkaiser.md` updated. The dialog's summary came in the system language beside
 an English step.
+
+## [2026-11-21] ingested | gerd-auto-repeat-2026-11-21
+
+A day of the diagnosis in extended auto repeat on gerd's own Home Assistant, ten runs on P022
+([the source](sources/gerd-auto-repeat-2026-11-21-summary.md)): 37/55 passed, none failed. 13052's hard
+limit is the inverter's rated power (8000 W), so the house's 10000 W could not be restored (exit 5); set to
+8000 W by hand. P022 enforces the SoC limits' upper bounds and not the five power limits', as P023. Forced
+discharge, the export limit, the charging start threshold and the charge ceiling confirmed; run 4's
+discharge-window verdict was a procedure error (charging read as a discharge). New page
+`register-13052.md`; `installation-gerd.md`, `firmware-sapphire-h-b001-v000-p022.md` and
+`capability-test.md` updated.

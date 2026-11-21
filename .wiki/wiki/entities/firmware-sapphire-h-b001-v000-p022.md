@@ -17,6 +17,12 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)).
   1.00 kW, import 1002 W over the cable and 956-1009 W written through the dongle, at gerd
   ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)). It holds a scheduled charge too,
   through the dongle ([the schedule run](../sources/gerd-import-limit-schedule-2026-11-08-summary.md)).
+- [Register 13052](register-13052.md), the forced power, refuses a value above the inverter's rated power
+  (8000 W on an SH8.0RT) with 0x04, and stores one above the battery-derived maximum. `battery_max_soc`
+  and `battery_min_soc` refuse a step past their maximum; the five power limits store it, as on P023
+  ([the day](../sources/gerd-auto-repeat-2026-11-21-summary.md)).
+- Forced discharge (1250 W, 1251 W measured), the export limit through the feed-in ratio (1250 W cap,
+  1243 W), the charging start threshold and the charge ceiling did as told, from Home Assistant at gerd.
 
 ## Diagnoses
 

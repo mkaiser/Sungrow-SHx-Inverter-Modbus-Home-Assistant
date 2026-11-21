@@ -227,8 +227,13 @@ The write paths were first run on hardware at [peter-sm](../entities/installatio
 over the cable, and at [ra1k-0](../entities/installation-ra1k-0.md), through a WiNet-S. Every
 write path took its own word at both. **The upper bounds are the firmware's only in part**:
 on P023, 13058 and 13059 refuse a step past their maximum, while 33047, 33048, 13052, 33149
-and 33150 store it ([peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)); on P071, 33048 refuses it
+and 33150 store it ([peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)), and P022 splits the
+same way ([gerd](../sources/gerd-auto-repeat-2026-11-21-summary.md)); on P071, 33048 refuses it
 ([ra1k-0](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+A value the device stores is not one it will always take back: 13052 refuses anything above the
+inverter's rated power, and at gerd it held 10000 W on an 8 kW model, which no restore could return.
+So a control whose own value lies outside its bounds is written back to itself before the run touches
+it, and left out if refused ([the day](../sources/gerd-auto-repeat-2026-11-21-summary.md)).
 
 **The readings checks have run at [mkaiser](../entities/installation-mkaiser.md)**, over a night
 and a day of observing. The six ratio checks and the lifetime-counter check hold there

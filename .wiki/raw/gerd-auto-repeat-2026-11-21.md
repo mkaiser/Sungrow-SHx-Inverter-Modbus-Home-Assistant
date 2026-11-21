@@ -104,3 +104,42 @@ Written through the proxy on the cable path, one session, EMS mode 0 (self-consu
   (drift 1001 W, so "could not tell", though the during figure sits on the cap). 13087 feed-in limitation
   off (0x55), so the export limit's write scale was again not asked. Inverter clock 10:40:36 at 09:40 UTC:
   CET, as known.
+
+## Runs 5-7 (11:07, 11:37-11:51, 12:15)
+
+- Run 5: exit 0, nothing new (battery 14 %, floor 10 %). Auto repeat then waited on conditions, not slots.
+- **Run 6 (battery 22 %): forced discharge and the export power limit confirmed.** Forced discharge
+  commanded 1250 W: discharge -788 W before, **1251 W** during, -752.5 W after (ratio 1.0008). Export limit
+  at 1250 W, export made by a manufactured 3280 W discharge (asked 3281 W): export 3973.5 W before,
+  **1243 W** during, 3437.5 W after (ratio 0.994). The cap went in as the feed-in ratio, 100 % to 15.6 %
+  (1250 of 8000 W rated); 13074's write scale was still not asked, since 13087 holds 0x55 (off).
+- Run 7: exit 0, nothing new. `daily_pv_generation against power` passed on the readings side.
+- At 12:32: 30/55 passed, 36/55 established, 0 failed; battery 27.6 %.
+
+## Run 8 (12:37-12:39)
+
+- **The charging start threshold (33149) confirmed**: raised to 1000 W over a 660 W charge, charge power
+  went to 0 W and came back to 683 W. Exit 0. `battery level follows its power` passed on the readings
+  side. 32/55 passed, 38/55 established, 0 inconclusive, battery 36 %.
+
+## Readings at 14:02, run 9 (14:37-14:39)
+
+- 14:02: `daily_battery_charge against power` and `total_pv_generation against daily_pv_generation`
+  passed on the readings side (34/55).
+- **Run 9, battery about 56 %: the charge ceiling confirmed.** `battery_max_soc` lowered to 53.2 %, under
+  the battery: a 2069.5 W charge went to 0 W and came back to 1980 W. Exit 0. 35/55 passed, 41/55
+  established, 0 failed.
+- **Run 10 (15:07): the upper bound of `battery_min_soc` (13059) is enforced**: one step past its maximum
+  was refused, with the battery at 57 % well above the probed floor. With `battery_max_soc`'s, refused in
+  run 1, the two SoC limits enforce their bounds on P022 while the five power limits do not, the same
+  split as peter-sm's P023. Exit 0; 36/55 passed, 42/55 established, 0 failed.
+
+## Stopped (15:25)
+
+- Auto repeat stopped on the maintainer's word with *Diagnosis: stop*, between runs (none in flight;
+  the controls were not held). Left: 13 checks, all readings-side or the discharging start threshold
+  (needs the battery discharging 200-800 W through itself). The wallbox entry's auto repeat still waits
+  for a car.
+- Readings after the stop, to 17:45: `daily_battery_discharge against power` passed as the battery
+  discharged into the evening (37/55 passed, 43/55 established). The watch ended at 17:45 with the
+  tunnel taken down; 13052 left at 8000 W.

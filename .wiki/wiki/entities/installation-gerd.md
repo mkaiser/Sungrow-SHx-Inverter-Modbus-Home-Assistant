@@ -39,6 +39,12 @@ the wallbox up to its own entry and takes it back when that entry is deleted
 ([the pairing](../sources/gerd-wallbox-2026-11-20-pairing-summary.md)). The managed test from Home
 Assistant is left to run with leave and a car charging.
 
+**2026-11-21, the diagnosis in auto repeat on his own Home Assistant**: ten runs, 37/55 checks passed and
+none failed. 13052 held 10000 W, above the 8000 W this model accepts, so the first run could not put it
+back (exit 5); it was set to 8000 W by hand. Forced discharge, the export limit, the charging start
+threshold and the charge ceiling were confirmed
+([the day](../sources/gerd-auto-repeat-2026-11-21-summary.md)).
+
 ## Diagnoses
 
 - [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30
