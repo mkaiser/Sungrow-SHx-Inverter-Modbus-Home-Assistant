@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T073.** Numbers are minted in order, never reused and
+**Next free item number: T075.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -63,8 +63,9 @@ app while charging) needs a car plugged in (tried 2026-11-20, unplugged);
 7 needs the owner at the car, 5 and 6 a bright hour. Tests 1, 3 and 9 were done 2026-11-20, and the
 user-defined mode's daily window (33546-33549) was mapped; section 10 now asks
 what Home Assistant does with it. The tunnel now runs from the
-devcontainer (`doc/development.md`, *Pitfalls*). gerd's integration was
-disabled for that session: re-enable it only when told. T003 and T004
+devcontainer (`doc/development.md`, *Pitfalls*). gerd's own Home Assistant
+has run the integration again since 2026-11-21 (its entries behind a modbus proxy), so his and a dev
+instance must never poll one device together. T003 and T004
 themselves still wait on a standalone wallbox (T040).
 
 ## Logger
@@ -79,6 +80,13 @@ Nothing can start now: an owner running the preview, and a second unit's
 diagnosis (T005, T006, T042).
 
 ## Integration and tooling
+
+**T073. Adding an inverter by address aborts with "already in progress" while a discovery card for the same
+inverter is pending**: the manual step ends the flow instead of continuing the card's or taking its place (a
+WiNet-S announcement, 2026-11-21 --
+[the source](.wiki/wiki/sources/gerd-ha-migration-2026-11-21-summary.md); `async_step_manual` in
+`custom_components/sungrow_modbus/config_flow.py`).
+*Needs*: nothing; a session can start it.
 
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
@@ -166,6 +174,13 @@ free. A new name goes under **To discuss** (`NAME_DISCUSSION` in `naming.py`).
 **T023. Should a battery or wallbox be looked for again while an entry runs?**
 Both are found at setup only (`dynamic-devices` on the quality scale), and
 looking again costs sessions on an inverter that grants few.
+
+**T074. Should the integration repair the Energy dashboard's sums after a long gap itself?** After more than ten
+days between the YAML package's last statistics and the first start, each lifetime counter's sum restarts at 0
+and the dashboard shows one hugely negative hour; the migration guide gives the manual repair
+(`recorder/adjust_sum_statistics`, [the guide](doc/integration_migration.md)), and a Repairs issue with a fix
+could do it in one click, at the price of writing to the user's statistics
+([the source](.wiki/wiki/sources/gerd-ha-migration-2026-11-21-summary.md)).
 
 **T024. Which entities should start disabled?** The quality scale's
 `entity-disabled-by-default` asks for the rarely used ones to start off. Only

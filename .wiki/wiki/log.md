@@ -1979,3 +1979,11 @@ only: the pairing of a TLS wallbox entry with the inverter entry on the cable wo
 inverter entry through the WiNet-S gives the wallbox up to its own entry and takes it back when that is
 deleted (T059's step 2). `installation-gerd.md` and `device-wallbox.md` updated.
 
+## [2026-11-21] ingested | gerd-ha-migration-2026-11-21
+
+The integration's first setup on a production Home Assistant that had run the YAML package, behind a
+modbus proxy on both paths ([the source](sources/gerd-ha-migration-2026-11-21-summary.md)): 150 legacy ids
+adopted from placeholders; a gap of more than ten days in the old statistics restarted every lifetime sum at
+0, so the Energy dashboard showed a huge negative hour, repaired with `recorder/adjust_sum_statistics`. The
+proxy add-on ignores its top-level upstream once `devices:` is set; a pending discovery card aborts a manual
+add as `already_in_progress`. `legacy-id-adoption.md` updated.

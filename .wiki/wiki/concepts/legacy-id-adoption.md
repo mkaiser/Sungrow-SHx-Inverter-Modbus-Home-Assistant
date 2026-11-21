@@ -48,4 +48,14 @@ the [legacy entity map](../sources/legacy-entity-map-summary.md).
   nothing looks broken. `tests/test_sensor_descriptions.py` holds this field
   by field.
 
+- **Adoption on a production instance** held at [gerd](../entities/installation-gerd.md)'s: 150 ids
+  adopted from `restored` placeholders, and an id the owner's own template sensors held stayed `_2`
+  ([the source](../sources/gerd-ha-migration-2026-11-21-summary.md)).
+- **A gap of more than ten days in the old series restarts each lifetime counter's sum at 0.** Home
+  Assistant continues a sum from the short-term table, which keeps ten days; with no row there it
+  starts again, and the Energy dashboard shows the first hour as minus everything the series had built
+  up. The ids and the history are right, only the sum is not continuous, and `validate_statistics` says
+  nothing. `recorder/adjust_sum_statistics` repairs it
+  (`doc/integration_migration.md`, the section on the Energy dashboard).
+
 A house with more than one inverter: see [the legacy slot](legacy-slot.md).

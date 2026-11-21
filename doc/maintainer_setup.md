@@ -190,6 +190,11 @@ runs it now. See [installing_a_preview.md](installing_a_preview.md);
 `make marketplace` installs from it the way a user does. Adding it from a
 link requires a GitHub account.
 
+A Home Assistant that already has the channel can keep showing the previous
+commit for over an hour after the mirror synced, and the entity's
+`homeassistant.update_entity` does not change that. Reloading the Marketplace
+config entry makes it fetch again (measured on 2026.11.1).
+
 From Home Assistant 2026.11, the integration's minimum, HACS is built in as
 the **Marketplace** (Settings → Marketplace) and its installer stops there. It keeps the
 `hacs.json` contract: a repository without one stays installed but gets no

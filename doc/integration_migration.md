@@ -149,6 +149,35 @@ Things that do **not** follow the entity IDs automatically:
   name you set yourself is kept. There is no language option: the names follow
   Settings → System → General.
 
+## The Energy dashboard, if the gap was long
+
+*For anyone whose YAML package stopped more than about ten days before the
+integration's first start.* Your ids and your history are right, and the
+Energy dashboard can still show one hour with a huge **negative** amount: on
+the first house to meet it, solar read minus everything its series had built
+up. Home Assistant continues a lifetime counter's running sum from its
+short-term statistics, which it keeps for ten days; after a longer gap there
+is nothing to continue from, so the sum starts again at 0. Settings → System →
+Repairs says nothing about it.
+
+It is repaired once per counter the Energy dashboard uses (solar, grid import
+and export, battery in and out) with Home Assistant's own
+`recorder/adjust_sum_statistics` command, which shifts the sum from a given
+hour on:
+
+1. Read the series with `recorder/statistics_during_period` (period `hour`,
+   types `sum` and `state`): the last old row's `sum`, and the first new
+   row's `sum` and start time.
+2. Send `recorder/adjust_sum_statistics` with `statistic_id`, `start_time` (the
+   first new hour), `adjustment` (the old final sum minus the new first sum)
+   and `adjustment_unit_of_measurement` (`kWh`).
+
+The series is then continuous. The energy produced during the gap is in no
+hour, because nobody measured it. Take a backup first: it holds the
+recorder only if that is the default SQLite database. Developer tools →
+Statistics also lists each statistic; whether its menu offers the same
+adjustment was not tried here.
+
 ## A reading the integration now refuses, that your history may still hold
 
 The integration refuses a lifetime energy counter above a million kWh: no
