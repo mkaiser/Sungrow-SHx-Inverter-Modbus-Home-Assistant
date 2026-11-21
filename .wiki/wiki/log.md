@@ -1987,3 +1987,13 @@ adopted from placeholders; a gap of more than ten days in the old statistics res
 0, so the Energy dashboard showed a huge negative hour, repaired with `recorder/adjust_sum_statistics`. The
 proxy add-on ignores its top-level upstream once `devices:` is set; a pending discovery card aborts a manual
 add as `already_in_progress`. `legacy-id-adoption.md` updated.
+
+## [2026-11-21] ingested | mkaiser-production-install-2026-11-21
+
+The integration (0.1.0a46) on the maintainer's production Home Assistant beside the still-running YAML
+package, both through one modbus-proxy add-on, neither losing reads
+([the source](sources/mkaiser-production-install-2026-11-21-summary.md)). Extended test: 21/54 passed,
+every readback matched. The site import limit held with PV below the load (engine) and, by hand under
+passing clouds, with PV above it; the engine's fixed 1250 W charge cannot take the PV-above-load case.
+Through the proxy the entry read 6100 while its *Connection* stayed unknown. `register-32998.md`,
+`installation-mkaiser.md` and `does-a-modbus-proxy-carry-6100.md` updated.

@@ -29,7 +29,15 @@ in kW. The diagnosis's register dump reads it too.
   forced charge drew only on PV (import ~15 W). It settles within ~4-6 s and holds 0-3 % above the
   cap. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
   ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The capability test's
-  `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
+  `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)),
+  and again from the integration on 0.1.0a46 (1830 W cap, import 2439 W -> 1876.5 W -> 2323 W, PV below
+  the load). **With PV above the load** it held as well, by hand under passing clouds: a 2190 W cap
+  under a 4500 W forced charge took median import from 4386 W to 1933 W while PV (2.6-3.6 kW) exceeded
+  the ~2.1 kW load, the charge cut to 2.4-3.0 kW; single samples overshot to ~4 kW for ~10 s where PV
+  dipped, and no clean after-bracket was possible
+  ([the production install](../sources/mkaiser-production-install-2026-11-21-summary.md)). The
+  engine's own check cannot take that case: its fixed 1250 W forced charge is absorbed by a PV surplus
+  and draws too little from the grid to cap.
   **At peter-sm the same three words answered differently in one respect**: 0 refused with 0x04 and
   5000 was taken, but 5001 **lost the connection** instead of drawing a refusal -- that house drops
   the link on several writes it will not take, so it says nothing about the register's range

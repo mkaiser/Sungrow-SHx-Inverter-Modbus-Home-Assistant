@@ -4,7 +4,7 @@ title: "Does a Modbus proxy carry register 6100?"
 tags: [proxy, transport, register-6100, mkaiser, open]
 created: '2026-11-16'
 query: "Through a modbus-proxy, does input 6100 answer for every session, or only for a short one of the reader's own?"
-results_count: 4
+results_count: 5
 ---
 
 # Does a Modbus proxy carry register 6100?
@@ -32,6 +32,15 @@ times -- at setup, after a reload and after a cold boot -- and its
 *Connection* sensor stayed unknown. Moved to the inverter's own LAN port the
 same entry read **direct** within a minute, and moved back it was unknown
 again ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)).
+
+**On 2026-11-21 the same proxy carried it to an entry.** An entry on the production
+Home Assistant itself, pointed at the add-on's internal hostname with the YAML package
+still polling through it, read 6100 as answered in its diagnosis (`winet_restricted_block_6100`,
+and the capability probe present) -- yet its *Connection* sensor stayed unknown
+([the production install](../sources/mkaiser-production-install-2026-11-21-summary.md)).
+So the proxy does carry the block to an entry's connection, with another poller busy;
+what does not get an answer is the entry's route probe. That weakens *the turn* below and
+points at when and how the route probe reads.
 
 So the address answers 6100 for one reader and not for another in the same
 hour, while another house's proxy answers it for every reader. Two

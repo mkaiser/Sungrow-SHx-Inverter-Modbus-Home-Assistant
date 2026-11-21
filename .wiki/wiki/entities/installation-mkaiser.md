@@ -62,7 +62,11 @@ house answers as one inverter at two addresses, one serial and one route note at
 search from the dev container found both and could name neither as the proxy
 ([the proxy reading](../sources/mkaiser-modbus-proxy-2026-11-16-summary.md)), and an entry
 pointed at the proxy cannot measure its route
-([open](../queries/does-a-modbus-proxy-carry-6100.md)). Its own LAN port **takes a second TCP
+([open](../queries/does-a-modbus-proxy-carry-6100.md)). Since 2026-11-21 the production instance
+runs the integration (0.1.0a46, new ids) **beside the YAML package, both through that proxy**, with
+neither losing reads; its extended test passed 21 checks with every readback matched, and the import
+limit held with PV above the load ([the production install](../sources/mkaiser-production-install-2026-11-21-summary.md)).
+Its own LAN port **takes a second TCP
 session from the address already polling it**: with the dev container's Home Assistant polling it
 without a break, 12 of 12 connects were accepted and two full sweeps from that same container
 found it ([the run](../sources/mkaiser-second-session-2026-11-17-summary.md)), so contention does

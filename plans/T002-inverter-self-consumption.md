@@ -11,6 +11,12 @@ the tens of watts expected: in Standby the inverter reports 0 for PV,
 battery, export and AC power, so every term but the load's noise is zero
 and the estimate collapses. So the sensor says nothing about the standby
 draw, and whether it should read `unknown` there rather than a number near
-zero is the question to settle. Left besides: the daytime look, whether
-the mean is steady enough and plausible while the inverter works; the
-13022 path on a house that refuses 5214; its energy counterpart.
+zero is the question to settle. **By day it is plausible and noisy**
+(the same house, 2026-11-21, 5.5 h of the one-minute mean while Running:
+median 248 W, hourly medians 143-365 W rising with the power converted,
+10th-90th percentile 104-416 W, single values from -178 to 601 W;
+wiki: mkaiser-production-install-2026-11-21). So an hour's mean is worth
+showing and a single minute is not: a longer window, or the energy
+counterpart, is the form that reads well. Left besides: the Standby
+decision above; the 13022 path on a house that refuses 5214; the energy
+counterpart.
