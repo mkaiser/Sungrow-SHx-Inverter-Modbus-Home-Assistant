@@ -400,6 +400,77 @@ class EventCheck(Check):
         self.notes = [str(n) for n in state.get("notes") or []]
 
 
+#: How far a lifetime counter must rise, in kWh, with its daily counter not
+#: moving at all, before the daily one is called stuck. Ten of the daily
+#: counter's 0.1 kWh steps: a total on a coarser step still rises 1 kWh only
+#: when the daily one should have moved ten times.
+STUCK_KWH = 1.0
+
+
+@dataclass
+class DailyKeepsUp(Check):
+    """A daily counter moves when its lifetime counter does.
+
+    The pair checks (`total_X against daily_X`) only start a trail when the
+    daily counter steps, so a daily counter that stands still is invisible to
+    them -- and standing still is the fault #797 reports: daily import at 0
+    through a night on the grid while the total climbed. Each pair keeps a
+    base; the daily counter moving is a pass, the lifetime one rising
+    `STUCK_KWH` past it with the daily one unmoved is a failure, and a gap,
+    a missing value or the daily counter's midnight fall starts it again.
+    """
+
+    pairs: tuple[tuple[str, str], ...] = ()
+    passes: int = 0
+    failures: list[str] = field(default_factory=list)
+    _bases: dict[str, tuple[float, float]] = field(default_factory=dict)
+    _last_at: float | None = None
+
+    def observe(self, values: Values, at: datetime) -> None:
+        """Advance every pair by one poll."""
+        now = at.timestamp()
+        gap = self._last_at is None or now - self._last_at > MAX_GAP_S
+        self._last_at = now
+        for daily, total in self.pairs:
+            day, life = _get(values, daily), _get(values, total)
+            base = None if gap else self._bases.get(daily)
+            if day is None or life is None:
+                self._bases.pop(daily, None)
+                continue
+            if base is None or day < base[0] or life < base[1]:
+                self._bases[daily] = (day, life)
+                continue
+            if day > base[0]:
+                self.passes += 1
+                self._bases[daily] = (day, life)
+            elif life - base[1] >= STUCK_KWH:
+                sentence = (
+                    f"{daily} stood at {day:g} kWh while {total} rose "
+                    f"{life - base[1]:.1f} kWh, to {at:%H:%M}"
+                )
+                if sentence not in self.failures:
+                    self.failures.append(sentence)
+                    del self.failures[:-MAX_FAILURES]
+                self._bases[daily] = (day, life)
+
+    def verdict(self) -> tuple[str | None, str]:
+        """Name a stuck counter; match once enough moves came without one."""
+        if self.failures:
+            return OFF_BY, "; ".join(self.failures)
+        if self.passes < self.minimum:
+            return None, f"{self.passes} of {self.minimum} moves"
+        return MATCH, f"{self.passes} moves, none stuck"
+
+    def state(self) -> dict[str, Any]:
+        """Return the counts and the failures; the open bases are not kept."""
+        return {"passes": self.passes, "failures": list(self.failures)}
+
+    def load(self, state: Mapping[str, Any]) -> None:
+        """Take kept counts back."""
+        self.passes = int(state.get("passes") or 0)
+        self.failures = [str(f) for f in state.get("failures") or []]
+
+
 @dataclass
 class RunningStates(Check):
     """Every running-state code seen, and how often; an unknown one is a finding."""
@@ -1015,6 +1086,17 @@ def checks() -> list[Check]:
             # decides whether this check applies to a device is unchanged.
             fields=(*DAILY, *CLOCK_FIELDS),
             judge=_daily_resets,
+        ),
+        DailyKeepsUp(
+            name="daily counters keep up with the totals",
+            needs="10 kWh through the counters",
+            minimum=100,
+            # Import first: it is the pair #797 saw stuck, and every hybrid has
+            # it, so what decides whether this check applies is the import pair.
+            fields=("daily_imported_energy", "total_imported_energy"),
+            pairs=tuple(
+                sorted(COUNTER_PAIRS, key=lambda p: p[0] != "daily_imported_energy")
+            ),
         ),
         SocDirection(
             name="battery level follows its power",

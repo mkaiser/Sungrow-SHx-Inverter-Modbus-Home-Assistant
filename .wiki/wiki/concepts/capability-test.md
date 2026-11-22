@@ -341,6 +341,10 @@ capability, what each mode can establish and what is still untested.
 The **forced startup** check is a mode of its own (`--forced-startup`, or the
 action's `forced_startup: true`), because it needs the inverter in low-SoC
 standby, the state every other check refuses: see
-[register 13017](../entities/register-13017.md).
+[register 13017](../entities/register-13017.md). **Auto repeat runs it by
+itself**: every other run waits for the inverter to run, but in low-SoC standby
+a slot runs this mode alone, until a kept run has established it. No option
+guards it -- a few minutes awake at night with the register put back to off --
+and a house whose battery never empties keeps auto repeat waiting for it.
 Every diagnosis with such a block is tagged `capability-test` in the
 [index](../index.md).

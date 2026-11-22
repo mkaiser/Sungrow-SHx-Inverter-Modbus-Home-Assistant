@@ -164,3 +164,31 @@ async def test_31213_is_an_on_off_sensor_and_its_number_is_legacy_only(
     assert flag is not None
     assert hass.states.get(flag).state == "on"
     assert _entity_id(hass, "sensor", "apl_shutdown_at_zero_raw") is None
+
+
+@pytest.mark.parametrize(
+    ("word", "soc", "minimum", "pv", "expected"),
+    [
+        (0x0008, 0.3, 10.0, 0.0, True),
+        (0x1400, 12.0, 10.0, None, True),  # the dongle's Standby, within 5 %
+        (0x0040, 0.3, 10.0, 0.0, False),  # running
+        (0x0008, 40.0, 10.0, 0.0, False),  # a standby that is not low-SoC
+        (0x0008, 0.3, 10.0, 600.0, False),  # the sun would wake it
+        (0x0008, None, 10.0, 0.0, False),
+    ],
+)
+def test_low_soc_standby_is_what_the_forced_startup_needs(
+    word: int, soc: float | None, minimum: float, pv: float | None, expected: bool
+) -> None:
+    from sungrow_modbus.capability_test import low_soc_standby
+
+    assert low_soc_standby(word, soc, minimum, pv) is expected
+
+
+def test_the_forced_startup_is_awaited_until_a_kept_run_establishes_it() -> None:
+    from sungrow_modbus.capability_test import ledger
+
+    assert ledger.forced_startup_awaited(None)
+    assert ledger.forced_startup_awaited({"summary": {}})
+    done = {"summary": {ledger.FORCED_STARTUP_CHECK: {"established": True}}}
+    assert not ledger.forced_startup_awaited(done)

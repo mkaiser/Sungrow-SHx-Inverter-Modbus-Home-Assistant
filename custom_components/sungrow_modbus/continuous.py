@@ -21,8 +21,10 @@ readings rather than a moment; auto repeat stays on while any of them is
 still unsettled, and writes nothing for them.
 
 Bounded so a forgotten switch cannot become a nuisance: one run per slot, never
-one while the inverter is not running (low-SoC Standby at night would refuse
-it anyway, after part A), at least `QUIET` after the last run ended, and it
+one while the inverter is not running -- except the forced startup check,
+which needs exactly that: in low-SoC Standby, while no kept run has
+established it, a slot runs that mode
+alone (`_forced_startup_due`) -- at least `QUIET` after the last run ended, and it
 switches itself off once nothing waiting can answer is left. And it waits
 after the owner changed a control (`write_owner.OWNER_QUIET`), or a managed
 wallbox's charging (`OWNER_QUIET_EV`): a run then would read the house still
@@ -38,7 +40,8 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
-from sungrow_modbus.capability_test import is_running, ledger
+from sungrow_modbus.capability_test import is_running, ledger, low_soc_standby
+from sungrow_modbus.hybrid_inverter.capabilities import Capability
 
 from .write_owner import EV_CHARGER, OWNER_QUIET, OWNER_QUIET_EV, owner_quiet_until
 
@@ -166,6 +169,41 @@ class ContinuousCapabilityTest:
             return None
         return None if word is None else is_running(int(word))
 
+    def _forced_startup_wanted(self, folded: dict[str, Any] | None) -> bool:
+        """Whether auto repeat still has the forced startup check to run here.
+
+        Its own mode, so `ledger.awaited` never lists it: the inverter must
+        answer register 13017 and no kept run may have established it. No
+        option of its own: a few minutes awake at night, from the grid, with the
+        register put back to off, harms nothing the auto repeat switch has not
+        already allowed.
+        """
+        runtime = self.entry.runtime_data
+        if runtime.is_string_inverter:
+            return False
+        if Capability.FORCED_STARTUP not in runtime.capabilities:
+            return False
+        return ledger.forced_startup_awaited(folded)
+
+    def _forced_startup_due(self) -> bool:
+        """Whether the last poll saw the low-SoC standby the check needs."""
+        device = self.entry.runtime_data.inverter_coordinator.device
+
+        def value(name: str) -> float | None:
+            try:
+                found = device.field(name)
+            except AttributeError:
+                return None
+            return None if found is None else float(found)
+
+        word = value("running_state_raw")
+        return low_soc_standby(
+            None if word is None else int(word),
+            value("battery_level"),
+            value("battery_min_soc"),
+            value("total_dc_power"),
+        )
+
     def _slot(self, now: datetime) -> int:
         """Return the number of the slot `now` falls in, 0 from the press."""
         assert self.started_at is not None
@@ -196,8 +234,9 @@ class ContinuousCapabilityTest:
         # A wallbox at its own address has no inverter checks to wait for.
         inverter = self.runner.inverter_tests
         waiting = ledger.awaited(folded) if inverter else []
+        forced = inverter and self._forced_startup_wanted(folded)
         wallbox_waiting = self.runner.wallbox_awaited()
-        if not waiting and not wallbox_waiting:
+        if not waiting and not forced and not wallbox_waiting:
             observing = [
                 *(self.runner.plausibility.unsettled() if inverter else []),
                 *(
@@ -215,10 +254,26 @@ class ContinuousCapabilityTest:
             self.async_turn_off("nothing left that a run at another moment can answer")
             return
         started = False
-        if waiting:
-            started = self._inverter_tick(now, folded, waiting)
+        if waiting or forced:
+            started = self._inverter_tick(now, folded, waiting, forced=forced)
         if not started and wallbox_waiting:
-            self._wallbox_tick(now, wallbox_waiting, said=bool(waiting))
+            self._wallbox_tick(now, wallbox_waiting, said=bool(waiting or forced))
+
+    def _start_forced_startup(self, now: datetime) -> bool:
+        """Run the forced startup mode in this slot; say whether it started."""
+        if not self.runner.async_start(capability_test=True, forced_startup=True):
+            return False
+        self.last_start = now
+        self._last_slot = self._slot(now)
+        self.runs_started += 1
+        _LOGGER.info(
+            "%s: continuous capability testing started run %d, for %s",
+            self.entry.title,
+            self.runs_started,
+            ledger.FORCED_STARTUP_CHECK,
+        )
+        self._say(f"running for {ledger.FORCED_STARTUP_CHECK}")
+        return True
 
     def _quiet(self, now: datetime) -> bool:
         """Whether the last run ended too recently for another to start."""
@@ -230,8 +285,19 @@ class ContinuousCapabilityTest:
         now: datetime,
         folded: dict[str, Any] | None,
         waiting: list[tuple[str, str]],
+        *,
+        forced: bool = False,
     ) -> bool:
-        """Start an inverter run when one is allowed and due; say whether it did."""
+        """Start an inverter run when one is allowed and due; say whether it did.
+
+        `forced` says the forced startup check is still wanted: in low-SoC
+        standby a slot runs that mode instead of waiting for the inverter.
+        """
+        if forced:
+            waiting = [
+                *waiting,
+                (ledger.FORCED_STARTUP_CHECK, ledger.FORCED_STARTUP_NEEDS),
+            ]
         if self._last_slot is not None and self._slot(now) <= self._last_slot:
             ready_at = self.next_start(now)
             if ready_at is not None:
@@ -240,14 +306,21 @@ class ContinuousCapabilityTest:
         if self._quiet(now):
             self._say("a moment of quiet after the last run")
             return False
-        if self._inverter_running() is False:
-            self._say("waiting for the inverter to run")
-            return False
         held = owner_quiet_until(self.entry.runtime_data, OWNER_QUIET, now=now)
         if held is not None:
             self._say(
                 "the owner changed a control; the next run not before "
                 f"{dt_util.as_local(held):%H:%M}"
+            )
+            return False
+        if self._inverter_running() is False:
+            if forced and self._forced_startup_due():
+                return self._start_forced_startup(now)
+            self._say(
+                "waiting for the inverter to run"
+                if len(waiting) > int(forced)
+                else "waiting for "
+                + "; ".join(f"{name}: {need}" for name, need in waiting)
             )
             return False
         due = ledger.due(folded, self.live())

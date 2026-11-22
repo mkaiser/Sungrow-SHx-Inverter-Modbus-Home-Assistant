@@ -82,7 +82,9 @@ writes `0xAA`, waits up to 10 minutes for Running, writes `0x55`, waits up to 2 
 Standby, and restores the register, the factory 0 as `0x55`
 ([the restore](../concepts/capability-test-restore.md)). Its row is the check *forced startup
 under low SoC*, judged by the running state alone. In Home Assistant it is the
-`run_capability_test` action with `forced_startup: true`.
+`run_capability_test` action with `forced_startup: true`, and **auto repeat
+runs it by itself** in low-SoC standby until a kept run has established it
+(`ContinuousCapabilityTest._forced_startup_due`, `low_soc_standby`).
 
 **It has run on hardware**, at [mkaiser](installation-mkaiser.md) on P020 over the cable, from
 Home Assistant, with the battery at 0.0 % against its 10 % minimum and no PV: left standby after

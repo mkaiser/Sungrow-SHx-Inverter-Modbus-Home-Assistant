@@ -2084,3 +2084,11 @@ re-sending into Standby.
 gerd's fourth cable reading, downloaded from his own Home Assistant
 ([the source](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-4-summary.md)): the kept capability run of 2026-11-21 evening and the
 plausibility checks over 1706 polls; every established check matches, export-side checks still wait.
+
+## [2026-11-22] updated | auto repeat runs the forced startup; a stuck daily counter is named
+
+`capability-test.md` and `register-13017.md`: auto repeat runs the forced startup mode by itself
+in low-SoC standby until a kept run has established it, with no option of its own. A new readings
+check, *daily counters keep up with the totals*, names a daily counter that stands still while its
+lifetime counter rises 1 kWh -- what #797 reports, and what the pair checks cannot see, since their
+trails start only when the daily counter steps (`doc/capability_tests.md`).

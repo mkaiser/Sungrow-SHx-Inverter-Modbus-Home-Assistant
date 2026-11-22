@@ -193,6 +193,33 @@ def test_a_total_a_decade_off_is_found_against_its_daily_counter() -> None:
     assert row["verdict"] == SCALED
 
 
+def test_a_daily_import_stuck_at_zero_overnight_is_named() -> None:
+    """#797: daily import at 0 through a night on the grid, the total climbing."""
+
+    def stick(at: datetime, values: Values) -> None:
+        if at.hour < 6:
+            values["daily_imported_energy"] = 0.0
+
+    row = _run(stick)["daily counters keep up with the totals"]
+    assert row["verdict"] == OFF_BY
+    assert "daily_imported_energy stood at 0 kWh" in row["detail"]
+    assert "total_imported_energy rose" in row["detail"]
+
+
+def test_the_pair_checks_alone_do_not_see_a_stuck_daily_counter() -> None:
+    """Why the check above exists: a trail starts only when the daily one steps."""
+
+    def stick(at: datetime, values: Values) -> None:
+        if at.hour < 6:
+            values["daily_imported_energy"] = 0.0
+
+    summary = _run(stick)
+    assert (
+        summary["total_imported_energy against daily_imported_energy"]["verdict"]
+        != OFF_BY
+    )
+
+
 def test_a_meter_whose_phases_disagree_in_sign_is_a_finding() -> None:
     """Phases with the opposite sign to the total."""
 

@@ -968,6 +968,10 @@ async def test_auto_repeat_stops_when_nothing_is_left_to_wait_for(
             "custom_components.sungrow_modbus.continuous.ledger.awaited",
             return_value=[],
         ),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.forced_startup_awaited",
+            return_value=False,
+        ),
         patch.object(runner.plausibility, "unsettled", return_value=[]),
     ):
         runner.continuous._async_tick(dt_util.utcnow())
@@ -989,6 +993,10 @@ async def test_auto_repeat_keeps_watching_the_readings(
         patch(
             "custom_components.sungrow_modbus.continuous.ledger.awaited",
             return_value=[],
+        ),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.forced_startup_awaited",
+            return_value=False,
         ),
         patch.object(runner, "async_start") as start,
     ):
@@ -1279,6 +1287,62 @@ async def test_auto_repeat_waits_while_the_inverter_is_not_running(
 
     assert continuous.runs_started == 1
     assert continuous.waiting == "waiting for the inverter to run"
+
+
+async def test_auto_repeat_runs_the_forced_startup_in_low_soc_standby(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The one check that needs the inverter asleep gets a slot of its own."""
+    entry = await _setup(hass, ready_unit)
+    continuous = entry.runtime_data.diagnosis.continuous
+    await _auto_repeat(hass, True)
+    assert continuous.started_at is not None
+    later = continuous.started_at + timedelta(minutes=31)
+    starts: list[dict[str, bool]] = []
+
+    with (
+        patch.object(continuous, "_inverter_running", return_value=False),
+        patch.object(continuous, "_forced_startup_wanted", return_value=True),
+        patch.object(continuous, "_forced_startup_due", return_value=True),
+        patch.object(
+            entry.runtime_data.diagnosis,
+            "async_start",
+            side_effect=lambda **kwargs: starts.append(kwargs) or True,
+        ),
+    ):
+        continuous._async_tick(later)
+
+    assert starts == [{"capability_test": True, "forced_startup": True}]
+    assert continuous.waiting == "running for forced startup under low SoC"
+    await _auto_repeat(hass, False)
+
+
+async def test_auto_repeat_waits_for_low_soc_standby_when_only_that_is_left(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Nothing else missing: it says what it waits for and stays on."""
+    entry = await _setup(hass, ready_unit)
+    continuous = entry.runtime_data.diagnosis.continuous
+    await _auto_repeat(hass, True)
+    assert continuous.started_at is not None
+    later = continuous.started_at + timedelta(minutes=31)
+
+    with (
+        patch.object(continuous, "_inverter_running", return_value=False),
+        patch.object(continuous, "_forced_startup_wanted", return_value=True),
+        patch.object(continuous, "_forced_startup_due", return_value=False),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.awaited",
+            return_value=[],
+        ),
+    ):
+        continuous._async_tick(later)
+
+    assert continuous.active
+    assert continuous.waiting.startswith(
+        "waiting for forced startup under low SoC: low-SoC standby"
+    )
+    await _auto_repeat(hass, False)
     await _auto_repeat(hass, False)
 
 

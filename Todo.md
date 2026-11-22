@@ -52,9 +52,10 @@ I don't know if I ever used the webiste/ changed the password. Check the documen
 ([#797](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/797), whose "13035" is the
 protocol address): with the battery empty and the house on the grid the daily import did not count, so the daily
 consumption stalled (its midnight spike is already clamped, `src/sungrow_modbus/hybrid_inverter/derived.py`).
-Compare 13036 with the total import (13037/13038) over a night on an RS; icefest's latest download
-(ingested 2026-11-20) was read at midday and does not answer it.
-*Needs*: a night's readings from an RS, the reporter's or icefest's.
+The readings check *daily counters keep up with the totals* names exactly this (a total rising
+1 kWh with its daily counter unmoved), so a morning diagnosis download from an RS that ran the
+integration overnight answers it, with no writes and no capability test.
+*Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check.
 
 What the maintainer's own inverter can answer is a planned test below
 (T001); the rest waits on other firmware or other houses.

@@ -237,6 +237,26 @@ def is_standby(word: int | None) -> bool:
     return label is not None and label.lower() == "standby"
 
 
+def low_soc_standby(
+    word: int | None,
+    soc: float | None,
+    minimum: float | None,
+    pv: float | None,
+) -> bool:
+    """Whether the inverter sleeps in the standby register 13017 is for.
+
+    Standby with the battery within `SOC_MARGIN` of its minimum and less than
+    `MIN_PV_W` of PV: the state the forced startup check needs and every other
+    check refuses. Preflight's own guards decide the same, with a sentence
+    for each refusal; this is the yes-or-no auto repeat asks before a start.
+    """
+    if not is_standby(word) or soc is None or minimum is None:
+        return False
+    if float(soc) > float(minimum) + SOC_MARGIN:
+        return False
+    return pv is None or float(pv) < MIN_PV_W
+
+
 def is_running(word: int | None) -> bool:
     """Whether this running-state word means the inverter is working.
 

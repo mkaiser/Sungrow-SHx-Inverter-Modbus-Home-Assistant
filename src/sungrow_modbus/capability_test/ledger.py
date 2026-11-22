@@ -153,6 +153,21 @@ _ALL_EFFECTS = ("no behavioural check",)
 #: refuses to start in, so it is never counted missing from an ordinary run.
 MODES = frozenset({"forced startup under low SoC"})
 
+#: The forced startup check, and what auto repeat waits for to run it.
+FORCED_STARTUP_CHECK = "forced startup under low SoC"
+FORCED_STARTUP_NEEDS = "low-SoC standby, the battery at its minimum and no PV"
+
+
+def forced_startup_awaited(folded: Mapping[str, Any] | None) -> bool:
+    """Whether no kept run has established the forced startup check yet.
+
+    A mode of its own, so `awaited` never lists it: auto repeat asks this
+    separately, and runs the mode when it finds the inverter in low-SoC
+    standby rather than waiting for it to run.
+    """
+    row = ((folded or {}).get("summary") or {}).get(FORCED_STARTUP_CHECK)
+    return not (row and row.get("established"))
+
 
 def note_check(note: str) -> str | None:
     """Return the behavioural check a skip note is about, or None."""
