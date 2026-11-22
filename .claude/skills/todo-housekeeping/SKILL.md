@@ -21,9 +21,9 @@ standing, stay out of your commit, and are named in the report.
 
 **Incoming items by maintainer** is the first section and the first step
 whenever this skill was asked for by name. Reached any other way -- closing a
-session, a tidy-up nobody asked for -- **ask first** whether to address them,
-and skip the step unless they say so. The section is a holding area; nothing
-in it is due.
+session, a tidy-up nobody asked for -- skip the step **without asking**, and
+only remind, in the report, how many entries wait there (if any). The section
+is a holding area; nothing in it is due.
 
 Taking it in is a conversation, not a filing job. Work through the entries one
 at a time:

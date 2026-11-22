@@ -30,10 +30,11 @@ A finding that lives only in the conversation is lost when it ends.
 
 ## 3. Run the todo housekeeping
 
-Run `/todo-housekeeping`. **Ask first whether to take the incoming items in**
--- "Incoming items by maintainer" is a holding area, and closing a session is
-not by itself a request to empty it (`workflow.md`). Everything else in that
-skill runs either way: close what this session finished, with its evidence;
+Run `/todo-housekeeping` **without step 1, and without asking about it**:
+"Incoming items by maintainer" is a holding area, closing a session is not a
+request to empty it, and a close never blocks on a question (`workflow.md`).
+Count its entries for the report. The rest of that skill runs: close what this
+session finished, with its evidence;
 take in what is new; reorder; raise the next free item number if you minted
 one.
 
@@ -61,5 +62,6 @@ standing and stay out of your commit. **Ask before pushing, every time**
 ## 7. Report
 
 Open with the current time in CET, then: what changed, what is uncommitted and
-why, whose work you left standing in the tree, what became of the incoming
-items if you took them in, and the one thing you would start next.
+why, whose work you left standing in the tree, a one-line reminder of how many
+incoming items wait (only when there are any), and the one thing you would start
+next.

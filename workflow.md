@@ -63,8 +63,9 @@ pasted link, a half-formed idea -- without having to shape it into an item.
   in *with* them: the agent says what it reads each entry to mean and what it
   would make of it, the maintainer settles it, and only what they agreed is
   written into the file. An agent that had to guess asks instead of filing.
-- **Closing a session, ask whether to address them.** Asking is the whole
-  obligation; their answer decides. Unasked, the section is left alone.
+- **Closing a session never asks about them**, so a close never blocks on
+  the maintainer: the section is left alone, and the report says how many
+  entries are waiting there, if any.
 - **An entry goes only in the edit that disposes of it**, with one line saying
   what became of it. Nothing is half-taken: what is not settled stays as the
   maintainer wrote it.
@@ -154,13 +155,14 @@ checklist, not a second statement of them.
    conversation is lost.
 3. **Run the project's todo housekeeping** (`AGENTS.md` names it): close what
    this session finished, take in what is new, reorder, and raise the next
-   free item number if you minted one. **Ask whether to take the incoming
-   items in**, and take them in only if the maintainer says so.
+   free item number if you minted one. Leave the incoming items standing,
+   without asking.
 4. **Delete what is spent**: a finished plan, a working file, a stale handover.
 5. **Run the gate** and read its real result.
 6. **Commit your own paths.** Ask before pushing.
 7. **Report**: what changed, what is uncommitted and why, whose work you left
-   standing in the tree, and the one thing you would start next.
+   standing in the tree, how many incoming items wait (only if any), and the
+   one thing you would start next.
 
 ## Item numbers
 
