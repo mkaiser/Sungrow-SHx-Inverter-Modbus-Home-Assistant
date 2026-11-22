@@ -422,7 +422,14 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   (admins only by default); the capability test has an audience of its own, and
   its restart, export limit and PV cut are each granted until the owner
   switches them off. The YAML's danger-mode toggle and automations are not
-  ported.
+  ported; the dashboard's lock replaces the toggle (below).
+- **The dashboard is a strategy the integration serves**
+  (`dashboard.py`, `frontend/`): built in the browser from the entities a
+  house has, found by platform, translation key and device rather than by
+  entity id, so it fits every house's names; no HACS. Its controls sit behind
+  a hold-to-unlock card of its own, in the viewer's browser only. Users adapt
+  it through its options or Home Assistant's *Take control*
+  ([dashboard.md](dashboard.md), `plans/T055-generated-dashboard.md`).
 - **A wallbox's own registers are read-only.** No manufacturer document
   covers its map, and an inverter that manages a wallbox overwrites them. A
   managed wallbox is controlled through the inverter's EV charger block

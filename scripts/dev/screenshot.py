@@ -13,8 +13,8 @@ flows, and never belongs on an instance whose entry reaches real hardware.
 So, like `ha_onboard.py`, this refuses a non-loopback URL and logs in as the
 public `dev` / `dev`.
 
-Each shot writes its file into `device-diagnosis/images/`; look at it before
-committing it.
+Each shot writes its file into `device-diagnosis/images/`, or `doc/images/`
+for the dashboard's; look at it before committing it.
 """
 
 from __future__ import annotations
@@ -25,10 +25,13 @@ from pathlib import Path
 import sys
 from urllib.parse import urlparse
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Locator, Page, sync_playwright
 
 REPO = Path(__file__).resolve().parents[2]
 IMAGES = REPO / "device-diagnosis" / "images"
+DOC_IMAGES = REPO / "doc" / "images"
+#: The strategy dashboard the dashboard shots create if it is missing.
+DASHBOARD = "dashboard-sungrow"
 LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
 
@@ -96,23 +99,12 @@ def device_diagnosis(page: Page, url: str) -> Path:
     return target
 
 
-def setup_menu(page: Page, url: str) -> Path:
-    """Shoot the first screen of Add integration.
+def dialog_surface(item: Locator) -> dict[str, float]:
+    """Return the box of the dialog surface around `item`.
 
-    The dialog's host has no box of its own, so the shot is clipped to the
-    first ancestor of the menu item the size of a dialog's surface.
+    A dialog's host has no box of its own, so this climbs from an element
+    inside it to the first ancestor the size of a dialog's surface.
     """
-    settle(page)
-    page.goto(f"{url}/config/integrations/dashboard")
-    page.wait_for_load_state("networkidle")
-    page.get_by_role("button", name="Add integration").click()
-    page.wait_for_timeout(2_000)
-    page.keyboard.type("Sungrow")
-    page.wait_for_timeout(2_000)
-    page.locator("dialog-add-integration").get_by_text("Sungrow Modbus").first.click()
-    item = page.get_by_text("Perform the device diagnosis").first
-    item.wait_for()
-    page.wait_for_timeout(1_000)
     box = item.evaluate(
         """item => {
             let node = item;
@@ -122,8 +114,8 @@ def setup_menu(page: Page, url: str) -> Path:
                     continue;
                 }
                 const r = node.getBoundingClientRect();
-                const wide = r.width >= 500 && r.width <= 900;
-                if (wide && r.height >= 350 && r.height <= 800) {
+                const wide = r.width >= 500 && r.width <= 1100;
+                if (wide && r.height >= 350 && r.height <= 900) {
                     return {x: r.x, y: r.y, width: r.width, height: r.height};
                 }
                 // Slotted content climbs through its slot, into the shadow
@@ -135,12 +127,111 @@ def setup_menu(page: Page, url: str) -> Path:
     )
     if box is None:
         raise RuntimeError("the dialog's surface was not found")
+    return box
+
+
+def setup_menu(page: Page, url: str) -> Path:
+    """Shoot the first screen of Add integration, clipped to the dialog."""
+    settle(page)
+    page.goto(f"{url}/config/integrations/dashboard")
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("button", name="Add integration").click()
+    page.wait_for_timeout(2_000)
+    page.keyboard.type("Sungrow")
+    page.wait_for_timeout(2_000)
+    page.locator("dialog-add-integration").get_by_text("Sungrow Modbus").first.click()
+    item = page.get_by_text("Perform the device diagnosis").first
+    item.wait_for()
+    page.wait_for_timeout(1_000)
+    box = dialog_surface(item)
     target = IMAGES / "HA-settings-configure-integration.png"
     page.screenshot(path=str(target), clip=box)
     return target
 
 
+def open_dashboard(page: Page, url: str, view: str) -> None:
+    """Open a view of the strategy dashboard, creating the dashboard if missing.
+
+    Created through the logged-in frontend's own connection, so the shot
+    needs no token. A scratch instance is the only place this runs.
+    """
+    settle(page)
+    page.evaluate(
+        """async (path) => {
+            const hass = document.querySelector("home-assistant").hass;
+            const all = await hass.callWS({type: "lovelace/dashboards/list"});
+            if (all.some((d) => d.url_path === path)) return;
+            await hass.callWS({type: "lovelace/dashboards/create", url_path: path,
+                title: "Sungrow", mode: "storage", show_in_sidebar: true,
+                require_admin: false});
+            await hass.callWS({type: "lovelace/config/save", url_path: path,
+                config: {strategy: {type: "custom:sungrow-modbus"}}});
+        }""",
+        DASHBOARD,
+    )
+    page.goto(f"{url}/{DASHBOARD}/{view}")
+    page.wait_for_load_state("networkidle")
+    page.locator("hui-section").first.wait_for()
+    page.wait_for_timeout(3_000)
+
+
+def sections_box(page: Page, count: int) -> dict[str, float]:
+    """Return the box around a view's first `count` sections."""
+    boxes = [page.locator("hui-section").nth(i).bounding_box() for i in range(count)]
+    if any(box is None for box in boxes):
+        raise RuntimeError("the view has fewer sections than the shot wants")
+    left = min(b["x"] for b in boxes)
+    top = min(b["y"] for b in boxes)
+    right = max(b["x"] + b["width"] for b in boxes)
+    bottom = max(b["y"] + b["height"] for b in boxes)
+    pad = 12
+    return {
+        "x": left - pad,
+        "y": top - pad,
+        "width": right - left + 2 * pad,
+        "height": bottom - top + 2 * pad,
+    }
+
+
+def dashboard_add(page: Page, url: str) -> Path:
+    """Shoot the Add dashboard dialog, which lists the integration's strategy.
+
+    At a normal height: this dialog grows with the window, and in the
+    context's tall one it would be mostly empty.
+    """
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    settle(page)
+    page.goto(f"{url}/config/lovelace/dashboards")
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("button", name="Add dashboard").first.click()
+    item = page.get_by_text("Sungrow Modbus").first
+    item.wait_for()
+    page.wait_for_timeout(1_000)
+    target = DOC_IMAGES / "HA-dashboard-add.png"
+    page.screenshot(path=str(target), clip=dialog_surface(item))
+    return target
+
+
+def dashboard_overview(page: Page, url: str) -> Path:
+    """Shoot the dashboard's Overview: its Now and Today sections."""
+    open_dashboard(page, url, "overview")
+    target = DOC_IMAGES / "HA-dashboard-overview.png"
+    page.screenshot(path=str(target), clip=sections_box(page, 2))
+    return target
+
+
+def dashboard_controls(page: Page, url: str) -> Path:
+    """Shoot the dashboard's Controls, locked: the warning and Operation."""
+    open_dashboard(page, url, "controls")
+    target = DOC_IMAGES / "HA-dashboard-controls.png"
+    page.screenshot(path=str(target), clip=sections_box(page, 2))
+    return target
+
+
 SHOTS: dict[str, Callable[[Page, str], Path]] = {
+    "dashboard-add": dashboard_add,
+    "dashboard-controls": dashboard_controls,
+    "dashboard-overview": dashboard_overview,
     "setup-menu": setup_menu,
     "device-diagnosis": device_diagnosis,
     "options-capability-test": options_capability_test,

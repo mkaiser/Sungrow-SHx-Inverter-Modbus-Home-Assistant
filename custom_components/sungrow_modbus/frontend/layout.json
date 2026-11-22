@@ -1,0 +1,314 @@
+{
+  "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
+  "views": [
+    {
+      "id": "overview",
+      "title": {"en": "Overview", "de": "Übersicht"},
+      "icon": "mdi:solar-power",
+      "sections": [
+        {
+          "heading": {"en": "Now", "de": "Jetzt"},
+          "icon": "mdi:flash",
+          "cards": [
+            {"type": "tile", "entity": "sensor.total_dc_power|sensor.sg_total_dc_power", "color": "amber"},
+            {"type": "tile", "entity": "sensor.load_power|sensor.sg_load_power", "color": "blue"},
+            {"type": "tile", "entity": "sensor.import_power", "color": "red"},
+            {"type": "tile", "entity": "sensor.export_power", "color": "green"},
+            {"type": "tile", "entity": "sensor.battery_power", "color": "orange"},
+            {"type": "gauge", "entity": "sensor.battery_level", "min": 0, "max": 100, "needle": true,
+             "severity": {"green": 40, "yellow": 15, "red": 0}}
+          ]
+        },
+        {
+          "heading": {"en": "Today", "de": "Heute"},
+          "icon": "mdi:calendar-today",
+          "cards": [
+            {"type": "tile", "entity": "sensor.daily_pv_generation|sensor.sg_daily_pv_generation"},
+            {"type": "tile", "entity": "sensor.daily_consumed_energy_filtered|sensor.daily_consumed_energy"},
+            {"type": "tile", "entity": "sensor.daily_imported_energy|sensor.sg_daily_imported_energy"},
+            {"type": "tile", "entity": "sensor.daily_exported_energy|sensor.sg_daily_exported_energy"},
+            {"type": "tile", "entity": "sensor.daily_battery_charge"},
+            {"type": "tile", "entity": "sensor.daily_battery_discharge"},
+            {"type": "tile", "entity": "sensor.self_consumption_of_today"}
+          ]
+        },
+        {
+          "heading": {"en": "Last 24 hours", "de": "Letzte 24 Stunden"},
+          "icon": "mdi:chart-line",
+          "column_span": 3,
+          "cards": [
+            {"type": "history-graph", "hours_to_show": 24, "title": {"en": "Power", "de": "Leistung"},
+             "entities": ["sensor.total_dc_power|sensor.sg_total_dc_power", "sensor.load_power|sensor.sg_load_power",
+                          "sensor.import_power", "sensor.export_power"]},
+            {"type": "history-graph", "hours_to_show": 24, "title": {"en": "Battery", "de": "Batterie"},
+             "entities": ["sensor.battery_power", "sensor.battery_level"]}
+          ]
+        },
+        {
+          "heading": {"en": "Last 30 days", "de": "Letzte 30 Tage"},
+          "icon": "mdi:chart-bar",
+          "column_span": 3,
+          "cards": [
+            {"type": "statistics-graph", "days_to_show": 30, "period": "day", "chart_type": "bar",
+             "stat_types": ["change"], "title": {"en": "Energy per day", "de": "Energie pro Tag"},
+             "entities": ["sensor.total_pv_generation|sensor.sg_total_pv_generation",
+                          "sensor.total_consumed_energy",
+                          "sensor.total_imported_energy|sensor.sg_total_imported_energy",
+                          "sensor.total_exported_energy|sensor.sg_total_exported_energy"]},
+            {"type": "statistics-graph", "days_to_show": 30, "period": "day", "chart_type": "bar",
+             "stat_types": ["change"], "title": {"en": "Battery per day", "de": "Batterie pro Tag"},
+             "entities": ["sensor.total_battery_charge", "sensor.total_battery_discharge"]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "battery",
+      "title": {"en": "Battery", "de": "Batterie"},
+      "icon": "mdi:battery-high",
+      "sections": [
+        {
+          "heading": {"en": "Pack", "de": "Speicher"},
+          "icon": "mdi:battery-high",
+          "cards": [
+            {"type": "gauge", "entity": "sensor.battery_pack_level|sensor.battery_level", "min": 0, "max": 100,
+             "needle": true, "severity": {"green": 40, "yellow": 15, "red": 0}},
+            {"type": "tile", "entity": "sensor.battery_pack_state_of_health|sensor.battery_state_of_health"},
+            {"type": "tile", "entity": "sensor.battery_pack_temperature|sensor.battery_temperature"},
+            {"type": "tile", "entity": "sensor.battery_pack_voltage|sensor.battery_voltage"},
+            {"type": "tile", "entity": "sensor.battery_pack_current|sensor.battery_current"}
+          ]
+        },
+        {
+          "heading": {"en": "Cells", "de": "Zellen"},
+          "icon": "mdi:battery-unknown",
+          "cards": [
+            {"type": "entities", "title": {"en": "Pack", "de": "Speicher"},
+             "entities": ["sensor.battery_max_cell_voltage", "sensor.battery_min_cell_voltage",
+                          "sensor.battery_cell_voltage_spread", "sensor.battery_max_module_temperature",
+                          "sensor.battery_min_module_temperature"]},
+            {"type": "entities", "title": {"en": "Modules", "de": "Module"}, "repeat": [1, 8],
+             "entities": ["sensor.battery_module_{n}_max_cell_voltage", "sensor.battery_module_{n}_min_cell_voltage"]}
+          ]
+        },
+        {
+          "heading": {"en": "Lifetime", "de": "Lebensdauer"},
+          "icon": "mdi:counter",
+          "cards": [
+            {"type": "entities",
+             "entities": ["sensor.battery_pack_total_charge", "sensor.battery_pack_total_discharge",
+                          "sensor.total_battery_charge", "sensor.total_battery_discharge",
+                          "sensor.battery_capacity_high_precision", "sensor.bms_max_charging_current",
+                          "sensor.bms_max_discharging_current"]}
+          ]
+        },
+        {
+          "heading": {"en": "Last 48 hours", "de": "Letzte 48 Stunden"},
+          "icon": "mdi:chart-line",
+          "column_span": 3,
+          "cards": [
+            {"type": "history-graph", "hours_to_show": 48,
+             "entities": ["sensor.battery_pack_level|sensor.battery_level",
+                          "sensor.battery_pack_temperature|sensor.battery_temperature"]},
+            {"type": "history-graph", "hours_to_show": 48, "entities": ["sensor.battery_cell_voltage_spread"]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inverter",
+      "title": {"en": "Inverter", "de": "Wechselrichter"},
+      "icon": "mdi:flash",
+      "sections": [
+        {
+          "heading": {"en": "State", "de": "Zustand"},
+          "icon": "mdi:information",
+          "cards": [
+            {"type": "tile", "entity": "sensor.sungrow_inverter_state|sensor.sg_work_state"},
+            {"type": "tile", "entity": "binary_sensor.alarm_reported"},
+            {"type": "tile", "entity": "binary_sensor.fault_reported|binary_sensor.sg_fault_reported"},
+            {"type": "tile", "entity": "sensor.inverter_temperature|sensor.sg_inverter_temperature"},
+            {"type": "tile", "entity": "sensor.grid_frequency|sensor.sg_grid_frequency"},
+            {"type": "tile", "entity": "sensor.connection"},
+            {"type": "device-link"}
+          ]
+        },
+        {
+          "heading": {"en": "PV strings", "de": "Solarstrings"},
+          "icon": "mdi:solar-panel",
+          "cards": [
+            {"type": "entities", "title": {"en": "MPPT {n}", "de": "MPPT {n}"}, "repeat": [1, 4], "split": true,
+             "entities": ["sensor.mppt{n}_power", "sensor.mppt{n}_voltage", "sensor.mppt{n}_current"]},
+            {"type": "entities", "title": {"en": "MPPT {n}", "de": "MPPT {n}"}, "repeat": [1, 12], "split": true,
+             "entities": ["sensor.sg_mppt{n}_power", "sensor.sg_mppt{n}_voltage", "sensor.sg_mppt{n}_current"]}
+          ]
+        },
+        {
+          "heading": {"en": "Grid", "de": "Netz"},
+          "icon": "mdi:transmission-tower",
+          "cards": [
+            {"type": "entities", "title": {"en": "Phases", "de": "Phasen"},
+             "entities": ["sensor.phase_a_voltage|sensor.sg_phase_a_voltage", "sensor.phase_b_voltage|sensor.sg_phase_b_voltage",
+                          "sensor.phase_c_voltage|sensor.sg_phase_c_voltage", "sensor.phase_a_power",
+                          "sensor.phase_b_power", "sensor.phase_c_power"]},
+            {"type": "history-graph", "hours_to_show": 24,
+             "entities": ["sensor.phase_a_voltage|sensor.sg_phase_a_voltage", "sensor.phase_b_voltage|sensor.sg_phase_b_voltage",
+                          "sensor.phase_c_voltage|sensor.sg_phase_c_voltage"]}
+          ]
+        },
+        {
+          "heading": {"en": "Backup", "de": "Notstrom"},
+          "icon": "mdi:power-plug-battery",
+          "cards": [
+            {"type": "entities",
+             "entities": ["sensor.total_backup_power", "sensor.backup_phase_a_power", "sensor.backup_phase_b_power",
+                          "sensor.backup_phase_c_power"]}
+          ]
+        },
+        {
+          "heading": {"en": "Device", "de": "Gerät"},
+          "icon": "mdi:chip",
+          "cards": [
+            {"type": "entities",
+             "entities": ["sensor.sungrow_device_type", "sensor.inverter_firmware_version",
+                          "sensor.sungrow_arm_software", "sensor.sungrow_dsp_software",
+                          "sensor.communication_module_firmware_version", "sensor.inverter_rated_output"]},
+            {"type": "entities", "title": {"en": "Totals", "de": "Gesamtwerte"},
+             "entities": ["sensor.total_pv_generation|sensor.sg_total_pv_generation",
+                          "sensor.total_consumed_energy",
+                          "sensor.total_imported_energy|sensor.sg_total_imported_energy",
+                          "sensor.total_exported_energy|sensor.sg_total_exported_energy",
+                          "sensor.total_battery_charge", "sensor.total_battery_discharge"]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wallbox",
+      "title": {"en": "Wallbox", "de": "Wallbox"},
+      "icon": "mdi:ev-station",
+      "sections": [
+        {
+          "heading": {"en": "Now", "de": "Jetzt"},
+          "icon": "mdi:ev-station",
+          "cards": [
+            {"type": "tile", "entity": "sensor.wallbox_charging_status", "color": "blue"},
+            {"type": "tile", "entity": "sensor.wallbox_charging_power", "color": "green"},
+            {"type": "tile", "entity": "binary_sensor.wallbox_charging"},
+            {"type": "tile", "entity": "sensor.wallbox_available_current"},
+            {"type": "tile", "entity": "sensor.wallbox_session_energy"},
+            {"type": "tile", "entity": "sensor.wallbox_lifetime_energy"}
+          ]
+        },
+        {
+          "heading": {"en": "Charger", "de": "Ladestation"},
+          "icon": "mdi:ev-plug-type2",
+          "cards": [
+            {"type": "entities", "title": {"en": "Phases", "de": "Phasen"},
+             "entities": ["sensor.wallbox_phase_a_current", "sensor.wallbox_phase_b_current",
+                          "sensor.wallbox_phase_c_current", "sensor.wallbox_phase_a_voltage",
+                          "sensor.wallbox_phase_b_voltage", "sensor.wallbox_phase_c_voltage"]},
+            {"type": "entities", "title": {"en": "Settings", "de": "Einstellungen"},
+             "entities": ["sensor.wallbox_phase_mode", "sensor.wallbox_start_mode", "sensor.wallbox_rated_current",
+                          "sensor.wallbox_power_limit", "sensor.wallbox_control_pilot_voltage",
+                          "sensor.wallbox_firmware_version", "binary_sensor.wallbox_enabled",
+                          "binary_sensor.wallbox_plug_and_play"]}
+          ]
+        },
+        {
+          "heading": {"en": "Last 24 hours", "de": "Letzte 24 Stunden"},
+          "icon": "mdi:chart-line",
+          "column_span": 3,
+          "cards": [
+            {"type": "history-graph", "hours_to_show": 24,
+             "entities": ["sensor.wallbox_charging_power", "~sensor.total_dc_power|~sensor.sg_total_dc_power",
+                          "~sensor.export_power", "~sensor.load_power|~sensor.sg_load_power"]},
+            {"type": "history-graph", "hours_to_show": 24,
+             "entities": ["sensor.wallbox_available_current", "sensor.wallbox_output_current_setting"]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "controls",
+      "title": {"en": "Controls", "de": "Steuerung"},
+      "icon": "mdi:tune",
+      "locked": true,
+      "sections": [
+        {
+          "heading": {"en": "Careful", "de": "Achtung"},
+          "icon": "mdi:alert",
+          "cards": [
+            {"type": "markdown", "content": {
+              "en": "A change on this page acts on the inverter and the battery **at once**, and is not undone by itself.",
+              "de": "Eine Änderung auf dieser Seite wirkt **sofort** auf Wechselrichter und Batterie und wird nicht von selbst zurückgenommen."}}
+          ]
+        },
+        {
+          "heading": {"en": "Operation", "de": "Betrieb"},
+          "icon": "mdi:cog",
+          "cards": [
+            {"type": "entities",
+             "entities": ["select.ems_mode", "select.battery_forced_charge_discharge",
+                          "number.battery_forced_charge_discharge_power", "switch.backup_mode",
+                          "switch.load_adjustment_mode_enable", "select.load_adjustment_mode"]}
+          ]
+        },
+        {
+          "heading": {"en": "Limits", "de": "Grenzen"},
+          "icon": "mdi:speedometer",
+          "cards": [
+            {"type": "entities",
+             "entities": ["switch.export_power_limit_mode", "number.export_power_limit",
+                          "number.site_import_power_limit", "switch.cut_pv_generation"]}
+          ]
+        },
+        {
+          "heading": {"en": "Battery", "de": "Batterie"},
+          "icon": "mdi:battery-lock",
+          "cards": [
+            {"type": "entities",
+             "entities": ["number.battery_min_soc", "number.battery_max_soc", "number.battery_reserved_soc_for_backup",
+                          "number.battery_max_charge_power", "number.battery_max_discharge_power",
+                          "number.battery_charging_start_power", "number.battery_discharging_start_power",
+                          "switch.forced_startup_under_low_soc"]}
+          ]
+        },
+        {
+          "heading": {"en": "Forced charging", "de": "Zwangsladung"},
+          "icon": "mdi:battery-clock",
+          "cards": [
+            {"type": "entities",
+             "entities": ["switch.forced_charging_schedule", "select.forced_charging_days",
+                          "time.forced_charging_start_1", "time.forced_charging_end_1", "number.forced_charging_target_soc_1",
+                          "time.forced_charging_start_2", "time.forced_charging_end_2", "number.forced_charging_target_soc_2"]}
+          ]
+        },
+        {
+          "heading": {"en": "Discharge schedule", "de": "Entladeplan"},
+          "icon": "mdi:calendar-clock",
+          "cards": [
+            {"type": "entities", "title": {"en": "Weekdays", "de": "Werktage"},
+             "entities": ["time.weekday_discharge_start_1", "time.weekday_discharge_end_1",
+                          "switch.weekday_discharge_end_1_all_day", "time.weekday_discharge_start_2",
+                          "time.weekday_discharge_end_2", "switch.weekday_discharge_end_2_all_day"]},
+            {"type": "entities", "title": {"en": "Weekend", "de": "Wochenende"},
+             "entities": ["switch.weekend_discharge_schedule", "time.weekend_discharge_start_1",
+                          "time.weekend_discharge_end_1", "switch.weekend_discharge_end_1_all_day",
+                          "time.weekend_discharge_start_2", "time.weekend_discharge_end_2",
+                          "switch.weekend_discharge_end_2_all_day"]}
+          ]
+        },
+        {
+          "heading": {"en": "Wallbox", "de": "Wallbox"},
+          "icon": "mdi:ev-station",
+          "cards": [
+            {"type": "entities",
+             "entities": ["switch.ev_charger_charging", "select.ev_charger_mode", "number.ev_charger_user_current",
+                          "switch.ev_charger_grid_purchase"]}
+          ]
+        }
+      ]
+    }
+  ]
+}

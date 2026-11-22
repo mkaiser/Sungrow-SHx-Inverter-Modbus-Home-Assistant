@@ -2,6 +2,7 @@
   "domain": "sungrow_modbus",
   "name": "Sungrow Modbus (preview)",
   "after_dependencies": [
+    "frontend",
     "recorder",
     "zeroconf"
   ],

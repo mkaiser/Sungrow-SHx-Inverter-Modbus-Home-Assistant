@@ -244,7 +244,7 @@ does properly.
 | --- | --- |
 | `button.start_inverter` | Action `sungrow_modbus.start_inverter` |
 | `button.stop_inverter` | Action `sungrow_modbus.stop_inverter` |
-| `switch.sungrow_dashboard_enable_danger_mode` | Nothing — see below |
+| `switch.sungrow_dashboard_enable_danger_mode` | The dashboard's lock — see below |
 
 **Start and stop are actions**, because Home Assistant has no confirmation
 dialog for a button press, and a misclick while scrolling on a phone would
@@ -254,11 +254,14 @@ affected. If one of yours pressed those buttons, replace the `button.press`
 with the action: the register written is the same.
 
 **The danger-mode switch guarded the YAML's own dashboard**, not the device,
-so it does not come across. To keep using that dashboard, copy its
+so it does not come across. The integration's [own dashboard](dashboard.md)
+locks its controls instead: a section opens when held for three seconds and
+locks again by itself, and the lock card can wrap the controls on your own
+dashboards too. To keep using the YAML's dashboard as it is, copy its
 `Sungrow dashboard enable danger mode` template switch and its auto-reset
 automation into your own configuration before removing the package; the
-switch keeps its unique id, so the dashboard keeps working. The integration's
-own guard is per account: a read-only user sees every reading and can change
+switch keeps its unique id, so the dashboard keeps working. Beyond either,
+the guard is per account: a read-only user sees every reading and can change
 nothing.
 
 ## Changing your mind

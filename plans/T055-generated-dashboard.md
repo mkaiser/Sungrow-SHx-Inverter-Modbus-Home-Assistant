@@ -149,18 +149,58 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
 
 ## Steps
 
-1. Serve the module (`__init__.py`, `manifest.json`); a test that the path is
-   registered once across two entries; `make hassfest`.
-2. `layout.json`, and a test that every `translation_key` in it is one the
-   description modules define and `translations/en.json` names, so a renamed
-   key fails CI instead of emptying a card.
-3. The strategy, then the lock card.
-4. `doc/dashboard.md` (the three levels, the options, the lock card on its
-   own, screenshots); links from the README and the install guide;
-   `doc/integration_migration.md`'s danger-mode row and paragraph point at
-   the lock card; `doc/architecture.md`'s "danger-mode toggle ... not ported"
-   becomes the lock decision; `dashboard/wallbox/dashboard.yaml` goes, its
-   view now built.
+1. **Done.** `dashboard.py` serves `frontend/` at `/sungrow_modbus_frontend`
+   and adds the module with `?v=` a hash of the files (a development build
+   carries the release's version with other code). `frontend` is an
+   after-dependency, not a dependency: every real Home Assistant runs it, and
+   without it setup goes on with no dashboard (`tests/test_dashboard.py`).
+2. **Done.** `frontend/layout.json` names each entity as
+   `<domain>.<translation_key>`. `a|b` takes the first that exists (the hybrid
+   and the string inverter name the same reading differently), a leading `~`
+   resolves anywhere in the integration if unique and never keeps a card on
+   its own (the wallbox history's PV and load), and `{n}` expands over a
+   card's `repeat`. `tests/test_dashboard_layout.py` holds every key to
+   `translations/en.json`, every text to English and German, and the views to
+   the strategy's list. It caught the MPPTs: a hybrid has `mppt1..4`, a string
+   inverter `sg_mppt1..12`, so they are two cards, not one with alternatives.
+3. **Done.** `frontend/sungrow-modbus.js`: the strategy and the lock card,
+   no build step, no dependency. What the build settled:
+   - **Families.** An inverter and every device whose `via_device_id` leads
+     to it; a wallbox entry of its own is its own family, and each family
+     builds the views it can fill. gerd's separate wallbox entry gives one
+     Wallbox view, its history drawing the inverter's PV and load through `~`.
+     With two inverters every view is built per inverter, suffixed with the
+     device name, and the ambiguous `~` lines drop out.
+   - **Names.** `{type: entity}` shows the entity's name in Home Assistant's
+     **system** language: the frontend takes entity names from the server,
+     not the viewer's profile. Headings and the lock follow the viewer.
+   - **The lock** is a hold alone, without a confirm dialog: a held press is
+     already deliberate, and a browser `confirm()` is not reliable in the
+     companion apps' web views. Its cards share a `group` (`controls`), so one
+     hold opens the whole view; the unlock lives in that browser tab. The
+     unlocked note sits below the card, so the last row stays reachable.
+   - **The Controls view** is left out for a plain user, and carries the
+     administrators as `visible` users, for a copy that is taken over.
+   - `registryDependencies = ["entities", "devices"]`: rebuilt on a registry
+     change, not on every state change.
+   - Checked in V8 against gerd's real registry (legacy ids,
+     `total_consumed_energy_2`, `sh8_0rt_v112_` prefixes all resolve) and
+     against an empty house, a pinned wallbox, both languages, each
+     `controls` mode and two inverters; then in Chromium on a scratch instance
+     on the simulator: every view renders without a console error, a tap
+     leaves the lock shut, a 3-second hold opens the group, *Lock* shuts it,
+     the add-dashboard dialog lists *Sungrow Modbus* under *Community
+     dashboards*, the edit dialog edits the options in YAML, and *Take
+     control* saves the real ids with the lock cards kept.
+4. **Done.** `doc/dashboard.md` (adding it, the views, the lock, the
+   options, taking control, the lock card on its own, coming from the YAML
+   package), with three screenshots in `doc/images/` that
+   `scripts/dev/screenshot.py` retakes (`dashboard-add`, `dashboard-overview`,
+   `dashboard-controls`). Linked from the README; the migration guide's
+   danger-mode row and paragraph now point at the lock; `doc/architecture.md`
+   records the decision; `doc/development.md` says how the module is checked;
+   the merge step in `plans/T047-T053-release.md` names its documentation
+   link; `dashboard/wallbox/dashboard.yaml` is gone.
 5. `make quick`, then `make check`.
 
 ## Verification
@@ -173,5 +213,8 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
 - *Take control* produces the real ids and still renders after a reload.
 - The container has no node, so the module is checked by hand on the dev
   instance; the test of step 3 guards the data.
-- gerd: save the live inverter and wallbox dashboards first, add this one
-  beside them, compare, and replace them only on the maintainer's word.
+- gerd: the live inverter and wallbox dashboards are saved (gitignored
+  `tmp/gerd-backup-ha/live_2026-11-22_*.json`; the wallbox one carries
+  hand-typed short names, the device-name problem `{type: entity}` solves).
+  Left: install a build with the dashboard there, add it beside them,
+  compare, and replace them only on the maintainer's word.

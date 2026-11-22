@@ -84,6 +84,8 @@ read only: the site's flows, its grid meter and its settings as set.
 [devices-wanted.md](device-diagnosis/devices-wanted.md)), SBH batteries, the
 SBR's per-module entities, and writing to the wallbox.
 
+[doc/dashboard.md](doc/dashboard.md) is the integration's own dashboard,
+with the controls behind a hold-to-unlock lock,
 [doc/energy_dashboard.md](doc/energy_dashboard.md) says which sensors to pick
 for Home Assistant's Energy dashboard,
 [doc/architecture.md](doc/architecture.md) is how it is built and why,

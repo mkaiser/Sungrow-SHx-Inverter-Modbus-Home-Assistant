@@ -88,6 +88,7 @@ from .coordinator import (
     SungrowStringInverterCoordinator,
     SungrowWallboxCoordinator,
 )
+from .dashboard import async_register as async_register_dashboard
 from .diagnosis import DiagnosisRunner
 from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
@@ -207,6 +208,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # Home Assistant, not one per entry. Doing it here is what lets
     # `download.async_register` keep no state at all.
     async_register_download(hass)
+    # The dashboard module likewise: one static path and one module URL.
+    await async_register_dashboard(hass)
     return True
 
 

@@ -92,8 +92,10 @@ diagnosis (T005, T006, T042).
 **T055. The integration's own dashboard**: a dashboard strategy the integration serves, which finds its
 entities by translation key and device rather than entity id, builds only what the house has, and puts the
 controls behind a hold-to-unlock card of its own (or an admin-only view) -- no HACS. Users adapt it with
-*Take control*; the frontend 2026.11 offers all of it. [Plan](plans/T055-generated-dashboard.md).
-*Needs*: nothing.
+*Take control*. Built and checked on the simulator in Chromium ([doc/dashboard.md](doc/dashboard.md)); left is
+the look at a real house: add it beside gerd's two hand-made dashboards, compare, and replace them only on the
+maintainer's word. [Plan](plans/T055-generated-dashboard.md).
+*Needs*: a build with the dashboard installed at gerd's, which is the maintainer's go.
 
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause

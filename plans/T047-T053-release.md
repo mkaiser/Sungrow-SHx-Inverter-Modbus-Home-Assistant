@@ -9,7 +9,8 @@ and opens the HACS default store, which also needs the brand in
 `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
 At the merge, the links that name the `proper-ha-integration` branch move
 to `main` (`grep -rn proper-ha-integration custom_components`: the Energy
-dashboard guide and the preview repair's entity names).
+dashboard guide, the preview repair's entity names and the dashboard
+strategy's documentation link).
 
 ## T068 - What a `main` link finds after the merge.** `main` changes
 meaning at the merge: today the YAML package's root, afterwards the

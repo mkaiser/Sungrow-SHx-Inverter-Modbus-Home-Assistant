@@ -459,8 +459,9 @@ $ make hacs ARGS=--reset          # delete config-hacs/ and start over
 
 ## Screenshots for the docs
 
-The images in `device-diagnosis/images/` are taken headless, against the
-simulator, from a **second** Home Assistant. Never the one on :8123: its entry
+The images in `device-diagnosis/images/`, and the dashboard's in
+`doc/images/`, are taken headless, against the simulator, from a **second**
+Home Assistant. Never the one on :8123: its entry
 may point at real hardware, and a screenshot session clicks through flows.
 
 1. **The browser.** `scripts/dev/setup.sh` installs it with the container:
@@ -488,7 +489,14 @@ may point at real hardware, and a screenshot session clicks through flows.
    ```
 
    Each shot is one function in its `SHOTS` table; a new one is a new
-   function. Look at the result before committing it.
+   function. Look at the result before committing it. The `dashboard-*`
+   shots create the strategy dashboard on the scratch instance if it is
+   missing.
+
+The dashboard's module (`custom_components/sungrow_modbus/frontend/`) has no
+JavaScript test runner here: `tests/test_dashboard_layout.py` guards its
+layout, and the module itself is checked on this scratch instance, in the
+browser, as above.
 
 What the frontend needs, for a new shot:
 
