@@ -37,6 +37,7 @@ from .procedure import (
     RestoreResult,
     Snapshot,
     is_running,
+    is_standby,
     is_starting,
     restore_order,
     soc_pair_order,
@@ -356,9 +357,10 @@ class RestoreSteps(CapabilityTestBase):
         writes into a machine already doing what it was asked, then gives up
         while the state still reads `Starting`.
 
-        So: send once, then watch. `Starting` is progress and resets nothing;
-        only a state that is still *stopped* after `RESTART_RESEND_AFTER`
-        earns another command, in case the first was lost rather than slow.
+        So: send once, then watch. `Starting` and `Standby` are progress and
+        earn nothing; only a state that still reads a *stop* after
+        `RESTART_RESEND_AFTER` earns another command, in case the first was
+        lost rather than slow.
         """
         if await self._write(START_WORD_PROBE, START_WORD) is not None:
             _LOGGER.warning("capability test: the start command itself was refused")
@@ -376,6 +378,10 @@ class RestoreSteps(CapabilityTestBase):
             if is_starting(word):
                 # Taken and working on it. Never re-send into this.
                 seen_starting = True
+                last_sent = self.clock.monotonic()
+            elif is_standby(word):
+                # Left the stop: a night boot waits here for minutes before
+                # Starting, and a re-send changes nothing (`is_standby`).
                 last_sent = self.clock.monotonic()
             elif (
                 word is not None

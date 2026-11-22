@@ -201,8 +201,7 @@ no clean after-bracket; what is left is that bracket. The engine cannot take
 this case (its 1250 W charge is absorbed by the surplus); the plan has the
 hand run, through the production entry's entities.
 *Needs*: the battery under ~85 % with PV 0.2-2 kW over the load, steady for
-5 min -- a low-battery morning in clear or uniform light. The forced startup (13017) on firmware other
-than P020 is not testable here and is T063.
+5 min -- a low-battery morning in clear or uniform light.
 
 **T007. A day and a night of *Extended test (auto repeat)* at the
 maintainer's SH10RT**, then ingest -- the new checks on hardware, the
@@ -210,9 +209,7 @@ auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
 names on a real device page -- [plan](plans/T007-diagnosis-and-capability-tests.md).
 *Needs*: a **charged battery**, which is what the nine write-side rows left
 waiting all ask for, and a dusk for `ledger.TWO_MOMENTS`; the collection is
-armed and observing, 37 of 55 established and none failing. The
-forced-startup mode on other firmware is T063, which this house cannot
-answer.
+armed and observing, 37 of 55 established and none failing.
 
 **T078. Decide whether a cluster master is offered the Grid import limit**,
 now that 32998 failed on P023 at fwitten's master while it held at three
@@ -237,11 +234,11 @@ T -- [plan](plans/T026-sh-t-through-a-dongle.md).
 *Unblocked by*: any SH15T or SH10T owner running one capability test
 (`--enable-export-limit`) while the house exports.
 
-**T063. Forced startup (13017) on firmware other than P020** -- the other
-half of [the import-limit plan](plans/T001-T063-import-limit-and-forced-startup.md),
-which its own house cannot answer: the maintainer's SH10RT is P020.
-*Unblocked by*: a watched run after dark at a house on P022, P023 or an SH-T,
-in low-SoC standby.
+**T063. Forced startup (13017) on an SH-T** -- the switch is confirmed on
+P020, P022 and P023 ([register 13017](.wiki/wiki/entities/register-13017.md));
+every SH-T reads `0x55` and gets no switch until a watched wake.
+*Unblocked by*: a watched run after dark at an SH-T house (P071), in low-SoC
+standby.
 
 **T027. firetribe, once more** (#784): a cable capability test with the
 inverter *running* gives the first SH6.0RT-V112 readbacks and its 13074 write
@@ -270,12 +267,6 @@ WiNet-S the meter block (5083-5104), the per-string block (input 7013) and
 holding 5020 read nothing; writing the power limitation (holding 5007-5008)
 waits for a watched write.
 *Unblocked by*: an SG on a cable, or one with its own meter.
-
-**T032. gerd's cable restart**: the start had to be sent three times on
-2026-11-03 (cable) and again on 2026-11-10 (WiNet-S, running after 182 s).
-Look at what the inverter reports between the starts.
-*Unblocked by*: another restart at gerd's, watched -- the same night window as
-T063, after it ([plan](plans/T001-T063-import-limit-and-forced-startup.md)).
 
 **T033. The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
 source's model table, many rows unverified.

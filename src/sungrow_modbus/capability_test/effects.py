@@ -844,6 +844,13 @@ class EffectSteps(ReadbackSteps):
             return []
         self._step("forced startup under low SoC")
         before = await self._running_word()
+        if self.options.dry_run:
+            # Nothing is written, so there is no wake to wait ten minutes for.
+            return [
+                self._state_result(
+                    before, None, None, None, SKIPPED, "dry run: nothing was written"
+                )
+            ]
         detail: list[str] = []
         failure = await self._write(FORCED_STARTUP, FORCED_STARTUP_ON)
         if failure is not None:

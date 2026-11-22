@@ -20,9 +20,14 @@ running and stopped sets are derived from its labels.
   mode) the same on both ([the run](../sources/bar12-import-limit-2026-11-07-summary.md)).
 - **`0x0020 Starting`** is most of the wait after a Modbus start.
   `is_starting` recognises it.
-- **A start can take several `0xCF` commands** before the state moves, so
-  `async_ensure_running` re-sends while the state still reads stopped, and
-  every capability-test driver calls it on the way out. See the
+- **One `0xCF` is enough; a night boot waits in Standby.** At [gerd](installation-gerd.md)'s
+  SH8.0RT on P022, at night, a single start went Key stop `0x0002` -> Standby `0x0008` within
+  3 s, stayed in Standby 279 s, then Starting, and Running at 369 s -- the same as a run that
+  re-sent the start four times (368 s)
+  ([the run](../sources/gerd-forced-startup-and-restart-2026-11-22-summary.md)). So
+  `async_ensure_running` treats Standby after a start as progress (`is_standby`) and re-sends
+  only while the word still reads a stop, in case the command was lost; every
+  capability-test driver calls it on the way out. See the
   [capability test](../concepts/capability-test.md).
 - **A day of polling produces very few codes.** Over 1470 one-minute polls
   spanning 30 hours at [mkaiser](installation-mkaiser.md) on P020, over the

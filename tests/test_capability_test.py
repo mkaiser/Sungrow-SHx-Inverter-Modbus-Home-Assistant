@@ -1031,6 +1031,22 @@ async def test_a_dark_inverter_is_refused_unless_the_run_was_told_to_expect_it(
     assert (await allowed.async_run()).code != 2
 
 
+async def test_a_restart_alone_runs_in_the_dark(full_unit: MockModbusUnit) -> None:
+    """A restart writes no control, so it needs no sun to mean something."""
+    full_unit.input[5016] = [0, 0]
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = CapabilityTest(
+        inverter,
+        options=Options(restart=True, restart_only=True),
+        clock=FakeClock(),
+    )
+
+    outcome = await run.async_run()
+    assert "refused" not in run.conditions, run.conditions
+    assert outcome.code != 2
+
+
 async def test_a_state_of_charge_probe_never_climbs_towards_the_battery(
     full_unit: MockModbusUnit,
 ) -> None:
@@ -2633,6 +2649,26 @@ async def test_a_start_that_is_still_stopped_a_minute_later_is_sent_again(
 
     assert await run.async_ensure_running() is True
     assert sends.count(0xCF) == 2
+
+
+async def test_a_night_boot_waiting_in_standby_is_not_sent_the_start_again(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Key stop, then minutes of Standby, then Starting: one start, as at gerd's."""
+    from sungrow_modbus.capability_test import RESTART_POLL
+
+    sends: list[int] = []
+    full_unit.on_write(
+        lambda event: sends.append(event.values[0]) if event.address == 12999 else None
+    )
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    standby = int(279 / RESTART_POLL)
+    await _stuck(run, [0x0002, *[0x0008] * standby, 0x0020, 0x0020, 0x0040])
+
+    assert await run.async_ensure_running() is True
+    assert sends.count(0xCF) == 1
 
 
 async def test_an_inverter_that_never_comes_back_ends_the_run_in_exit_5(

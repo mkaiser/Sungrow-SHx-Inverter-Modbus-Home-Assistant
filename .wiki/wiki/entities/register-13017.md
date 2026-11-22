@@ -97,6 +97,14 @@ timing repeats: across nine days and three methods at this house, `Starting` cam
 [2026-11-16](../sources/mkaiser-forced-startup-2026-11-16-summary.md),
 [2026-11-17](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)).
 
+**On P022 the same**, at [gerd](installation-gerd.md)'s SH8.0RT over the cable, from the
+capability test's forced startup mode, battery at 0.3 % against its 10 % minimum, no PV: 13017 read
+the factory 0 before (no check had run there), left standby after 163 s, Running after 208 s with the
+battery idle, back in standby 17 s after `0x55`, verdict "the inverter did as it was told", every
+fault word 0. A second `0xAA` by hand right after took longer: Starting at 241 s, Running at 329 s
+([the run](../sources/gerd-forced-startup-and-restart-2026-11-22-summary.md)). So three B001
+firmwares now agree; whether P022 flips `0xAA` back by itself (#444) was not watched.
+
 ## In the integration
 
 A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustand*: on writes
@@ -105,6 +113,7 @@ A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustan
 `Capability.FORCED_STARTUP` answered (SH-CX excluded) **and** the firmware is in
 `CONFIRMED_ON_FIRMWARE` for `Capability.FORCED_STARTUP_CONTROL`
 ([firmware gating](../concepts/firmware-gating.md)): P023, from
-[the bar12 run](../sources/bar12-forced-startup-2026-11-07-summary.md), and P020, from
-[the mkaiser run](../sources/mkaiser-forced-startup-2026-11-08-summary.md). Other firmware gets it
-from a watched start.
+[the bar12 run](../sources/bar12-forced-startup-2026-11-07-summary.md), P020, from
+[the mkaiser run](../sources/mkaiser-forced-startup-2026-11-08-summary.md), and P022, from
+[the gerd run](../sources/gerd-forced-startup-and-restart-2026-11-22-summary.md). Other firmware
+gets it from a watched start.

@@ -56,12 +56,12 @@ def _entity_id(hass: HomeAssistant, domain: str, key: str) -> str | None:
 
 
 KEY = "forced_startup_under_low_soc"
-UNCONFIRMED = "SAPPHIRE-H_B001.V000.P022"
+UNCONFIRMED = "SAPPHIRE-H_B001.V000.P021"
 
 
-def test_p020_and_p023_are_confirmed_to_start_on_13017() -> None:
+def test_p020_p022_and_p023_are_confirmed_to_start_on_13017() -> None:
     assert capabilities.CONFIRMED_ON_FIRMWARE[Capability.FORCED_STARTUP_CONTROL] == (
-        frozenset({"SAPPHIRE-H_B001.V000.P020", FIRMWARE})
+        frozenset({"SAPPHIRE-H_B001.V000.P020", "SAPPHIRE-H_B001.V000.P022", FIRMWARE})
     )
 
 

@@ -110,7 +110,10 @@ class PreflightSteps(RestoreSteps):
             )
         pv = self._value("total_dc_power")
         self.conditions["pv_w"] = pv
-        if not self.options.allow_dark and (pv is None or pv < MIN_PV_W):
+        # A restart alone writes no control and needs no sun: its generating
+        # time is simply not measured in the dark (T032 runs it at night).
+        dark_is_fine = self.options.allow_dark or self.options.restart_only
+        if not dark_is_fine and (pv is None or pv < MIN_PV_W):
             raise Guard(
                 f"Only {pv or 0:.0f} W of PV. The behavioural half of this test "
                 "measures what the inverter does with the sun it has, so run it "

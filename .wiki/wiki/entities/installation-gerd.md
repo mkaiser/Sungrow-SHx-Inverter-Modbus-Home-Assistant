@@ -48,6 +48,11 @@ In the evening the day's three fixes went in over SSH (a local build, not a rele
 confirmed the discharge window and the discharging start threshold; the restart permission is left off
 ([the evening](../sources/gerd-t076-2026-11-21-summary.md)).
 
+**2026-11-22, a night window with his Home Assistant's entries disabled**: the forced startup (13017)
+did as told on P022, and a watched restart showed one start is enough -- the boot waits ~4.5 min in
+Standby at night, which the engine had answered with re-sends
+([the night](../sources/gerd-forced-startup-and-restart-2026-11-22-summary.md)).
+
 ## Diagnoses
 
 - [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30
@@ -58,6 +63,7 @@ confirmed the discharge window and the discharging start threshold; the restart 
 - [SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md)
 - [AC22E-01 wallbox, gerd, TLS](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md)
 - [SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3-summary.md), 2026-11-03, while a car charged
+- [SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port, fourth reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-4-summary.md), 2026-11-22, from his Home Assistant, with a day and a half of plausibility checks
 - [SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md), 2026-11-03, the wallbox charging
 - [The wallbox through a charging session](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md), 2026-11-03
 - [The battery level against the pack's own SoC](../sources/gerd-battery-level-2026-11-14-summary.md), 2026-11-14: max SoC now reads 100 %, 90 % in the diagnoses until 2026-11-03

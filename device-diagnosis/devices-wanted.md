@@ -64,7 +64,7 @@ Generated from [`results/`](results/) by `scripts/generate/generate_devices_want
 | Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P030, P031, P032, P033 | any other |
 | Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
 | Third-party battery | 4 inverters | other packs |
-| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 7 inverters through a Modbus proxy | any route not listed |
+| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 8 inverters through a Modbus proxy | any route not listed |
 | Capability test | 17 of 34 hybrid inverters | every other model and firmware |
 | Wallbox | AC011E-01, AC22E-01 | AC007-00 |
 | iHomeManager | read | a second unit |

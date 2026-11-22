@@ -22,6 +22,7 @@ from sungrow_modbus.capability_test.procedure import (
     FORCED_STARTUP_ON,
     FORCED_STARTUP_WAKE,
     NO_EFFECT,
+    SKIPPED,
 )
 
 from .test_capability_test import FakeClock
@@ -49,11 +50,15 @@ def asleep(sungrow_unit: MockModbusUnit) -> MockModbusUnit:
     return sungrow_unit
 
 
-async def _run(unit: MockModbusUnit, *, wakes: bool = True) -> tuple[Any, Any]:
+async def _run(
+    unit: MockModbusUnit, *, wakes: bool = True, dry_run: bool = False
+) -> tuple[Any, Any]:
     inverter = SungrowInverter(unit)
     await inverter.async_update()
     run = CapabilityTest(
-        inverter, options=Options(forced_startup=True), clock=FakeClock()
+        inverter,
+        options=Options(forced_startup=True, dry_run=dry_run),
+        clock=FakeClock(),
     )
     address = field_address(FORCED_STARTUP.field).address
     polls = {"awake": 0}
@@ -113,6 +118,17 @@ async def test_an_inverter_that_never_wakes_is_reported_as_no_effect(
     assert run.clock.now < FORCED_STARTUP_WAKE + 60
     address = field_address(FORCED_STARTUP.field).address
     assert asleep.holding[address] == FORCED_STARTUP_OFF
+
+
+async def test_a_dry_run_writes_nothing_and_waits_for_no_wake(
+    asleep: MockModbusUnit,
+) -> None:
+    run, outcome = await _run(asleep, dry_run=True)
+
+    (effect,) = outcome.effects
+    assert effect.verdict == SKIPPED
+    assert run.clock.now < 60
+    assert asleep.holding[field_address(FORCED_STARTUP.field).address] == 0
 
 
 @pytest.mark.parametrize(

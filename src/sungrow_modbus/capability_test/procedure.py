@@ -156,8 +156,9 @@ RESTART_DWELL = 10.0
 #: roughly two of those sitting in `0x0020 Starting`.
 #:
 #: **Twice as long in the dark.** With no PV, fwitten's SH10RT-V112 took 381
-#: seconds and gerd's SH8.0RT-V112 369, against 197 and 180 in daylight --
-#: four start commands before the state moved. Ten minutes is about one and
+#: seconds and gerd's SH8.0RT-V112 369, against 197 and 180 in daylight;
+#: at gerd's most of it in Standby before Starting, and the same 369 s from a
+#: single start command as from five. Ten minutes is about one and
 #: a half times the slowest measured, because the cost of waiting too long is
 #: a slow diagnostic where the cost of waiting too little is telling somebody
 #: their inverter is dead while it boots.
@@ -219,6 +220,21 @@ def is_starting(word: int | None) -> bool:
         return False
     label = RUNNING_STATES.get(int(word))
     return label is not None and any(part in label.lower() for part in STARTING_WORDS)
+
+
+def is_standby(word: int | None) -> bool:
+    """Whether the inverter reports Standby, on either encoding.
+
+    After a start command this is progress, not a lost command: gerd's SH8.0RT
+    on P022, started once at night, went Key stop -> Standby within 3 s, sat in
+    Standby for 279 s, then Starting, and Running at 369 s -- the same time as a
+    run that re-sent the start four times (wiki: register-13000). A lost start
+    leaves the stop word standing instead.
+    """
+    if word is None:
+        return False
+    label = RUNNING_STATES.get(int(word))
+    return label is not None and label.lower() == "standby"
 
 
 def is_running(word: int | None) -> bool:

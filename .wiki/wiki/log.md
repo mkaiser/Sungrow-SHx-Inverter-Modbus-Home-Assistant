@@ -2068,3 +2068,19 @@ after dark ([the source](sources/fwitten-import-limit-engine-2026-11-22-summary.
 under a 1250 W forced charge left import at 1718 W, the first failure of register 32998 on P023 and
 a contradiction of peter-sm on the same model and firmware. `register-32998.md`, the forced-charge
 query, `installation-fwitten.md` and the P023 page say so; both failures on record are cluster masters.
+
+## [2026-11-22] ingested | gerd-forced-startup-and-restart
+
+A watched night window at gerd's SH8.0RT-V112 on P022, over the cable
+([the source](sources/gerd-forced-startup-and-restart-2026-11-22-summary.md)): register 13017 is a
+switch on P022 as on P020 and P023 (left standby 163 s, Running 208 s, back 17 s after 0x55), and a
+restart needs one start command: the night boot waits ~4.5 min in Standby before Starting, Running at
+369 s, the same as with the engine's four re-sends. `register-13017.md`, `register-13000.md`,
+`installation-gerd.md` and the P022 page say so; the code grants the switch on P022 and stops
+re-sending into Standby.
+
+## [2026-11-22] ingested | sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-4
+
+gerd's fourth cable reading, downloaded from his own Home Assistant
+([the source](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-4-summary.md)): the kept capability run of 2026-11-21 evening and the
+plausibility checks over 1706 polls; every established check matches, export-side checks still wait.

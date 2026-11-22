@@ -580,10 +580,14 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
         }
     ),
     # Watched at bar12 (SH10RT-20, P023), over the cable and through a
-    # WiNet-S, and at the maintainer's SH10RT (P020) over the cable: 0xAA woke
-    # the standby inverter, 0x55 put it back.
+    # WiNet-S, at the maintainer's SH10RT (P020) and at gerd's SH8.0RT (P022)
+    # over the cable: 0xAA woke the standby inverter, 0x55 put it back.
     Capability.FORCED_STARTUP_CONTROL: frozenset(
-        {"SAPPHIRE-H_B001.V000.P020", "SAPPHIRE-H_B001.V000.P023"}
+        {
+            "SAPPHIRE-H_B001.V000.P020",
+            "SAPPHIRE-H_B001.V000.P022",
+            "SAPPHIRE-H_B001.V000.P023",
+        }
     ),
     # Watched writes of 32998 under a charge from the grid: the maintainer's
     # SH10RT on P020 (cable), gerd's SH8.0RT on P022 (cable and WiNet-S) and

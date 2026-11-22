@@ -186,6 +186,11 @@ def _cell(value: Any, unit: str = "") -> str:
     return f"{value}{space}{unit}"
 
 
+def _unit(row: Any) -> str:
+    """Watts for every observed power; nothing for a check that watches a word."""
+    return "" if row.observable.endswith(("word", "answer")) else " W"
+
+
 def _findings_section(outcome: Outcome) -> list[str]:
     """Render the findings, or say plainly that there were none.
 
@@ -319,10 +324,10 @@ def report(outcome: Outcome, *, title: str) -> str:
         lines += [
             f"| {row.check} | {row.observable} "
             f"| {_cell(row.commanded, ' ' + row.commanded_unit)} "
-            f"| {_cell(row.before, ' W')} ±{_cell(row.before_mad)} "
-            f"| {_cell(row.during, ' W')} ±{_cell(row.during_mad)} "
-            f"| {_cell(row.after, ' W')} ±{_cell(row.after_mad)} "
-            f"| {_cell(row.drift, ' W')} "
+            f"| {_cell(row.before, _unit(row))} ±{_cell(row.before_mad)} "
+            f"| {_cell(row.during, _unit(row))} ±{_cell(row.during_mad)} "
+            f"| {_cell(row.after, _unit(row))} ±{_cell(row.after_mad)} "
+            f"| {_cell(row.drift, _unit(row))} "
             f"| {row.verdict}{' -- ' + row.detail if row.detail else ''} |"
             for row in outcome.effects
         ]

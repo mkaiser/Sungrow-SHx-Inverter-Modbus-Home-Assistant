@@ -10,21 +10,9 @@ what every run measured).
 | Case | What it settles | How, where |
 | --- | --- | --- |
 | PV above the load, battery part full, a forced charge above the surplus | whether the cap is on the grid's share alone, PV counted. **Held by hand 2026-11-21, under passing clouds** (median 1933 W against a 2190 W cap, PV above the load; wiki: register-32998), with overshoots where PV dipped and no clean after-bracket. What is left is a bracket in steady light | **not the engine**: its fixed 1250 W charge is absorbed by a PV surplus (it declined, 582 W from the grid). A watched hand run through the entry's entities: forced charge 4500 W, a cap at half the import, 150 s, cap off 90 s, restore -- when the battery is under ~85 %, PV is 0.2-2 kW over the load and steady for 5 min (a low-battery morning in clear or uniform light) |
-| 13017 left on, on **other firmware** | whether the inverter flips `0xAA` back by itself or on PV. **Answered on P020 2026-11-17: it does not** -- 13017 held `0xAA` for 90 min 48 s, through dawn and 31 min of PV, read back from the register (wiki: register-13017, the watch). #444's ~20 min is not reproduced; other firmware, or an iSolarCloud-connected house, is what is left | a watched run, after dark, reading the register back |
-| 13017 on P022 and other firmware | whether it is a switch there too | a watched run, after dark |
+| 13017 left on, on other firmware | whether the inverter flips `0xAA` back by itself (#444). Held 90 min on P020 (wiki: register-13017); not watched elsewhere | a watched run after dark, reading the register back, at any house that has the switch |
 
-**gerd's is the P022 this wants**, and the precondition is already met there
-rather than waited for: `--forced-startup` needs the battery at its minimum
-with no PV, and his SBR096 sat at its 0.5 % minimum through the nights of the
-second half of November
-([the night](../.wiki/wiki/sources/gerd-wallbox-night-2026-11-16-summary.md),
-[the afternoon](../.wiki/wiki/sources/gerd-wallbox-2026-11-17-afternoon-summary.md)).
-One night window with his Home
-Assistant stopped answers this row and T032's watched restart together, in that
-order -- the forced startup first, since it leaves the inverter running for the
-restart to measure. It does **not** combine with T044's dongle restore run,
-which wants the battery above 30 %: that is a different window, and in late
-autumn a different week.
+13017 as a switch is settled on P020, P022 and P023 (wiki: register-13017); the SH-T is T063.
 
 Not worth a run: a full battery at night, a forced charge into a full
 battery (the engine skips at 90 %), a forced discharge.
@@ -40,3 +28,13 @@ where the house is left changed. Its first real use is the next 13017 watch.
 schedule, bar12). Whether the import-limit check should command that
 charge and wait for the start instead of refusing: decide with the
 diagnosis's rework.
+
+## Status log
+
+- **2026-11-22**, gerd's night window (T063's P022 half, T032): 13017 did as told on P022 and
+  P022 joined `CONFIRMED_ON_FIRMWARE`; a watched restart showed one start is enough (the night
+  boot waits ~4.5 min in Standby), so `async_ensure_running` no longer re-sends into Standby.
+  Two diagnosis bugs found and fixed on the way: the forced startup dry run waited out its
+  10-minute deadline, and `--restart-only` was refused at night. Wiki:
+  `sources/gerd-forced-startup-and-restart-2026-11-22-summary.md`. What is left here is T001's
+  daylight bracket.
