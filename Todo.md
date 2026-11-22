@@ -49,7 +49,8 @@ consumption stalled (its midnight spike is already clamped, `src/sungrow_modbus/
 The readings check *daily counters keep up with the totals* names exactly this (a total rising
 1 kWh with its daily counter unmoved), so a morning diagnosis download from an RS that ran the
 integration overnight answers it, with no writes and no capability test.
-*Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check.
+*Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check; the
+reporter (Diegocampy) offered on #797 to test once the fix is out.
 
 What the maintainer's own inverter can answer is a planned test below
 (T001); the rest waits on other firmware or other houses.
@@ -92,10 +93,10 @@ diagnosis (T005, T006, T042).
 **T055. The integration's own dashboard**: a dashboard strategy the integration serves, which finds its
 entities by translation key and device rather than entity id, builds only what the house has, and puts the
 controls behind a hold-to-unlock card of its own (or an admin-only view) -- no HACS. Users adapt it with
-*Take control*. Built, checked on the simulator in Chromium ([doc/dashboard.md](doc/dashboard.md)), and in
-release 0.1.0a50, which is tagged but **not pushed**. gerd runs the same code: the maintainer adds the dashboard
-there beside the two hand-made ones and decides whether it replaces them. [Plan](plans/T055-generated-dashboard.md).
-*Needs*: the maintainer's look at gerd's, and their go for the push.
+*Take control*. Released in 0.1.0a50 ([doc/dashboard.md](doc/dashboard.md)), and running at the maintainer's
+house and gerd's. Left: the maintainer's verdict there, and at gerd's whether it replaces the two hand-made
+dashboards. [Plan](plans/T055-generated-dashboard.md).
+*Needs*: the maintainer's look at both houses.
 
 **T079. A night restart on an empty pack reads as a house left changed**: at peter-sm the
 capability test stopped the inverter after dark with the pack at 1.0 % (under its 5 % minimum) and
@@ -110,18 +111,11 @@ changes only with the maintainer.
 
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
-is found and fixed, not yet confirmed by the user. An entry first set up on device-scoped ids and deleted leaves
-its ids in the registry's deleted entities, and re-adding to migrate got them back ahead of the claim; the claim
-now renames onto the free legacy id (`tests/test_migration.py`). The user's own way back is **Configure ->
-Entity IDs -> the YAML package's**, which also takes area-prefixed ids (`tests/test_entity_id_switch.py`). Left:
-the user's answer whether they had set it up before, and the fix released to the preview.
-*Needs*: the maintainer posting the reply below on #798, then a release.
-
-> Correction: choosing "migrate" should have kept your old IDs, so this is a bug. Had you added the
-> integration once before and deleted it? Home Assistant then hands the deleted entities' new-style IDs
-> back, ahead of the migration; the next preview fixes that. To get your old IDs now: Settings -> Devices &
-> Services -> Sungrow Modbus -> **Configure** -> **Entity IDs**: the YAML package's IDs. Your old history
-> continues on them. *Total DC power* is there as *Total PV input power* (`sensor.total_dc_power` on the old IDs).
+is fixed since 0.1.0a46 -- an entry first set up on device-scoped ids and deleted leaves its ids in the
+registry's deleted entities, and re-adding to migrate got them back ahead of the claim; the claim now renames
+onto the free legacy id (`tests/test_migration.py`). The correction and the user's way back (**Configure ->
+Entity IDs**) are posted on the issue.
+*Needs*: the user's answer whether they had set it up before.
 
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
@@ -508,12 +502,12 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-22T15:32:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-22T15:32:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-22T20:30:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-22T20:30:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-22 15:32 UTC**: peter_sm's twenty-third reading (posted by Korsberg to #786)
+Last checked **2026-11-22 20:30 UTC**: peter_sm's twenty-third reading (posted by Korsberg to #786)
 is ingested; its outcome 5 is T079.
 Maximo101's
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries

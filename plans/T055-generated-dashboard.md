@@ -6,6 +6,12 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-22 evening**, released: 0.1.0a50 is on PyPI, the GitHub release and the preview
+  mirror (pin check green). The maintainer's own Home Assistant and gerd's run the same code as
+  a hand-installed `0.1.0a50+g5390594`; a Marketplace update to 0.1.0a50 replaces it with the
+  release. Left: the maintainer's verdict on the dashboard at both houses, and at gerd's whether
+  it replaces the two hand-made dashboards.
+
 - **2026-11-22**, built and checked (`bf6d52f`, `3aa6b6c`, `3aee981`): steps 1-4
   below are done, the gate green (8758 passed). Release **0.1.0a50** carries it,
   committed and tagged `v0.1.0a50` (`5390594`) but **not pushed**: the maintainer
