@@ -29,12 +29,6 @@ A holding area, not a queue: taken in only when the maintainer asks
 - github: deactivate the automatic / bot closing of issues
 
 
-- dashboard: Create a new dashboard for the integration. How to deal with namings as users will have different names for the same entities, e.g. prefixed by the room. How to tackle this and still provide a default dashboard for the integration?
-The old yaml integration dashboard had a swtich for "danger mode", wich enabled the controls.
-use the same mechanism as the Wärmepumpe of the maintainer (additional HACS card). Is there a way without the additional HACS card?
-started a dashboard on gerds HA. How to deal with different device namings?
-
-
 - Ensure the install guide shows the new entitiy values for the HA Energy dashboard. The Energy dashboard is not prefilled, so the user has to do this manually. How to provide a guide for this?
 
 - devcontainer: bindmount to sungrow. this fails if the user has not the folder at the place. is there a workaround / auto create folder if not existing for this?
@@ -94,6 +88,12 @@ Nothing can start now: an owner running the preview, and a second unit's
 diagnosis (T005, T006, T042).
 
 ## Integration and tooling
+
+**T055. The integration's own dashboard**: a dashboard strategy the integration serves, which finds its
+entities by translation key and device rather than entity id, builds only what the house has, and puts the
+controls behind a hold-to-unlock card of its own (or an admin-only view) -- no HACS. Users adapt it with
+*Take control*. [Plan](plans/T055-generated-dashboard.md); step 1 reads the frontend's strategy API first.
+*Needs*: nothing.
 
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
@@ -459,9 +459,6 @@ Wanted, not scheduled.
 **T054. How far the MPPT energy drifts** -- [plan](plans/T054-mppt-energy-drift.md)
 (one cable day: 0.984 of *Daily PV generation*).
 *Needs*: more days from the production recorder, and a house through a WiNet-S.
-
-**T055. A generated dashboard** -- [plan](plans/T055-generated-dashboard.md).
-*Needs*: the question of one default dashboard over houses that differ.
 
 **T056. Helping users set up the Energy dashboard** --
 [plan](plans/T056-energy-dashboard-help.md). *Needs*: nothing; core cannot be
