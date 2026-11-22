@@ -9,8 +9,8 @@ created: '2026-10-29'
 
 An [SH10RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md) with an
 [SBR160](device-sbr-battery.md), read on the inverter's own LAN port, with a WiNet-S fitted but not
-in the path. Twenty-two readings, all from Home Assistant, eighteen with a capability test. The first was
-published as `anonymous`; the later twenty-one are signed `peter_sm`. All carry the stand-in
+in the path. Twenty-three readings, all from Home Assistant, nineteen with a capability test. The first was
+published as `anonymous`; the later twenty-two are signed `peter_sm`. All carry the stand-in
 `anon-91477823483`, so they are one installation.
 
 - **[13074](register-13074.md) writes times ten.** The probe answered it by refusal in every
@@ -29,10 +29,11 @@ published as `anonymous`; the later twenty-one are signed `peter_sm`. All carry 
   confirm all three again, with nine of nine readbacks matched.
 - **The charge window's write of 33213 lost the connection every time it was tried**: in the
   sixth, seventh, tenth, twelfth, thirteenth, fifteenth, sixteenth, seventeenth, eighteenth,
-  twentieth, twenty-first and twenty-second readings (2026-11-02 to 2026-11-16), twelve of twelve,
+  twentieth, twenty-first, twenty-second and twenty-third readings (2026-11-02 to 2026-11-18),
+  thirteen of thirteen,
   so the window was never measured here;
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md). From the sixteenth reading
-  on, other writes lost it too: 13059 once, 13050 (EMS mode 3) three times, 33047 (a value above its
+  on, other writes lost it too: 13059 once, 13050 (EMS mode 3) four times, 33047 (a value above its
   bound) three times, 32998's word 5001, and the discharge-window write after 33213 each time.
 - **A Modbus restart did as it was told** in the tenth reading: stopped in 2.0 s, running again
   269 s after the start command, in daylight; and four times more, at 271 s, 301 s, 361 s (after
@@ -41,6 +42,12 @@ published as `anonymous`; the later twenty-one are signed `peter_sm`. All carry 
   and three times more, at 363 s (after dark), 271 s and 303 s (sixteenth to eighteenth), and at
   271 s in the twentieth, twenty-first and twenty-second. Eleven restarts, six of them back at
   271 s to the second. Settings survived every restart.
+- **A twelfth restart, after dark on an empty pack, did not come back to Running**, and the run
+  reported outcome 5 and "the link dropped" though no poll was refused: the pack was at 1.0 %,
+  under its 5 % minimum, and the inverter waited in Standby, as it does without the test. Every
+  setting read back on the first attempt, and the inverter ran again in the days after (154
+  Running observations to 57 Standby); a false alarm, not a house left changed
+  ([twenty-third reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)).
 - **Forced discharge and the export limit acted again** in the thirteenth and fifteenth readings
   (1250 W and 1248 W; export held at 1249 W and 1246.5 W against 1250 W); nine of nine readbacks
   matched, 13074 times ten each time.
@@ -97,3 +104,4 @@ published as `anonymous`; the later twenty-one are signed `peter_sm`. All carry 
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twenty-first reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twenty-second reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, twenty-third reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)

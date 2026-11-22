@@ -29,6 +29,12 @@ running and stopped sets are derived from its labels.
   only while the word still reads a stop, in case the command was lost; every
   capability-test driver calls it on the way out. See the
   [capability test](../concepts/capability-test.md).
+- **But Standby can also be where it stays.** At [peter-sm](installation-peter-sm.md)'s SH10RT-V112
+  on P023, a stop after dark with the pack at 1.0 % (under its 5 % minimum) read `0x0008` at once,
+  and after the start it stayed in Standby past the ten-minute deadline: with no PV and an empty
+  pack there is nothing to run on. Standby after a start is progress only where the inverter has
+  something to start for
+  ([twenty-third reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)).
 - **A day of polling produces very few codes.** Over 1470 one-minute polls
   spanning 30 hours at [mkaiser](installation-mkaiser.md) on P020, over the
   cable, only four appeared and every one was in the map: Standby 1013,

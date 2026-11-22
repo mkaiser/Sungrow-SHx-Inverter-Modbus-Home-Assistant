@@ -4,7 +4,7 @@ title: "Does writing 33213 drop the link at peter-sm?"
 tags: [contention, charge-window, peter-sm, sapphire-h-b001-v000-p023, open]
 created: '2026-11-02'
 query: "Is the connection lost on the charge window's write of 33213 at peter-sm the register's doing or the link's?"
-results_count: 11
+results_count: 14
 ---
 
 # Does writing 33213 drop the link at peter-sm?
@@ -32,7 +32,12 @@ same write (words 3, 30 and 19) and restored every word
 [eighteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16-summary.md) readings).
 A tenth, on 2026-11-15 with 0.1.0a40, lost it on the same write (word 56) and restored every word
 ([twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md)).
-Ten of ten attempts, morning, afternoon and evening. A fourteenth-reading run did not try it:
+Three more, on 2026-11-16 (words 29 and 48) and 2026-11-18 after dark (word 51), lost it on the
+same write and restored every word
+([twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md),
+[twenty-second](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md),
+[twenty-third](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md) readings).
+Thirteen of thirteen attempts, morning, afternoon, evening and night. A fourteenth-reading run did not try it:
 the owner's own charge schedule was on.
 
 **Those three runs also lost the connection elsewhere**, where the earlier ones had not: the

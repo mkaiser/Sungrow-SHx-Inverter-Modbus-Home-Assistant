@@ -104,6 +104,14 @@ and over six at night, then up to 20 s more to generate. Much of the wait is
 deadline is ten minutes, with five each for the stop and for generation. The
 terminal prints a dot every `WAIT_TICK` (10 s) while it waits.
 
+**An empty pack after dark has nothing to come back to.** At
+[peter-sm](../entities/installation-peter-sm.md), a restart at night with the pack at 1.0 %, under
+its 5 % minimum and no PV, left the inverter in `0x0008 Standby` past the deadline. The run reported
+outcome 5 and "the link dropped", though no poll was refused and every setting read back; the
+inverter ran again in the days after. Standby there is the inverter's own choice, not a lost start,
+and the restart cannot tell the two apart
+([twenty-third reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)).
+
 ## Timed windows
 
 `--charge-window` writes a forced-charging window around the inverter's own clock (holding

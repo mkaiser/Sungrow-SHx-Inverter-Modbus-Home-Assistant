@@ -2092,3 +2092,15 @@ in low-SoC standby until a kept run has established it, with no option of its ow
 check, *daily counters keep up with the totals*, names a daily counter that stands still while its
 lifetime counter rises 1 kWh -- what #797 reports, and what the pair checks cannot see, since their
 trails start only when the daily counter steps (`doc/capability_tests.md`).
+
+## [2026-11-22] ingested | sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21
+
+peter_sm's twenty-third reading, posted by Korsberg to #786
+([the source](sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)).
+Its run of 2026-11-18 after dark ended in **outcome 5**, the one code that means a house may be
+left changed, and on reading it is a false alarm: every setting read back, no poll was refused,
+and the restart's "the link dropped" is an inverter that stayed in Standby with its pack at 1.0 %,
+under the 5 % minimum, as it would have without the test. The plausibility section's running
+states (154 Running to 57 Standby over the following three days) show it ran again.
+`installation-peter-sm.md`, `register-13000.md`, `capability-test.md` and the 33213 query (now
+thirteen of thirteen, with the eleventh and twelfth it was missing) say so.

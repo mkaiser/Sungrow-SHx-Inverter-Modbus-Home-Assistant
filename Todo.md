@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T079.** Numbers are minted in order, never reused and
+**Next free item number: T080.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -96,6 +96,17 @@ controls behind a hold-to-unlock card of its own (or an admin-only view) -- no H
 release 0.1.0a50, which is tagged but **not pushed**. gerd runs the same code: the maintainer adds the dashboard
 there beside the two hand-made ones and decides whether it replaces them. [Plan](plans/T055-generated-dashboard.md).
 *Needs*: the maintainer's look at gerd's, and their go for the push.
+
+**T079. A night restart on an empty pack reads as a house left changed**: at peter-sm the
+capability test stopped the inverter after dark with the pack at 1.0 % (under its 5 % minimum) and
+no PV; it stayed in Standby past the deadline, as it would have anyway, and the run reported
+outcome 5 and "the link dropped" with no poll refused and every setting restored
+([the reading](.wiki/wiki/sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-21-summary.md)).
+Two fixes to weigh, both in `capability_test/restore.py` and the pre-flight: do not restart when the
+pack is at its minimum with no PV (nothing can come back to Running), and do not call a deadline a
+dropped link when no poll was refused. Outcome 5 is the hard-constraint code, so its meaning
+changes only with the maintainer.
+*Needs*: the maintainer's call on what Standby at the deadline means.
 
 **T071. A migration that did not claim the legacy entity ids**
 ([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
@@ -497,13 +508,13 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-21T18:55:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-21T18:55:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-22T15:32:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-22T15:32:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-21 18:55 UTC**: no new diagnosis. PVSonnenfreund's comment on #788 (an SBR096's
-cell block on BCU `.01.30`, its module serials, two mismatched frames) is ingested as a wiki source.
+Last checked **2026-11-22 15:32 UTC**: peter_sm's twenty-third reading (posted by Korsberg to #786)
+is ingested; its outcome 5 is T079.
 Maximo101's
 **AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
 `"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
