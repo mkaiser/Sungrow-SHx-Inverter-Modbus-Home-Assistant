@@ -26,7 +26,22 @@ A holding area, not a queue: taken in only when the maintainer asks
 
 - Investigate / future: How to properly organize the code base after release. CI/CD from github. restrict main branch to PR only. Assumption: Automated CI/CD depends on how much can the tests be stripped down.
 
-- deactivate the automatic / bot closing of issues
+- github: deactivate the automatic / bot closing of issues
+
+
+- dashboard: Create a new dashboard for the integration. How to deal with namings as users will have different names for the same entities, e.g. prefixed by the room. How to tackle this and still provide a default dashboard for the integration?
+The old yaml integration dashboard had a swtich for "danger mode", wich enabled the controls.
+use the same mechanism as the Wärmepumpe of the maintainer (additional HACS card). Is there a way without the additional HACS card?
+started a dashboard on gerds HA. How to deal with different device namings?
+
+
+- Ensure the install guide shows the new entitiy values for the HA Energy dashboard. The Energy dashboard is not prefilled, so the user has to do this manually. How to provide a guide for this?
+
+- devcontainer: bindmount to sungrow. this fails if the user has not the folder at the place. is there a workaround / auto create folder if not existing for this?
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/sungrow-manuals,target=${containerWorkspaceFolder}/tmp/manuals,type=bind"
+
+- How  the access the RAK module (predecessor of WiNetS) website?
+I don't know if I ever used the webiste/ changed the password. Check the documentaed credentials automataically via playwright.
 
 
 # Next steps
@@ -122,6 +137,7 @@ still holds alone; the other three can go today.
 archive 2025-legacy to archive/2025-legacy
 current main (last yaml version) to archive/
 
+
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
 where it said "no runs kept", on a house that may never run a capability test
@@ -179,11 +195,13 @@ holds. Two owner settings are deliberate and stay as they are:
 
 **T001. The site import limit (32998) at the maintainer's SH10RT, in
 daylight** -- [plan](plans/T001-T063-import-limit-and-forced-startup.md). What it
-settles: whether the cap is on the grid's share alone with PV counted, which
-needs PV above the load, the battery part full and a forced charge above the
-surplus. How: `sungrow_capability_test.py <host> --import-limit` from this
-checkout, a dry run first.
-*Needs*: a bright enough hour. The forced startup (13017) on firmware other
+settles: whether the cap is on the grid's share alone with PV counted. It held
+by hand on 2026-11-21 with PV above the load, but under passing clouds, with
+no clean after-bracket; what is left is that bracket. The engine cannot take
+this case (its 1250 W charge is absorbed by the surplus); the plan has the
+hand run, through the production entry's entities.
+*Needs*: the battery under ~85 % with PV 0.2-2 kW over the load, steady for
+5 min -- a low-battery morning in clear or uniform light. The forced startup (13017) on firmware other
 than P020 is not testable here and is T063.
 
 **T007. A day and a night of *Extended test (auto repeat)* at the
@@ -256,7 +274,8 @@ waits for a watched write.
 **T032. gerd's cable restart**: the start had to be sent three times on
 2026-11-03 (cable) and again on 2026-11-10 (WiNet-S, running after 182 s).
 Look at what the inverter reports between the starts.
-*Unblocked by*: another restart at gerd's, watched.
+*Unblocked by*: another restart at gerd's, watched -- the same night window as
+T063, after it ([plan](plans/T001-T063-import-limit-and-forced-startup.md)).
 
 **T033. The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
 source's model table, many rows unverified.
@@ -264,10 +283,14 @@ source's model table, many rows unverified.
 
 **T034. The PV cut (31211, #738) beyond the four confirmed firmwares**, and
 whether a cut survives a night or a restart or iSolarCloud rewrites it.
-Nothing here or at the maintainer's P020 can answer it.
+No firmware here or at the maintainer's P020 extends the list; the survival
+half needs only a confirmed device.
 *Unblocked by*: a capability test on `SUNSTONE-H_B000.V001.P068`,
 `B000.V002.P067`, `B000.V002.P059`, `B000.V002.P057` or
-`PEARL-H_B001.V001.P038`; one evening's watch on a confirmed device.
+`PEARL-H_B001.V001.P038`; one evening's watch on a confirmed device -- gerd's
+P022 is one, and the overnight leg leaves 31211 set, which costs him a
+morning's generation if the restore fails, so ask for that leg explicitly and
+measure the restart first.
 
 **T035. What register 13080 counts.** Documented as the external EMS heartbeat
 (0-1000 s), it reads 0 on 42 diagnoses, 330 on two houses in EMS mode 0, and
