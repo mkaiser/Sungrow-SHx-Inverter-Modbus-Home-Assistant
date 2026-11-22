@@ -4,6 +4,17 @@ One dashboard for every house, built in the browser from the entities that
 exist there. A user who wants more takes it over and edits it as their own.
 Nothing to install from HACS.
 
+## Status log
+
+- **2026-11-22**, built and checked (`bf6d52f`, `3aa6b6c`, `3aee981`): steps 1-4
+  below are done, the gate green (8758 passed). Release **0.1.0a50** carries it,
+  committed and tagged `v0.1.0a50` (`5390594`) but **not pushed**: the maintainer
+  said not yet. Pushing is `git push --follow-tags origin proper-ha-integration`,
+  then the release skill's steps 5-6. The same code runs at gerd's as
+  `0.1.0a50+g5390594` (file-URL wheel; the previous build kept as
+  `/config/sungrow_modbus_42d3adc_backup`), where the maintainer tries the
+  dashboard themselves. The restart for it ended auto repeat on both entries.
+
 ## What it has to solve
 
 - **Names differ per house.** An entity id may carry a room or a device
@@ -216,5 +227,5 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
 - gerd: the live inverter and wallbox dashboards are saved (gitignored
   `tmp/gerd-backup-ha/live_2026-11-22_*.json`; the wallbox one carries
   hand-typed short names, the device-name problem `{type: entity}` solves).
-  Left: install a build with the dashboard there, add it beside them,
-  compare, and replace them only on the maintainer's word.
+  The build is installed there; left: the maintainer adds the dashboard
+  beside them, compares, and decides whether it replaces them.
