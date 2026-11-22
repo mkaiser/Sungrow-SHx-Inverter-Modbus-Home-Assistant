@@ -92,7 +92,7 @@ diagnosis (T005, T006, T042).
 **T055. The integration's own dashboard**: a dashboard strategy the integration serves, which finds its
 entities by translation key and device rather than entity id, builds only what the house has, and puts the
 controls behind a hold-to-unlock card of its own (or an admin-only view) -- no HACS. Users adapt it with
-*Take control*. [Plan](plans/T055-generated-dashboard.md); step 1 reads the frontend's strategy API first.
+*Take control*; the frontend 2026.11 offers all of it. [Plan](plans/T055-generated-dashboard.md).
 *Needs*: nothing.
 
 **T071. A migration that did not claim the legacy entity ids**

@@ -52,10 +52,12 @@ By what the integration owns, never by `entity_id`:
 3. A card that resolves nothing is dropped, and so is a section left empty.
    The condition is on the entity existing, not on its state: an offline
    device still shows *unavailable*, which is what its owner wants to see.
-4. Names come from the integration's own translations
-   (`component.sungrow_modbus.entity.<platform>.<key>.name`), so the dashboard
-   speaks the user's language without a word typed into it. Headings come from
-   a small en/de table in the module.
+4. Every tile and entities row carries `name: {type: entity}`: the entity's
+   own translated name without the device name in front. A plain row repeats
+   the device ("Carport AC22E-01 Phase mode"), which is why gerd's wallbox
+   dashboard was given hand-typed short names. Nothing is typed in, so the
+   dashboard speaks the user's language, and so does a copy taken over.
+   Headings come from a small en/de table in the module.
 
 ### Views
 
@@ -119,27 +121,47 @@ else the strategy leaves the view out.
    A dashboard taken over no longer follows a capability that appears later;
    the docs say so.
 
+## What the frontend offers
+
+Read in the frontend that Home Assistant 2026.11, the minimum, pins
+(`home-assistant-frontend` 20261028.6):
+
+- **A custom dashboard strategy** is the element `ll-strategy-dashboard-<name>`
+  with `static async generate(config, hass)`, referred to as
+  `strategy: {type: custom:<name>}` (`src/panels/lovelace/strategies/get-strategy.ts`).
+  An optional `shouldRegenerate(config, oldHass, newHass)` decides when it is
+  built again; without it, a registry change rebuilds it.
+- **The add-dashboard dialog lists custom strategies** registered in
+  `window.customStrategies` (`{type, strategyType: "dashboard", name,
+  description, documentationURL}`), beside Home Assistant's own
+  (`src/data/lovelace_custom_strategies.ts`, `dialog-new-dashboard.ts`).
+- **`hass.entities` carries `platform`, `translation_key` and `device_id`**
+  (`EntityRegistryDisplayEntry`, `src/data/entity/entity_registry.ts`).
+- **Take control works on a custom strategy.** *Edit dashboard* opens the
+  strategy editor dialog: its YAML mode edits the options, and its *Take
+  control* saves the generated config as an ordinary dashboard
+  (`hui-root.ts`). The module sets no `noEditor`, which would skip straight to
+  taking control and hide the options.
+- **Names without the device**: tiles and entities rows take `name` as
+  `{type: entity}` (`EntityNameItem`, `src/common/entity/entity_name_config.ts`).
+- **A view or section is limited to users** by the `user` visibility
+  condition (`users: [...]`).
+
 ## Steps
 
-1. **Read the frontend first**, at the minimum Home Assistant version
-   (`doc/architecture.md`): the custom dashboard strategy API and `generate`'s
-   signature; whether `window.customStrategies` reaches the add-dashboard
-   picker; that `hass.entities` carries `translation_key`, `platform` and
-   `device_id`; that *Take control* works on a custom strategy. What does not
-   hold changes this plan before any code.
-2. Serve the module (`__init__.py`, `manifest.json`); a test that the path is
+1. Serve the module (`__init__.py`, `manifest.json`); a test that the path is
    registered once across two entries; `make hassfest`.
-3. `layout.json`, and a test that every `translation_key` in it is one the
+2. `layout.json`, and a test that every `translation_key` in it is one the
    description modules define and `translations/en.json` names, so a renamed
    key fails CI instead of emptying a card.
-4. The strategy, then the lock card.
-5. `doc/dashboard.md` (the three levels, the options, the lock card on its
+3. The strategy, then the lock card.
+4. `doc/dashboard.md` (the three levels, the options, the lock card on its
    own, screenshots); links from the README and the install guide;
    `doc/integration_migration.md`'s danger-mode row and paragraph point at
    the lock card; `doc/architecture.md`'s "danger-mode toggle ... not ported"
    becomes the lock decision; `dashboard/wallbox/dashboard.yaml` goes, its
    view now built.
-6. `make quick`, then `make check`.
+5. `make quick`, then `make check`.
 
 ## Verification
 
