@@ -50,7 +50,7 @@ async def test_the_module_is_added_and_served(
     assert url.startswith(f"{dashboard.URL_BASE}/{dashboard.MODULE}?v=")
 
     client = await hass_client()
-    for name in (dashboard.MODULE, "layout.json"):
+    for name in sorted(path.name for path in dashboard.DIRECTORY.iterdir()):
         response = await client.get(f"{dashboard.URL_BASE}/{name}")
         assert response.status == HTTPStatus.OK, name
 

@@ -24,16 +24,17 @@ TRANSLATIONS = json.loads(
     (COMPONENT / "translations" / "en.json").read_text(encoding="utf-8")
 )
 #: The views the strategy's `views` option names, in the strategy's order.
-VIEW_IDS = ["overview", "battery", "inverter", "wallbox", "controls"]
-#: Card types the strategy builds: `device-link` is its own, the rest Home Assistant's.
+VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls"]
+#: Card types the strategy builds: the last four are its own, the rest Home Assistant's.
 CARD_TYPES = {
     "tile",
-    "gauge",
     "entities",
     "history-graph",
     "statistics-graph",
-    "markdown",
+    "energy",
+    "flow",
     "device-link",
+    "integration-link",
 }
 
 
@@ -43,8 +44,16 @@ def _cards():
             yield from section["cards"]
 
 
+def _badges():
+    for view in LAYOUT["views"]:
+        yield from view.get("badges", [])
+
+
 def _refs(card: dict) -> list[str]:
-    refs = [card["entity"]] if "entity" in card else list(card.get("entities", []))
+    """Return every reference a card or badge may resolve, alternatives apart."""
+    rows = [card["entity"]] if "entity" in card else list(card.get("entities", []))
+    rows += card.get("roles", {}).values()
+    refs = [row["entity"] if isinstance(row, dict) else row for row in rows]
     low, high = card.get("repeat", (1, 1))
     expanded = [
         ref.replace("{n}", str(n)) for ref in refs for n in range(low, high + 1)
@@ -61,13 +70,30 @@ def test_every_card_type_is_one_the_strategy_builds() -> None:
 
 
 @pytest.mark.parametrize(
-    "ref", sorted({ref for card in _cards() for ref in _refs(card)})
+    "ref", sorted({ref for card in [*_cards(), *_badges()] for ref in _refs(card)})
 )
 def test_every_entity_is_one_the_integration_has(ref: str) -> None:
     domain, _, key = ref.partition(".")
     assert key in TRANSLATIONS["entity"].get(domain, {}), (
         f"{ref} is not a translation key of {domain}"
     )
+
+
+def test_every_view_a_tap_opens_is_one_there_is() -> None:
+    sections = [s for view in LAYOUT["views"] for s in view["sections"]]
+    for item in [*_cards(), *_badges(), *sections]:
+        assert item.get("view", VIEW_IDS[0]) in VIEW_IDS, item
+
+
+def test_a_setting_outside_the_controls_opens_no_dialog() -> None:
+    """Its dialog would change the setting past the lock."""
+    writable = {"number", "select", "switch", "time", "button"}
+    for view in LAYOUT["views"]:
+        if view.get("locked"):
+            continue
+        for card in (c for section in view["sections"] for c in section["cards"]):
+            if {ref.partition(".")[0] for ref in _refs(card)} & writable:
+                assert card.get("more_info") is False, card
 
 
 def test_every_text_has_english_and_german() -> None:
