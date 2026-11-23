@@ -93,7 +93,7 @@ automation:
   the minimum raised from 25 % to 50 % at 28 %. Raise it in small steps, or
   lower *Battery max charge power* first. Lowering it again stops the charge
   within a minute, but an inverter already in low-SoC standby stays there until
-  PV returns; *Forced startup under low SoC* wakes it.
+  PV returns; turning *Low-SoC standby* off wakes it.
 - **On a three-wire grid (3P3L, no neutral)** the inverter reports the
   voltages *between* phases (A-B, B-C, C-A, about 400 V) where a four-wire
   one reports each phase against neutral (about 230 V). The integration

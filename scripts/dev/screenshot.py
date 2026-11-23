@@ -172,7 +172,7 @@ def open_dashboard(page: Page, url: str, view: str) -> None:
     page.goto(f"{url}/{DASHBOARD}/{view}")
     page.wait_for_load_state("networkidle")
     page.locator("hui-section").first.wait_for()
-    page.wait_for_timeout(3_000)
+    page.wait_for_timeout(5_000)
 
 
 def sections_box(page: Page, count: int) -> dict[str, float]:
@@ -212,26 +212,26 @@ def dashboard_add(page: Page, url: str) -> Path:
     return target
 
 
-def dashboard_overview(page: Page, url: str) -> Path:
-    """Shoot the dashboard's Overview: its Now and Today sections."""
-    open_dashboard(page, url, "overview")
-    target = DOC_IMAGES / "HA-dashboard-overview.png"
-    page.screenshot(path=str(target), clip=sections_box(page, 2))
+def dashboard_home(page: Page, url: str) -> Path:
+    """Shoot the dashboard's Home: power flow, battery and today."""
+    open_dashboard(page, url, "home")
+    target = DOC_IMAGES / "HA-dashboard-home.png"
+    page.screenshot(path=str(target), clip=sections_box(page, 3))
     return target
 
 
 def dashboard_controls(page: Page, url: str) -> Path:
-    """Shoot the dashboard's Controls, locked: the warning and Operation."""
+    """Shoot the dashboard's Controls, locked: the battery's section."""
     open_dashboard(page, url, "controls")
     target = DOC_IMAGES / "HA-dashboard-controls.png"
-    page.screenshot(path=str(target), clip=sections_box(page, 2))
+    page.screenshot(path=str(target), clip=sections_box(page, 1))
     return target
 
 
 SHOTS: dict[str, Callable[[Page, str], Path]] = {
     "dashboard-add": dashboard_add,
     "dashboard-controls": dashboard_controls,
-    "dashboard-overview": dashboard_overview,
+    "dashboard-home": dashboard_home,
     "setup-menu": setup_menu,
     "device-diagnosis": device_diagnosis,
     "options-capability-test": options_capability_test,

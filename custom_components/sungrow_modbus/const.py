@@ -421,6 +421,13 @@ DIAGNOSIS_ISSUE_URL = (
     "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786"
 )
 
+#: The integration's own dashboard, linked from the same dialog; moves with
+#: the one below.
+DASHBOARD_GUIDE_URL = (
+    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+    "/blob/proper-ha-integration/doc/dashboard.md"
+)
+
 #: Which sensors to pick in the Energy dashboard, linked from the success
 #: dialog of the ordinary setup. On the development branch until the merge
 #: into `main`, which moves it.

@@ -547,11 +547,15 @@ and bold are kept.
 
 > **EN** **You are set up.** The inverter's entities appear on its device page as their first readings arrive.
 >
+> **A dashboard is ready for you**: **Settings → Dashboards → Add dashboard**, then *Sungrow Modbus* under *Community dashboards* ([the guide]({dashboard_url})).
+>
 > To see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.
 >
 > **If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more.
 
 > **DE** **Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.
+>
+> **Ein Dashboard liegt bereit**: **Einstellungen → Dashboards → Dashboard hinzufügen**, dann *Sungrow Modbus* unter *Community-Dashboards* ([die Anleitung]({dashboard_url})).
 >
 > Um ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
 >

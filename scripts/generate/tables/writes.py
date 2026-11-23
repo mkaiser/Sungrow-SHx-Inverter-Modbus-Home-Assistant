@@ -325,9 +325,9 @@ class Switch(TypedDict):
     requires: NotRequired[str]
     on: int
     off: int
-    #: Words the register holds that mean off but cannot be written: a
+    #: Words the register holds that mean on but cannot be written: a
     #: factory value outside the two the specification defines.
-    also_off: NotRequired[tuple[int, ...]]
+    also_on: NotRequired[tuple[int, ...]]
     #: Seconds after an off is written for which a read of the on word is
     #: not believed: a register that keeps reading on for a while after it
     #: took the off.
@@ -398,16 +398,19 @@ SWITCHES: tuple[Switch, ...] = (
     # specification names only 0xAA; watched on P023 (bar12) it is a switch:
     # 0xAA stays, reads back and keeps the inverter running, 0x55 sends it
     # back to standby, and every other word is refused with 0x04. Every SH-RT
-    # reads 0 from the factory, which behaves as off and cannot be written
-    # back, so 0 reads as off. Gated by `FORCED_STARTUP_CONTROL`, which
+    # reads 0 from the factory, which behaves as 0x55 and cannot be written
+    # back. So the switch says what the register does as a state, the other
+    # way round from Sungrow's name for it: on, the inverter may go into
+    # low-SoC standby (0x55, and the factory 0); off, it stays awake (0xAA).
+    # Gated by `FORCED_STARTUP_CONTROL`, which
     # `capabilities.CONFIRMED_ON_FIRMWARE` grants per watched firmware.
     {
         "field": "forced_startup_under_low_soc_raw",
-        "key": "forced_startup_under_low_soc",
+        "key": "low_soc_standby",
         "requires": "FORCED_STARTUP_CONTROL",
-        "on": 0xAA,
-        "off": 0x55,
-        "also_off": (0,),
+        "on": 0x55,
+        "off": 0xAA,
+        "also_on": (0,),
     },
     # Register 33179, outside Sungrow's document (#785): the weekend
     # discharge schedule's own enable. Gated by `DISCHARGE_SCHEDULE_CONTROL`,

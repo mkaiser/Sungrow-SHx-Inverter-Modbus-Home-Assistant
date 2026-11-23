@@ -101,6 +101,7 @@ from .migration import (
 )
 from .route import async_direct, connection_text, route_key, web_interface
 from .services import async_setup_services
+from .websocket import async_register as async_register_websocket
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -210,6 +211,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_download(hass)
     # The dashboard module likewise: one static path and one module URL.
     await async_register_dashboard(hass)
+    async_register_websocket(hass)
     return True
 
 
@@ -741,6 +743,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     await entry.runtime_data.diagnosis.async_load_ledger()
 
     _async_drop_unused_corrections(hass, entry, serial)
+    _async_remove_retired_controls(hass, serial)
 
     await _async_take_over_legacy_ids(hass, entry, serial, capabilities, legacy_ids)
 
@@ -778,6 +781,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+#: Controls no longer made, by domain and unique-id suffix. 13017's switch was
+#: on where `low_soc_standby` is off: it goes rather than change its meaning
+#: under an automation that uses it, and an action on it then fails out loud.
+RETIRED_CONTROLS: tuple[tuple[str, str], ...] = (
+    ("switch", "forced_startup_under_low_soc"),
+)
+
+
+@callback
+def _async_remove_retired_controls(hass: HomeAssistant, serial: str) -> None:
+    """Drop the controls another one replaced from the registry."""
+    registry = er.async_get(hass)
+    for domain, key in RETIRED_CONTROLS:
+        entity_id = registry.async_get_entity_id(domain, DOMAIN, f"{serial}_{key}")
+        if entity_id is not None:
+            _LOGGER.warning(
+                "%s was replaced by the switch Low-SoC standby, which is on "
+                "where it was off; change what uses it",
+                entity_id,
+            )
+            registry.async_remove(entity_id)
 
 
 @callback

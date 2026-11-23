@@ -419,8 +419,9 @@ class InverterFastHolding(Component):
     A switch, watched on P023: 0xAA wakes an inverter in low-SoC standby and
     keeps it running, 0x55 returns it to standby, and each reads back as
     written. Every other word is refused with 0x04, so the factory 0 cannot
-    be written back. Written only by the *Forced startup under low SoC*
-    switch, where `Capability.FORCED_STARTUP_CONTROL` is granted.
+    be written back. Written only by the *Low-SoC standby* switch, which is
+    on for 0x55 and the factory 0 and off for 0xAA, where
+    `Capability.FORCED_STARTUP_CONTROL` is granted.
     """
     pv_power_limitation_raw = integer(reg(13018), signed=False, nan=65535)
     """PV power limitation raw."""

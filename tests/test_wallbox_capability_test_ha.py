@@ -339,7 +339,8 @@ async def test_auto_repeat_starts_a_wallbox_run_only_while_a_car_charges(
     assert runner._wallbox_folded is not None
     # The wallbox's slot is its own: the same slot starts no second run.
     assert runner.continuous._last_wallbox_slot == 0
-    assert runner.continuous._last_slot is None
+    # And it sets no wait for the inverter's runs.
+    assert runner.continuous._ready_at is None
 
 
 async def test_a_wallbox_run_and_an_inverter_run_never_overlap(

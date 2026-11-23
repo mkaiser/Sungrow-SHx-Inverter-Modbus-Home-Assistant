@@ -203,8 +203,9 @@ inverter restart included, so a restart is measured once per collection.
 check needs (`ledger.NEEDS`: the import limit needs PV under 200 W and room in
 the battery, the PV cut needs PV above 700 W) and starts the ordinary run when
 one is due: its own snapshot, its own restore, the entry's options as for the
-button. At most one run in each 30-minute slot counted from the press of
-*Diagnosis: start*, none while the inverter is not running, two minutes of
+button. The next run waits by what the last was worth: 5 minutes after one that settled a
+check, 30 after one that settled none, 60 after the second such in a row; a check that became possible and
+was not yet tried in vain shortens that to 5, once. None while the inverter is not running, two minutes of
 quiet after a run, no daily cap, and it switches itself off when nothing a
 moment can answer is left (`custom_components/sungrow_modbus/continuous.py`).
 A night of runs at [mkaiser](../entities/installation-mkaiser.md) showed why it

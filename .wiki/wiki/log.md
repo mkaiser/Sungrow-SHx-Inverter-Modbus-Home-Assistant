@@ -2110,3 +2110,15 @@ thirteen of thirteen, with the eleventh and twelfth it was missing) say so.
 How a plugged-in car is told: the control pilot's three bands, from the readings at gerd, behind the
 new binary sensor *Car connected*. The pilot while the wallbox is disabled is unmeasured and asked for
 in `devices-wanted.md`.
+
+## [2026-11-23] changed | register-13017
+
+Its switch is *Low-SoC standby* now, on where the inverter may sleep (`0x55`, the factory 0) and off where
+it stays awake (`0xAA`): the measurements show a state, not a wake. A new entity; the old one is removed.
+Unmeasured: `0xAA` written while the inverter still runs, before the battery is low.
+
+## [2026-11-23] changed | capability-test
+
+Auto repeat's fixed 30-minute slots became a wait by what the last run settled, and the minimum SoC and
+backup reserve readbacks wait for a battery above 15 %. At mkaiser's on 2026-11-22 seventeen runs were due
+for those two alone, at 0 to 3.7 %, where they have no safe probe value, and none settled a check.

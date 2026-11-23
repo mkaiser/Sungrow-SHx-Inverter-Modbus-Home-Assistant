@@ -51,7 +51,7 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - **[Register 13017](register-13017.md), forced startup under low SoC, is a switch here too**: 0xAA
   woke the inverter from low-SoC Standby (Running after 3 min 35 s), 0x55 sent it back, 0x01 and 0
   are refused; [the run](../sources/mkaiser-forced-startup-2026-11-08-summary.md). So the switch
-  *Forced startup under low SoC* exists here.
+  *Low-SoC standby* exists here.
 - **A minimum SoC (13059) raised above the battery's SoC** made the inverter report 0x8000 (Stop)
   while charging the battery from the grid at its charge limit; [the run](../sources/mkaiser-forced-startup-2026-11-08-summary.md).
 

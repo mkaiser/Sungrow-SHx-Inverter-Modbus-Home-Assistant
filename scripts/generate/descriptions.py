@@ -798,9 +798,9 @@ def render_switches() -> str:
             lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        on_value={row['on']:#04x},")
         lines.append(f"        off_value={row['off']:#04x},")
-        if also_off := row.get("also_off"):
-            words = ", ".join(f"{word:#04x}" for word in also_off)
-            lines.append(f"        also_off=({words},),")
+        if also_on := row.get("also_on"):
+            words = ", ".join(f"{word:#04x}" for word in also_on)
+            lines.append(f"        also_on=({words},),")
         if hold := row.get("hold_off_seconds"):
             lines.append(f"        hold_off_seconds={float(hold)!r},")
         lines.append("        entity_category=EntityCategory.CONFIG,")

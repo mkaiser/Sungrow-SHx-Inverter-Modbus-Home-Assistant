@@ -109,9 +109,11 @@ firmwares now agree; whether P022 flips `0xAA` back by itself (#444) was not wat
 
 ## In the integration
 
-A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustand*: on writes
-`0xAA`, off writes `0x55`, and its state is read from the register, the factory 0 as off
-(`SWITCHES` in `scripts/generate/tables/writes.py`). It is created only where
+A switch, *Low-SoC standby* / *Standby bei leerem Akku*, the other way round from Sungrow's name,
+because the register is a state and not a wake: **on** writes `0x55`, the inverter may go into that
+standby; **off** writes `0xAA`, it stays awake. Its state is read from the register, the factory 0 as on.
+It replaced *Forced startup under low SoC* (on was `0xAA`) on 2026-11-23, as a new entity, so that no
+automation turns round (`SWITCHES` in `scripts/generate/tables/writes.py`). It is created only where
 `Capability.FORCED_STARTUP` answered (SH-CX excluded) **and** the firmware is in
 `CONFIRMED_ON_FIRMWARE` for `Capability.FORCED_STARTUP_CONTROL`
 ([firmware gating](../concepts/firmware-gating.md)): P023, from

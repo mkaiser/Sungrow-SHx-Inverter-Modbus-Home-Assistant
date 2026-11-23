@@ -187,7 +187,7 @@ FEATURE_SETS: tuple[FeatureSet, ...] = (
     ),
     FeatureSet(
         "forced_startup",
-        "Forced startup under low SoC",
+        "Low-SoC standby",
         (procedure.FORCED_STARTUP.field,),
         Capability.FORCED_STARTUP,
         ("forced startup under low SoC",),

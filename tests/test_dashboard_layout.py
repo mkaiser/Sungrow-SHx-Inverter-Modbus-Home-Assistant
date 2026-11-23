@@ -10,6 +10,7 @@ which it is generated, is built from the entity descriptions.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -24,15 +25,21 @@ TRANSLATIONS = json.loads(
     (COMPONENT / "translations" / "en.json").read_text(encoding="utf-8")
 )
 #: The views the strategy's `views` option names, in the strategy's order.
-VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls"]
-#: Card types the strategy builds: the last four are its own, the rest Home Assistant's.
+VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "diagnosis"]
+#: The layout's revision and the digest of its views. **A change to the views
+#: raises `revision` and adds a line to `changes`**: that is how the owner of a
+#: dashboard taken over learns of it. Then this pair follows.
+REVISION = (2, "5af6428b9fde")
+#: Card types the strategy builds: the last five are its own, the rest Home Assistant's.
 CARD_TYPES = {
     "tile",
     "entities",
     "history-graph",
     "statistics-graph",
+    "markdown",
     "energy",
     "flow",
+    "tests",
     "device-link",
     "integration-link",
 }
@@ -58,6 +65,7 @@ def _refs(card: dict) -> list[str]:
     """Return every reference a card or badge may resolve, alternatives apart."""
     rows = [card["entity"]] if "entity" in card else list(card.get("entities", []))
     rows += card.get("roles", {}).values()
+    rows += [card[key] for key in ("status", "step") if key in card]
     refs = [row["entity"] if isinstance(row, dict) else row for row in rows]
     low, high = card.get("repeat", (1, 1))
     expanded = [
@@ -90,15 +98,45 @@ def test_every_view_a_tap_opens_is_one_there_is() -> None:
         assert item.get("view", VIEW_IDS[0]) in VIEW_IDS, item
 
 
-def test_a_setting_outside_the_controls_opens_no_dialog() -> None:
-    """Its dialog would change the setting past the lock."""
+def test_a_setting_is_behind_the_lock_or_opens_no_dialog() -> None:
+    """Its dialog would change the setting past the lock.
+
+    But Stop, which is never to be refused.
+    """
     writable = {"number", "select", "switch", "time", "button"}
     for view in LAYOUT["views"]:
         if view.get("locked"):
             continue
-        for card in (c for s in view["sections"] for c in _section_cards(s)):
-            if {ref.partition(".")[0] for ref in _refs(card)} & writable:
-                assert card.get("more_info") is False, card
+        for section in view["sections"]:
+            for group in section.get("groups", [section]):
+                if group.get("locked"):
+                    continue
+                for card in group["cards"]:
+                    refs = set(_refs(card)) - {"button.diagnosis_stop"}
+                    if {ref.partition(".")[0] for ref in refs} & writable:
+                        assert card.get("more_info") is False, card
+
+
+def test_what_writes_is_for_administrators() -> None:
+    for view in LAYOUT["views"]:
+        groups = [g for s in view["sections"] for g in s.get("groups", [s])]
+        if view.get("locked") or any(group.get("locked") for group in groups):
+            assert view.get("admin") is True, view["id"]
+
+
+def test_stop_is_never_locked() -> None:
+    for view in LAYOUT["views"]:
+        for section in view["sections"]:
+            for group in section.get("groups", [section]):
+                if any("button.diagnosis_stop" in _refs(c) for c in group["cards"]):
+                    assert not (view.get("locked") or group.get("locked"))
+
+
+def test_a_changed_layout_raises_its_revision() -> None:
+    views = json.dumps(LAYOUT["views"], sort_keys=True, ensure_ascii=False)
+    digest = hashlib.sha256(views.encode()).hexdigest()[:12]
+    assert (LAYOUT["revision"], digest) == REVISION
+    assert max(c["revision"] for c in LAYOUT["changes"]) == LAYOUT["revision"]
 
 
 def test_every_text_has_english_and_german() -> None:

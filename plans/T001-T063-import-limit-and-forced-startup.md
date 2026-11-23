@@ -2,7 +2,7 @@
 
 What is still to run on hardware. Both are measured and shipped as
 controls -- the number *Grid import limit* (W, 10 W step) and the switch
-*Forced startup under low SoC* -- on the firmware the wiki lists
+*Low-SoC standby* (off is 13017 on) -- on the firmware the wiki lists
 ([register 32998](../.wiki/wiki/entities/register-32998.md),
 [register 13017](../.wiki/wiki/entities/register-13017.md), which carry
 what every run measured).

@@ -9,12 +9,11 @@
 // and for administrators one line on how to get it. It chooses when it is
 // shown, so a dashboard taken over changes too once the card is installed.
 
-const { DOCS, language, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { DOCS, getChoices, language, say, setChoice } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 const PLUS = "power-flow-card-plus";
 const HACS_LINK =
   "https://my.home-assistant.io/redirect/hacs_repository/?owner=flixlix&repository=power-flow-card-plus&category=plugin";
-const USER_DATA = "sungrow_modbus_dashboard";
 
 // How long a listed resource may take to define its card.
 const DEFINE_MS = 10_000;
@@ -120,13 +119,7 @@ export class SungrowModbusFlowCard extends HTMLElement {
   }
 
   async _hint(lang) {
-    let data = {};
-    try {
-      data = (await this._hass.callWS({ type: "frontend/get_user_data", key: USER_DATA })).value ?? {};
-    } catch (err) {
-      console.warn("sungrow-modbus: could not read the user's choices", err);
-    }
-    if (data.no_flow_hint) return;
+    if ((await getChoices(this._hass)).no_flow_hint) return;
     const hacs = this._hass.config.components.includes("hacs");
     const row = document.createElement("div");
     row.style.cssText =
@@ -146,7 +139,7 @@ export class SungrowModbusFlowCard extends HTMLElement {
     dismiss.textContent = say("flow_dismiss", lang);
     dismiss.addEventListener("click", async (event) => {
       event.preventDefault();
-      await this._hass.callWS({ type: "frontend/set_user_data", key: USER_DATA, value: { ...data, no_flow_hint: true } });
+      await setChoice(this._hass, { no_flow_hint: true });
       row.remove();
     });
     row.append(label, link, dismiss);

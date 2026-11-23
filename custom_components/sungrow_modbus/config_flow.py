@@ -125,6 +125,7 @@ from .const import (
     CONF_WALLBOX_MAX_AMPS,
     CONF_WALLBOX_STANDALONE,
     CONF_WIFI_MODULE,
+    DASHBOARD_GUIDE_URL,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
@@ -1887,6 +1888,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # hassfest refuses a URL inside a translation string.
             description_placeholders={
                 "diagnosis_issue_url": DIAGNOSIS_ISSUE_URL,
+                "dashboard_url": DASHBOARD_GUIDE_URL,
                 "energy_dashboard_url": ENERGY_DASHBOARD_GUIDE_URL,
             },
         )

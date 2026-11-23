@@ -16,10 +16,12 @@ const DOMAIN = "sungrow_modbus";
 const STRATEGY = "sungrow-modbus";
 const LOCK_CARD = "sungrow-modbus-lock-card";
 const FLOW_CARD = "sungrow-modbus-flow-card";
+const TESTS_CARD = "sungrow-modbus-tests-card";
+const UPDATE_CARD = "sungrow-modbus-update-card";
 const HERE = new URL(import.meta.url);
 // The views were named `overview` before; an option that still says so is read as `home`.
 const RENAMED = { overview: "home" };
-const VIEW_ORDER = ["home", "energy", "battery", "inverter", "wallbox", "controls"];
+const VIEW_ORDER = ["home", "energy", "battery", "inverter", "wallbox", "controls", "diagnosis"];
 
 const MAX_COLUMNS = 3;
 
@@ -129,6 +131,7 @@ const energyCards = (ctx) => {
 const buildCard = (card, ctx) => {
   const { family, everywhere, lang, root } = ctx;
   if (card.type === "energy") return energyCards(ctx);
+  if (card.type === "markdown") return [{ anchor: false, config: { type: "markdown", content: text(card.content, lang) } }];
   if (card.type === "device-link") {
     return [{ anchor: false, config: linkButton(say("device_page", lang), "mdi:chip", `/config/devices/device/${root}`) }];
   }
@@ -136,6 +139,18 @@ const buildCard = (card, ctx) => {
     return [{
       anchor: false,
       config: linkButton(say("integration_page", lang), "mdi:puzzle", `/config/integrations/integration/${DOMAIN}`),
+    }];
+  }
+  if (card.type === "tests") {
+    const status = resolve(card.status, family, everywhere);
+    if (!status?.anchor) return [];
+    const step = resolve(card.step, family, everywhere);
+    return [{
+      anchor: true,
+      config: {
+        type: `custom:${TESTS_CARD}`, device_id: ctx.hass.entities[status.entity].device_id,
+        status: status.entity, step: step?.entity, grid_options: { columns: "full" },
+      },
     }];
   }
   if (card.type === "flow") {
@@ -152,7 +167,7 @@ const buildCard = (card, ctx) => {
     const found = resolve(card.entity, family, everywhere);
     if (!found) return [];
     const config = { type: card.type, entity: found.entity, name: card.name ? text(card.name, lang) : { type: "entity" }, ...grid };
-    for (const key of ["color", "icon", "features", "vertical"]) if (key in card) config[key] = card[key];
+    for (const key of ["color", "icon", "features", "vertical", "hide_state"]) if (key in card) config[key] = card[key];
     if (card.below) config.features_position = "bottom";
     if (card.view && ctx.paths[card.view]) config.tap_action = navigate(ctx.paths[card.view]);
     // A setting shown for reading: its dialog could change it past the lock.
@@ -190,9 +205,9 @@ const buildCard = (card, ctx) => {
 
 // Inside the lock the section's grid is gone, so the tiles are stacked, each
 // with its input beside the name.
-const lockCard = (cards, options) => ({
+const lockCard = (cards, options, group) => ({
   type: `custom:${LOCK_CARD}`,
-  group: "controls",
+  group,
   hold_seconds: options.hold_seconds,
   unlock_seconds: options.unlock_seconds,
   grid_options: { columns: "full" },
@@ -208,9 +223,9 @@ const buildCards = (layoutCards, ctx, locked) => {
   const built = layoutCards.flatMap(expand).flatMap((card) => buildCard(card, ctx));
   const anchor = built.some((card) => card.anchor);
   // Cards without any entity (the energy flow) stay, but do not make a view.
-  if (!anchor && layoutCards.some((card) => card.entity || card.entities || card.roles)) return null;
+  if (!anchor && layoutCards.some((card) => card.entity || card.entities || card.roles || card.status)) return null;
   let cards = built.map((card) => card.config);
-  if (locked && ctx.options.controls === "hold") cards = [lockCard(cards, ctx.options)];
+  if (locked && ctx.options.controls !== "admin") cards = [lockCard(cards, ctx.options, ctx.view)];
   else if (locked) {
     cards = cards.map((card) =>
       card.type === "tile" ? { features_position: "inline", ...card, grid_options: { columns: "full" } } : card);
@@ -224,13 +239,13 @@ const buildSection = (section, ctx, locked) => {
   if (section.groups) {
     // Side by side where there is room, one column each.
     cards = section.groups.flatMap((group) => {
-      const built = buildCards(group.cards, ctx, locked);
+      const built = buildCards(group.cards, ctx, locked || Boolean(group.locked));
       if (!built) return [];
       const title = { type: "heading", heading: text(group.heading, ctx.lang), heading_style: "subtitle" };
       return [{ type: "vertical-stack", grid_options: { columns: 12 }, cards: [title, ...built.cards] }];
     });
-    if (!cards.length) return null;
-    anchor = true;
+    anchor = cards.length > 0;
+    if (!anchor) return null;
   } else {
     const built = buildCards(section.cards, ctx, locked);
     if (!built) return null;
@@ -257,7 +272,8 @@ const buildBadge = (badge, ctx) => {
 
 const buildView = (view, ctx) => {
   const locked = Boolean(view.locked);
-  const sections = view.sections.map((section) => buildSection(section, ctx, locked)).filter(Boolean);
+  const here = { ...ctx, view: view.id };
+  const sections = view.sections.map((section) => buildSection(section, here, locked)).filter(Boolean);
   if (!sections.some((section) => section.anchor)) return null;
   // A "fill" section takes what its row has left beside the ones before it.
   let column = 0;
@@ -273,7 +289,7 @@ const buildView = (view, ctx) => {
     max_columns: MAX_COLUMNS,
     badges: (view.badges ?? []).flatMap((badge) => buildBadge(badge, ctx)),
     sections: sections.map((section) => section.grid),
-    ...(locked && ctx.admins ? { visible: ctx.admins } : {}),
+    ...(view.admin && ctx.admins ? { visible: ctx.admins } : {}),
   };
 };
 
@@ -317,27 +333,30 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     };
     const asked = Array.isArray(config.views) ? config.views.map((id) => RENAMED[id] ?? id) : VIEW_ORDER;
     const wanted = asked.filter(
-      (id) => VIEW_ORDER.includes(id) && !(id === "controls" && (options.controls === "hidden" || !hass.user?.is_admin)),
+      (id) => VIEW_ORDER.includes(id) && !(id === "controls" && options.controls === "hidden"),
     );
     const layout = await loadLayout();
+    const views = wanted
+      .map((id) => layout.views.find((view) => view.id === id))
+      .filter((view) => view && (!view.admin || hass.user?.is_admin));
     const house = indexHouse(hass);
     // `device_id` pins one family: the inverter's, or the one a named battery
     // or wallbox belongs to.
     const roots = config.device_id
       ? house.roots.filter((root) => root === house.rootOf(config.device_id))
       : house.roots;
-    const admins = wanted.includes("controls") ? await adminVisibility(hass) : null;
+    const admins = views.some((view) => view.admin) ? await adminVisibility(hass) : null;
 
     const energy = wanted.includes("energy") && (await energyIsSetUp(hass));
     const context = (root, paths) => ({
-      family: house.families.get(root), everywhere: house.everywhere, lang, root, options, admins, energy, paths,
+      family: house.families.get(root), everywhere: house.everywhere, hass, lang, root, options, admins, energy, paths,
     });
 
     // Which views each family fills, first, so that a tap can name another
     // view by its path; a wallbox entry of its own lends its view to the rest.
     const plan = [];
     const dashboard = location.pathname.split("/")[1];
-    for (const view of wanted.map((id) => layout.views.find((v) => v.id === id)).filter(Boolean)) {
+    for (const view of views) {
       const filled = roots.filter((root) => buildView(view, context(root, {})));
       for (const [index, root] of filled.entries()) {
         plan.push({ view, root, many: filled.length > 1, path: filled.length > 1 ? `${view.id}-${index + 1}` : view.id });
@@ -357,6 +376,10 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
           sections: [{ type: "grid", cards: [{ type: "markdown", content: say("empty", lang) }] }] }],
       };
     }
+    const { type: _type, ...chosen } = config;
+    built[0].sections[0].cards.splice(1, 0, {
+      type: `custom:${UPDATE_CARD}`, revision: layout.revision, options: chosen, grid_options: { columns: "full" },
+    });
     return { views: built };
   }
 }
@@ -369,6 +392,8 @@ if (!customElements.get(`ll-strategy-dashboard-${STRATEGY}`)) {
 
 const { SungrowModbusLockCard } = await import(new URL(`lock.js${HERE.search}`, HERE));
 const { SungrowModbusFlowCard } = await import(new URL(`flow.js${HERE.search}`, HERE));
+const { SungrowModbusTestsCard } = await import(new URL(`tests.js${HERE.search}`, HERE));
+const { SungrowModbusUpdateCard } = await import(new URL(`update.js${HERE.search}`, HERE));
 
 // For the card picker: the flow of the first family that has one.
 SungrowModbusFlowCard.getStubConfig = async (hass) => {
@@ -387,6 +412,10 @@ const CARDS = [
   [LOCK_CARD, SungrowModbusLockCard, "Sungrow Modbus lock", "lock_description"],
   [FLOW_CARD, SungrowModbusFlowCard, "Sungrow power flow", "flow_description"],
 ];
+// Parts of the dashboard, of no use in the card picker.
+for (const [tag, element] of [[TESTS_CARD, SungrowModbusTestsCard], [UPDATE_CARD, SungrowModbusUpdateCard]]) {
+  if (!customElements.get(tag)) customElements.define(tag, element);
+}
 const lang = language(document.querySelector("home-assistant")?.hass);
 window.customCards ??= [];
 for (const [tag, element, name, description] of CARDS) {

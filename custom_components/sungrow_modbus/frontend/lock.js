@@ -4,7 +4,7 @@
 // From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT).
 // Keep this line with any copy -- doc/attribution.md.
 
-const { language, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { language, onHold, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 // Unlocks are kept per browser tab, by group: the controls of one view open
 // together, and one person's unlock never opens another screen's.
@@ -52,7 +52,7 @@ export class SungrowModbusLockCard extends HTMLElement {
 
   disconnectedCallback() {
     window.removeEventListener(LOCK_EVENT, this._onLockEvent);
-    this._cancelHold();
+    this._cancelHold?.();
     clearInterval(this._ticker);
     this._ticker = undefined;
   }
@@ -112,40 +112,12 @@ export class SungrowModbusLockCard extends HTMLElement {
     this._wrap = this._root.querySelector(".wrap");
     const overlay = this._root.querySelector(".overlay");
     const badge = this._root.querySelector(".bar");
-    overlay.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0) return;
-      this._startHold(badge);
-    });
-    for (const name of ["pointerup", "pointerleave", "pointercancel"]) overlay.addEventListener(name, () => this._cancelHold());
-    overlay.addEventListener("contextmenu", (event) => event.preventDefault());
-    overlay.addEventListener("keydown", (event) => {
-      if ((event.key === "Enter" || event.key === " ") && !event.repeat) {
-        event.preventDefault();
-        this._startHold(badge);
-      }
-    });
-    overlay.addEventListener("keyup", () => this._cancelHold());
+    this._cancelHold = onHold(overlay, badge, () => this._config.hold_seconds, () => this._unlock());
     this._root.querySelector("button").addEventListener("click", () => this._lock());
     this._update();
   }
 
-  _startHold(badge) {
-    this._cancelHold();
-    this._badge = badge;
-    badge.style.setProperty("--hold", `${this._config.hold_seconds}s`);
-    // Next frame, so the bar starts from empty.
-    requestAnimationFrame(() => badge.classList.add("holding"));
-    this._holdTimer = setTimeout(() => this._unlock(), this._config.hold_seconds * 1000);
-  }
-
-  _cancelHold() {
-    clearTimeout(this._holdTimer);
-    this._holdTimer = undefined;
-    this._badge?.classList.remove("holding");
-  }
-
   _unlock() {
-    this._cancelHold();
     unlockedUntil.set(this._key, Date.now() + this._config.unlock_seconds * 1000);
     window.dispatchEvent(new Event(LOCK_EVENT));
   }

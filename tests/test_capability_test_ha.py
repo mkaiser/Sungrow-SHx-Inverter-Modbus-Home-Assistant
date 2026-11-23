@@ -830,7 +830,7 @@ async def test_observing_stands_back_while_a_run_has_the_link(
 async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """Start is the leave: a first run starts, and the next waits for the next slot."""
+    """Start is the leave: a first run starts, and the next waits out the gap."""
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
     assert not runner.continuous.active
@@ -875,7 +875,7 @@ async def test_auto_repeat_says_what_it_waits_for_as_soon_as_a_run_ends(
 
     assert runner._task.done()
     assert runner.continuous.runs_started == 1
-    # What it waits for next -- this slot has had its run -- rather than the
+    # What it waits for next -- the gap after its run -- rather than the
     # last thing a tick said while the run went: "running for ..." or "a run
     # is in progress".
     assert runner.continuous.waiting.startswith("the next run at")
@@ -1232,43 +1232,95 @@ async def test_skipping_established_checks_survives_a_reload(
     assert not entry.runtime_data.diagnosis.skip_established
 
 
-async def test_next_start_is_the_next_slot_from_the_press(
+async def test_the_wait_is_what_the_last_run_was_worth(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """Slots run every 30 minutes from the press of Start, with no daily cap."""
-    from custom_components.sungrow_modbus.continuous import INTERVAL
+    """Short after a run that settled something, longer after vain ones."""
+    from custom_components.sungrow_modbus.continuous import (
+        GAP_USEFUL,
+        GAP_VAIN,
+        INTERVAL,
+    )
 
     entry = await _setup(hass, ready_unit)
-    continuous = entry.runtime_data.diagnosis.continuous
+    runner = entry.runtime_data.diagnosis
+    continuous = runner.continuous
     assert continuous.next_start(dt_util.utcnow()) is None, "off"
 
+    # The first run settles a lot of checks.
     await _auto_repeat(hass, True)
-    pressed = continuous.started_at
-    assert pressed is not None
-    assert continuous.next_start(pressed) == pressed + INTERVAL
+    ended = continuous._last_end
+    assert ended is not None
+    assert continuous._ready_at == ended + GAP_USEFUL
 
-    # Late in the day, many slots on: still one run per slot, never a day's cap.
-    much_later = pressed + 40 * INTERVAL + timedelta(minutes=3)
-    with patch(
-        "custom_components.sungrow_modbus.continuous.ledger.due",
-        return_value=["another run"],
+    awaited = [("one", "this"), ("two", "that")]
+    starts: list[str] = []
+    with (
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.awaited",
+            side_effect=lambda folded: awaited,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.forced_startup_awaited",
+            return_value=False,
+        ),
+        patch.object(
+            runner,
+            "async_start",
+            side_effect=lambda **kwargs: starts.append("run") or True,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.due",
+            return_value=["one"],
+        ) as due,
     ):
-        continuous._async_tick(much_later)
-    await entry.runtime_data.diagnosis._task
-    await hass.async_block_till_done()
-    assert continuous.runs_started == 2
-    assert continuous.next_start(much_later) == pressed + 41 * INTERVAL
 
-    # A slot whose house never allows a run names no time: the house decides.
-    continuous._last_slot = None
-    assert continuous.next_start(much_later) is None
+        def tick(at: Any) -> int:
+            continuous._async_tick(at)
+            return len(starts)
+
+        now = ended + GAP_USEFUL
+        assert tick(now - timedelta(seconds=1)) == 0
+        assert tick(now) == 1
+        # It settled nothing: half an hour, then an hour from the second on.
+        assert tick(now := now + timedelta(minutes=1)) == 1
+        assert continuous.next_start(now) == now + INTERVAL
+        assert tick(now + INTERVAL - timedelta(seconds=1)) == 1
+        assert tick(now := now + INTERVAL) == 2
+        assert tick(now := now + timedelta(minutes=1)) == 2
+        assert continuous.next_start(now) == now + GAP_VAIN
+
+        # Another check becoming possible does not wait for that, but does
+        # let the house settle first.
+        due.return_value = ["one", "two"]
+        assert tick(now + timedelta(minutes=1)) == 2
+        assert tick(now := now + GAP_USEFUL) == 3
+        # It shortens the wait once: tried in vain, it waits like the first.
+        assert tick(now := now + timedelta(minutes=1)) == 3
+        assert tick(now + GAP_USEFUL) == 3
+        assert tick(now := now + GAP_VAIN) == 4
+
+        # A run that settles one starts the short wait again.
+        awaited = [("two", "that")]
+        assert tick(now := now + timedelta(minutes=1)) == 4
+        assert continuous.next_start(now) == now + GAP_USEFUL
+        assert tick(now + GAP_USEFUL) == 5
     await _auto_repeat(hass, False)
+
+
+def test_an_empty_battery_is_not_asked_for_the_charge_limits_probes() -> None:
+    """They have no safe value there, and each run for them writes the rest."""
+    for name in ("battery_min_soc", "battery_reserved_soc_for_backup"):
+        _words, due = ledger.NEEDS[name]
+        assert not due(ledger.Live(pv=500.0, battery=0.0, export=0.0, soc=1.2))
+        assert not due(ledger.Live(pv=500.0, battery=0.0, export=0.0, soc=None))
+        assert due(ledger.Live(pv=500.0, battery=0.0, export=0.0, soc=20.0))
 
 
 async def test_auto_repeat_waits_while_the_inverter_is_not_running(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """Low-SoC Standby at night starts no run, and spends no slot."""
+    """Low-SoC Standby at night starts no run."""
     entry = await _setup(hass, ready_unit)
     continuous = entry.runtime_data.diagnosis.continuous
     await _auto_repeat(hass, True)
@@ -1292,7 +1344,7 @@ async def test_auto_repeat_waits_while_the_inverter_is_not_running(
 async def test_auto_repeat_runs_the_forced_startup_in_low_soc_standby(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """The one check that needs the inverter asleep gets a slot of its own."""
+    """The one check that needs the inverter asleep is run alone."""
     entry = await _setup(hass, ready_unit)
     continuous = entry.runtime_data.diagnosis.continuous
     await _auto_repeat(hass, True)
@@ -1349,7 +1401,7 @@ async def test_auto_repeat_waits_for_low_soc_standby_when_only_that_is_left(
 async def test_auto_repeat_keeps_quiet_after_a_run(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """A slot that opens just as the last run ended waits for the link to settle."""
+    """A wait that ends just after another run waits for the link to settle."""
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
     continuous = runner.continuous

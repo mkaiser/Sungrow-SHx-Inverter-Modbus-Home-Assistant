@@ -59,7 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 
 #: How long auto repeat waits after the owner changed an inverter control.
 #: Long enough for the house to settle on the owner's value (a battery limit
-#: is followed within a minute or two), short against a half-hour slot.
+#: is followed within a minute or two), short against the wait between runs.
 OWNER_QUIET = timedelta(minutes=10)
 
 #: How long a wallbox run waits after the owner changed the EV charger block.

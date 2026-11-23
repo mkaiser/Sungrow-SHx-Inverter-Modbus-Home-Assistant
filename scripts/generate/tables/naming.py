@@ -396,7 +396,7 @@ OVERRIDES: dict[str, str] = {
     "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power code",
     # Register 13017, Sungrow's "Forced Startup Under Low SOC Standby": a
     # switch, named after the specification.
-    "forced_startup_under_low_soc": "Forced startup under low SoC",
+    "low_soc_standby": "Low-SoC standby",
     # The two mode registers, now that a binary sensor decodes each. The
     # entity says whether limiting is happening; the ratio above says how
     # much.
@@ -805,7 +805,7 @@ GERMAN: dict[str, str] = {
     "forced_charging_end_1": "Zwangsladung Ende 1",
     "forced_charging_end_2": "Zwangsladung Ende 2",
     "forced_charging_schedule": "Zwangsladung Zeitplan",
-    "forced_startup_under_low_soc": "Zwangsstart bei niedrigem Ladezustand",
+    "low_soc_standby": "Standby bei leerem Akku",
     "weekday_discharge_start_1": "Entladung Werktag Start 1",
     "weekday_discharge_end_1": "Entladung Werktag Ende 1",
     "weekday_discharge_end_1_all_day": "Entladung Werktag Ende 1 ganztägig",

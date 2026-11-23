@@ -68,7 +68,7 @@ What moves between firmware versions of one platform, over one kind of link:
   - Battery firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
 - **SAPPHIRE-H, dongle** (01011.95.03, B001.V000.P020, B001.V000.P022, B001.V000.P023): 7 differ.
   - Feed-in limit ratio: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
-  - Forced startup under low SoC *(switch)*: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Low-SoC standby *(switch)*: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
   - Communication module firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
   - Firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
   - Cut PV generation *(switch)*: 01011.95.03 ✗, B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
@@ -213,7 +213,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 | Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Forced startup under low SoC *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ W | ✓ W | ✗ | ✗ | ✗ | ✗ |
+| Low-SoC standby *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ W | ✓ W | ✗ | ✗ | ✗ | ✗ |
 | Power factor | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Power flow code | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Running state | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

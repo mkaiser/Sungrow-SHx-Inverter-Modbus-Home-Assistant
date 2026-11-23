@@ -1118,10 +1118,11 @@ class DiagnosisRunner:
             ),
             DIAGNOSIS_MODE_AUTO_REPEAT: (
                 "The extended test repeats on its own: whenever the house can "
-                "answer a check still missing, a capability test starts, at "
-                "most every 30 minutes, and leaves out what earlier runs "
-                "established. Each writes its settings and puts your original "
-                "values back. **Diagnosis: current step** shows what it waits "
+                "answer a check still missing, a capability test starts, and "
+                "leaves out what earlier runs established. The next one waits "
+                "5 minutes if that settled something, and 30 to 60 if not. Each "
+                "writes its settings and puts your original values back. "
+                "**Diagnosis: current step** shows what it waits "
                 "for; **Diagnosis: stop** ends it, and so does a restart."
             ),
         }[mode]

@@ -137,7 +137,7 @@
       "searching": "Searching {network}.\n\n{stage}\n\nPorts 502, 503, 504, 505 and 516 are all tried, so you do not have to know which one your equipment uses. This can take several minutes, depending on how many devices (Sungrow and others) have to be tested."
     },
     "create_entry": {
-      "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.\n\n**If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more."
+      "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\n**A dashboard is ready for you**: **Settings → Dashboards → Add dashboard**, then *Sungrow Modbus* under *Community dashboards* ([the guide]({dashboard_url})).\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.\n\n**If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more."
     }
   },
   "entity": {
@@ -1433,11 +1433,11 @@
       "forced_charging_schedule": {
         "name": "Forced charging schedule"
       },
-      "forced_startup_under_low_soc": {
-        "name": "Forced startup under low SoC"
-      },
       "load_adjustment_mode_enable": {
         "name": "Load control"
+      },
+      "low_soc_standby": {
+        "name": "Low-SoC standby"
       },
       "skip_established_capability_tests": {
         "name": "Diagnosis: skip completed tests"

@@ -6,6 +6,14 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-23**, done over, after the maintainer's four items and two rounds of their looking at it; not
+  released. What it is now is *The second layout* below; where that differs from the older sections, it
+  holds. Checked in Chromium on a demo house: German and English, desktop and phone, dark; the lock (tap and Tab reach
+  nothing, a hold opens); taking over, then a newer revision: add beside, replace (the backup equals the copy),
+  dismiss; Stop outside the lock; and, in the strategy alone, a plain user, no battery, two inverters, an SG, a
+  wallbox on its own, diagnostics only. **Not checked**: gerd's registry (unreachable that evening), a live run
+  in the Diagnosis view, the results of a wallbox entry.
+
 - **2026-11-22 evening**, released: 0.1.0a50 is on PyPI, the GitHub release and the preview
   mirror (pin check green). The maintainer's own Home Assistant and gerd's run the same code as
   a hand-installed `0.1.0a50+g5390594`; a Marketplace update to 0.1.0a50 replaces it with the
@@ -20,6 +28,30 @@ Nothing to install from HACS.
   `0.1.0a50+g5390594` (file-URL wheel; the previous build kept as
   `/config/sungrow_modbus_42d3adc_backup`), where the maintainer tries the
   dashboard themselves. The restart for it ended auto repeat on both entries.
+
+## The second layout
+
+- **Views**: Home, Energy, Battery, Inverter, Wallbox, Controls, Diagnosis. An option that says `overview` is read as
+  `home`. Tiles carry short names of the layout's own; the lists keep `{type: entity}`.
+- **Battery power is charge and discharge**, never signed (maintainer).
+- **Controls by device**, everything about the battery in one section, in groups side by side; no question
+  headings (maintainer). The lock leaves values readable: the wrap is `inert` under an invisible overlay.
+- **A setting outside the lock opens no dialog**, since the dialog would change it past the lock; the layout
+  test holds that, and that Stop is never locked and what writes is for administrators.
+- **Power flow: HACS now, package later** (maintainer). `sungrow-modbus-flow-card` shows `power-flow-card-plus` if it is
+  among `lovelace/resources`, tiles and one dismissible line otherwise, chosen when shown. The energy flow is
+  core's `energy-distribution`, where the Energy dashboard has sources.
+- **The package, if it comes**: a second PyPI project (`sungrow-modbus-cards`) holding the pinned upstream
+  bundle (MIT text in the wheel), built in CI from a version and a SHA-256 in `cards/`, its tag renamed so it cannot
+  clash with a HACS copy; pinned in the manifest's `requirements`, served on a second static path. No third-party
+  code in this repository. A requirement that cannot be installed blocks setup, as the library's does.
+- **Results**: `sungrow_modbus/diagnosis/results` (`websocket.py`, administrators, the host taken out), built by
+  `capability_test/results.py`; a person's name for every check in `capability_test/labels.py`, the ledger's names
+  unchanged. What a check waits for, and verdicts, are still English (T007's item 4.3).
+- **Logs**: each run's notes come with the results; the live log is the recorded history of *Diagnosis: current
+  step*, read by the card (`logLines` in `frontend/tests.js`), so nothing new is recorded.
+- **Revisions**: a change to `layout.json`'s views raises `revision` and adds to `changes`, which a digest in the test
+  enforces; `sungrow-modbus-update-card` sits on the first view. Copies from 0.1.0a50 carry none.
 
 ## What it has to solve
 
@@ -212,7 +244,7 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
 4. **Done.** `doc/dashboard.md` (adding it, the views, the lock, the
    options, taking control, the lock card on its own, coming from the YAML
    package), with three screenshots in `doc/images/` that
-   `scripts/dev/screenshot.py` retakes (`dashboard-add`, `dashboard-overview`,
+   `scripts/dev/screenshot.py` retakes (`dashboard-add`, `dashboard-home`,
    `dashboard-controls`). Linked from the README; the migration guide's
    danger-mode row and paragraph now point at the lock; `doc/architecture.md`
    records the decision; `doc/development.md` says how the module is checked;

@@ -98,16 +98,15 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
             # The register catching up with an off this switch wrote, not
             # the state: the hold ends at its timer or at a read of off.
             return self._release_hold is None
+        if value in self.entity_description.also_on:
+            return True
         if self.entity_description.minute_field is not None:
             # A window's end: any hour but 24 is a time the `time` entity
             # beside this one holds, so the switch is simply off. There is no
             # third state to report, because an hour the inverter cannot mean
             # is already None above.
             return False
-        if (
-            value == self.entity_description.off_value
-            or value in self.entity_description.also_off
-        ):
+        if value == self.entity_description.off_value:
             return False
         return None
 

@@ -315,7 +315,9 @@ def test_with_nothing_kept_a_first_run_is_due() -> None:
 
 
 def test_every_behavioural_check_says_what_it_needs() -> None:
-    assert set(ledger.NEEDS) == set(EFFECT_FIELDS) - ledger.MODES
+    # And the two readbacks that have no safe value under an empty battery.
+    readbacks = {"battery_min_soc", "battery_reserved_soc_for_backup"}
+    assert set(ledger.NEEDS) == (set(EFFECT_FIELDS) - ledger.MODES) | readbacks
 
 
 def test_unfold_gives_back_what_fold_took() -> None:

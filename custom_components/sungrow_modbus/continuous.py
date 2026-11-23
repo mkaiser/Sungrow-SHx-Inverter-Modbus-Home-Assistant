@@ -1,13 +1,20 @@
-"""Continuous capability testing: a run every half hour from the press of Start.
+"""Continuous capability testing: a run whenever one can still settle something.
 
 One run answers only the checks its moment allowed (`ledger` says why), so an
 owner who wants every check answered would have to come back at noon, in the
-evening and after dark. This does the coming back. The press of *Diagnosis:
-start* opens the first half-hour slot, and every `INTERVAL` after it opens the
-next. In each slot at most one run starts -- the ordinary run, part A then
-part B, with its own snapshot and its own restore -- at the first minute
-(`TICK`) the inverter is running and a check still missing needs what the
-house is doing now. A slot in which that never happens passes without a run.
+evening and after dark. This does the coming back. Every minute (`TICK`) it
+compares the polled readings with what the checks still missing need, and
+starts the ordinary run -- part A then part B, with its own snapshot and its
+own restore -- when the inverter is running and one of them is due.
+
+**How long after a run the next may start is what that run was worth.** One
+that settled a check is followed after `GAP_USEFUL`: the house is in a state
+that answers. One that settled nothing would only repeat itself, so the same
+checks wait `INTERVAL`, and `GAP_VAIN` once that happened twice running. A
+check that became possible meanwhile, and has not been tried in vain since the
+last useful run, does not wait for that: a battery passing through 200 to
+800 W is there for minutes. Each check can shorten the wait once, so a house
+whose readings flicker cannot start a run every few minutes.
 
 **The switch is the leave, and it ends at a restart.** Turning it on is a
 person deciding, once, that runs may start without them at a terminal. It
@@ -20,10 +27,10 @@ checks (`sungrow_modbus.capability_test.plausibility`), which need days of
 readings rather than a moment; auto repeat stays on while any of them is
 still unsettled, and writes nothing for them.
 
-Bounded so a forgotten switch cannot become a nuisance: one run per slot, never
-one while the inverter is not running -- except the forced startup check,
+Bounded so a forgotten switch cannot become a nuisance: the gaps above, never
+a run while the inverter is not running -- except the forced startup check,
 which needs exactly that: in low-SoC Standby, while no kept run has
-established it, a slot runs that mode
+established it, that mode runs
 alone (`_forced_startup_due`) -- at least `QUIET` after the last run ended, and it
 switches itself off once nothing waiting can answer is left. And it waits
 after the owner changed a control (`write_owner.OWNER_QUIET`), or a managed
@@ -55,10 +62,17 @@ _LOGGER = logging.getLogger(__name__)
 #: this costs no Modbus read of its own.
 TICK = timedelta(minutes=1)
 
-#: The length of one slot, counted from the press of Start. A run pauses
-#: polling and writes for minutes, so a shorter one would leave the house's
-#: own readings stale for much of the time.
+#: The wait after a run that settled a check: time for the house to be polled
+#: again and settle, and no more.
+GAP_USEFUL = timedelta(minutes=5)
+
+#: The wait before checks a run tried in vain are tried again, and the length
+#: of a wallbox's slot. A run pauses polling and writes for minutes, so a
+#: shorter one would leave the house's own readings stale for much of the time.
 INTERVAL = timedelta(minutes=30)
+
+#: The same wait from the second vain run in a row on.
+GAP_VAIN = timedelta(minutes=60)
 
 #: The slot of a wallbox at its own address, with no inverter beside it. Its
 #: runs need a car charging, and a session lasts an hour or two: half-hour slots
@@ -87,9 +101,18 @@ class ContinuousCapabilityTest:
         self._cancel: CALLBACK_TYPE | None = None
         self.started_at: datetime | None = None
         self.last_start: datetime | None = None
-        self._last_slot: int | None = None
-        #: The wallbox's own slots: its runs and the inverter's are counted apart,
-        #: so a run of one never uses up the other's half hour.
+        #: What was still missing when the last run started; None once it is judged.
+        self._missing_before: frozenset[str] | None = None
+        #: The checks that run was started for.
+        self._attempted: frozenset[str] = frozenset()
+        #: What has been tried in vain since the last run that settled something.
+        self._tried: frozenset[str] = frozenset()
+        self._vain = 0
+        self._last_end: datetime | None = None
+        #: When the next run may start, unless a check becomes possible before.
+        self._ready_at: datetime | None = None
+        #: The wallbox's own slots, counted from the press: its runs and the
+        #: inverter's are counted apart, so neither uses up the other's time.
         self._last_wallbox_slot: int | None = None
         self.runs_started = 0
         self.waiting: str = "off"
@@ -114,7 +137,10 @@ class ContinuousCapabilityTest:
         # so, and keeps saying it for the single runs after it.
         self.runner.skip_established = True
         now = dt_util.utcnow()
-        self.started_at, self.last_start, self._last_slot = now, None, None
+        self.started_at, self.last_start = now, None
+        self._missing_before, self._ready_at, self._last_end = None, None, None
+        self._attempted = self._tried = frozenset()
+        self._vain = 0
         self._last_wallbox_slot = None
         self.runs_started = 0
         self._cancel = async_track_time_interval(self.hass, self._async_tick, TICK)
@@ -204,10 +230,44 @@ class ContinuousCapabilityTest:
             value("total_dc_power"),
         )
 
-    def _slot(self, now: datetime) -> int:
-        """Return the number of the slot `now` falls in, 0 from the press."""
-        assert self.started_at is not None
-        return max(0, int((now - self.started_at) / INTERVAL))
+    def _missing(self, folded: dict[str, Any] | None) -> frozenset[str]:
+        """Return the names a run could still settle, the forced startup's too."""
+        names = {name for name, _need in ledger.awaited(folded)}
+        if self._forced_startup_wanted(folded):
+            names.add(ledger.FORCED_STARTUP_CHECK)
+        return frozenset(names)
+
+    def _judge_last_run(self, now: datetime, folded: dict[str, Any] | None) -> None:
+        """Set how long the next run waits, by what the last one settled."""
+        if self._missing_before is None:
+            return
+        settled = self._missing_before - self._missing(folded)
+        self._missing_before = None
+        self._last_end = now
+        if settled:
+            self._vain, self._tried = 0, frozenset()
+            self._ready_at = now + GAP_USEFUL
+            return
+        self._vain += 1
+        self._tried |= self._attempted
+        self._ready_at = now + (INTERVAL if self._vain == 1 else GAP_VAIN)
+
+    def _may_start(self, now: datetime, due: list[str]) -> bool:
+        """Whether the wait is over, or a check not tried in vain is due."""
+        if self._ready_at is None or now >= self._ready_at:
+            return True
+        if self._vain == 0 or self._last_end is None:
+            return False
+        return now >= self._last_end + GAP_USEFUL and bool(set(due) - self._tried)
+
+    def _note_start(
+        self, now: datetime, folded: dict[str, Any] | None, due: list[str]
+    ) -> None:
+        """Remember what a run was started for, to judge it by when it ends."""
+        self.last_start = now
+        self._missing_before = self._missing(folded)
+        self._attempted = frozenset(due)
+        self.runs_started += 1
 
     def _wallbox_slot(self, now: datetime) -> int:
         """Return the number of the wallbox's slot `now` falls in."""
@@ -231,6 +291,7 @@ class ContinuousCapabilityTest:
         # cadence, whether or not auto repeat is on: they write nothing, so
         # they are not the leave's to give (`DiagnosisRunner.OBSERVE_EVERY`).
         folded = self.runner.state.capability_test
+        self._judge_last_run(now, folded)
         # A wallbox at its own address has no inverter checks to wait for.
         inverter = self.runner.inverter_tests
         waiting = ledger.awaited(folded) if inverter else []
@@ -260,12 +321,11 @@ class ContinuousCapabilityTest:
             self._wallbox_tick(now, wallbox_waiting, said=bool(waiting or forced))
 
     def _start_forced_startup(self, now: datetime) -> bool:
-        """Run the forced startup mode in this slot; say whether it started."""
+        """Run the forced startup mode; say whether it started."""
+        folded = self.runner.state.capability_test
         if not self.runner.async_start(capability_test=True, forced_startup=True):
             return False
-        self.last_start = now
-        self._last_slot = self._slot(now)
-        self.runs_started += 1
+        self._note_start(now, folded, [ledger.FORCED_STARTUP_CHECK])
         _LOGGER.info(
             "%s: continuous capability testing started run %d, for %s",
             self.entry.title,
@@ -291,17 +351,23 @@ class ContinuousCapabilityTest:
         """Start an inverter run when one is allowed and due; say whether it did.
 
         `forced` says the forced startup check is still wanted: in low-SoC
-        standby a slot runs that mode instead of waiting for the inverter.
+        standby that mode runs instead of waiting for the inverter.
         """
         if forced:
             waiting = [
                 *waiting,
                 (ledger.FORCED_STARTUP_CHECK, ledger.FORCED_STARTUP_NEEDS),
             ]
-        if self._last_slot is not None and self._slot(now) <= self._last_slot:
-            ready_at = self.next_start(now)
-            if ready_at is not None:
-                self._say(f"the next run at {dt_util.as_local(ready_at):%H:%M}")
+        asleep = self._inverter_running() is False
+        if not asleep:
+            due = ledger.due(folded, self.live())
+        elif forced and self._forced_startup_due():
+            due = [ledger.FORCED_STARTUP_CHECK]
+        else:
+            due = []
+        if not self._may_start(now, due):
+            assert self._ready_at is not None
+            self._say(f"the next run at {dt_util.as_local(self._ready_at):%H:%M}")
             return False
         if self._quiet(now):
             self._say("a moment of quiet after the last run")
@@ -313,8 +379,8 @@ class ContinuousCapabilityTest:
                 f"{dt_util.as_local(held):%H:%M}"
             )
             return False
-        if self._inverter_running() is False:
-            if forced and self._forced_startup_due():
+        if asleep:
+            if due:
                 return self._start_forced_startup(now)
             self._say(
                 "waiting for the inverter to run"
@@ -323,16 +389,13 @@ class ContinuousCapabilityTest:
                 + "; ".join(f"{name}: {need}" for name, need in waiting)
             )
             return False
-        due = ledger.due(folded, self.live())
         if not due:
             self._say(
                 "waiting for " + "; ".join(f"{name}: {need}" for name, need in waiting)
             )
             return False
         if self.runner.async_start(capability_test=True):
-            self.last_start = now
-            self._last_slot = self._slot(now)
-            self.runs_started += 1
+            self._note_start(now, folded, due)
             _LOGGER.info(
                 "%s: continuous capability testing started run %d, for %s",
                 self.entry.title,
@@ -415,9 +478,9 @@ class ContinuousCapabilityTest:
     def next_start(self, now: datetime) -> datetime | None:
         """Return the earliest a run may start on its own, when time decides it.
 
-        The start of the next slot once this slot has had its run, and None
-        when it is off, a run is in flight, or what decides is the house
-        rather than the clock.
+        The end of the wait the last run left, which a check that becomes
+        possible may shorten; None when it is off, a run is in flight, or what
+        decides is the house rather than the clock.
         """
         if not self.active or self.runner.state.running or self.started_at is None:
             return None
@@ -428,8 +491,8 @@ class ContinuousCapabilityTest:
             ):
                 return self._next_wallbox_start()
             return None
-        if self._last_slot is not None and self._slot(now) <= self._last_slot:
-            return self.started_at + (self._last_slot + 1) * INTERVAL
+        if self._ready_at is not None and now < self._ready_at:
+            return self._ready_at
         return None
 
     def attributes(self) -> dict[str, Any]:

@@ -93,7 +93,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | --- | --- | --- | --- | --- | --- | --- |
 |  |  | Diagnosis: start | Diagnose: starten | `button.sh10rt_diagnosis_start` |  |  |
 |  |  | Diagnosis: stop | Diagnose: stoppen | `button.sh10rt_diagnosis_stop` |  |  |
-| Forced Startup Under Low SOC Standby (13017) |  | Forced startup under low SoC | Zwangsstart bei niedrigem Ladezustand | `switch.sh10rt_forced_startup_under_low_soc` |  |  |
+| Forced Startup Under Low SOC Standby (13017) |  | Low-SoC standby | Standby bei leerem Akku | `switch.sh10rt_low_soc_standby` |  |  |
 | Power factor (5035) | Power factor | Power factor | Leistungsfaktor | `sensor.sh10rt_power_factor` | `sensor.power_factor` |  |
 | Power Flow Status (13001) | Power Flow Status **←** | Power flow code | Leistungsfluss Code | `sensor.sh10rt_power_flow_code` | `sensor.power_flow_status` |  |
 |  | Sungrow inverter state **←** | Running state | Betriebszustand | `sensor.sh10rt_running_state` | `sensor.sungrow_inverter_state` |  |

@@ -137,7 +137,7 @@
       "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502, 503, 504, 505 und 516 werden alle versucht, du musst also nicht wissen, welchen deine Geräte verwenden. Das kann einige Minuten dauern, je nachdem, wie viele Geräte (Sungrow und andere) geprüft werden müssen."
     },
     "create_entry": {
-      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
+      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\n**Ein Dashboard liegt bereit**: **Einstellungen → Dashboards → Dashboard hinzufügen**, dann *Sungrow Modbus* unter *Community-Dashboards* ([die Anleitung]({dashboard_url})).\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
     }
   },
   "entity": {
@@ -1433,11 +1433,11 @@
       "forced_charging_schedule": {
         "name": "Zwangsladung Zeitplan"
       },
-      "forced_startup_under_low_soc": {
-        "name": "Zwangsstart bei niedrigem Ladezustand"
-      },
       "load_adjustment_mode_enable": {
         "name": "Laststeuerung"
+      },
+      "low_soc_standby": {
+        "name": "Standby bei leerem Akku"
       },
       "skip_established_capability_tests": {
         "name": "Diagnose: abgeschlossene Tests überspringen"

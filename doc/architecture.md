@@ -428,7 +428,9 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   house has, found by platform, translation key and device rather than by
   entity id, so it fits every house's names; no HACS. Its controls sit behind
   a hold-to-unlock card of its own, in the viewer's browser only. Users adapt
-  it through its options or Home Assistant's *Take control*
+  it through its options or Home Assistant's *Take control*; a copy taken over
+  is told of a newer layout by a revision it carries. The diagnosis's results
+  come over a websocket command, administrators only (`websocket.py`)
   ([dashboard.md](dashboard.md), `plans/T055-generated-dashboard.md`).
 - **A wallbox's own registers are read-only.** No manufacturer document
   covers its map, and an inverter that manages a wallbox overwrites them. A

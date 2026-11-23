@@ -1,5 +1,11 @@
 {
   "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
+  "revision": 2,
+  "changes": [
+    {"revision": 2, "text": {
+      "en": "New views throughout: Home with the power flow, Energy, Diagnosis with the test results, and controls that stay readable while locked.",
+      "de": "Alle Ansichten neu: Start mit dem Leistungsfluss, Energie, Diagnose mit den Testergebnissen und eine Steuerung, die auch gesperrt lesbar bleibt."}}
+  ],
   "views": [
     {
       "id": "home",
@@ -316,6 +322,7 @@
       "id": "controls",
       "title": {"en": "Controls", "de": "Steuerung"},
       "icon": "mdi:tune",
+      "admin": true,
       "locked": true,
       "sections": [
         {
@@ -377,7 +384,7 @@
           "heading": {"en": "Inverter", "de": "Wechselrichter"},
           "icon": "mdi:solar-power-variant",
           "cards": [
-            {"type": "tile", "entity": "switch.forced_startup_under_low_soc", "name": {"en": "Wake inverter from standby", "de": "Wechselrichter aus Standby wecken"}, "icon": "mdi:alarm", "color": "orange", "features": [{"type": "toggle"}], "below": true},
+            {"type": "tile", "entity": "switch.low_soc_standby", "name": {"en": "Low-SoC standby", "de": "Standby bei leerem Akku"}, "icon": "mdi:power-sleep", "color": "blue", "features": [{"type": "toggle"}], "below": true},
             {"type": "tile", "entity": "switch.cut_pv_generation", "name": {"en": "Stop PV", "de": "PV abschalten"}, "icon": "mdi:solar-power-variant-outline", "color": "red", "features": [{"type": "toggle"}]},
             {"type": "tile", "entity": "switch.backup_mode", "name": {"en": "Backup supply", "de": "Notstrom"}, "icon": "mdi:power-plug-battery", "color": "orange", "features": [{"type": "toggle"}]},
             {"type": "tile", "entity": "switch.load_adjustment_mode_enable", "name": {"en": "Load control", "de": "Lastregelung"}, "icon": "mdi:electric-switch", "color": "blue", "features": [{"type": "toggle"}]},
@@ -392,6 +399,48 @@
             {"type": "tile", "entity": "select.ev_charger_mode", "name": {"en": "Mode", "de": "Modus"}, "icon": "mdi:cog", "color": "purple", "features": [{"type": "select-options"}]},
             {"type": "tile", "entity": "number.ev_charger_user_current", "name": {"en": "Current", "de": "Strom"}, "icon": "mdi:current-ac", "color": "purple", "features": [{"type": "numeric-input", "style": "slider"}]},
             {"type": "tile", "entity": "switch.ev_charger_grid_purchase", "name": {"en": "Use the grid too", "de": "Auch vom Netz"}, "icon": "mdi:transmission-tower-import", "color": "red", "features": [{"type": "toggle"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diagnosis",
+      "title": {"en": "Diagnosis", "de": "Diagnose"},
+      "icon": "mdi:clipboard-pulse",
+      "admin": true,
+      "sections": [
+        {
+          "heading": {"en": "Run", "de": "Ausführen"},
+          "icon": "mdi:play-circle",
+          "groups": [
+            {"heading": {"en": "Now", "de": "Jetzt"}, "cards": [
+              {"type": "tile", "entity": "sensor.diagnosis_progress", "name": {"en": "Progress", "de": "Fortschritt"}, "icon": "mdi:progress-check", "color": "blue", "features": [{"type": "bar-gauge", "min": 0, "max": 100}]},
+              {"type": "entities", "entities": [
+                {"entity": "sensor.diagnosis_next_start", "name": {"en": "Next attempt", "de": "Nächster Versuch"}},
+                {"entity": "sensor.diagnosis_finished", "name": {"en": "Last finished", "de": "Zuletzt fertig"}},
+                {"entity": "binary_sensor.controls_held_by_test", "name": {"en": "Controls held by the test", "de": "Steuerung vom Test belegt"}}]},
+              {"type": "tile", "entity": "button.diagnosis_stop", "name": {"en": "Stop", "de": "Stoppen"}, "icon": "mdi:stop-circle", "color": "red", "hide_state": true, "features": [{"type": "button"}]}]},
+            {"heading": {"en": "Start", "de": "Starten"}, "locked": true, "cards": [
+              {"type": "markdown", "content": {
+                "en": "*Read-only* changes nothing. The *extended* tests write settings, read them back and put everything back as it was.",
+                "de": "*Nur lesen* ändert nichts. Die *erweiterten* Tests schreiben Einstellungen, lesen sie zurück und stellen alles wieder her."}},
+              {"type": "entities", "entities": [
+                {"entity": "select.diagnosis_mode", "name": {"en": "Mode", "de": "Modus"}},
+                {"entity": "switch.skip_established_capability_tests", "name": {"en": "Skip completed tests", "de": "Abgeschlossene überspringen"}},
+                {"entity": "button.diagnosis_start", "name": {"en": "Start", "de": "Starten"}}]}]},
+            {"heading": {"en": "Clear", "de": "Löschen"}, "locked": true, "cards": [
+              {"type": "entities", "entities": [
+                {"entity": "button.clear_capability_test_history", "name": {"en": "Test history", "de": "Testverlauf"}},
+                {"entity": "button.clear_capability_test_readings", "name": {"en": "Readings' history", "de": "Messwertverlauf"}}]}]},
+            {"heading": {"en": "Info", "de": "Info"}, "cards": [{"type": "integration-link"}, {"type": "device-link"}]}
+          ]
+        },
+        {
+          "heading": {"en": "Results", "de": "Ergebnisse"},
+          "icon": "mdi:clipboard-check",
+          "column_span": 2,
+          "cards": [
+            {"type": "tests", "status": "sensor.capability_test_status", "step": "sensor.diagnosis_step"}
           ]
         }
       ]

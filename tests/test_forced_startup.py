@@ -3,10 +3,11 @@
 13017 is a switch, watched on P023 (bar12) and P020 (the maintainer's):
 0xAA wakes an inverter in low-SoC standby and keeps it running, 0x55 sends
 it back, and every other
-word is refused -- the factory 0 included, which reads as off. The switch is
-created only on firmware where a start was watched. 31213 holds a setting
-both ways round in the diagnoses, so it is decoded, and its number stays only
-for legacy history.
+word is refused -- the factory 0 included. The switch, *Low-SoC standby*, is on
+where the inverter may go into that standby (0x55 and the factory 0) and off
+where it stays awake (0xAA); it is created only on firmware where a start was
+watched. 31213 holds a setting both ways round in the diagnoses, so it is
+decoded, and its number stays only for legacy history.
 """
 
 from __future__ import annotations
@@ -55,7 +56,7 @@ def _entity_id(hass: HomeAssistant, domain: str, key: str) -> str | None:
 # -- 13017 ------------------------------------------------------------------
 
 
-KEY = "forced_startup_under_low_soc"
+KEY = "low_soc_standby"
 UNCONFIRMED = "SAPPHIRE-H_B001.V000.P021"
 
 
@@ -85,10 +86,8 @@ async def test_no_switch_and_no_raw_sensor_on_unconfirmed_firmware(
     assert _entity_id(hass, "sensor", "forced_startup_under_low_soc_raw") is None
 
 
-@pytest.mark.parametrize(
-    ("word", "expected"), [(0, "off"), (0x55, "off"), (0xAA, "on")]
-)
-async def test_the_switch_reads_the_factory_0_as_off(
+@pytest.mark.parametrize(("word", "expected"), [(0, "on"), (0x55, "on"), (0xAA, "off")])
+async def test_the_switch_reads_the_factory_0_as_standby_allowed(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit, word: int, expected: str
 ) -> None:
     sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
@@ -110,7 +109,7 @@ async def test_no_switch_where_13017_reads_unavailable(
     assert _entity_id(hass, "switch", KEY) is None
 
 
-async def test_on_writes_0xaa_and_off_writes_0x55(
+async def test_on_writes_0x55_and_off_writes_0xaa(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
@@ -134,8 +133,33 @@ async def test_on_writes_0xaa_and_off_writes_0x55(
         "switch", "turn_off", {"entity_id": switch_id}, blocking=True
     )
 
-    assert written == [0xAA, 0x55]
+    assert written == [0x55, 0xAA]
     assert all(word != 0 for word in written)
+
+
+async def test_the_switch_it_replaced_is_removed(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """It meant the opposite: kept, it would turn an automation around."""
+    sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
+    entry = await _setup(hass, sungrow_unit)
+    er.async_get(hass).async_get_or_create(
+        "switch",
+        DOMAIN,
+        f"{SERIAL}_forced_startup_under_low_soc",
+        config_entry=entry,
+    )
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert _entity_id(hass, "switch", "forced_startup_under_low_soc") is None
+    assert _entity_id(hass, "switch", KEY) is not None
+    assert "replaced by the switch Low-SoC standby" in caplog.text
 
 
 # -- 31213 ------------------------------------------------------------------

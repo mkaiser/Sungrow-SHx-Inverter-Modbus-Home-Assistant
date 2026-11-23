@@ -704,6 +704,11 @@ _THRESHOLD_FLOW = 1000.0 - EFFECT_FLOOR_W
 #: the battery (`preflight._safe_soc_probe`).
 _MIN_SOC_BOUND = 50.0 + 1.0 + 5.0 + 1.0
 
+#: Charge over which the minimum and the backup reserve have a probe value
+#: clear under the battery (`preflight._safe_soc_probe`). At 1 % there is none:
+#: a day at mkaiser's ran seventeen times for these two alone.
+_SOC_PROBES = 15.0
+
 #: What each behavioural check needs the house to be doing, in words for the
 #: owner and as a test on `Live`. Taken from the guards in `effects.py`, with
 #: margin, so a run started for a check does not refuse it at once; a run is
@@ -764,6 +769,14 @@ NEEDS: dict[str, tuple[str, Callable[[Live], bool]]] = {
         lambda live: _below(live.pv, MIN_PV_W) and _below(live.soc, _ROOM),
     ),
     **dict.fromkeys(WRITE_PATH_CHECKS, ("a run", lambda live: True)),
+    # Readback fields, which otherwise need nothing but a run.
+    **dict.fromkeys(
+        ("battery_min_soc", "battery_reserved_soc_for_backup"),
+        (
+            f"the battery above {_SOC_PROBES:.0f} %",
+            lambda live: _above(live.soc, _SOC_PROBES),
+        ),
+    ),
     # A floor offered a step above its 50 % maximum, only under a battery
     # well above it (`preflight._safe_soc_probe`).
     bound_check("battery_min_soc"): (
@@ -784,8 +797,9 @@ def needs_leave(item: Mapping[str, Any]) -> bool:
 def awaited(folded: Mapping[str, Any] | None) -> list[tuple[str, str]]:
     """Return (check, what it needs) for every check waiting can still answer.
 
-    A readback field needs nothing but a run. Checks that wait on leave, and
-    the modes of their own, are left out: no moment of the day answers them.
+    A readback field without a need of its own needs nothing but a run. Checks
+    that wait on leave, and the modes of their own, are left out: no moment of
+    the day answers them.
     """
     if folded is None:
         return [("every check", "a first run")]
