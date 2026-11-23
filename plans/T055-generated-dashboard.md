@@ -6,8 +6,8 @@ Nothing to install from HACS.
 
 ## Status log
 
-- **2026-11-23**, done over, after the maintainer's four items and two rounds of their looking at it; not
-  released. What it is now is *The second layout* below; where that differs from the older sections, it
+- **2026-11-23**, done over, after the maintainer's four items and their looking at it; released
+  as 0.1.0a51 (PyPI, GitHub, the preview mirror). What it is now is *The second layout* below; where that differs from the older sections, it
   holds. Checked in Chromium on a demo house: German and English, desktop and phone, dark; the lock (tap and Tab reach
   nothing, a hold opens); taking over, then a newer revision: add beside, replace (the backup equals the copy),
   dismiss; Stop outside the lock; and, in the strategy alone, a plain user, no battery, two inverters, an SG, a
