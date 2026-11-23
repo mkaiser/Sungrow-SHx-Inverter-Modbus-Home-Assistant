@@ -25,3 +25,7 @@ but BiergitKraft's SH10T on `PEARL-H_B001.V001.P038` answered them through
 a WiNet-S2 in every round (#792), as GalKar's did once. That SH10T is a
 second candidate for the run above. Its first capability test was refused
 in Standby after dark, so it needs daylight with the inverter Running.
+
+**Measured 2026-11-23 at GalKar's SH15T on P071** (#786; wiki: register-13074): word 125 held export at
+106.5 W, so stored as handed. Not read back, and 13088 read 0.5 %. Left of the first item: a second house, with
+nothing else polling the dongle, and T080, the fallback factor.

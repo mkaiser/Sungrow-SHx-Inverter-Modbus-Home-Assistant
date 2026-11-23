@@ -25,12 +25,12 @@ with the [SBH](device-sbh-battery.md) high-voltage battery, and with an
 - **31211 answers 0x55** on P071 and on P067, as on SH-RT P022/P023, and **the PV cut acts**: 20421 W,
   28 W, 20395 W at [ra1k-0](installation-ra1k-0.md), through a WiNet-S; see
   [register 31211](register-31211.md). The T also has 13018, which is unwritten.
-- **Three capability tests**, two at [ra1k-0](installation-ra1k-0.md) and one at
+- **Four capability tests**, two at [ra1k-0](installation-ra1k-0.md) and two at
   [GalKar](installation-galkar.md), all through a WiNet-S, so only their behavioural legs are
   evidence: the forced discharge did as it was told (1252 W and 1245.5 W for 1250 W), and so did
-  the forced charge (1248 W for 1250 W) and the PV cut. Two restarts: stopped in 2 s, running
-  145 s (GalKar) and 147.5 s (ra1k-0) after the start command. Its readbacks matched the specification except [13074](register-13074.md), whose
-  write scale is not determined on P071. Everything else about writes on this family is
+  the forced charge (1248 W for 1250 W) and the PV cut, at both. Three restarts: stopped in 2 s, running
+  145 s and 181 s (GalKar) and 147.5 s (ra1k-0) after the start command. Its readbacks matched the specification except [13074](register-13074.md), which
+  P071 stores as handed, by one watched limit ([GalKar](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)). Everything else about writes on this family is
   carried over from SH-RT, not measured.
 
 ## Version strings are their own series

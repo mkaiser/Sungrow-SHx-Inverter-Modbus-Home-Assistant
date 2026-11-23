@@ -2122,3 +2122,17 @@ Unmeasured: `0xAA` written while the inverter still runs, before the battery is 
 Auto repeat's fixed 30-minute slots became a wait by what the last run settled, and the minimum SoC and
 backup reserve readbacks wait for a battery above 15 %. At mkaiser's on 2026-11-22 seventeen runs were due
 for those two alone, at 0 to 3.7 %, where they have no safe probe value, and none settled a check.
+
+## [2026-11-23] ingested | sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2
+
+GalKar's second reading (#786), a capability test while exporting in daylight
+([the source](sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)). Word 125 to 13074 held export at 106.5 W, so **P071 stores the word as
+handed**, by one watched limit; `register-13074.md`, which called P071 undetermined, the P071 and SH-T pages and
+`installation-galkar.md` say so, with what is not exact (no readback, 13088 at 0.5 %). Outcome 5 on 33208, a
+busy dongle's refusal of the value held.
+
+## [2026-11-23] ingested | sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6
+
+The maintainer's completed auto-repeat collection, 56 of 56 over 26 runs ([the source](sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)).
+New on P020: 13059 refuses 51 %, the export limit holds, the forced discharge acts. `installation-mkaiser.md`
+and the P020 page say so.

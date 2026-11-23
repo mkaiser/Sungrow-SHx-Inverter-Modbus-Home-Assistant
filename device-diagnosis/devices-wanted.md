@@ -14,7 +14,7 @@ details are under [Why each one](#why-each-one).
 | --- | --- | --- |
 | 1 | **An inverter of the K or MG family** (SH*K, MG*RL) | Nothing from either family has been read, so every capability the two are given today is an inference |
 | 2 | **A second iHomeManager** (unit 247, port 502, 503 or 504), on firmware other than `SV930.001.00.P020` above all | One unit has been read; a second tells the device's behaviour from that unit's. Its Modbus TCP must be opened in the app first, see [item 2](#2-a-second-ihomemanager) |
-| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does |
+| 3 | **A second SH-T (SH10T, SH20T, SH25T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export, and nothing else polling it | One SH15T on P071 held its export limit as if register 13074 stores the word as handed; a second house confirms it, or says it holds on another firmware |
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the diagnosis also reads the Logger itself |
 | 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
@@ -22,7 +22,7 @@ details are under [Why each one](#why-each-one).
 | 8 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065, P066 and P067 only |
 | 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
-| 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether register 13017 (the *Low-SoC standby* switch) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
+| 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether register 13017 (the *Low-SoC standby* switch) wakes this firmware and sends it back to sleep. Watched on P020, P022 and P023 only, so the switch is created there only: an SH-T above all |
 | 12 | **A Sungrow wallbox switched off (disabled) in the app**, once with a car plugged in and once without | What the control pilot (register 21312) reads then, which is what *Car connected* is made from: it has been read unplugged, connected and charging, but never while the wallbox is disabled |
 
 ## Not needed any more
@@ -65,7 +65,7 @@ Generated from [`results/`](results/) by `scripts/generate/generate_devices_want
 | Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P030, P031, P032, P033 | any other |
 | Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
 | Third-party battery | 4 inverters | other packs |
-| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 8 inverters through a Modbus proxy | any route not listed |
+| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 9 inverters through a Modbus proxy | any route not listed |
 | Capability test | 17 of 34 hybrid inverters | every other model and firmware |
 | Wallbox | AC011E-01, AC22E-01 | AC007-00 |
 | iHomeManager | read | a second unit |
@@ -98,13 +98,14 @@ finds it at unit 247 and writes a document of its own. In Home Assistant,
 inverter registers 5741-5746 (#647, #651). See
 [iHomeManager](../.wiki/wiki/entities/device-ihomemanager.md).
 
-### 3. An SH-T through its WiNet-S, in daylight, with export
+### 3. A second SH-T through its WiNet-S, in daylight, with export
 
 Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN
 port of its own (an SH20T owner says so; Sungrow's SH5T-SH25T manual lists a
 WiNet-S2 and a COM2 terminal). Run it with the capability test, feed-in
-limitation and PV cut allowed, while the house exports: through a dongle only
-what the inverter does counts, and that settles 13074's write scale on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. See
+limitation allowed, while the house exports, with every other poller stopped: through a dongle only
+what the inverter does counts. One SH15T held 106.5 W for a word of 125, which says P071 stores
+the word as handed; its readback was refused by a busy dongle. An SBH pack's cell layout, which a dongle refuses, stays unread. See
 [SH-T](../.wiki/wiki/entities/device-sh-t.md).
 
 ### 4. A Sungrow Logger1000, 3000 or 4000
@@ -168,8 +169,8 @@ Nothing on 3P3L has been read.
 
 ### 11. A hybrid in low-SoC standby
 
-Register 13017 wakes a standby inverter and sends it back to sleep on P020 and
-P023, watched ([register 13017](../.wiki/wiki/entities/register-13017.md)); the
+Register 13017 wakes a standby inverter and sends it back to sleep on P020, P022
+and P023, watched ([register 13017](../.wiki/wiki/entities/register-13017.md)); the
 switch is created only there. A run in standby, battery at its minimum and no
 PV, watches it on one more firmware.
 

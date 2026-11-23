@@ -112,7 +112,7 @@ the reset eight counters to lose where the earlier nights had only one
 ([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)).
 `lifetime battery counters contain each other` settled in the same stretch, 175 passes and no
 failure, the first time anywhere, and its first field being read on that boot is what moved the
-house's total from 54 checks to 55. It now stands at **37 of 55, none failing**: fewer than the
+house's total from 54 checks to 55. It stood then at **37 of 55, none failing**: fewer than the
 39 below, because the bound checks' own revision was raised on 2026-11-17 and six
 `upper bound of ...` rows went back to waiting with it, each needing a charged battery
 ([eight in one poll](../sources/mkaiser-midnight-reset-answered-2026-11-20-summary.md)).
@@ -122,10 +122,15 @@ passed on 1464 judged steps with none going backwards, and `running states` pass
 all in the decode table -- Standby 1013, Running 452, Stop 4, **Starting 1**, that last a reminder
 that a one-minute cadence catches a transient state by luck. Together they take the house to
 **39 of 54** ([the day of polls](../sources/mkaiser-day-of-polls-2026-11-18-summary.md)).
+**The production instance's auto repeat finished the collection on 2026-11-23: 56 of 56 established,
+0 failed**, 26 runs, five bounds not enforced, everything put back each time
+([seventh reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)): the export limit held 1247.5 W for 1250 W, 13059 refused 51 %, and the
+daily counters reset together at two more midnights.
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses
 
+- [SH10RT, B001.V000.P020, mkaiser, seventh reading: every check established](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, second reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)

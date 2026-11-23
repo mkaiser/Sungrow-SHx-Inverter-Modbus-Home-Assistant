@@ -39,6 +39,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14.4kwh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14,4 kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported), **via a Modbus proxy** | Pylontech Force H1 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1, 14.4kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan` | robbensonmio | SH10RT (`0x0E03`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | no | yes | no |
 | `sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | — | no |
@@ -81,6 +82,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10t-b001v001p038-3p-biergitkraft-anon-38431301666-battery-sbh100-winet-lan` | BiergitKraft | SH10T (`0x0E23`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger` | code-imstillalive | SH15T (`0x0E25`) | Logger (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | yes?[^dongle] | yes | — |
 | `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan` | FullHD23 | SH15T (`0x0E25`) | WiNet-S, wired (reported), **via a Modbus proxy** | Sungrow SBR128 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
+| `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2` | GalKar | SH15T (`0x0E25`) | WiNet-S, wired (reported) | SBH150-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan` | GalKar | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan` | jm493 | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
@@ -224,7 +226,7 @@ that has only one would make the next pair.
 | SH10RS | winet_lan | B000.V002.P065 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P067 (2 readings) |
 | SH10RS | winet_wlan | B000.V002.P057 (1 reading) |
-| SH10RT | direct_lan | B001.V000.P020 (6 readings) |
+| SH10RT | direct_lan | B001.V000.P020 (7 readings) |
 | SH10RT | unstated | B001.V000.P020 (1 reading) |
 | SH10RT-20 | direct_lan | B001.V000.P023 (3 readings) |
 | SH10RT-20 | direct_lan | unknown (3 readings) |
@@ -241,7 +243,7 @@ that has only one would make the next pair.
 | SH10RT-V112 | winet | unknown (2 readings) |
 | SH10T | winet_lan | B001.V001.P038 (1 reading) |
 | SH15T | logger | B000.V000.P067 (1 reading) |
-| SH15T | winet_lan | B000.V000.P071 (3 readings) |
+| SH15T | winet_lan | B000.V000.P071 (4 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (4 readings) |
 | SH25T | logger | B000.V000.P067 (1 reading) |
 | SH5.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |

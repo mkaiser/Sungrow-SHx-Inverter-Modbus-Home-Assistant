@@ -18,6 +18,7 @@ entry.
 | --- | --- | --- |
 | every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023 |
 | [P023](firmware-sapphire-h-b001-v000-p023.md), a 5 kW SH5.0RT-V112 on `.95.14` | **multiplied** by an unknown factor: the probe's write was refused, which ten and 0.1 % of the 5000 W rating both give | [mahagon](installation-mahagon.md), cable |
+| [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) (SH-T) | stored as handed, by the watched limit alone: word 125 held 106.5 W | [GalKar](installation-galkar.md), through a WiNet-S |
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
 | [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) (SH-RS) | stored as handed | [Jam3s97](installation-jam3s97.md), through a WiNet-S: the probe's acceptance |
 | [SUNSTONE-H_B000.V002.P057](firmware-sunstone-h-b000-v002-p057.md) (SH-RS) | stored as handed | [bleughb](installation-bleughb.md), through a WiNet-S: the probe's acceptance |
@@ -35,31 +36,35 @@ probe, not a family rule, is what keeps an RS right.
 **Only while feed-in limitation (13087) is on.** With it off, the register
 ignores writes on B001: no exception, no change. That is most houses.
 
-**A second dongle echoes a forwarded word, which weakens the P071 lead.** At
+**A second dongle echoes a forwarded word, so an echo is not a measurement.** At
 [bigz2012](installation-bigz2012.md)'s SH10RS on
 [P067](firmware-sunstone-h-b000-v002-p067.md) the capability test wrote word 60 for 600 W with
 feed-in limitation off, and the WiNet-S2 reported 60 back -- the same pattern that was kept open
 below as possible evidence that P071 stores the word as handed
 ([the diagnosis](../sources/sh10rs-b000v002p067-1p-bigz2012-anon-10002952285-battery-sungrow-winet-lan-summary.md)).
 Two dongles, two firmware families, one behaviour: a cache answering with the word it forwarded
-explains both, where "the register took it" would have to be true of both firmwares at once. The
-P071 lead stays open and the dongle is now the better explanation of it. On P067 itself the write
+explains both, where "the register took it" would have to be true of both firmwares at once. An
+echo therefore says nothing about P071, whose watched limit (below) does. On P067 itself the write
 scale is **unmeasured**: the owner reports 1:1 in watts, which is a report, and a probe needs the
 mode on.
 
-**SH-T on [P071](firmware-pearl-h-b000-v000-p071.md): not determined.** At
+**SH-T on [P071](firmware-pearl-h-b000-v000-p071.md): stored as handed, on one watched limit.** At
+[GalKar](installation-galkar.md), exporting 2539 W, the run asked for 1250 W, could not ask the probe (the
+read of 13074 was refused), wrote word 125, and export held at 106.5 W (MAD 36.5) and came back to
+2528 W ([second reading](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)). What the inverter did is the evidence a dongle cannot spoil. Not settled: the
+register was not read back, and 13088 read 0.5 % of 15000 W (75 W), where 125 W is 0.8 %; times ten would
+read 8.3 % and hold 1250 W. A second house would confirm it. **The consequence**: where the probe cannot
+answer, the integration divides by ten, so on an SH-T it sets **a tenth** of the limit asked; and at
+GalKar's, holding 0 W, the probe has no word to ask with. What to do about the fallback is open in
+`Todo.md`. Before this, at
 [ra1k-0](installation-ra1k-0.md) the register held 20000 W, its maximum, and
 ten times that wraps to 3392 W in sixteen bits, inside the bounds, so the
 probe had no word that changes nothing on both firmwares. The capability test then
 wrote word 60 for 600 W with feed-in limitation off, and the WiNet-S reported
 60 back, where B001 would have kept its old value. **This contradicts "ignores
 writes" for P071 if the register really took it**, and would mean P071 stores
-the word as handed, so the integration's fallback of ten would set a tenth of
-the asked limit. Through a dongle it may equally be the dongle reporting the
-word it forwarded, so it stays a lead until a cable reading or a watched export
-limit settles it. [GalKar](installation-galkar.md)'s SH15T could not settle it either:
-through a busy WiNet-S the read of 13074 was refused with 0x04, so the probe was
-never asked, and the export check's write was refused too.
+the word as handed, which the watched
+limit above now agrees with, though a dongle may equally report the word it forwarded.
 
 ## How the code carries it
 

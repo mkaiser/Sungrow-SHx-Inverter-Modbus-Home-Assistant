@@ -37,6 +37,10 @@ and were refused in others, the four power controls' writes and a read of 13074 
 with 0x04, and the forced charge was written and obeyed.
 [Source](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-summary.md).
 
+On 2026-11-23, with the YAML package polling too, the same house saw it again: the same four registers came and
+went, six readback writes were refused with 0x04, and so were the check's write of 33208 and five of its
+restore, outcome 5, while the export limit, PV cut and forced charge were obeyed. [Source](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md).
+
 At gerd on 2026-11-03, with nothing else polling, the dongle's capability test had the
 forced-charging window's write of 33211 refused with 0x04 and the stop refused with an
 exception, where the same dongle had stopped the inverter in 4.1 s two days before.

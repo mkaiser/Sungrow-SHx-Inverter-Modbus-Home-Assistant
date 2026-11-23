@@ -22,6 +22,10 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - A night of auto repeat at mkaiser established the forced charge, the forced-charging window
   (seven times) and the site import limit (seven times) again; a Modbus restart took 367 s after
   dark and 186 s in daylight ([fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)).
+- **Every check the capability test and the readings have is established here**, 56 of 56, 0 failed, at
+  mkaiser over 26 runs ([seventh reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)). New on P020: **13059 refuses 51 %**
+  with 0x04, above its 50 % maximum; **the export limit holds**, 6674 W to 1247.5 W for 1250 W, with 13088 at
+  12.5 %; the forced discharge acts, -3686 W to 1017 W for 1250 W; the charge ceiling at 53 %.
 - **Five battery-power upper bounds are not enforced**: a short auto-repeat collection stored
   7204 W above the 7104 W maximum (33047/33048/13052) and 1010 W above 1000 W (33149/33150), each
   read back ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).
@@ -57,6 +61,7 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 
 ## Diagnoses
 
+- [SH10RT, B001.V000.P020, mkaiser, seventh reading: every check established](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)
 - [SH10RT-20, B001.V000.P020, bar12, a WiNet-S on Ethernet](../sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan-summary.md)
 - [SH10RT-20, B001.V000.P020, bar12, a WiNet-S on WiFi](../sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)

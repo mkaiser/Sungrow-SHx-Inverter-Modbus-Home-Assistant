@@ -111,10 +111,12 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3`
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4`
 - `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5`
+- `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6`
 - `sh10rt-v112-b001v000p023-3p-anonymous-anon-14076202309-battery-unknown-winet`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan`
+- `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2`
 - `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan`
 - `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-2`
 - `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan`
@@ -494,7 +496,7 @@ What moves between firmware versions of one platform, over one kind of link:
 | B1 | SBHBCU-S | 22011.04.07 | unit 2 (dongle) | 25.34 kWh, no single model | 1 |
 | B2 | SBHBCU-S | 22011.04.08+32 | unit 2 (dongle) | SBH300 | 1 |
 | B3 | SBHBCU-S | 22011.04.09 | unit 2 (dongle) | SBH100 | 1 |
-| B4 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 6 |
+| B4 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 7 |
 | B5 | SBRBCU-S | 22011.01.21 | unit 200 (cable) | SBR096 | 1 |
 | B6 | SBRBCU-S | 22011.01.21 | unit 2 (dongle) | SBR096 | 1 |
 | B7 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |

@@ -13,14 +13,17 @@ created: '2026-10-29'
   20421 W before, 28 W during, 20395 W after, at [ra1k-0](installation-ra1k-0.md), through a
   WiNet-S, whose behavioural leg is evidence. P071 is in `CONFIRMED_ON_FIRMWARE`. The T also has
   13018, which was not written.
-- The write scale of [register 13074](register-13074.md) is **not determined** on this firmware.
-  At [ra1k-0](installation-ra1k-0.md) the probe declined to ask (20000 W held, and ten times
+- The write scale of [register 13074](register-13074.md): **stored as handed, by behaviour at one
+  house**. At [GalKar](installation-galkar.md), exporting 2.5 kW, a word of 125 held export at 106.5 W
+  ([second reading](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)); not read back, and 13088 read 0.5 % where 125 W is 0.8 %. A second house would
+  confirm it. At [ra1k-0](installation-ra1k-0.md) the probe declined to ask (20000 W held, and ten times
   that wraps into range), and with feed-in limitation off the dongle reported a written word
-  back as handed, where B001 ignores the write. A lead, through a WiNet-S.
+  back as handed, where B001 ignores the write. That fits too, through a WiNet-S.
 - The forced discharge acts: 1252 W for 1250 W commanded, at [ra1k-0](installation-ra1k-0.md); the
-  forced charge acts: 1248 W for 1250 W, at [GalKar](installation-galkar.md).
-- Two restarts: at [GalKar](installation-galkar.md) stopped in 2 s, running again 145 s after the
-  start command; at [ra1k-0](installation-ra1k-0.md) 2 s and 147.5 s.
+  forced charge acts: 1248 W for 1250 W, at [GalKar](installation-galkar.md). **The PV cut acts there
+  too**: 2247 W, 7 W, 1623 W ([second reading](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)).
+- Three restarts: at [GalKar](installation-galkar.md) stopped in 2 s, running again 145 s and 181 s after
+  the start command ([second](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)); at [ra1k-0](installation-ra1k-0.md) 2 s and 147.5 s.
 - **33149/33150 (battery start power): contradicted, not settled.** The capability table marks
   them absent on the SH-T and [ra1k-0](installation-ra1k-0.md)'s capability test found 33149 not
   answering, but at [GalKar](installation-galkar.md) a read of 33149-33150 answered in one round of
@@ -32,12 +35,15 @@ created: '2026-10-29'
 - **33048's upper bound is enforced**: at [ra1k-0](installation-ra1k-0.md), 26339 W was refused
   with 0x04 above the 26239 W maximum, and 13059 refused 51 %, 13058 101 %
   ([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+- **33208 refuses through a WiNet-S** at [GalKar](installation-galkar.md), the check's write and five of
+  the restore, outcome 5; read back at its original by the owner ([second reading](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)).
 - **The charge window's 33209 refuses through a WiNet-S** at [ra1k-0](installation-ra1k-0.md):
   the check's write and the restore's five, all of the value it held, were refused with 0x04, so the
   run ended with outcome 5 ([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
 
 ## Diagnoses
 
+- [SH15T, B000.V000.P071, GalKar, second reading: the export limit in daylight](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-2-summary.md)
 - [SH15T, B000.V000.P071, FullHD23, a WiNet-S on Ethernet](../sources/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan-summary.md)
 - [SH15T, B000.V000.P071, jm493, a WiNet-S on Ethernet](../sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md)
