@@ -1,5 +1,5 @@
 {
-  "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
+  "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
   "views": [
     {
       "id": "home",
@@ -35,10 +35,11 @@
           "cards": [
             {"type": "tile", "entity": "sensor.battery_level", "name": {"en": "Level", "de": "Ladestand"}, "color": "teal",
              "view": "battery", "columns": "full", "features": [{"type": "bar-gauge", "min": 0, "max": 100}]},
-            {"type": "tile", "entity": "sensor.battery_power", "name": {"en": "Power", "de": "Leistung"}, "color": "teal", "icon": "mdi:battery-charging", "view": "battery"},
-            {"type": "tile", "entity": "sensor.battery_temperature", "name": {"en": "Temperature", "de": "Temperatur"}, "color": "teal", "view": "battery"},
-            {"type": "tile", "entity": "number.battery_min_soc", "name": {"en": "Keeps at least", "de": "Untergrenze"}, "icon": "mdi:battery-arrow-down", "color": "grey", "more_info": false},
-            {"type": "tile", "entity": "number.battery_max_soc", "name": {"en": "Charges up to", "de": "Obergrenze"}, "icon": "mdi:battery-arrow-up", "color": "grey", "more_info": false}
+            {"type": "tile", "entity": "sensor.battery_charging_power", "name": {"en": "Charge", "de": "Laden"}, "icon": "mdi:battery-plus", "color": "teal", "view": "battery"},
+            {"type": "tile", "entity": "sensor.battery_discharging_power", "name": {"en": "Discharge", "de": "Entladen"}, "icon": "mdi:battery-minus", "color": "orange", "view": "battery"},
+            {"type": "tile", "entity": "sensor.battery_temperature", "name": {"en": "Temperature", "de": "Temperatur"}, "color": "teal", "view": "battery", "columns": "full"},
+            {"type": "tile", "entity": "number.battery_min_soc", "name": {"en": "Min SoC", "de": "Min. SoC"}, "icon": "mdi:battery-arrow-down", "color": "grey", "more_info": false},
+            {"type": "tile", "entity": "number.battery_max_soc", "name": {"en": "Max SoC", "de": "Max. SoC"}, "icon": "mdi:battery-arrow-up", "color": "grey", "more_info": false}
           ]
         },
         {
@@ -77,7 +78,8 @@
                {"entity": "sensor.load_power|sensor.sg_load_power", "name": {"en": "House", "de": "Haus"}, "color": "blue"},
                {"entity": "sensor.import_power", "name": {"en": "From the grid", "de": "Vom Netz"}, "color": "red"},
                {"entity": "sensor.export_power", "name": {"en": "To the grid", "de": "Ins Netz"}, "color": "green"},
-               {"entity": "sensor.battery_power", "name": {"en": "Battery", "de": "Batterie"}, "color": "teal"}]},
+               {"entity": "sensor.battery_charging_power", "name": {"en": "Battery charge", "de": "Batterie lädt"}, "color": "teal"},
+               {"entity": "sensor.battery_discharging_power", "name": {"en": "Battery discharge", "de": "Batterie entlädt"}, "color": "orange"}]},
             {"type": "history-graph", "hours_to_show": 24, "columns": "full", "min_y_axis": 0, "max_y_axis": 100,
              "entities": [{"entity": "sensor.battery_level", "name": {"en": "Battery level", "de": "Ladestand"}, "color": "teal"}]}
           ]
@@ -142,8 +144,9 @@
           "cards": [
             {"type": "tile", "entity": "sensor.battery_level|sensor.battery_pack_level", "name": {"en": "Level", "de": "Ladestand"}, "color": "teal",
              "columns": "full", "features": [{"type": "bar-gauge", "min": 0, "max": 100}]},
-            {"type": "tile", "entity": "sensor.battery_power", "name": {"en": "Power", "de": "Leistung"}, "icon": "mdi:battery-charging", "color": "teal", "features": [{"type": "trend-graph", "hours_to_show": 24}]},
-            {"type": "tile", "entity": "sensor.battery_pack_temperature|sensor.battery_temperature", "name": {"en": "Temperature", "de": "Temperatur"}, "color": "orange", "features": [{"type": "trend-graph", "hours_to_show": 24}]},
+            {"type": "tile", "entity": "sensor.battery_charging_power", "name": {"en": "Charge", "de": "Laden"}, "icon": "mdi:battery-plus", "color": "teal", "features": [{"type": "trend-graph", "hours_to_show": 24}]},
+            {"type": "tile", "entity": "sensor.battery_discharging_power", "name": {"en": "Discharge", "de": "Entladen"}, "icon": "mdi:battery-minus", "color": "orange", "features": [{"type": "trend-graph", "hours_to_show": 24}]},
+            {"type": "tile", "entity": "sensor.battery_pack_temperature|sensor.battery_temperature", "name": {"en": "Temperature", "de": "Temperatur"}, "color": "orange", "columns": "full", "features": [{"type": "trend-graph", "hours_to_show": 24}]},
             {"type": "tile", "entity": "sensor.battery_pack_voltage|sensor.battery_voltage", "name": {"en": "Voltage", "de": "Spannung"}, "color": "grey"},
             {"type": "tile", "entity": "sensor.battery_pack_current|sensor.battery_current", "name": {"en": "Current", "de": "Strom"}, "color": "grey"}
           ]
@@ -181,7 +184,8 @@
           "cards": [
             {"type": "history-graph", "hours_to_show": 48, "columns": "full",
              "entities": [{"entity": "sensor.battery_level|sensor.battery_pack_level", "name": {"en": "Level", "de": "Ladestand"}, "color": "teal"},
-                          {"entity": "sensor.battery_power", "name": {"en": "Power", "de": "Leistung"}, "color": "blue"}]}
+                          {"entity": "sensor.battery_charging_power", "name": {"en": "Charge", "de": "Laden"}, "color": "teal"},
+                          {"entity": "sensor.battery_discharging_power", "name": {"en": "Discharge", "de": "Entladen"}, "color": "orange"}]}
           ]
         }
       ]
@@ -315,35 +319,65 @@
       "locked": true,
       "sections": [
         {
-          "heading": {"en": "What is the battery doing?", "de": "Was macht die Batterie?"},
-          "icon": "mdi:battery-sync",
-          "cards": [
-            {"type": "tile", "entity": "select.ems_mode", "name": {"en": "Mode", "de": "Modus"}, "icon": "mdi:cog", "color": "blue", "features": [{"type": "select-options"}]},
-            {"type": "tile", "entity": "select.battery_forced_charge_discharge", "name": {"en": "Forced", "de": "Erzwungen"}, "icon": "mdi:battery-charging-high", "color": "teal", "features": [{"type": "select-options"}]},
-            {"type": "tile", "entity": "number.battery_forced_charge_discharge_power", "name": {"en": "Forced power", "de": "Leistung dabei"}, "icon": "mdi:flash", "color": "teal", "features": [{"type": "numeric-input", "style": "buttons"}]},
-            {"type": "tile", "entity": "switch.forced_startup_under_low_soc", "name": {"en": "Wake when empty", "de": "Leer wecken"}, "icon": "mdi:alarm", "color": "orange", "features": [{"type": "toggle"}]}
+          "heading": {"en": "Battery", "de": "Batterie"},
+          "icon": "mdi:battery-high",
+          "column_span": 3,
+          "groups": [
+            {"heading": {"en": "Battery charge / discharge", "de": "Batterie laden / entladen"}, "cards": [
+              {"type": "tile", "entity": "select.ems_mode", "name": {"en": "Mode", "de": "Modus"}, "icon": "mdi:cog", "color": "blue", "features": [{"type": "select-options"}]},
+              {"type": "tile", "entity": "select.battery_forced_charge_discharge", "name": {"en": "Forced mode", "de": "Zwangsmodus"}, "icon": "mdi:battery-charging-high", "color": "teal", "features": [{"type": "select-options"}]},
+              {"type": "tile", "entity": "number.battery_forced_charge_discharge_power", "name": {"en": "Forced power", "de": "Zwangsleistung"}, "icon": "mdi:flash", "color": "teal", "features": [{"type": "numeric-input", "style": "buttons"}]},
+              {"type": "tile", "entity": "number.battery_max_charge_power", "name": {"en": "Charge power", "de": "Ladeleistung"}, "icon": "mdi:battery-plus", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
+              {"type": "tile", "entity": "number.battery_max_discharge_power", "name": {"en": "Discharge power", "de": "Entladeleistung"}, "icon": "mdi:battery-minus", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
+              {"type": "tile", "entity": "number.battery_charging_start_power", "name": {"en": "Charge battery over", "de": "Batterie laden über"}, "icon": "mdi:ray-start-arrow", "color": "grey", "features": [{"type": "numeric-input", "style": "slider"}], "below": true},
+              {"type": "tile", "entity": "number.battery_discharging_start_power", "name": {"en": "Discharge battery over", "de": "Batterie entladen über"}, "icon": "mdi:ray-start-arrow", "color": "grey", "features": [{"type": "numeric-input", "style": "slider"}], "below": true}]},
+            {"heading": {"en": "Battery limits", "de": "Batteriegrenzen"}, "cards": [
+              {"type": "tile", "entity": "number.battery_min_soc", "name": {"en": "Min SoC", "de": "Min. SoC"}, "icon": "mdi:battery-arrow-down", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
+              {"type": "tile", "entity": "number.battery_max_soc", "name": {"en": "Max SoC", "de": "Max. SoC"}, "icon": "mdi:battery-arrow-up", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
+              {"type": "tile", "entity": "number.battery_reserved_soc_for_backup", "name": {"en": "Backup reserve", "de": "Notstromreserve"}, "icon": "mdi:power-plug-battery", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]}]},
+            {"heading": {"en": "Battery charge", "de": "Batterie laden"}, "cards": [
+              {"type": "tile", "entity": "switch.forced_charging_schedule", "name": {"en": "Scheduled", "de": "Nach Plan"}, "icon": "mdi:calendar-clock", "color": "teal", "features": [{"type": "toggle"}]},
+              {"type": "entities", "entities": [
+                {"entity": "select.forced_charging_days", "name": {"en": "Days", "de": "Tage"}},
+                {"entity": "time.forced_charging_start_1", "name": {"en": "From 1", "de": "Von 1"}},
+                {"entity": "time.forced_charging_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
+                {"entity": "number.forced_charging_target_soc_1", "name": {"en": "Up to 1", "de": "Ziel 1"}},
+                {"entity": "time.forced_charging_start_2", "name": {"en": "From 2", "de": "Von 2"}},
+                {"entity": "time.forced_charging_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
+                {"entity": "number.forced_charging_target_soc_2", "name": {"en": "Up to 2", "de": "Ziel 2"}}]}]},
+            {"heading": {"en": "Battery discharge, weekdays", "de": "Batterie entladen, werktags"}, "cards": [
+              {"type": "entities", "entities": [
+                {"entity": "time.weekday_discharge_start_1", "name": {"en": "From 1", "de": "Von 1"}},
+                {"entity": "time.weekday_discharge_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
+                {"entity": "switch.weekday_discharge_end_1_all_day", "name": {"en": "All day 1", "de": "Ganztägig 1"}},
+                {"entity": "time.weekday_discharge_start_2", "name": {"en": "From 2", "de": "Von 2"}},
+                {"entity": "time.weekday_discharge_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
+                {"entity": "switch.weekday_discharge_end_2_all_day", "name": {"en": "All day 2", "de": "Ganztägig 2"}}]}]},
+            {"heading": {"en": "Battery discharge, weekend", "de": "Batterie entladen, am Wochenende"}, "cards": [
+              {"type": "entities", "entities": [
+                {"entity": "switch.weekend_discharge_schedule", "name": {"en": "Own schedule", "de": "Eigener Plan"}},
+                {"entity": "time.weekend_discharge_start_1", "name": {"en": "From 1", "de": "Von 1"}},
+                {"entity": "time.weekend_discharge_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
+                {"entity": "switch.weekend_discharge_end_1_all_day", "name": {"en": "All day 1", "de": "Ganztägig 1"}},
+                {"entity": "time.weekend_discharge_start_2", "name": {"en": "From 2", "de": "Von 2"}},
+                {"entity": "time.weekend_discharge_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
+                {"entity": "switch.weekend_discharge_end_2_all_day", "name": {"en": "All day 2", "de": "Ganztägig 2"}}]}]}
           ]
         },
         {
-          "heading": {"en": "How far may it charge?", "de": "Wie weit darf sie laden?"},
-          "icon": "mdi:battery-lock",
-          "cards": [
-            {"type": "tile", "entity": "number.battery_min_soc", "name": {"en": "At least", "de": "Mindestens"}, "icon": "mdi:battery-arrow-down", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_max_soc", "name": {"en": "At most", "de": "Höchstens"}, "icon": "mdi:battery-arrow-up", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_reserved_soc_for_backup", "name": {"en": "Kept for backup", "de": "Notstromreserve"}, "icon": "mdi:power-plug-battery", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_max_charge_power", "name": {"en": "Charge power", "de": "Ladeleistung"}, "icon": "mdi:battery-plus", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_max_discharge_power", "name": {"en": "Discharge power", "de": "Entladeleistung"}, "icon": "mdi:battery-minus", "color": "teal", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_charging_start_power", "name": {"en": "Charges from", "de": "Lädt ab"}, "icon": "mdi:ray-start-arrow", "color": "grey", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.battery_discharging_start_power", "name": {"en": "Discharges from", "de": "Entlädt ab"}, "icon": "mdi:ray-start-arrow", "color": "grey", "features": [{"type": "numeric-input", "style": "slider"}]}
-          ]
-        },
-        {
-          "heading": {"en": "What may the grid see?", "de": "Was darf das Netz sehen?"},
+          "heading": {"en": "Grid", "de": "Netz"},
           "icon": "mdi:transmission-tower",
           "cards": [
             {"type": "tile", "entity": "switch.export_power_limit_mode", "name": {"en": "Limit export", "de": "Einspeiselimit"}, "icon": "mdi:transmission-tower-export", "color": "green", "features": [{"type": "toggle"}]},
             {"type": "tile", "entity": "number.export_power_limit", "name": {"en": "Export up to", "de": "Einspeisen bis"}, "icon": "mdi:transmission-tower-export", "color": "green", "features": [{"type": "numeric-input", "style": "slider"}]},
-            {"type": "tile", "entity": "number.site_import_power_limit", "name": {"en": "Import up to", "de": "Beziehen bis"}, "icon": "mdi:transmission-tower-import", "color": "red", "features": [{"type": "numeric-input", "style": "slider"}]},
+            {"type": "tile", "entity": "number.site_import_power_limit", "name": {"en": "Import up to", "de": "Beziehen bis"}, "icon": "mdi:transmission-tower-import", "color": "red", "features": [{"type": "numeric-input", "style": "slider"}]}
+          ]
+        },
+        {
+          "heading": {"en": "Inverter", "de": "Wechselrichter"},
+          "icon": "mdi:solar-power-variant",
+          "cards": [
+            {"type": "tile", "entity": "switch.forced_startup_under_low_soc", "name": {"en": "Wake inverter from standby", "de": "Wechselrichter aus Standby wecken"}, "icon": "mdi:alarm", "color": "orange", "features": [{"type": "toggle"}], "below": true},
             {"type": "tile", "entity": "switch.cut_pv_generation", "name": {"en": "Stop PV", "de": "PV abschalten"}, "icon": "mdi:solar-power-variant-outline", "color": "red", "features": [{"type": "toggle"}]},
             {"type": "tile", "entity": "switch.backup_mode", "name": {"en": "Backup supply", "de": "Notstrom"}, "icon": "mdi:power-plug-battery", "color": "orange", "features": [{"type": "toggle"}]},
             {"type": "tile", "entity": "switch.load_adjustment_mode_enable", "name": {"en": "Load control", "de": "Lastregelung"}, "icon": "mdi:electric-switch", "color": "blue", "features": [{"type": "toggle"}]},
@@ -351,43 +385,7 @@
           ]
         },
         {
-          "heading": {"en": "When does it charge?", "de": "Wann lädt sie?"},
-          "icon": "mdi:battery-clock",
-          "cards": [
-            {"type": "tile", "entity": "switch.forced_charging_schedule", "name": {"en": "Scheduled", "de": "Nach Plan"}, "icon": "mdi:calendar-clock", "color": "teal", "features": [{"type": "toggle"}]},
-            {"type": "entities",
-             "entities": [{"entity": "select.forced_charging_days", "name": {"en": "Days", "de": "Tage"}},
-                          {"entity": "time.forced_charging_start_1", "name": {"en": "From 1", "de": "Von 1"}},
-                          {"entity": "time.forced_charging_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
-                          {"entity": "number.forced_charging_target_soc_1", "name": {"en": "Up to 1", "de": "Ziel 1"}},
-                          {"entity": "time.forced_charging_start_2", "name": {"en": "From 2", "de": "Von 2"}},
-                          {"entity": "time.forced_charging_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
-                          {"entity": "number.forced_charging_target_soc_2", "name": {"en": "Up to 2", "de": "Ziel 2"}}]}
-          ]
-        },
-        {
-          "heading": {"en": "When may it discharge?", "de": "Wann darf sie entladen?"},
-          "icon": "mdi:calendar-clock",
-          "cards": [
-            {"type": "entities", "title": {"en": "Weekdays", "de": "Werktage"},
-             "entities": [{"entity": "time.weekday_discharge_start_1", "name": {"en": "From 1", "de": "Von 1"}},
-                          {"entity": "time.weekday_discharge_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
-                          {"entity": "switch.weekday_discharge_end_1_all_day", "name": {"en": "All day 1", "de": "Ganztägig 1"}},
-                          {"entity": "time.weekday_discharge_start_2", "name": {"en": "From 2", "de": "Von 2"}},
-                          {"entity": "time.weekday_discharge_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
-                          {"entity": "switch.weekday_discharge_end_2_all_day", "name": {"en": "All day 2", "de": "Ganztägig 2"}}]},
-            {"type": "entities", "title": {"en": "Weekend", "de": "Wochenende"},
-             "entities": [{"entity": "switch.weekend_discharge_schedule", "name": {"en": "Own schedule", "de": "Eigener Plan"}},
-                          {"entity": "time.weekend_discharge_start_1", "name": {"en": "From 1", "de": "Von 1"}},
-                          {"entity": "time.weekend_discharge_end_1", "name": {"en": "To 1", "de": "Bis 1"}},
-                          {"entity": "switch.weekend_discharge_end_1_all_day", "name": {"en": "All day 1", "de": "Ganztägig 1"}},
-                          {"entity": "time.weekend_discharge_start_2", "name": {"en": "From 2", "de": "Von 2"}},
-                          {"entity": "time.weekend_discharge_end_2", "name": {"en": "To 2", "de": "Bis 2"}},
-                          {"entity": "switch.weekend_discharge_end_2_all_day", "name": {"en": "All day 2", "de": "Ganztägig 2"}}]}
-          ]
-        },
-        {
-          "heading": {"en": "How does the car charge?", "de": "Wie lädt das Auto?"},
+          "heading": {"en": "Wallbox", "de": "Wallbox"},
           "icon": "mdi:ev-station",
           "cards": [
             {"type": "tile", "entity": "switch.ev_charger_charging", "name": {"en": "Charge the car", "de": "Auto laden"}, "icon": "mdi:ev-plug-type2", "color": "purple", "features": [{"type": "toggle"}]},

@@ -153,6 +153,7 @@ const buildCard = (card, ctx) => {
     if (!found) return [];
     const config = { type: card.type, entity: found.entity, name: card.name ? text(card.name, lang) : { type: "entity" }, ...grid };
     for (const key of ["color", "icon", "features", "vertical"]) if (key in card) config[key] = card[key];
+    if (card.below) config.features_position = "bottom";
     if (card.view && ctx.paths[card.view]) config.tap_action = navigate(ctx.paths[card.view]);
     // A setting shown for reading: its dialog could change it past the lock.
     if (card.more_info === false) {
@@ -197,21 +198,43 @@ const lockCard = (cards, options) => ({
   grid_options: { columns: "full" },
   card: {
     type: "vertical-stack",
-    cards: cards.map((card) => (card.type === "tile" ? { ...card, features_position: "inline" } : card)),
+    cards: cards.map((card) => (card.type === "tile" ? { features_position: "inline", ...card } : card)),
   },
 });
 
-const buildSection = (section, ctx, locked) => {
-  const built = section.cards.flatMap(expand).flatMap((card) => buildCard(card, ctx));
+// The cards of a section, or of one group of it, and whether they show
+// something of this family; null where they name entities and found none.
+const buildCards = (layoutCards, ctx, locked) => {
+  const built = layoutCards.flatMap(expand).flatMap((card) => buildCard(card, ctx));
   const anchor = built.some((card) => card.anchor);
-  // A section that names entities and found none is left out; one without
-  // any (the energy flow) stays, but does not on its own make a view.
-  if (!anchor && section.cards.some((card) => card.entity || card.entities || card.roles)) return null;
+  // Cards without any entity (the energy flow) stay, but do not make a view.
+  if (!anchor && layoutCards.some((card) => card.entity || card.entities || card.roles)) return null;
   let cards = built.map((card) => card.config);
   if (locked && ctx.options.controls === "hold") cards = [lockCard(cards, ctx.options)];
   else if (locked) {
     cards = cards.map((card) =>
-      card.type === "tile" ? { ...card, features_position: "inline", grid_options: { columns: "full" } } : card);
+      card.type === "tile" ? { features_position: "inline", ...card, grid_options: { columns: "full" } } : card);
+  }
+  return { cards, anchor };
+};
+
+const buildSection = (section, ctx, locked) => {
+  let cards;
+  let anchor;
+  if (section.groups) {
+    // Side by side where there is room, one column each.
+    cards = section.groups.flatMap((group) => {
+      const built = buildCards(group.cards, ctx, locked);
+      if (!built) return [];
+      const title = { type: "heading", heading: text(group.heading, ctx.lang), heading_style: "subtitle" };
+      return [{ type: "vertical-stack", grid_options: { columns: 12 }, cards: [title, ...built.cards] }];
+    });
+    if (!cards.length) return null;
+    anchor = true;
+  } else {
+    const built = buildCards(section.cards, ctx, locked);
+    if (!built) return null;
+    ({ cards, anchor } = built);
   }
   const heading = { type: "heading", heading: text(section.heading, ctx.lang), heading_style: "title", icon: section.icon };
   if (section.view && ctx.paths[section.view]) heading.tap_action = navigate(ctx.paths[section.view]);
@@ -351,7 +374,7 @@ const { SungrowModbusFlowCard } = await import(new URL(`flow.js${HERE.search}`, 
 SungrowModbusFlowCard.getStubConfig = async (hass) => {
   const layout = await loadLayout();
   const house = indexHouse(hass);
-  const flow = layout.views.flatMap((view) => view.sections).flatMap((section) => section.cards).find((card) => card.type === "flow");
+  const flow = layout.views.flatMap((view) => view.sections).flatMap((section) => section.cards ?? []).find((card) => card.type === "flow");
   for (const root of house.roots) {
     const ctx = { family: house.families.get(root), everywhere: house.everywhere, lang: language(hass), root, options: {}, paths: {} };
     const [card] = buildCard(flow, ctx);

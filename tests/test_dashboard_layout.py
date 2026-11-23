@@ -38,10 +38,15 @@ CARD_TYPES = {
 }
 
 
+def _section_cards(section: dict):
+    for group in section.get("groups", [section]):
+        yield from group["cards"]
+
+
 def _cards():
     for view in LAYOUT["views"]:
         for section in view["sections"]:
-            yield from section["cards"]
+            yield from _section_cards(section)
 
 
 def _badges():
@@ -91,7 +96,7 @@ def test_a_setting_outside_the_controls_opens_no_dialog() -> None:
     for view in LAYOUT["views"]:
         if view.get("locked"):
             continue
-        for card in (c for section in view["sections"] for c in section["cards"]):
+        for card in (c for s in view["sections"] for c in _section_cards(s)):
             if {ref.partition(".")[0] for ref in _refs(card)} & writable:
                 assert card.get("more_info") is False, card
 
