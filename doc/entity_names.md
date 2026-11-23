@@ -1,6 +1,6 @@
 # The entity names
 
-**398 entities** that modern mode can create (Hybrid inverter 215, SBR battery 34, Wallbox 24, SG string inverter 85, iHomeManager 40).
+**399 entities** that modern mode can create (Hybrid inverter 215, SBR battery 34, Wallbox 25, SG string inverter 85, iHomeManager 40).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -364,14 +364,15 @@ A device of its own under the inverter, named after the pack its capacity matche
 |  |  | Warmest module | Wärmstes Modul | `sensor.sbr096_warmest_module` |  |  |
 |  |  | Warmest module temperature | Temperatur wärmstes Modul | `sensor.sbr096_warmest_module_temperature` |  | °C |
 
-## Wallbox (24)
+## Wallbox (25)
 
 A device of its own under the inverter, named after the model it reports, `Wallbox` where it reports none. Ids shown for `AC22E-01`.
 
-### Everything (24)
+### Everything (25)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
+|  |  | Car connected | Auto angeschlossen | `binary_sensor.ac22e_01_car_connected` |  |  |
 |  |  | Charger enabled | Ladestation aktiviert | `binary_sensor.ac22e_01_charger_enabled` |  |  |
 |  |  | Charging | Lädt | `binary_sensor.ac22e_01_charging` |  |  |
 |  |  | Charging current setpoint | Ladestrom-Sollwert | `sensor.ac22e_01_charging_current_setpoint` |  | A |

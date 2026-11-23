@@ -217,6 +217,9 @@
       "wallbox_plug_and_play": {
         "name": "Start charging on plug-in"
       },
+      "wallbox_vehicle_connected": {
+        "name": "Car connected"
+      },
       "weekend_discharge": {
         "name": "Weekend discharge"
       }

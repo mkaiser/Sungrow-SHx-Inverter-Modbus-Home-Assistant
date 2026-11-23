@@ -39,6 +39,7 @@ from ..capability_test.plausibility import (
     judge_ratios,
 )
 from ..capability_test.procedure import INCONCLUSIVE, OFF_BY
+from .registers import PILOT_CHARGING, PILOT_CONNECTED, PILOT_FREE
 
 #: The wallbox's own fields the checks read, as the device names them, and
 #: the inverter's load, which `values` adds.
@@ -125,13 +126,13 @@ def _pilot(previous: Values, current: Values, _at: datetime) -> tuple[bool, str]
         return None
     status_int = int(status)
     if status_int == CHARGING:
-        low, high = 4.5, 7.5
+        low, high = PILOT_CHARGING
     elif status_int in CONNECTED:
-        low, high = 7.5, 10.5
+        low, high = PILOT_CONNECTED
     elif status_int in UNPLUGGED:
         # 12 V unplugged; a car connected and idle reads 9 V, which the
         # status does not always tell from "idle", so both are accepted.
-        low, high = 7.5, 13.5
+        low, high = PILOT_CONNECTED[0], PILOT_FREE[1]
     else:
         return None
     if low <= pilot <= high:

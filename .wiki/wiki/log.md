@@ -2104,3 +2104,9 @@ under the 5 % minimum, as it would have without the test. The plausibility secti
 states (154 Running to 57 Standby over the following three days) show it ran again.
 `installation-peter-sm.md`, `register-13000.md`, `capability-test.md` and the 33213 query (now
 thirteen of thirteen, with the eleventh and twelfth it was missing) say so.
+
+## [2026-11-23] updated | device-wallbox
+
+How a plugged-in car is told: the control pilot's three bands, from the readings at gerd, behind the
+new binary sensor *Car connected*. The pilot while the wallbox is disabled is unmeasured and asked for
+in `devices-wanted.md`.

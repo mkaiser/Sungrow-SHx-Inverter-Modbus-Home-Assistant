@@ -299,6 +299,15 @@ BINARY_DESCRIPTIONS: tuple[SungrowBinarySensorDescription, ...] = (
         translation_key="wallbox_charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
     ),
+    # From the control pilot, not the status code: "idle" can have a car
+    # plugged in.
+    SungrowBinarySensorDescription(
+        key="wallbox_vehicle_connected",
+        component="wallbox_live",
+        field="vehicle_connected",
+        translation_key="wallbox_vehicle_connected",
+        device_class=BinarySensorDeviceClass.PLUG,
+    ),
     SungrowBinarySensorDescription(
         key="wallbox_enabled",
         component="wallbox_settings",

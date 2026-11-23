@@ -329,3 +329,44 @@ def test_the_tls_dump_covers_every_field_the_integration_reads() -> None:
         for name, field in component.declared_fields.items():
             for address in range(field.address, field.address + field.count):
                 assert (component.register_space, address) in covered, name
+
+
+class _Live:
+    """What `vehicle_connected` reads, set by hand."""
+
+    def __init__(self, pilot: float | None, status: int | None) -> None:
+        self.control_pilot_voltage = pilot
+        self.charging_status_raw = status
+        self.charging = None if status is None else status == 3
+
+
+@pytest.mark.parametrize(
+    ("pilot", "status", "expected"),
+    [
+        # Read on hardware: unplugged, stopped with the car in, charging.
+        (11.9, 1, False),
+        (8.97, 5, True),
+        (5.94, 3, True),
+        # "Idle" does not mean unplugged.
+        (9.0, 1, True),
+        # The bands' edges.
+        (4.5, 2, True),
+        (10.5, 2, True),
+        (10.51, 1, False),
+        (13.5, 1, False),
+        # Outside every band, or no reading: not known, and never "no car".
+        (13.51, 1, None),
+        (0.0, 9, None),
+        (3.0, 8, None),
+        (None, 1, None),
+        (None, None, None),
+        # A charging session answers without the pilot.
+        (None, 3, True),
+        (0.0, 3, True),
+    ],
+)
+def test_a_connected_vehicle_is_read_from_the_pilot(
+    pilot: float | None, status: int | None, expected: bool | None
+) -> None:
+    """The pilot decides; the status only when it is charging."""
+    assert WallboxLive.vehicle_connected.fget(_Live(pilot, status)) is expected

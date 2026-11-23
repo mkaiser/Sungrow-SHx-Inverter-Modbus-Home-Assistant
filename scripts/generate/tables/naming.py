@@ -209,6 +209,7 @@ OVERRIDES: dict[str, str] = {
     # `-ing` on a binary sensor, which is what the convention reserves it
     # for: something happening right now.
     "wallbox_charging": "Charging",
+    "wallbox_vehicle_connected": "Car connected",
     "wallbox_enabled": "Charger enabled",
     # Sungrow's "Plug&Play", named for what it does: on, a plugged-in car
     # starts charging by itself; off, it waits for a start. Not "Plug and
@@ -753,6 +754,7 @@ GERMAN: dict[str, str] = {
     "pv_power_limitation_enabled": "PV-Leistungsbegrenzung",
     "sg_fault_reported": "Fehler gemeldet",
     "wallbox_charging": "Lädt",
+    "wallbox_vehicle_connected": "Auto angeschlossen",
     "wallbox_enabled": "Ladestation aktiviert",
     "wallbox_plug_and_play": "Automatischer Ladestart",
     "weekend_discharge": "Entladung am Wochenende",

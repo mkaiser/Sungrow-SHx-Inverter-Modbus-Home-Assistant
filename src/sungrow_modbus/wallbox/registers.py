@@ -68,6 +68,13 @@ CHARGING_STATUS: dict[int, str] = {
     9: "fault",
 }
 
+#: The control pilot's bands, in volts (IEC 61851's states): 6 V a vehicle
+#: charging, 9 V one connected and not charging, 12 V nothing plugged in. The
+#: readings taken here: 5.94, 8.97 and 11.9 V.
+PILOT_CHARGING = (4.5, 7.5)
+PILOT_CONNECTED = (7.5, 10.5)
+PILOT_FREE = (10.5, 13.5)
+
 #: Single or three phase, for both the reading and the setpoint.
 PHASE_MODE: dict[int, str] = {0: "three phase", 1: "single phase"}
 
@@ -326,6 +333,23 @@ class WallboxLive(Component):
         if code is None:
             return None
         return int(code) == 3
+
+    @property
+    def vehicle_connected(self) -> bool | None:
+        """Whether a vehicle is plugged in, from the control pilot.
+
+        Not from the status code, which can read *idle* with a car connected
+        (`plausibility._pilot`). A pilot outside every band -- a fault, 0 V,
+        no reading -- says nothing, so it is None and never "no car"; a
+        session that is charging is the one case the status answers alone.
+        """
+        pilot = self.control_pilot_voltage
+        if pilot is not None:
+            if PILOT_CHARGING[0] <= pilot <= PILOT_CONNECTED[1]:
+                return True
+            if PILOT_FREE[0] < pilot <= PILOT_FREE[1]:
+                return False
+        return True if self.charging else None
 
 
 class WallboxSettings(Component):

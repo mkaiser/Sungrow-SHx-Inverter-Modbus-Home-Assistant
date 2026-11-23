@@ -217,6 +217,9 @@
       "wallbox_plug_and_play": {
         "name": "Automatischer Ladestart"
       },
+      "wallbox_vehicle_connected": {
+        "name": "Auto angeschlossen"
+      },
       "weekend_discharge": {
         "name": "Entladung am Wochenende"
       }

@@ -94,6 +94,12 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   (`SungrowRuntimeData.has_wallbox`, `custom_components/sungrow_modbus/coordinator.py`): without
   one they are not created, whatever 33541 reads.
 
+- **The control pilot (input 21312) tells whether a car is plugged in; the status does not.** Read at
+  [gerd](installation-gerd.md): 11.9 V after an unplug, with the status back at idle
+  ([2026-11-20](../sources/gerd-wallbox-2026-11-20-test4-summary.md)), 8.97 V with the car in and stopped, and 5.94 V charging
+  ([2026-11-03](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md)). The binary sensor *Car connected* is made from
+  it (`WallboxLive.vehicle_connected`): a pilot outside the three bands is unknown, never "no car". What the pilot
+  reads while the wallbox is disabled (status 8) has not been measured.
 - **The phases are the inverter's too**: it switches a managed wallbox to one phase by itself,
   by owners' reports in PV surplus with grid purchase off, and nothing documented chooses them;
   the wallbox's own 21204 did not ([a managed wallbox's phases](../concepts/managed-wallbox-phases.md)).

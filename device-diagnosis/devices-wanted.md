@@ -23,6 +23,7 @@ details are under [Why each one](#why-each-one).
 | 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 | 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
+| 12 | **A Sungrow wallbox switched off (disabled) in the app**, once with a car plugged in and once without | What the control pilot (register 21312) reads then, which is what *Car connected* is made from: it has been read unplugged, connected and charging, but never while the wallbox is disabled |
 
 ## Not needed any more
 
