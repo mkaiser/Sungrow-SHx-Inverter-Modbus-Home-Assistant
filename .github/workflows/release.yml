@@ -159,7 +159,9 @@ jobs:
       - name: Build sdist and wheel
         run: |
           python -m pip install --upgrade pip build
+          python scripts/release/fetch_cards.py
           python -m build
+          python scripts/release/fetch_cards.py --check dist/*
 
       - name: Check the metadata before uploading
         run: |

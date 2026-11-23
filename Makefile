@@ -241,9 +241,11 @@ wheel: ## Build only the library's wheel into dist/, for SUNGROW_MODBUS_LIBRARY
 .PHONY: wheel
 
 build: ## Build the sdist and wheel, and check them
+	$(PY) scripts/release/fetch_cards.py
 	$(PY) -m build
 	twine check --strict dist/*
 	$(PY) scripts/release/check_pinned_library.py --wheel "$$(ls dist/*.whl)"
+	$(PY) scripts/release/fetch_cards.py --check dist/*
 .PHONY: build
 
 pin-check: ## Does the *published* library the manifest pins serve this integration?

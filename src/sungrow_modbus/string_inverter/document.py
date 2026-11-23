@@ -163,6 +163,7 @@ def document(
     firmware: Mapping[str, object],
     connection: Mapping[str, object],
     string_inverter: Mapping[str, object],
+    network_names: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build the document for an SG, from an already masked section."""
     from ..diagnosis_document import SCHEMA
@@ -178,6 +179,7 @@ def document(
         "firmware": dict(firmware),
         "connection": dict(connection),
         "string_inverter": dict(string_inverter),
+        **({"network_names": dict(network_names)} if network_names else {}),
     }
 
 

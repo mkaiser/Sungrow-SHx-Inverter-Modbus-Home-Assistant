@@ -67,6 +67,12 @@ the abstract:
   records that evcc's `charger/sungrow.go` is **not** MIT — "All rights
   reserved", unlike the rest of evcc — so it is a cross-check here and
   never a source.
+- **Power Flow Card Plus** and **Energy Flow Card Plus** by flixlix
+  ([MIT](https://github.com/flixlix/power-flow-card-plus/blob/main/LICENSE)),
+  which draw the dashboard's power flow and the day's energy flow. Its code is not in this repository:
+  the release fetches a pinned version of each into the library's wheel, with its
+  licence beside it, under a name of its own
+  (`scripts/release/fetch_cards.py`).
 - [`wallbox_registers.md`](wallbox_registers.md) — all three wallbox maps
   compared line by line, saying which of them holds each register.
 

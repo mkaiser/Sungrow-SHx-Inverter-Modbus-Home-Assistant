@@ -5,12 +5,18 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus import network_records
+from custom_components.sungrow_modbus.const import DOMAIN
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.discovery_flow import DiscoveryKey
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from sungrow_modbus.network_names import Advert, BrowseResult
 
 HOST = "192.0.2.10"
+ENTRY = MockConfigEntry(domain=DOMAIN, data={CONF_HOST: HOST})
 
 #: Taken at import, before `conftest`'s autouse stub replaces it for the test.
 REAL_ADVERTS = network_records._async_adverts
@@ -67,7 +73,7 @@ async def test_the_section_marks_this_device_and_carries_no_serial(
 
     monkeypatch.setattr(network_records, "_async_adverts", heard)
     monkeypatch.setattr(network_records, "async_mac_prefix", prefix)
-    section = await network_records.async_network_names(hass, HOST, ["A123456789"])
+    section = await network_records.async_network_names(hass, ENTRY, ["A123456789"])
     assert section["mdns"]["state"] == "answered"
     assert section["mdns"]["services"][0]["this_device"] is True
     assert section["mac_vendor_prefix"] == "A4:CF:12"
@@ -82,8 +88,35 @@ async def test_a_failed_browse_is_recorded_as_not_browsed(
         raise OSError("no multicast here")
 
     monkeypatch.setattr(network_records, "_async_adverts", refused)
-    section = await network_records.async_network_names(hass, HOST)
+    section = await network_records.async_network_names(hass, ENTRY)
     assert section["mdns"] == {
         "state": "not_browsed",
         "why": "OSError: no multicast here",
     }
+
+
+async def test_what_home_assistant_s_discovery_knows(hass: HomeAssistant) -> None:
+    section = await network_records.async_network_names(hass, ENTRY)
+    # DHCP discovery does not run here, which is not the same as not knowing.
+    assert section["home_assistant"] == {"set_up_by": [], "dhcp_knows_address": None}
+
+    found = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: HOST},
+        discovery_keys={
+            "dhcp": (DiscoveryKey(domain="dhcp", key="aabbccddeeff", version=1),)
+        },
+    )
+    hass.config.components.add("dhcp")
+    for address, known in ((HOST, True), ("192.0.2.11", False)):
+        seen = [DhcpServiceInfo(ip=address, hostname="x", macaddress="aabbccddeeff")]
+        with patch(
+            "homeassistant.components.dhcp.async_discovered_service_info",
+            return_value=seen,
+        ):
+            section = await network_records.async_network_names(hass, found)
+        assert section["home_assistant"] == {
+            "set_up_by": ["dhcp"],
+            "dhcp_knows_address": known,
+        }
+        assert "aabbcc" not in str(section).lower()

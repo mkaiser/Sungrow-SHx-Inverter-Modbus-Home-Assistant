@@ -168,7 +168,7 @@ async def async_get_config_entry_diagnostics(
     # 19 probe reads, which is small beside the
     # register dump and not free -- an inverter grants very few sessions.
     try:
-        report["diagnosis"] = await async_build(hass, entry)
+        report["diagnosis"] = await async_build(hass, entry, allow_network_names=True)
         _carry_capability_test(report["diagnosis"], runtime, device)
     # Deliberately broad: the report a user came for matters more than any one
     # section of it.
@@ -233,7 +233,7 @@ async def _async_string_inverter_diagnostics(
         "wifi_module": wifi_module.diagnostics(entry),
     }
     try:
-        report["diagnosis"] = await async_build(hass, entry)
+        report["diagnosis"] = await async_build(hass, entry, allow_network_names=True)
     except Exception as err:  # the report matters more than one section of it
         _LOGGER.exception("Could not build the diagnosis for %s", entry.title)
         report["diagnosis"] = {"error": f"{type(err).__name__}: {err}"}

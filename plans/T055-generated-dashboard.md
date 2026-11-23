@@ -12,6 +12,10 @@ Nothing to install from HACS.
   come first; with several inverters a wallbox keeps its own tabs but no Home. The lock opens after 2 s and stays open
   60 s. Checked in Chromium on synthetic houses (inverter alone, wallbox alone, both, on the bus and beside it, two
   inverters, two wallboxes), not on gerd's registry. Not released.
+  Then the power flow card in the wheel and the
+  diagnosis's settings in the Diagnosis view, checked on a scratch instance on the simulator: the flow draws, an answer
+  saves, an allowed test refuses a tap while locked and saves once held. Not seen: a wallbox entry's settings, a save
+  refused during a run in the browser (the server's refusal is tested).
 
 - **2026-11-23**, done over, after the maintainer's four items and their looking at it; released
   as 0.1.0a51 (PyPI, GitHub, the preview mirror). What it is now is *The second layout* below; where that differs from the older sections, it
@@ -45,13 +49,15 @@ Nothing to install from HACS.
   headings (maintainer). The lock leaves values readable: the wrap is `inert` under an invisible overlay.
 - **A setting outside the lock opens no dialog**, since the dialog would change it past the lock; the layout
   test holds that, and that Stop is never locked and what writes is for administrators.
-- **Power flow: HACS now, package later** (maintainer). `sungrow-modbus-flow-card` shows `power-flow-card-plus` if it is
-  among `lovelace/resources`, tiles and one dismissible line otherwise, chosen when shown. The energy flow is
-  core's `energy-distribution`, where the Energy dashboard has sources.
-- **The package, if it comes**: a second PyPI project (`sungrow-modbus-cards`) holding the pinned upstream
-  bundle (MIT text in the wheel), built in CI from a version and a SHA-256 in `cards/`, its tag renamed so it cannot
-  clash with a HACS copy; pinned in the manifest's `requirements`, served on a second static path. No third-party
-  code in this repository. A requirement that cannot be installed blocks setup, as the library's does.
+- **Power flow: in the library's wheel** (maintainer, 2026-11-23), and the day's energy flow beside it
+  (`energy-flow-card-plus`, which reads long-term statistics of the day's sensors and needs no Energy dashboard; on Home's
+  *Today*, where it replaces the six tiles it shows). `scripts/release/fetch_cards.py` fetches the pinned
+  `power-flow-card-plus`, checks its SHA-256, renames its element and drops its card picker entry; the wheel carries it
+  with its licence, and `dashboard.py` serves the one file. Tiles where it is missing (a source checkout) or fails to
+  load. The energy flow is core's `energy-distribution`, where the Energy dashboard has sources.
+- **The diagnosis's settings** are the entry's options (`diagnosis_settings.py`), read and saved over the websocket by
+  administrators, with Configure's texts. Saving does not reload (`_built_from` leaves `RUN_OPTIONS` out), since a
+  reload would end a collection; the server refuses a save during a run, and an allowed test through the unlocked part.
 - **Results**: `sungrow_modbus/diagnosis/results` (`websocket.py`, administrators, the host taken out), built by
   `capability_test/results.py`; a person's name for every check in `capability_test/labels.py`, the ledger's names
   unchanged. What a check waits for, and verdicts, are still English (T007's item 4.3).

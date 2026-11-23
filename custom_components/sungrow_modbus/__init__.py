@@ -90,6 +90,7 @@ from .coordinator import (
 )
 from .dashboard import async_register as async_register_dashboard
 from .diagnosis import DiagnosisRunner
+from .diagnosis_settings import RUN_OPTIONS
 from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
 from .links import wallbox_tls_params
@@ -1272,7 +1273,10 @@ def _built_from(entry: SungrowConfigEntry) -> tuple[dict[str, Any], dict[str, An
         CONF_WIFI_MODULE,
     }
     data = {k: v for k, v in entry.data.items() if k not in measured}
-    return data, dict(entry.options)
+    # And the diagnosis's options, read when a run starts: a reload would end
+    # a collection that is between two runs.
+    options = {k: v for k, v in entry.options.items() if k not in RUN_OPTIONS}
+    return data, options
 
 
 async def async_remove_config_entry_device(

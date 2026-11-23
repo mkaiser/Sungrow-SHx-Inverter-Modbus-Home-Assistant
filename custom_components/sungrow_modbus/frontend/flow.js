@@ -4,33 +4,51 @@
 // From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT).
 // Keep this line with any copy -- doc/attribution.md.
 
-// It draws nothing itself. Where the user has power-flow-card-plus (from HACS)
-// it shows that, with the house's entities filled in; everywhere else tiles,
-// and for administrators one line on how to get it. It chooses when it is
-// shown, so a dashboard taken over changes too once the card is installed.
+// It draws nothing itself. It shows power-flow-card-plus, or for the day's
+// energy energy-flow-card-plus, both by flixlix (MIT), which come with the
+// integration's library under names of their own, with the house's entities
+// filled in; tiles where one is missing or fails to load. It chooses when it
+// is shown, so a dashboard taken over follows too.
 
-const { DOCS, getChoices, language, say, setChoice } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { language, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
-const PLUS = "power-flow-card-plus";
-const HACS_LINK =
-  "https://my.home-assistant.io/redirect/hacs_repository/?owner=flixlix&repository=power-flow-card-plus&category=plugin";
+// `kind` of the card: the element, and its file. Not versioned: the server
+// revalidates it, and an element is defined once per page.
+const KINDS = {
+  power: ["sungrow-modbus-power-flow", "/sungrow_modbus_cards/power-flow.js"],
+  energy: ["sungrow-modbus-energy-flow", "/sungrow_modbus_cards/energy-flow.js"],
+};
 
-// How long a listed resource may take to define its card.
-const DEFINE_MS = 10_000;
-
-const plusAvailable = async (hass) => {
-  if (customElements.get(PLUS)) return true;
+const bundles = new Map();
+const available = async (kind) => {
+  const [tag, url] = KINDS[kind];
+  if (customElements.get(tag)) return true;
   try {
-    const resources = await hass.callWS({ type: "lovelace/resources" });
-    if (!resources.some((resource) => resource.url?.includes(PLUS))) return false;
+    await (bundles.get(kind) ?? bundles.set(kind, import(url)).get(kind));
   } catch (err) {
-    console.warn("sungrow-modbus: could not list the dashboard resources", err);
-    return false;
+    console.warn(`sungrow-modbus: no ${kind} flow card, showing tiles`, err);
+    bundles.delete(kind);
   }
-  return Promise.race([
-    customElements.whenDefined(PLUS).then(() => true),
-    new Promise((resolve) => setTimeout(() => resolve(false), DEFINE_MS)),
-  ]);
+  return Boolean(customElements.get(tag));
+};
+
+// The day's energy: the same circles from the day's sensors, which are in kWh.
+const energyConfig = (e, lang) => {
+  const entities = {};
+  if (e.solar) entities.solar = { entity: e.solar, name: say("solar", lang) };
+  if (e.import || e.export) {
+    entities.grid = { entity: { consumption: e.import, production: e.export }, name: say("grid", lang), color_circle: true };
+  }
+  if (e.charge || e.discharge) {
+    entities.battery = {
+      entity: { consumption: e.discharge, production: e.charge },
+      state_of_charge: e.level,
+      name: say("battery", lang),
+      color_circle: true,
+    };
+  }
+  entities.home = { entity: e.home, name: say("home", lang), color_icon: true };
+  return { type: `custom:${KINDS.energy[0]}`, entities, clickable_entities: true };
 };
 
 const plusConfig = (e, lang) => {
@@ -52,7 +70,7 @@ const plusConfig = (e, lang) => {
     entities.individual = [{ entity: e.car, name: say("car", lang), icon: "mdi:car-electric", color: "#9c27b0", display_zero: true }];
   }
   return {
-    type: `custom:${PLUS}`,
+    type: `custom:${KINDS.power[0]}`,
     entities,
     clickable_entities: true,
     use_new_flow_rate_model: true,
@@ -107,42 +125,15 @@ export class SungrowModbusFlowCard extends HTMLElement {
     this._started = true;
     this.style.display = "block";
     const lang = language(this._hass);
-    const plus = this._config.style !== "tiles" && (await plusAvailable(this._hass));
+    const kind = this._config.kind === "energy" ? "energy" : "power";
+    const plus = this._config.style !== "tiles" && (await available(kind));
     const helpers = await window.loadCardHelpers();
+    const e = this._config.entities;
     const child = helpers.createCardElement(
-      plus ? plusConfig(this._config.entities, lang) : tilesConfig(this._config.entities, lang),
+      !plus ? tilesConfig(e, lang) : kind === "energy" ? energyConfig(e, lang) : plusConfig(e, lang),
     );
     child.hass = this._hass;
     this.replaceChildren(child);
     this._child = child;
-    if (!plus && this._config.style !== "tiles" && this._hass.user?.is_admin) await this._hint(lang);
-  }
-
-  async _hint(lang) {
-    if ((await getChoices(this._hass)).no_flow_hint) return;
-    const hacs = this._hass.config.components.includes("hacs");
-    const row = document.createElement("div");
-    row.style.cssText =
-      "display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;padding:0 4px;font-size:12px;color:var(--secondary-text-color)";
-    const label = document.createElement("span");
-    label.style.flex = "1 1 auto";
-    label.textContent = say("flow_hint", lang);
-    const link = document.createElement("a");
-    link.href = hacs ? HACS_LINK : `${DOCS}/dashboard.md#the-power-flow`;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.style.color = "var(--primary-color)";
-    link.textContent = say(hacs ? "flow_install" : "flow_how", lang);
-    const dismiss = document.createElement("a");
-    dismiss.href = "#";
-    dismiss.style.color = "var(--secondary-text-color)";
-    dismiss.textContent = say("flow_dismiss", lang);
-    dismiss.addEventListener("click", async (event) => {
-      event.preventDefault();
-      await setChoice(this._hass, { no_flow_hint: true });
-      row.remove();
-    });
-    row.append(label, link, dismiss);
-    this.append(row);
   }
 }

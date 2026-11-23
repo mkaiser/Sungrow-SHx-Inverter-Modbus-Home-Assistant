@@ -29,8 +29,8 @@ VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "dia
 #: The layout's revision and the digest of its views. **A change to the views
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
-REVISION = (2, "5af6428b9fde")
-#: Card types the strategy builds: the last five are its own, the rest Home Assistant's.
+REVISION = (3, "e2ba8519c0de")
+#: Card types the strategy builds: the last seven are its own, the rest core's.
 CARD_TYPES = {
     "tile",
     "entities",
@@ -39,7 +39,9 @@ CARD_TYPES = {
     "markdown",
     "energy",
     "flow",
+    "energy-flow",
     "tests",
+    "settings",
     "device-link",
     "integration-link",
 }
@@ -65,7 +67,7 @@ def _refs(card: dict) -> list[str]:
     """Return every reference a card or badge may resolve, alternatives apart."""
     rows = [card["entity"]] if "entity" in card else list(card.get("entities", []))
     rows += card.get("roles", {}).values()
-    rows += [card[key] for key in ("status", "step") if key in card]
+    rows += [card[key] for key in ("status", "step", "progress") if key in card]
     refs = [row["entity"] if isinstance(row, dict) else row for row in rows]
     low, high = card.get("repeat", (1, 1))
     expanded = [
@@ -122,6 +124,15 @@ def test_what_writes_is_for_administrators() -> None:
         groups = [g for s in view["sections"] for g in s.get("groups", [s])]
         if view.get("locked") or any(group.get("locked") for group in groups):
             assert view.get("admin") is True, view["id"]
+
+
+def test_allowing_a_test_is_locked_and_answering_is_not() -> None:
+    for view in LAYOUT["views"]:
+        for section in view["sections"]:
+            for group in section.get("groups", [section]):
+                for card in group["cards"]:
+                    if card["type"] == "settings":
+                        assert bool(group.get("locked")) == (card["part"] == "tests")
 
 
 def test_stop_is_never_locked() -> None:

@@ -327,6 +327,13 @@ instance. The download leaves it out.
   bridge, so none of the three is evidence about the device. `null` is "not
   determined" -- a host that is not an IPv4 address, adapters that could not
   be read, or a document written before the field existed.
+- **`home_assistant`** (schema 29) is written by Home Assistant only.
+  `set_up_by` names the discoveries that set the entry up (`dhcp`,
+  `zeroconf`; empty for one added by hand or by the search), and
+  `dhcp_knows_address` whether Home Assistant's DHCP discovery has the
+  device's address (`null` where it does not run). That table is filled by a
+  DHCP request, a router's device tracker and a network scan alike, so `true`
+  says Home Assistant could offer the device, not which of the three told it.
 
 A wallbox's own document carries the same section.
 

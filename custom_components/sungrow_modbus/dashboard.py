@@ -17,12 +17,15 @@ from pathlib import Path
 from homeassistant.components.frontend import DATA_EXTRA_MODULE_URL, add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
+from sungrow_modbus import cards
 
 _LOGGER = logging.getLogger(__name__)
 
 #: Where the files are served; one path per Home Assistant, not per entry.
 URL_BASE = "/sungrow_modbus_frontend"
 MODULE = "sungrow-modbus.js"
+#: The power flow card, which the library carries (`sungrow_modbus.cards`).
+CARDS_URL = "/sungrow_modbus_cards"
 DIRECTORY = Path(__file__).parent / "frontend"
 
 
@@ -53,7 +56,13 @@ async def async_register(hass: HomeAssistant) -> None:
         _LOGGER.debug("No frontend; the Sungrow dashboard is not offered")
         return
     version = await hass.async_add_executor_job(_digest, DIRECTORY)
-    await hass.http.async_register_static_paths(
-        [StaticPathConfig(URL_BASE, str(DIRECTORY), cache_headers=False)]
-    )
+    paths = [StaticPathConfig(URL_BASE, str(DIRECTORY), cache_headers=False)]
+    # Files, not the directory: the rest of it is Python.
+    paths += [
+        StaticPathConfig(
+            f"{CARDS_URL}/{name}", str(cards.DIRECTORY / name), cache_headers=False
+        )
+        for name in await hass.async_add_executor_job(cards.present)
+    ]
+    await hass.http.async_register_static_paths(paths)
     add_extra_js_url(hass, f"{URL_BASE}/{MODULE}?v={version}")

@@ -7,7 +7,7 @@ name = "sungrow-modbus"
 # Keep in lockstep with `requirements` in
 # custom_components/sungrow_modbus/manifest.json: Home Assistant checks the
 # installed version against it on every start.
-version = "0.1.0a51"
+version = "0.1.0a52"
 description = "Talk to Sungrow inverters, batteries and wallboxes over Modbus."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -21,6 +21,15 @@ discovery = ["zeroconf>=0.39.0"]
 
 [project.urls]
 Homepage = "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+
+# Fetched by scripts/release/fetch_cards.py and not committed, so named here:
+# hatchling leaves out what git ignores.
+[tool.hatch.build]
+artifacts = [
+    "/src/sungrow_modbus/cards/power-flow.js",
+    "/src/sungrow_modbus/cards/energy-flow.js",
+    "/src/sungrow_modbus/cards/LICENSE.power-flow-card-plus",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sungrow_modbus"]

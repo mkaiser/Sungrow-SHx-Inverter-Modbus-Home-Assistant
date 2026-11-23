@@ -18,6 +18,7 @@ const LOCK_CARD = "sungrow-modbus-lock-card";
 const FLOW_CARD = "sungrow-modbus-flow-card";
 const TESTS_CARD = "sungrow-modbus-tests-card";
 const UPDATE_CARD = "sungrow-modbus-update-card";
+const SETTINGS_CARD = "sungrow-modbus-settings-card";
 const HERE = new URL(import.meta.url);
 // The views were named `overview` before; an option that still says so is read as `home`.
 const RENAMED = { overview: "home" };
@@ -154,13 +155,28 @@ const buildCard = (card, ctx) => {
       },
     }];
   }
-  if (card.type === "flow") {
+  if (card.type === "settings") {
+    const status = resolve(card.status, family, everywhere);
+    if (!status?.anchor) return [];
+    const progress = resolve(card.progress, family, everywhere);
+    return [{
+      anchor: true,
+      config: {
+        type: `custom:${SETTINGS_CARD}`, device_id: ctx.hass.entities[status.entity].device_id, part: card.part,
+        watch: [progress?.entity].filter(Boolean), grid_options: { columns: "full" },
+      },
+    }];
+  }
+  if (card.type === "flow" || card.type === "energy-flow") {
     const found = Object.entries(card.roles).map(([role, ref]) => [role, resolve(ref, family, everywhere)]).filter(([, f]) => f);
     if (!found.some(([, f]) => f.anchor)) return [];
     const entities = Object.fromEntries(found.map(([role, f]) => [role, f.entity]));
     return [{
       anchor: true,
-      config: { type: `custom:${FLOW_CARD}`, entities, style: ctx.options.power_flow, grid_options: { columns: "full" } },
+      config: {
+        type: `custom:${FLOW_CARD}`, kind: card.type === "energy-flow" ? "energy" : "power", entities,
+        style: ctx.options.power_flow, grid_options: { columns: "full" },
+      },
     }];
   }
   const grid = card.columns ? { grid_options: { columns: card.columns } } : {};
@@ -460,12 +476,16 @@ SungrowModbusFlowCard.getStubConfig = async (hass) => {
   return { entities: {} };
 };
 
+const { SungrowModbusSettingsCard } = await import(new URL(`settings.js${HERE.search}`, HERE));
+
 const CARDS = [
   [LOCK_CARD, SungrowModbusLockCard, "Sungrow Modbus lock", "lock_description"],
   [FLOW_CARD, SungrowModbusFlowCard, "Sungrow power flow", "flow_description"],
 ];
 // Parts of the dashboard, of no use in the card picker.
-for (const [tag, element] of [[TESTS_CARD, SungrowModbusTestsCard], [UPDATE_CARD, SungrowModbusUpdateCard]]) {
+for (const [tag, element] of [
+  [TESTS_CARD, SungrowModbusTestsCard], [UPDATE_CARD, SungrowModbusUpdateCard], [SETTINGS_CARD, SungrowModbusSettingsCard],
+]) {
   if (!customElements.get(tag)) customElements.define(tag, element);
 }
 const lang = language(document.querySelector("home-assistant")?.hass);

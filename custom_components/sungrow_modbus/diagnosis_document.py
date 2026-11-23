@@ -193,8 +193,8 @@ async def async_build(
 
     `allow_network_names` adds what the device says about itself beside
     Modbus (`network_records`): a two-second mDNS browse, a reverse-DNS
-    lookup and an ARP read. The button's, like the block test; the download
-    leaves it off, because somebody is waiting on it.
+    lookup and an ARP read. Both the button's and the download's, since two
+    seconds is affordable and the two documents should not differ in it.
 
     `allow_block_test` is the same decision for the block read test, which is
     not an option at all: the diagnosis button always runs it and the download
@@ -211,7 +211,9 @@ async def async_build(
     if options is None:
         options = dict(entry.options)
     if runtime.is_string_inverter:
-        return await _async_build_string_inverter(entry, options, on_progress)
+        return await _async_build_string_inverter(
+            hass, entry, options, on_progress, allow_network_names
+        )
     device = next(iter(runtime.coordinators.values())).device
 
     # Asked for and affordable are two different things; see the docstring.
@@ -274,9 +276,7 @@ async def async_build(
         battery_pack=collected.battery_pack,
         steps_lost={str(step): why for step, why in collected.failed.items()},
         network_names=(
-            await async_network_names(
-                hass, entry.data.get(CONF_HOST, ""), [collected.serial]
-            )
+            await async_network_names(hass, entry, [collected.serial])
             if allow_network_names
             else None
         ),
@@ -286,9 +286,11 @@ async def async_build(
 
 
 async def _async_build_string_inverter(
+    hass: HomeAssistant,
     entry: SungrowConfigEntry,
     options: Mapping[str, Any],
     on_progress: Progress | None,
+    allow_network_names: bool,
 ) -> dict[str, Any]:
     """Return an SG's document: its own map read raw, as the terminal writes it.
 
@@ -331,6 +333,11 @@ async def _async_build_string_inverter(
             "unit": device.unit_id,
         },
         string_inverter=string_inverter.section(dump, unit=device.unit_id),
+        network_names=(
+            await async_network_names(hass, entry, [serial])
+            if allow_network_names
+            else None
+        ),
     )
 
 

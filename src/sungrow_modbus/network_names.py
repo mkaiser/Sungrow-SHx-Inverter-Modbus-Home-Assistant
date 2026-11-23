@@ -489,6 +489,7 @@ def network_section(
     mac_prefix: str | None = None,
     services_heard: int | None = None,
     on_segment: bool | None = None,
+    home_assistant: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Return the document's `network_names` section.
 
@@ -508,6 +509,9 @@ def network_section(
     (`on_device_segment`, `BrowseResult`). Both are optional and both default
     to None, which is "not determined": a document written before they
     existed says nothing rather than claiming the reader was placed well.
+
+    `home_assistant` is what Home Assistant's own discovery knows of this
+    address, which only a document written inside it can say.
     """
     adverts = list(adverts) if adverts is not None else None
     all_serials = set(device_serials)
@@ -542,4 +546,5 @@ def network_section(
         "reverse_dns_label": anonymised(label, serials) if label else None,
         "mac_vendor_prefix": mac_prefix,
         "on_device_segment": on_segment,
+        **({"home_assistant": dict(home_assistant)} if home_assistant else {}),
     }

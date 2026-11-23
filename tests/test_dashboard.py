@@ -8,9 +8,12 @@ Python: the static path, the module URL and its version.
 from __future__ import annotations
 
 from http import HTTPStatus
+import importlib.util
+from pathlib import Path
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
+import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus import dashboard
@@ -18,8 +21,15 @@ from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from homeassistant.components.frontend import DATA_EXTRA_MODULE_URL, UrlManager
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
+from sungrow_modbus import cards
 
 from .conftest import SERIAL
+
+SCRIPT = Path(__file__).parent.parent / "scripts" / "release" / "fetch_cards.py"
+spec = importlib.util.spec_from_file_location("fetch_cards", SCRIPT)
+assert spec is not None and spec.loader is not None
+fetch_cards = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(fetch_cards)
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -67,3 +77,41 @@ async def test_without_a_frontend_setup_goes_on(
 ) -> None:
     await _setup(hass, sungrow_unit, SERIAL)
     assert DATA_EXTRA_MODULE_URL not in hass.data
+
+
+async def test_the_cards_are_served_where_the_library_has_them(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, hass_client, tmp_path
+) -> None:
+    hass.data[DATA_EXTRA_MODULE_URL] = UrlManager(lambda *_: None, [])
+    for name in cards.BUNDLES:
+        (tmp_path / name).write_text("export {};")
+    with patch.object(cards, "DIRECTORY", tmp_path):
+        await _setup(hass, sungrow_unit, SERIAL)
+    client = await hass_client()
+    flow = (dashboard.DIRECTORY / "flow.js").read_text()
+    for name in cards.BUNDLES:
+        path = f"{dashboard.CARDS_URL}/{name}"
+        assert (await client.get(path)).status == HTTPStatus.OK
+        # What the card asks for, and under which name.
+        assert f'"{path}"' in flow
+        assert f'"{fetch_cards.CARDS_BY_BUNDLE[name].tag}"' in flow
+
+
+async def test_without_the_bundle_the_dashboard_is_still_offered(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, tmp_path
+) -> None:
+    hass.data[DATA_EXTRA_MODULE_URL] = UrlManager(lambda *_: None, [])
+    with patch.object(cards, "DIRECTORY", tmp_path):
+        await _setup(hass, sungrow_unit, SERIAL)
+    assert _module_urls(hass)
+
+
+@pytest.mark.parametrize("card", fetch_cards.CARDS_BY_BUNDLE.values())
+def test_the_bundle_s_patches_must_match(card) -> None:
+    bundle = "".join(old for old, _new in card.patches)
+    patched = card.patched(bundle)
+    assert all(new in patched for _old, new in card.patches)
+    with pytest.raises(SystemExit):
+        card.patched(bundle.replace(card.patches[0][0], ""))
+    assert tuple(fetch_cards.CARDS_BY_BUNDLE) == cards.BUNDLES
+    assert fetch_cards.LICENCE == cards.LICENCE

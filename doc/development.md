@@ -219,6 +219,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `generate_simulator_registers.py` | The simulator's seed, from the library's inverter map |
 | **`scripts/release/`** | **Release gates** |
 | `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
+| `fetch_cards.py` | Put the pinned power and energy flow cards into `src/sungrow_modbus/cards/` (not committed) for the wheel; `--check dist/*` says whether a build carries it. `make build` and the release run both. A new upstream version is a new version and digest there (`POWER`, `ENERGY`) |
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases. It reads the **working tree**, so another agent's uncommitted library change fails it too; to judge a release, run it in a clean `git worktree` of the tag |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |

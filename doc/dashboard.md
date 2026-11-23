@@ -32,7 +32,7 @@ It is the energy side of your house in one place. Home Assistant's own
 
 | View | Shows |
 | --- | --- |
-| **Home** | The power flow, the battery, today's energy, the car, and the last 24 hours. Badges at the top: the inverter's state, whether a car is plugged in, and an alarm, a fault or a running test while there is one |
+| **Home** | The power flow, the battery, today's energy flow, the car, and the last 24 hours. Badges at the top: the inverter's state, whether a car is plugged in, and an alarm, a fault or a running test while there is one |
 | **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; energy per day over 30 days; totals since installation |
 | **Battery** | Level, charge and discharge, temperature, health, cells and modules, and 48 hours of history |
 | **Inverter** | State, alarms and faults, the MPPTs, the grid phases, backup output, the device and its firmware |
@@ -53,20 +53,21 @@ Controls and Diagnosis tabs, since nothing says which inverter it belongs to.
 
 ## The power flow
 
-Home shows the power between PV, house, grid, battery and car as moving dots
-if you have **Power Flow Card Plus**, a community card from
-[HACS](https://www.hacs.xyz/); your sensors are filled in for you. Without it,
-the same numbers are tiles, with one line on how to get the card (shown to
-administrators; *Not interested* hides it for good).
+Home shows the power between PV, house, grid, battery and car as moving dots,
+with your sensors filled in. The drawing is
+[Power Flow Card Plus](https://github.com/flixlix/power-flow-card-plus) by
+flixlix (MIT licence), which comes with the integration: there is nothing to
+install, and a copy of yours from HACS is left alone. If it cannot be loaded,
+the same numbers are tiles.
 
-To get it: in HACS, search **Power Flow Card Plus**, download it, and reload
-the page. Without HACS, download `power-flow-card-plus.js` from
-[its releases](https://github.com/flixlix/power-flow-card-plus/releases), put
-it into `config/www/`, and add `/local/power-flow-card-plus.js` as a
-*JavaScript module* under **Settings → Dashboards → ⋮ → Resources**. It is not
-part of this integration.
+Under **Today** the same circles show the day's energy, from
+[Energy Flow Card Plus](https://github.com/flixlix/energy-flow-card-plus), also
+flixlix's and also shipped with the integration. It draws from Home Assistant's
+long-term statistics of the day's sensors, so on a new installation it reads
+zero until the first hour has been recorded; it needs no Energy dashboard. If it
+cannot be loaded, the day's numbers are tiles.
 
-To keep the tiles, set `power_flow: tiles` in the options below. The card is
+To have the tiles anyway, set `power_flow: tiles` in the options below. The card is
 also in the card picker, as *Sungrow power flow*, for your own dashboards.
 
 ## The controls are locked
@@ -102,7 +103,13 @@ hours, and follows a run while it happens; waiting is one line an hour with a
 dot for every five minutes. What the tests do is in
 [capability_tests.md](capability_tests.md).
 
-The buttons below lead to the integration's page and the device's.
+**Settings** holds what a run goes by, the same options as under **Configure**.
+*Allowed tests* is behind the lock; *About your installation* (your name, how
+the inverter is connected, a Modbus proxy, whether the end of its address may
+be published) is not. Each is saved when you leave the field, without
+interrupting a collection, and is fixed while a test runs.
+
+The *Info* buttons lead to the integration's page and the device's.
 
 ## Options
 

@@ -1,7 +1,10 @@
 {
   "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
-  "revision": 2,
+  "revision": 3,
   "changes": [
+    {"revision": 3, "text": {
+      "en": "The power flow and the day's energy flow come with the integration, and the Diagnosis view holds the diagnosis's settings.",
+      "de": "Leistungs- und Energiefluss des Tages kommen mit der Integration, und die Diagnose-Ansicht enthält die Einstellungen der Diagnose."}},
     {"revision": 2, "text": {
       "en": "New views throughout: Home with the power flow, Energy, Diagnosis with the test results, and controls that stay readable while locked.",
       "de": "Alle Ansichten neu: Start mit dem Leistungsfluss, Energie, Diagnose mit den Testergebnissen und eine Steuerung, die auch gesperrt lesbar bleibt."}}
@@ -53,12 +56,14 @@
           "icon": "mdi:calendar-today",
           "view": "energy",
           "cards": [
-            {"type": "tile", "entity": "sensor.daily_pv_generation|sensor.sg_daily_pv_generation", "name": {"en": "PV", "de": "PV"}, "icon": "mdi:solar-power", "color": "amber"},
-            {"type": "tile", "entity": "sensor.daily_consumed_energy_filtered|sensor.daily_consumed_energy", "name": {"en": "House", "de": "Haus"}, "icon": "mdi:home", "color": "blue"},
-            {"type": "tile", "entity": "sensor.daily_imported_energy|sensor.sg_daily_imported_energy", "name": {"en": "From the grid", "de": "Vom Netz"}, "icon": "mdi:transmission-tower-import", "color": "red"},
-            {"type": "tile", "entity": "sensor.daily_exported_energy|sensor.sg_daily_exported_energy", "name": {"en": "To the grid", "de": "Ins Netz"}, "icon": "mdi:transmission-tower-export", "color": "green"},
-            {"type": "tile", "entity": "sensor.daily_battery_charge", "name": {"en": "Charged", "de": "Geladen"}, "icon": "mdi:battery-plus", "color": "teal"},
-            {"type": "tile", "entity": "sensor.daily_battery_discharge", "name": {"en": "Discharged", "de": "Entladen"}, "icon": "mdi:battery-minus", "color": "teal"},
+            {"type": "energy-flow", "roles": {
+              "solar": "sensor.daily_pv_generation|sensor.sg_daily_pv_generation",
+              "home": "sensor.daily_consumed_energy_filtered|sensor.daily_consumed_energy",
+              "import": "sensor.daily_imported_energy|sensor.sg_daily_imported_energy",
+              "export": "sensor.daily_exported_energy|sensor.sg_daily_exported_energy",
+              "charge": "sensor.daily_battery_charge",
+              "discharge": "sensor.daily_battery_discharge",
+              "level": "sensor.battery_level"}},
             {"type": "tile", "entity": "sensor.self_consumption_of_today", "name": {"en": "Self-consumption", "de": "Eigenverbrauch"}, "icon": "mdi:home-percent", "color": "amber",
              "columns": "full", "features": [{"type": "bar-gauge", "min": 0, "max": 100}]}
           ]
@@ -441,6 +446,22 @@
           "column_span": 2,
           "cards": [
             {"type": "tests", "status": "sensor.capability_test_status", "step": "sensor.diagnosis_step"}
+          ]
+        },
+        {
+          "heading": {"en": "Settings", "de": "Einstellungen"},
+          "icon": "mdi:cog",
+          "column_span": 3,
+          "groups": [
+            {
+              "heading": {"en": "Allowed tests", "de": "Erlaubte Tests"},
+              "locked": true,
+              "cards": [{"type": "settings", "part": "tests", "status": "sensor.capability_test_status|sensor.diagnosis_progress", "progress": "sensor.diagnosis_progress"}]
+            },
+            {
+              "heading": {"en": "About your installation", "de": "Angaben zur Anlage"},
+              "cards": [{"type": "settings", "part": "answers", "status": "sensor.capability_test_status|sensor.diagnosis_progress", "progress": "sensor.diagnosis_progress"}]
+            }
           ]
         }
       ]

@@ -11,9 +11,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import logging
+from typing import Any
 
 from homeassistant.components import zeroconf as ha_zeroconf
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
+from homeassistant.core import HomeAssistant, callback
 from sungrow_modbus import network_names
 from sungrow_modbus.discovery import async_hostname
 from sungrow_modbus.network_names import async_mac_prefix, on_device_segment
@@ -33,10 +36,31 @@ async def _async_adverts(hass: HomeAssistant) -> network_names.BrowseResult:
     )
 
 
+@callback
+def _home_assistant(hass: HomeAssistant, entry: ConfigEntry[Any]) -> dict[str, object]:
+    """Return what Home Assistant's own discovery knows of this entry's address.
+
+    No MAC, host name or address goes out, only whether. `dhcp_knows_address`
+    is None where Home Assistant's DHCP discovery does not run; a true one does
+    not say whether a DHCP request, a router or a network scan told it.
+    """
+    known: bool | None = None
+    if "dhcp" in hass.config.components:
+        # Here: its own requirements are only sure to be installed where it runs.
+        from homeassistant.components.dhcp import async_discovered_service_info
+
+        host = entry.data.get(CONF_HOST)
+        known = any(info.ip == host for info in async_discovered_service_info(hass))
+    return {"set_up_by": sorted(entry.discovery_keys), "dhcp_knows_address": known}
+
+
 async def async_network_names(
-    hass: HomeAssistant, host: str, serials: Iterable[str | None] = ()
+    hass: HomeAssistant,
+    entry: ConfigEntry[Any],
+    serials: Iterable[str | None] = (),
 ) -> dict[str, object]:
-    """Return `network_names` for the device at `host`."""
+    """Return `network_names` for the device this entry talks to."""
+    host: str = entry.data.get(CONF_HOST, "")
     browsed: network_names.BrowseResult | None = None
     why: str | None = None
     try:
@@ -56,4 +80,5 @@ async def async_network_names(
         mac_prefix=await async_mac_prefix(host),
         services_heard=browsed.heard if browsed is not None else None,
         on_segment=on_device_segment(host),
+        home_assistant=_home_assistant(hass, entry),
     )

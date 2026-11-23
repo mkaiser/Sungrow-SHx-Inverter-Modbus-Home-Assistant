@@ -126,7 +126,14 @@ from .const import model_for
 #: read as findings about the device when they may be findings about where the
 #: diagnosis ran. Both are `null` in a document written before 28, which says
 #: nothing rather than claiming the reader was placed well.
-SCHEMA = 28
+#:
+#: 29 admits `network_names.home_assistant`: which of Home Assistant's
+#: discoveries set this entry up (`set_up_by`), and whether its DHCP discovery
+#: has this address (`dhcp_knows_address`, null where it does not run). It
+#: cannot say how it got there: a DHCP request heard, a router's device
+#: tracker and a network scan all fill the one table. An SG string inverter's
+#: document carries the section too, and the diagnostics download asks for it.
+SCHEMA = 29
 
 #: The key part B's block is under, by schema: `control_test` before 25.
 CAPABILITY_TEST_KEY = "capability_test"
