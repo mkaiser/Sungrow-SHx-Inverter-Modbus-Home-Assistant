@@ -255,7 +255,7 @@ with the action: the register written is the same.
 
 **The danger-mode switch guarded the YAML's own dashboard**, not the device,
 so it does not come across. The integration's [own dashboard](dashboard.md)
-locks its controls instead: a section opens when held for three seconds and
+locks its controls instead: a section opens when held for two seconds and
 locks again by itself, and the lock card can wrap the controls on your own
 dashboards too. To keep using the YAML's dashboard as it is, copy its
 `Sungrow dashboard enable danger mode` template switch and its auto-reset

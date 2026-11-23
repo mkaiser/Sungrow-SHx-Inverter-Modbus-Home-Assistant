@@ -6,6 +6,13 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-23, 23 CET**: gerd's house showed Home and Diagnosis twice (0.1.0a51), because his wallbox is an entry of
+  its own and so a family of its own: the Home *Car* section alone filled a Home. Fixed: with one inverter, a wallbox
+  entry lends its entities to the inverter's Home and Controls and its Diagnosis is a part of the inverter's; inverters
+  come first; with several inverters a wallbox keeps its own tabs but no Home. The lock opens after 2 s and stays open
+  60 s. Checked in Chromium on synthetic houses (inverter alone, wallbox alone, both, on the bus and beside it, two
+  inverters, two wallboxes), not on gerd's registry. Not released.
+
 - **2026-11-23**, done over, after the maintainer's four items and their looking at it; released
   as 0.1.0a51 (PyPI, GitHub, the preview mirror). What it is now is *The second layout* below; where that differs from the older sections, it
   holds. Checked in Chromium on a demo house: German and English, desktop and phone, dark; the lock (tap and Tab reach
@@ -216,7 +223,8 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
    no build step, no dependency. What the build settled:
    - **Families.** An inverter and every device whose `via_device_id` leads
      to it; a wallbox entry of its own is its own family, and each family
-     builds the views it can fill. gerd's separate wallbox entry gives one
+     builds the views it can fill, but a wallbox entry beside one inverter joins its Home, Controls and
+     Diagnosis (`guests`). gerd's separate wallbox entry gives one
      Wallbox view, its history drawing the inverter's PV and load through `~`.
      With two inverters every view is built per inverter, suffixed with the
      device name, and the ambiguous `~` lines drop out.
@@ -237,7 +245,7 @@ Read in the frontend that Home Assistant 2026.11, the minimum, pins
      against an empty house, a pinned wallbox, both languages, each
      `controls` mode and two inverters; then in Chromium on a scratch instance
      on the simulator: every view renders without a console error, a tap
-     leaves the lock shut, a 3-second hold opens the group, *Lock* shuts it,
+     leaves the lock shut, a hold opens the group, *Lock* shuts it,
      the add-dashboard dialog lists *Sungrow Modbus* under *Community
      dashboards*, the edit dialog edits the options in YAML, and *Take
      control* saves the real ids with the lock cards kept.

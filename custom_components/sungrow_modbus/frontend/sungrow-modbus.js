@@ -44,7 +44,8 @@ const loadLayout = () => {
 
 // Group the integration's entities by device family: an inverter and the
 // devices that hang off it (battery, wallbox, WiFi module). A wallbox entry of
-// its own is a family of its own.
+// its own is a family of its own, which `guests` then takes into the inverter's
+// views.
 const indexHouse = (hass) => {
   const own = Object.values(hass.entities ?? {}).filter(
     (entity) => entity.platform === DOMAIN && entity.device_id && entity.translation_key && !entity.hidden,
@@ -320,6 +321,36 @@ const energyIsSetUp = async (hass) => {
   }
 };
 
+// A wallbox entry beside inverters: which families are wallboxes of their own,
+// which inverter they are the guests of -- the only one, or none, since nothing
+// says which of several a wallbox belongs to -- and that inverter's family with
+// the first wallbox's entities lent to it.
+const guests = (layout, roots, context, families) => {
+  const fills = (id, root) => Boolean(buildView(layout.views.find((view) => view.id === id), context(root, {})));
+  const inverters = roots.filter((root) => fills("inverter", root));
+  const wallboxes = roots.filter((root) => !inverters.includes(root) && fills("wallbox", root));
+  const host = inverters.length === 1 ? inverters[0] : null;
+  const lent = new Map(host ? families.get(host) : []);
+  // A wallbox whose entities the inverter already shows keeps its own controls.
+  const merged = new Set();
+  for (const root of host ? wallboxes : []) {
+    const own = [...families.get(root)].filter(([ref]) => ref.split(".")[1].startsWith("wallbox_"));
+    if (own.some(([ref]) => lent.has(ref))) continue;
+    for (const [ref, ids] of own) lent.set(ref, ids);
+    merged.add(root);
+  }
+  return { inverters, wallboxes, host, lent, merged };
+};
+
+// A wallbox's sections under the inverter's, each named by its device.
+const joinViews = (parts, names) => ({
+  ...parts[0],
+  sections: parts.flatMap((part, index) => part.sections.map((section) => {
+    const [heading, ...cards] = section.cards;
+    return { ...section, cards: [{ ...heading, heading: `${heading.heading} · ${names[index]}` }, ...cards] };
+  })),
+});
+
 class SungrowModbusDashboardStrategy extends HTMLElement {
   static registryDependencies = ["entities", "devices"];
 
@@ -327,8 +358,8 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     const lang = language(hass);
     const options = {
       controls: ["hold", "admin", "hidden"].includes(config.controls) ? config.controls : "hold",
-      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 3,
-      unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 30,
+      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 2,
+      unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 60,
       power_flow: config.power_flow === "tiles" ? "tiles" : "auto",
     };
     const asked = Array.isArray(config.views) ? config.views.map((id) => RENAMED[id] ?? id) : VIEW_ORDER;
@@ -348,26 +379,47 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     const admins = views.some((view) => view.admin) ? await adminVisibility(hass) : null;
 
     const energy = wanted.includes("energy") && (await energyIsSetUp(hass));
-    const context = (root, paths) => ({
-      family: house.families.get(root), everywhere: house.everywhere, hass, lang, root, options, admins, energy, paths,
+    const context = (root, paths, family = house.families.get(root)) => ({
+      family, everywhere: house.everywhere, hass, lang, root, options, admins, energy, paths,
     });
+
+    const { inverters, wallboxes, host, lent, merged } = guests(layout, roots, context, house.families);
+    // Inverters first, so that a wallbox never takes the first tab.
+    roots.sort((a, b) => inverters.includes(b) - inverters.includes(a));
+    const familyFor = (view, root) =>
+      root === host && ["home", "controls"].includes(view.id) ? lent : house.families.get(root);
+    // What a wallbox entry gives to the inverter's view instead of a tab of its own.
+    const isGuest = (view, root) =>
+      wallboxes.includes(root) &&
+      ((view.id === "home" && inverters.length > 0) || (view.id === "controls" && merged.has(root)));
 
     // Which views each family fills, first, so that a tap can name another
     // view by its path; a wallbox entry of its own lends its view to the rest.
     const plan = [];
     const dashboard = location.pathname.split("/")[1];
     for (const view of views) {
-      const filled = roots.filter((root) => buildView(view, context(root, {})));
+      let filled = roots.filter((root) => !isGuest(view, root) && buildView(view, context(root, {}, familyFor(view, root))));
+      let joined = [];
+      if (view.id === "diagnosis" && filled.includes(host)) {
+        joined = filled.filter((root) => wallboxes.includes(root));
+        filled = filled.filter((root) => !joined.includes(root));
+      }
       for (const [index, root] of filled.entries()) {
-        plan.push({ view, root, many: filled.length > 1, path: filled.length > 1 ? `${view.id}-${index + 1}` : view.id });
+        plan.push({ view, root, joined: root === host ? joined : [], many: filled.length > 1, path: filled.length > 1 ? `${view.id}-${index + 1}` : view.id });
       }
     }
-    const built = plan.map(({ view, root, many, path }) => {
+    const built = plan.map(({ view, root, joined, many, path }) => {
       const paths = {};
       for (const other of plan) {
         if (other.root === root || !other.many) paths[other.view.id] = `/${dashboard}/${other.path}`;
       }
-      const result = buildView(view, context(root, paths));
+      let result = buildView(view, context(root, paths, familyFor(view, root)));
+      if (joined.length) {
+        result = joinViews(
+          [result, ...joined.map((other) => buildView(view, context(other, paths)))],
+          [root, ...joined].map(house.deviceName),
+        );
+      }
       return { ...result, path, ...(many ? { title: `${result.title} · ${house.deviceName(root)}` } : {}) };
     });
     if (!built.length) {

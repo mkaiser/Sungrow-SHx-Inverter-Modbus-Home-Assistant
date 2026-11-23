@@ -47,7 +47,9 @@ an hour after the integration is added; until then they say *No statistics
 found*.
 
 With **more than one inverter**, each view comes once per inverter, named
-after the device.
+after the device. A wallbox added as an entry of its own joins the inverter's Home,
+Controls and Diagnosis; with more than one inverter it has its own Wallbox,
+Controls and Diagnosis tabs, since nothing says which inverter it belongs to.
 
 ## The power flow
 
@@ -71,8 +73,8 @@ also in the card picker, as *Sungrow power flow*, for your own dashboards.
 
 Everything on **Controls** writes to your inverter at once and stays as set.
 So the view is for administrators only, and it is locked until you **hold it
-for 3 seconds**: you can read every value, but a tap changes nothing. The whole
-view then unlocks for 30 seconds and locks again by itself, or at once with
+for 2 seconds**: you can read every value, but a tap changes nothing. The whole
+view then unlocks for 60 seconds and locks again by itself, or at once with
 **Lock**.
 
 ![The Controls view, locked](images/HA-dashboard-controls.png)
@@ -110,8 +112,8 @@ them are optional:
 ```yaml
 type: custom:sungrow-modbus
 controls: hold            # hold (default), admin, or hidden
-hold_seconds: 3           # how long to hold to unlock
-unlock_seconds: 30        # how long it stays unlocked
+hold_seconds: 2           # how long to hold to unlock
+unlock_seconds: 60        # how long it stays unlocked
 power_flow: auto          # auto (default), or tiles
 views: [home, energy, battery, inverter, wallbox, controls, diagnosis]   # which views, in which order
 device_id: 0123456789abcdef0123456789abcdef               # only this inverter (or its wallbox)
@@ -166,8 +168,8 @@ integration is installed. Wrap a card in it:
 
 ```yaml
 type: custom:sungrow-modbus-lock-card
-hold_seconds: 3
-unlock_seconds: 30
+hold_seconds: 2
+unlock_seconds: 60
 group: inverter           # cards with the same group unlock together
 card:
   type: entities

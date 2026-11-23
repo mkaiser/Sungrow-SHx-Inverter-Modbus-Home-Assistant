@@ -21,8 +21,8 @@ export class SungrowModbusLockCard extends HTMLElement {
     const changed = JSON.stringify(config.card) !== JSON.stringify(this._config?.card);
     this._config = {
       group: config.group ?? null,
-      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 3,
-      unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 30,
+      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 2,
+      unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 60,
       card: config.card,
     };
     this._key = this._config.group ?? this;
