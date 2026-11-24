@@ -2194,3 +2194,11 @@ A cluster member (33500 = 0xAA) is no longer offered the number; the page says s
 ## [2026-11-24] changed | is-battery-power-firmware-dependent
 
 The fallback reads 13022 as two's complement on 01011.95.03; the page says so.
+
+## [2026-11-24] ingested | cluster-mode-33500-bar12-2026-11-24
+
+bar12's 33500 ([the source](sources/cluster-mode-33500-bar12-2026-11-24-summary.md)); `register-33500.md` has a third lone inverter.
+
+## [2026-11-24] changed | capability-test-restore
+
+A second capability test in a cluster is refused; the page says so.
