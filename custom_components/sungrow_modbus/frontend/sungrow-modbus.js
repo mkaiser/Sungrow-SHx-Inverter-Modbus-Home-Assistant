@@ -26,6 +26,10 @@ const VIEW_ORDER = ["home", "energy", "battery", "inverter", "wallbox", "control
 
 const MAX_COLUMNS = 3;
 
+// What this module can build. A tab open over an update still runs the old
+// module, but the server hands it the new layout, whose `module` says what it needs.
+const BUILDS = 1;
+
 const { DOCS, language, say, text } = await import(new URL(`shared.js${HERE.search}`, HERE));
 
 // ---------------------------------------------------------------- layout
@@ -367,6 +371,11 @@ const joinViews = (parts, names) => ({
   })),
 });
 
+const messageView = (content) => ({
+  views: [{ title: "Sungrow", path: "sungrow", type: "sections",
+    sections: [{ type: "grid", cards: [{ type: "markdown", content }] }] }],
+});
+
 class SungrowModbusDashboardStrategy extends HTMLElement {
   static registryDependencies = ["entities", "devices"];
 
@@ -383,6 +392,7 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
       (id) => VIEW_ORDER.includes(id) && !(id === "controls" && options.controls === "hidden"),
     );
     const layout = await loadLayout();
+    if (layout.module > BUILDS) return messageView(say("update_reload", lang));
     const views = wanted
       .map((id) => layout.views.find((view) => view.id === id))
       .filter((view) => view && (!view.admin || hass.user?.is_admin));
@@ -439,10 +449,7 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
       return { ...result, path, ...(many ? { title: `${result.title} · ${house.deviceName(root)}` } : {}) };
     });
     if (!built.length) {
-      return {
-        views: [{ title: "Sungrow", path: "sungrow", type: "sections",
-          sections: [{ type: "grid", cards: [{ type: "markdown", content: say("empty", lang) }] }] }],
-      };
+      return messageView(say("empty", lang));
     }
     const { type: _type, ...chosen } = config;
     built[0].sections[0].cards.splice(1, 0, {

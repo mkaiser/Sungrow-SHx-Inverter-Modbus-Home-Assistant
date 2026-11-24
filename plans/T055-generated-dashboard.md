@@ -6,6 +6,11 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-24**: the maintainer's tab, open over the update, ran 0.1.0a50's module on 0.1.0a53's layout and failed
+  (`ref.split is not a function`); a reload is the cure. Guard built, not released: the layout's `module` against the
+  module's `BUILDS`, and a too-old module says *reload*. It helps from the release that carries it on; 0.1.0a53's
+  module and older have none.
+
 - **2026-11-24, 01 CET**: **0.1.0a53 is released** (PyPI, GitHub, the preview mirror pinned; 0.1.0a52 stopped in CI at a test
   importing a Home Assistant component CI does not install, and was never published). It carries the power flow and, under
   Home's *Today*, the day's energy flow (`energy-flow-card-plus`, from long-term statistics; its figures are **not seen on real

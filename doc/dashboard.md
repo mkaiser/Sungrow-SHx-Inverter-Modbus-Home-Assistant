@@ -154,7 +154,9 @@ itself.
 ## When there is a newer version
 
 The dashboard follows the integration's updates by itself. A browser tab left
-open over an update says so and offers **Reload**.
+open over an update says so; reload the page. One that shows *Error loading the
+dashboard strategy* right after an update holds the old dashboard: reload it
+without its cache (Ctrl+Shift+R, in the app *Reset frontend cache*).
 
 One you took control of stays as it is. When the integration brings a newer
 layout, administrators see a notice on it that says what is new:

@@ -1,5 +1,6 @@
 {
   "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
+  "module": 1,
   "revision": 3,
   "changes": [
     {"revision": 3, "text": {

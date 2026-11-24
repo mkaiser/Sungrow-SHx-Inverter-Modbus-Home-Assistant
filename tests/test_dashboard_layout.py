@@ -30,6 +30,10 @@ VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "dia
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
 REVISION = (3, "e2ba8519c0de")
+#: What building the layout takes (`BUILDS` in the module) and the digest of the
+#: keys and card types it uses. **A new word the module has to understand raises
+#: `module` and `BUILDS`**, so that an older module says "reload" rather than fail.
+MODULE = (1, "c7e8643f83e7")
 #: Card types the strategy builds: the last seven are its own, the rest core's.
 CARD_TYPES = {
     "tile",
@@ -155,3 +159,24 @@ def test_every_text_has_english_and_german() -> None:
     assert texts
     for text in texts:
         assert set(json.loads(text)) == {"en", "de"}, text
+
+
+def _vocabulary(value: object, keys: frozenset[str] = frozenset()) -> frozenset[str]:
+    """Return every key and card type the layout uses."""
+    if isinstance(value, dict):
+        kind = (
+            {f"type={value['type']}"} if isinstance(value.get("type"), str) else set()
+        )
+        return frozenset({*value, *kind}).union(*map(_vocabulary, value.values()))
+    if isinstance(value, list):
+        return frozenset().union(*map(_vocabulary, value))
+    return keys
+
+
+def test_a_module_too_old_for_the_layout_says_so() -> None:
+    """A tab open over an update runs the old module on the new layout."""
+    words = "\n".join(sorted(_vocabulary(LAYOUT["views"])))
+    digest = hashlib.sha256(words.encode()).hexdigest()[:12]
+    assert (LAYOUT["module"], digest) == MODULE
+    script = (COMPONENT / "frontend" / "sungrow-modbus.js").read_text(encoding="utf-8")
+    assert f"const BUILDS = {LAYOUT['module']};" in script
