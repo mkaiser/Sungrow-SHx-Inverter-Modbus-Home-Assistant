@@ -301,7 +301,7 @@ class ContinuousCapabilityTest:
             observing = [
                 *(self.runner.plausibility.unsettled() if inverter else []),
                 *(
-                    self.runner.wallbox_plausibility.unsettled()
+                    self.runner.wallbox_unsettled()
                     if self.runner.wallbox_present
                     else []
                 ),

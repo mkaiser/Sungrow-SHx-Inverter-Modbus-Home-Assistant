@@ -778,10 +778,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         await hass.config_entries.async_forward_entry_setups(
             entry, DIAGNOSTIC_PLATFORMS
         )
+        _async_tell_managed_wallbox(hass, entry)
         return True
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _async_tell_managed_wallbox(hass, entry)
     return True
+
+
+@callback
+def _async_tell_managed_wallbox(
+    hass: HomeAssistant, inverter: SungrowConfigEntry
+) -> None:
+    """Let the wallbox entry this inverter manages count its checks again.
+
+    What that entry may test depends on this one being loaded, and it may have
+    loaded first.
+    """
+    serial = inverter.runtime_data.wallbox_elsewhere
+    if serial is None:
+        return
+    for other in hass.config_entries.async_loaded_entries(DOMAIN):
+        if other.unique_id == serial:
+            other.runtime_data.diagnosis.async_notify()
 
 
 #: Controls no longer made, by domain and unique-id suffix. 13017's switch was

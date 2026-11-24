@@ -61,6 +61,7 @@ from sungrow_modbus.wallbox import (
     plausibility as wallbox_plausibility,
 )
 from sungrow_modbus.wallbox.capability_test import CHARGING as WALLBOX_CHARGING
+from sungrow_modbus.wallbox.plausibility import LOAD_INCLUDES
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
@@ -203,6 +204,15 @@ class DiagnosisState:
 OBSERVE_EVERY = timedelta(minutes=1)
 
 
+def polled_load(device: Any) -> float | None:
+    """Return an inverter's house load as last polled, or None."""
+    try:
+        found = device.field("load_power")
+    except AttributeError:
+        return None
+    return None if found is None else float(found)
+
+
 class DiagnosisRunner:
     """Owns one entry's diagnosis: starts it, tracks it, announces it."""
 
@@ -252,6 +262,7 @@ class DiagnosisRunner:
         #: nothing else: what may be written to a wallbox is the owner's word
         #: in the entry's options (`sungrow_modbus.wallbox.management`).
         self.wallbox_management = wallbox_management.Management()
+        self._wallbox_slow_reads: int | None = None
         self._wallbox_firmware: str | None = None
         #: The readings' own checks are fed on their own timer, not auto
         #: repeat's, because **they write nothing**. Auto repeat is a leave to
@@ -297,7 +308,11 @@ class DiagnosisRunner:
         """Return the wallbox's checks as summary rows, to count with the rest."""
         if not self.wallbox_present:
             return {}
-        rows = self.wallbox_plausibility.summary()
+        rows = {
+            name: row
+            for name, row in self.wallbox_plausibility.summary().items()
+            if name != LOAD_INCLUDES or self.house_load_known
+        }
         if wallbox_consented(self.entry):
             rows = {
                 **wallbox_ledger.summary_rows(
@@ -306,6 +321,29 @@ class DiagnosisRunner:
                 **rows,
             }
         return rows
+
+    @property
+    def house_load_known(self) -> bool:
+        """Whether an inverter's load can be set beside the wallbox's power."""
+        return self.inverter_tests and not self.entry.runtime_data.is_string_inverter
+
+    def _house_load(self) -> float | None:
+        """Return the inverter's load as last polled, or None."""
+        if not self.house_load_known:
+            return None
+        return polled_load(self._device())
+
+    def wallbox_unsettled(self) -> list[tuple[str, str]]:
+        """Return the wallbox's readings' checks that can still settle here."""
+        return [
+            (name, need)
+            for name, need in self.wallbox_plausibility.unsettled()
+            if name != LOAD_INCLUDES or self.house_load_known
+        ]
+
+    def wallbox_management_view(self) -> dict[str, Any]:
+        """Return what drives the wallbox, as the status sensor shows it."""
+        return self.wallbox_management.as_dict()
 
     def wallbox_awaited(self) -> list[tuple[str, str]]:
         """Return the wallbox checks still unanswered, empty without leave."""
@@ -349,23 +387,23 @@ class DiagnosisRunner:
         reading = wallbox_readings_of(self._wallbox_device())
         if all(value is None for value in reading.values()):
             return
-        load: float | None = None
-        if self.inverter_tests and not self.entry.runtime_data.is_string_inverter:
-            try:
-                found = self._device().field("load_power")
-            except AttributeError:
-                found = None
-            load = None if found is None else float(found)
+        load = self._house_load()
         self.wallbox_plausibility.observe(
             wallbox_plausibility.values(reading, load), dt_util.as_local(now)
         )
         # The same poll answers who drives the wallbox, at no extra read: an
-        # inverter that manages a charge rewrites 21203 every few seconds.
+        # inverter that manages a charge rewrites 21203 every few seconds. The
+        # setting is in the slow block, so between two reads of that it is the
+        # same value again, which is no evidence that it held still.
         status = reading.get("charging_status_raw")
-        self.wallbox_management.observe(
-            reading.get("output_current_setting"),
-            charging=status is not None and int(status) == WALLBOX_CHARGING,
-        )
+        charging = status is not None and int(status) == WALLBOX_CHARGING
+        coordinator = self.entry.runtime_data.wallbox
+        reads = getattr(coordinator, "slow_reads", 0)
+        if not charging or reads != self._wallbox_slow_reads:
+            self.wallbox_management.observe(
+                reading.get("output_current_setting"), charging=charging
+            )
+        self._wallbox_slow_reads = reads
         firmware = self._wallbox_firmware
         collection = self.wallbox_plausibility
         wallbox_plausibility_store(self.hass, self.entry).async_delay_save(

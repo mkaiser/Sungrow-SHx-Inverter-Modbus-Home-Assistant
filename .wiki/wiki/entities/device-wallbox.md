@@ -71,13 +71,19 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   **The window's start switches charging on by itself** as its end switches it off, a daily schedule; and each
   mode's words take a write only in that mode -- the window only in 163 and only as one four-word write
   ([18:20](../sources/gerd-wallbox-2026-11-20-test4-summary.md)).
+- **24 November 2026** ([the source](../sources/gerd-wallbox-2026-11-24-summary.md)): the managed test passed from Home Assistant. **Plug&Play
+  (21298) decides what a plug-in does**: on, the inverter switches its charging word on by itself and the car charges
+  within 10 s, whatever the word was; off, the wallbox stays in *standby* until charging is switched on. Switching it
+  on with a car in starts a charge. An unplug switches the word off. User defined to fast ends a session from the app,
+  not from Home Assistant, whose select writes charging on after the mode.
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written. In Home
   Assistant that is a wallbox entry's own option, *No inverter manages this wallbox*, off
   until it is switched on. **Behaviour is what can be inferred**, and it is shown rather than
   acted on: 21203 moving during a charge with nothing written says managed, holding still through
-  a charge suggests standalone, and an idle wallbox says nothing
+  an hour of one suggests standalone (a managed one holds still too in user-defined mode, so an inverter entry that
+  manages it says managed outright), and an idle wallbox says nothing
   (`src/sungrow_modbus/wallbox/management.py`, the `management` attribute of *Diagnosis: test
   summary*).
 - **And nothing on the inverter alone tells it either.** Holding 33541 reads **161**, a named

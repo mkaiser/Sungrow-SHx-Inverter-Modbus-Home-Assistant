@@ -2,15 +2,15 @@
 type: query
 title: Why does a managed wallbox stop charging?
 query: What ends a charging session on a wallbox the inverter manages, when nothing of ours wrote - the inverter, the wallbox or the car?
-results_count: 6
+results_count: 7
 tags: [wallbox, ems, open]
 created: '2026-11-17'
 ---
 
 # Why does a managed wallbox stop charging?
 
-**Open, narrowed.** Seven endings were seen at [gerd](../entities/installation-gerd.md), a three-phase
-car on a managed AC22E-01. Which side decides is settled for five of them.
+**Open, narrowed.** Nine endings were seen at [gerd](../entities/installation-gerd.md), a three-phase
+car on a managed AC22E-01. Which side decides is settled for six of them.
 
 | Ending | When | What was written first | Who ended it |
 | --- | --- | --- | --- |
@@ -21,6 +21,8 @@ car on a managed AC22E-01. Which side decides is settled for five of them.
 | The inverter's word off within 1 s, `completed` at +4 s, then the word on again by itself at +7 s and the car charging at +9 s | 2026-11-20 14:54 | fast to user defined, while charging, **with the owner's own Home Assistant polling the inverter** | **the inverter**, with a second client on the house; the same write at 15:03 with that client disabled ended nothing ([2026-11-20](../sources/gerd-wallbox-2026-11-20-summary.md)) |
 | `completed` at the target, the word off 11 s later | 2026-11-20 16:04 | nothing; mode 162 (scheduled) with a 1.9 kWh target | **the inverter**: scheduled charging ends a session at its target ([2026-11-20](../sources/gerd-wallbox-2026-11-20-summary.md)) |
 | `completed` at the window's end, the word off 10 s later | 2026-11-20 17:30 | nothing; user defined (163) with a 16:30..17:30 window | **the inverter**: the user-defined window's end ends a session, daily ([the evening](../sources/gerd-wallbox-2026-11-20-user-window-summary.md)) |
+| `completed` with the surplus still there, the draw gone 3-10 s before the word went off | 2026-11-24 11:10 and 11:12, after 10 and 30 s | PV surplus on one phase, grid purchase off | open: the car, the wallbox or the inverter; the block says nothing ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)) |
+| `completed` within seconds, the word off | 2026-11-24 12:09 | user defined to fast **in the app** | **the inverter**: the app writes no charging on after the mode ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)) |
 
 | Not an ending: the car cut to 6-8 A and ramped back, the session kept | 2026-11-17 15:08, 15:11, 15:14, 15:15 | nothing | **the inverter**, most likely: each right after a house load spike (to 16.0 kW, a phase to about 5.9 kW) under a 20 kW import limit ([the afternoon](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md)) |
 
@@ -40,6 +42,7 @@ What is still open:
 - **Whether the inverter's 03:50 off is a reaction to the long suspension** (an inverter timeout) or a schedule.
 - **When a mode change ends a session and when it does not**: the endings were at night with the battery at
   its minimum and no PV, and on 2026-11-20 at 14:54 with a second client polling; two runs with one client per
-  path ended nothing. A second client is now as likely a cause as the battery.
+  path ended nothing, nor did four changes from Home Assistant on 2026-11-24 as the battery went from 17 to 10 %, where a
+  fast charge also went on at the minimum ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)).
 - **How long after a mode change the inverter switches the word off**: within 1 s from 163 to 160 (02:02), 16 s
   from 160 to 163 (00:21). A writer has to wait that long before it judges or writes charging on.

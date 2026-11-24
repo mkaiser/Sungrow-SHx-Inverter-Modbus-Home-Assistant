@@ -123,6 +123,7 @@ page is worth less than nothing. Name the project and link the page:
 - [mkaiser-self-consumption-standby-2026-11-21.md](sources/mkaiser-self-consumption-standby-2026-11-21-summary.md) — in Standby the inverter self-consumption estimate is import minus load, centred on zero; it cannot see the standby draw #mkaiser #self-consumption
 - [mkaiser-production-sweep-2026-11-20.md](sources/mkaiser-production-sweep-2026-11-20-summary.md) — the search from the production machine, proxy running, found the inverter and the proxy as one device: the 2026-11-15 miss does not reproduce #discovery #modbus-proxy #mkaiser
 - [gerd-wallbox-2026-11-20-pairing.md](sources/gerd-wallbox-2026-11-20-pairing-summary.md) — the wallbox entry names its inverter and the cable entry gets the EV charger controls; an inverter entry through the WiNet-S gives the wallbox up to its own entry and takes it back when that is deleted; no car #wallbox #ac22e-01 #gerd #home-assistant #winet-s
+- [gerd-wallbox-2026-11-24.md](sources/gerd-wallbox-2026-11-24-summary.md) — the managed test passed from Home Assistant; grid purchase chooses one or three phases in PV surplus; Plug&Play decides what a plug-in does; the app's user defined to fast ends a session #wallbox #ac22e-01 #gerd #ems #home-assistant
 - [gerd-wallbox-2026-11-20-test4.md](sources/gerd-wallbox-2026-11-20-test4-summary.md) — the user-defined window's start switches charging on by itself; each mode's words take a write only in that mode, the window only as one four-word write; an unplug seen #wallbox #ac22e-01 #gerd #ems
 - [gerd-car-morning-2026-11-17.md](sources/gerd-car-morning-2026-11-17-summary.md) — the owner's report: the car reached 100 % after its suspension, and says its Internet connection is not established #wallbox #gerd #ems
 - [gerd-wallbox-inverter-control-2026-11-14.md](sources/gerd-wallbox-inverter-control-2026-11-14-summary.md) — the inverter manages the wallbox and drives 21203 (0.1 A, by the car); control is the inverter's 33540 on/off, 33541 mode, 33545 user current (6 A up, only in user-defined mode) #wallbox #gerd #ems #capability-test
@@ -276,7 +277,7 @@ page is worth less than nothing. Name the project and link the page:
 
 ## Queries
 
-- [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open: no document names a way; 21204 did not, 33538/33539 refuse writes in fast and PV surplus #wallbox #phases #ems #open
+- [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open, narrowed: no document names a way; 21204 did not, and nothing in 33538-33550 moves with the phases #wallbox #phases #ems #open
 - [Why does a managed wallbox stop charging?](queries/why-does-a-managed-wallbox-stop-charging.md) — Open, narrowed: the inverter ends a session on a mode change, the car suspended one for hours; why the car did, and the 03:50 off, are not known #wallbox #ems #open
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Which unit does a WiNet-S give a wallbox?](queries/which-unit-does-a-winet-s-give-a-wallbox.md) — Answered: not always 3 — an AC22E-01 at 3, an AC011E-01 at 4; 2 is still only reported #wallbox #winet-s

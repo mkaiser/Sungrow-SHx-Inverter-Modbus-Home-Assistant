@@ -33,8 +33,10 @@ from sungrow_modbus.wallbox import (
     ledger as wallbox_ledger,
     plausibility as wallbox_plausibility,
 )
+from sungrow_modbus.wallbox.management import MANAGED
 
 from .const import (
+    CONF_WALLBOX_MANAGED_BY,
     DIAGNOSIS_ISSUE_URL,
     DIAGNOSIS_MODE_AUTO_REPEAT,
     DIAGNOSIS_MODE_EXTENDED,
@@ -44,7 +46,7 @@ from .const import (
 from .continuous import WALLBOX_ALONE_INTERVAL
 from .coordinator import SungrowConfigEntry
 from .device_diagnosis import _fields, wallbox_builder, wallbox_summary
-from .diagnosis import DiagnosisRunner
+from .diagnosis import DiagnosisRunner, polled_load
 from .wallbox_capability_test import (
     async_ledger_clear,
     async_ledger_runs,
@@ -52,8 +54,10 @@ from .wallbox_capability_test import (
     check_options,
     consented,
     firmware_of,
+    managing_entry,
     plausibility_store,
 )
+from .write_owner import holder
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -117,6 +121,47 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
         if shown is not None and self._wallbox_runs:
             shown["runs"] = [_run_line(run) for run in self._wallbox_runs]
         return shown
+
+    @property
+    def house_load_known(self) -> bool:
+        """Whether an inverter entry here manages this wallbox, and has its load.
+
+        Named in the options counts before that entry has loaded, so the check
+        does not come and go with it.
+        """
+        return (
+            bool(self.entry.options.get(CONF_WALLBOX_MANAGED_BY))
+            or managing_entry(self.hass, self.entry) is not None
+        )
+
+    def _house_load(self) -> float | None:
+        """Return the managing inverter's load, while that entry polls it.
+
+        None while its polling is held, by either entry's run, or failed: a
+        load of minutes ago beside a power of now would be a false step.
+        """
+        inverter = managing_entry(self.hass, self.entry)
+        if inverter is None:
+            return None
+        runtime = inverter.runtime_data
+        if holder(runtime) is not None or runtime.diagnosis.state.running:
+            return None
+        coordinator = runtime.inverter_coordinator
+        if not coordinator.last_update_success:
+            return None
+        return polled_load(coordinator.device)
+
+    def wallbox_management_view(self) -> dict[str, Any]:
+        """Say managed where an inverter entry here manages it, not inferred.
+
+        In user-defined mode the setting stands at the owner's current, so the
+        inference would read a managed wallbox as standalone.
+        """
+        view = super().wallbox_management_view()
+        if managing_entry(self.hass, self.entry) is not None:
+            view["management"] = MANAGED
+            view["management_detail"] = "an inverter entry here manages it"
+        return view
 
     async def _async_wallbox_test(self) -> dict[str, Any]:
         """Run the wallbox's checks as the inverter's runner does, and keep the runs."""

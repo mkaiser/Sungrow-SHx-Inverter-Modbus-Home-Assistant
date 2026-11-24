@@ -230,6 +230,7 @@ async def test_the_runner_feeds_it_the_polls_the_readings_checks_get(
             "custom_components.sungrow_modbus.diagnosis.wallbox_readings_of",
             return_value=charging,
         ):
+            entry.runtime_data.wallbox.slow_reads += 1
             # The tick, not `async_observe` alone: it is what tells the
             # entities, and an inference nothing shows is no use.
             runner._async_observe_tick(dt_util.utcnow())
@@ -241,6 +242,15 @@ async def test_the_runner_feeds_it_the_polls_the_readings_checks_get(
     assert summary is not None
     assert summary.attributes["management"] == published["management"]
     assert summary.attributes["charging_polls"] == 3
+
+    # The same setting again, not read anew, is no evidence that it held.
+    with patch(
+        "custom_components.sungrow_modbus.diagnosis.wallbox_readings_of",
+        return_value=charging,
+    ):
+        for _ in range(40):
+            runner._async_observe_tick(dt_util.utcnow())
+    assert runner.wallbox_management.charging_polls == 3
 
 
 async def test_no_wallbox_no_attribute(

@@ -112,6 +112,16 @@ automation:
   `SAPPHIRE-H_B001.V000.P022`. The phases are the inverter's to choose: it
   switches to one phase by itself in PV surplus with grid purchase off, and
   nothing sets them by hand.
+- **Plugging in can start a charge whatever *Wallbox charge* says**: with the
+  app's *Plug&Play* on (*Start charging on plug-in*), the inverter switches
+  charging on by itself a few seconds after the car is plugged in, in the mode
+  last set. For an automation to decide when the car charges, switch Plug&Play
+  off in the app; *Wallbox charge* then starts the plugged-in car in about 10 s.
+- **Surplus charging**: mode *PV surplus* with grid purchase off charges on one
+  phase from about 1.3 kW of surplus, the inverter switching it on and off by
+  itself; with grid purchase on it charges on three phases at no less than 4 kW,
+  from the battery or the grid where the sun falls short. Measured at one house;
+  the one-phase charges there were short.
 - **An inverter's entry carries its readings, its controls and the
   diagnosis**: the diagnosis and the capability test are in the dashboard's
   [Diagnosis view](dashboard.md#diagnosis) and on the same device page, under *Diagnostic*, with *Diagnosis: mode* choosing what

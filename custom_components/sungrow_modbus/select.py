@@ -109,8 +109,8 @@ class EvChargerModeSelect(SungrowSelect):
     and fast charge to PV surplus, end the session; to user defined switches
     charging on by itself from off, and ended a session while charging. So
     the charging word is written after the mode, back to what it was
-    (`ev_charger.mode_writes`); its timing against the inverter's own delayed
-    off is still to be watched from Home Assistant.
+    (`ev_charger.mode_writes`). In PV surplus the inverter then drives that
+    word itself.
     """
 
     @property

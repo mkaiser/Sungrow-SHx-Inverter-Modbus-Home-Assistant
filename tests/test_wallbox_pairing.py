@@ -12,6 +12,7 @@ the dongle path does (`wallbox_elsewhere`). Everything that hangs off that --
 
 from __future__ import annotations
 
+from datetime import timedelta
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
@@ -33,6 +34,9 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.util import dt as dt_util
+from sungrow_modbus.wallbox import management
+from sungrow_modbus.wallbox.plausibility import LOAD_INCLUDES
 
 from .conftest import SERIAL, encode_string
 from .test_wallbox_entry import DATA, WALLBOX_SERIAL, _wallbox
@@ -211,3 +215,76 @@ async def test_saving_the_same_answer_again_leaves_the_inverter_running(
 
     assert inverter.runtime_data is running
     assert inverter.runtime_data.wallbox_elsewhere == WALLBOX_SERIAL
+
+
+def _unsettled(entry: MockConfigEntry) -> list[str]:
+    return [name for name, _need in entry.runtime_data.diagnosis.wallbox_unsettled()]
+
+
+async def test_the_load_check_is_fed_by_the_managing_inverter(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """At gerd's it read 0 of 3 power steps after six of them (2026-11-24)."""
+    (inverter,), wallbox_entry = await _set_up(hass, SERIAL)
+    runner = wallbox_entry.runtime_data.diagnosis
+    # No inverter here to ask: not a check to wait for, or auto repeat never ends.
+    assert LOAD_INCLUDES not in _unsettled(wallbox_entry)
+    assert LOAD_INCLUDES not in runner.tests["summary"]
+    assert runner._house_load() is None
+
+    await _answer(hass, wallbox_entry, **{CONF_WALLBOX_MANAGED_BY: SERIAL})
+    runner = wallbox_entry.runtime_data.diagnosis
+    assert LOAD_INCLUDES in _unsettled(wallbox_entry)
+    assert LOAD_INCLUDES in runner.tests["summary"]
+
+    device = inverter.runtime_data.inverter_coordinator.device
+    read = device.field
+    seen = {"load": 500.0, "power": 0.0}
+    reading = wbt.readings_of(wallbox_entry.runtime_data.wallbox.device)
+    at = dt_util.utcnow()
+    with (
+        patch.object(
+            device,
+            "field",
+            side_effect=lambda n: seen["load"] if n == "load_power" else read(n),
+        ),
+        patch(
+            "custom_components.sungrow_modbus.diagnosis.wallbox_readings_of",
+            side_effect=lambda _d: {**reading, "charging_power": seen["power"]},
+        ),
+    ):
+        for step in range(4):
+            seen["power"] = 10000.0 * (step % 2)
+            seen["load"] = 500.0 + seen["power"]
+            runner.async_observe(at + timedelta(minutes=step))
+    row = runner.tests["summary"][LOAD_INCLUDES]
+    assert row["established"], row
+
+    # A run holds that entry's polling: its load is not of now.
+    inverter.runtime_data.write_owners.append(object())
+    assert runner._house_load() is None
+
+
+async def test_the_wallbox_counts_again_when_its_inverter_has_loaded(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The wallbox entry may load first, and its inverter decides its checks."""
+    (inverter,), wallbox_entry = await _set_up(hass, SERIAL)
+    await _answer(hass, wallbox_entry, **{CONF_WALLBOX_MANAGED_BY: SERIAL})
+    with patch.object(wallbox_entry.runtime_data.diagnosis, "async_notify") as notified:
+        assert await hass.config_entries.async_reload(inverter.entry_id)
+        await hass.async_block_till_done()
+    notified.assert_called()
+
+
+async def test_a_managed_wallbox_is_never_shown_as_standalone(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """In user-defined mode its setting holds still at the owner's current."""
+    _, wallbox_entry = await _set_up(hass, SERIAL)
+    await _answer(hass, wallbox_entry, **{CONF_WALLBOX_MANAGED_BY: SERIAL})
+    runner = wallbox_entry.runtime_data.diagnosis
+    for _ in range(management.STEADY_POLLS_FOR_STANDALONE):
+        runner.wallbox_management.observe(16.0, charging=True)
+    assert runner.wallbox_management.verdict()[0] == management.STANDALONE
+    assert runner.wallbox_management_view()["management"] == management.MANAGED

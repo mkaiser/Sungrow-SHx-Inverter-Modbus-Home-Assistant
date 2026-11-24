@@ -2,7 +2,7 @@
 type: query
 title: Can a managed wallbox be set to one phase over Modbus?
 query: Is there a word at the inverter, or a wallbox word the inverter respects, that chooses one or three phases for a wallbox the inverter manages?
-results_count: 0
+results_count: 1
 tags: [wallbox, phases, ems, open]
 created: '2026-11-14'
 ---
@@ -23,7 +23,9 @@ What is known at [gerd](../entities/installation-gerd.md):
   33539 read 161 in both modes
   ([gerd, 2026-11-14](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md)).
 
-What would answer it: read the inverter's holding 33501-33600 during a one-phase session (PV
-surplus, energy purchase off, a small surplus, the battery above its minimum) and compare with the
-three-phase baseline of 2026-11-14 (`plans/T003-T004-T020-T039-T040-T059-wallbox.md`, section 9, test 5). If 33538 or 33539 moves
-then, it reports the phases rather than sets them, as far as writes have shown.
+- **In a one-phase session** (2026-11-24, PV surplus, grid purchase off) none of 33538-33550 read other than at three
+  phase but the charging word; grid purchase is what chooses, with the mode
+  ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)).
+
+What would still answer it: a word outside 33538-33550, so 33501-33600 whole during a one-phase session, which has
+lasted at most 30 s.

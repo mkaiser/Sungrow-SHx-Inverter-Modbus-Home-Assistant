@@ -2136,3 +2136,9 @@ busy dongle's refusal of the value held.
 The maintainer's completed auto-repeat collection, 56 of 56 over 26 runs ([the source](sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)).
 New on P020: 13059 refuses 51 %, the export limit holds, the forced discharge acts. `installation-mkaiser.md`
 and the P020 page say so.
+
+## [2026-11-24] ingested | gerd-wallbox-2026-11-24
+
+A morning at gerd's from his own Home Assistant ([the source](sources/gerd-wallbox-2026-11-24-summary.md)): the managed test passed there, grid
+purchase chooses the phases in PV surplus and no block word does, Plug&Play decides a plug-in. The wallbox and phases
+pages and both queries say so.

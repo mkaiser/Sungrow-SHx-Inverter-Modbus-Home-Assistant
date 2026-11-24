@@ -67,6 +67,9 @@ UNPLUGGED = (1, 8)
 #: How much the wallbox's power must step for the inverter's load to be judged.
 STEP_W = 1000.0
 
+#: The check that needs an inverter's load, which not every wallbox has beside it.
+LOAD_INCLUDES = "inverter load includes the wallbox"
+
 #: The most 21313 changes a log keeps.
 MAX_LOG = 60
 
@@ -235,7 +238,7 @@ def checks() -> list[Check]:
             failure=INCONCLUSIVE,
         ),
         LoadFollows(
-            name="inverter load includes the wallbox",
+            name=LOAD_INCLUDES,
             needs="the wallbox's power stepping by 1 kW",
             minimum=3,
             fields=("charging_power", "load_power"),

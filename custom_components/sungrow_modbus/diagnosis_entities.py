@@ -576,7 +576,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         """
         if not self._runner.wallbox_present:
             return {}
-        return self._runner.wallbox_management.as_dict()
+        return self._runner.wallbox_management_view()
 
     async def async_added_to_hass(self) -> None:
         """Listen, start the clock if a run is already going, stop it at removal."""

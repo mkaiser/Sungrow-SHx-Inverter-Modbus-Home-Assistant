@@ -202,12 +202,11 @@ def mode_writes(mode: int, *, charge: bool) -> list[tuple[int, int]]:
     mode. User-defined mode switches charging on by itself from off, so a
     caller that had it off gets it switched off again after the mode.
 
-    Not yet matched to the measurement of 2026-11-17 (gerd's): entering
-    user-defined mode while charging ended the session too, and the inverter
-    switched its word off up to 16 s after a mode change, so charging on
-    written straight after the mode can be overwritten. A watched run from
-    Home Assistant decides the change
-    (`plans/T003-T004-T020-T039-T040-T059-wallbox.md`, section 10).
+    Watched from Home Assistant at gerd's on 2026-11-24, one client: fast to
+    user defined and back four times ended no session, where the app's own
+    user defined to fast did. To PV surplus the session ended and the word,
+    written on here, read off about a minute later; with surplus there the
+    inverter drives that word by itself, so it is not written again.
     """
     if mode not in MODES:
         raise ValueError(f"{mode} is not a charging mode")

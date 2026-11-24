@@ -63,9 +63,10 @@ _LOGGER = logging.getLogger(__name__)
 OWNER_QUIET = timedelta(minutes=10)
 
 #: How long a wallbox run waits after the owner changed the EV charger block.
-#: A charging session is an hour or two, and a run interrupts it (stop and
-#: start, a pause under 6 A): one the owner just set up is theirs.
-OWNER_QUIET_EV = timedelta(hours=1)
+#: Short enough that a car started from Home Assistant can be tested in its own
+#: session, which an hour outlasted (gerd's, 2026-11-24). A run interrupts the
+#: charge for about two minutes, and a check that has passed is not run again.
+OWNER_QUIET_EV = timedelta(minutes=10)
 
 #: The component the managed wallbox's controls write.
 EV_CHARGER = "ev_charger"

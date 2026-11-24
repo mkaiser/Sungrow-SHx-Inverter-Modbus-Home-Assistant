@@ -51,10 +51,11 @@ UNKNOWN = "unknown"
 #: because one move can be the owner changing the current in Sungrow's app.
 MOVES_FOR_MANAGED = 2
 
-#: How many charging polls with the setting untouched suggest nobody is. 30 on
-#: the ten-second tier is five minutes of charging, which is many times the
-#: few seconds an inverter takes to write it again.
-STEADY_POLLS_FOR_STANDALONE = 30
+#: How many reads of an untouched setting during a charge suggest nobody is. The
+#: caller feeds each read once (the setting is in the five-minute block), so 12
+#: is an hour of charging. It is still only a suggestion: in user-defined mode a
+#: managed wallbox's setting stands at the owner's current (gerd's, 2026-11-24).
+STEADY_POLLS_FOR_STANDALONE = 12
 
 #: A difference in the setting smaller than this is not a move: 21203 is a
 #: 0.1 A register, so a count is the smallest change it can express.

@@ -511,6 +511,8 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
         """Initialize the coordinator, and the counter the rhythm turns on."""
         super().__init__(*args, **kwargs)
         self._polls = 0
+        #: How often the slow block has been read: the settings are new only then.
+        self.slow_reads = 0
 
     async def _async_setup(self) -> None:
         """Read the wallbox's serial once, for the device registry.
@@ -544,7 +546,10 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
         async with self._reading():
             report: UpdateReport = await self.device.async_update(only=FAST)
             if due:
-                report = report | await self.device.async_update(only=SLOW)
+                slow: UpdateReport = await self.device.async_update(only=SLOW)
+                if not slow.failed:
+                    self.slow_reads += 1
+                report = report | slow
         # A slow component that was not read this time keeps the values it
         # had, so it must not be reported as failed -- an entity would go
         # unavailable for four minutes out of five. Only the slow components'
