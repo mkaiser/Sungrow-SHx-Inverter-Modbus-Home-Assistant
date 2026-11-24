@@ -23,7 +23,14 @@
   // wg-quick create the interface and its routes; /dev/net/tun is there for
   // wireguard-go should a kernel lack the module. The confs and the script
   // that switches them live in the ~/.claude bind mount, never in the repo.
-  "runArgs": ["--cap-add=NET_ADMIN", "--device=/dev/net/tun"],
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--device=/dev/net/tun",
+    // The manuals folder, described at "mounts" below. Here and as -v, because
+    // -v creates a folder the host does not have where a bind mount fails.
+    "-v",
+    "${localEnv:HOME}${localEnv:USERPROFILE}/sungrow-manuals:/workspaces/${localWorkspaceFolderBasename}/tmp/manuals"
+  ],
 
   // Session handoff: bind the host's ~/.claude into the container so Claude
   // Code auth, settings, transcripts and plan files survive a rebuild and are
@@ -48,11 +55,10 @@
   // datasheets) the wiki cites: Sungrow's forbid redistribution, so they are
   // never committed, and a folder outside the repo (a synced one, say) keeps
   // them across machines. It lands on the gitignored tmp/manuals/, the path
-  // the wiki names. Point the source at your own folder; it must exist on the
-  // host, or the container does not start.
+  // the wiki names, and is bound in runArgs above, empty if you have none.
+  // Point its source at your own folder.
   "mounts": [
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind",
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/sungrow-manuals,target=${containerWorkspaceFolder}/tmp/manuals,type=bind"
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
   ],
 
   // VS Code copies the host ~/.gitconfig in when it attaches, after

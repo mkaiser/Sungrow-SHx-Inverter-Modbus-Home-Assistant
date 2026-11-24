@@ -17,7 +17,7 @@ details are under [Why each one](#why-each-one).
 | 3 | **A second SH-T (SH10T, SH20T, SH25T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export, and nothing else polling it | One SH15T on P071 held its export limit as if register 13074 stores the word as handed; a second house confirms it, or says it holds on another firmware |
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the diagnosis also reads the Logger itself |
 | 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
-| 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
+| 6 | **A Sungrow wallbox that no inverter manages** (not set up as an inverter's EV charger in iSolarCloud), with a car charging, set up as an entry of its own with its extended test allowed | Whether its current, start/stop and phases can be set at the wallbox itself. Every wallbox tested so far was an inverter's, which overwrites those settings |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
 | 8 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065, P066 and P067 only |
 | 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
@@ -30,7 +30,7 @@ details are under [Why each one](#why-each-one).
 Already read several times over. Please send one of these **only** if it
 differs from what is in [`results/inverter/`](results/inverter/) in one of the ways below:
 
-- an **SH10RT-20 or SH10RT-V112 on P023**, on either path (seven
+- an **SH10RT-20 or SH10RT-V112 on P023**, on either path (eight
   inverters);
 - an **SH8.0RT-V112 on P022** or an **SH6.0RT-V112 on P023**;
 - an **SBR096** behind any of those;
@@ -130,10 +130,14 @@ What is left is telling one unit's values from a model's constants, which
 needs a second of either model, and the AC007-00, which is unread. The
 diagnosis finds one behind a WiNet-S, or at its own address on port 516.
 
-### 6. A charging car
+### 6. A Sungrow wallbox that no inverter manages
 
-Two runs a few minutes apart while a car charges: whether 21308/21310 are
-signed. Their high words have read 0 through every session so far.
+A managed wallbox is controlled at its inverter, which is tested with a car charging
+([wallbox](../.wiki/wiki/entities/device-wallbox.md)). On one nobody else drives, the wallbox's own
+registers are the control, and none of them has been watched with a car: the current and its scale,
+start and stop, the phase switch, and what it falls back to when nobody reads it. The test runs from the
+wallbox's own entry in Home Assistant, interrupts the charge for a few minutes and puts everything
+back. If evcc drives yours, stop evcc first.
 
 ### 7. Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW
 
@@ -173,6 +177,12 @@ Register 13017 wakes a standby inverter and sends it back to sleep on P020, P022
 and P023, watched ([register 13017](../.wiki/wiki/entities/register-13017.md)); the
 switch is created only there. A run in standby, battery at its minimum and no
 PV, watches it on one more firmware.
+
+### 12. A wallbox switched off in the app
+
+*Car connected* is made from the control pilot (register 21312), read unplugged, connected and charging
+but never while the wallbox is disabled (*Ladegerät aktivieren* off, status 8). Two read-only runs, with a car
+plugged in and without, say whether it can be trusted then.
 
 ## Also worth sending
 

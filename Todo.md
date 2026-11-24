@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T080.** Numbers are minted in order, never reused and
+**Next free item number: T087.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -20,23 +20,7 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 # Incoming items by maintainer
 
 A holding area, not a queue: taken in only when the maintainer asks
-([`workflow.md`](workflow.md)).
-
-- Investigate / future: The make checks are very long (30 minutes). Can we cut that down?
-
-- Investigate / future: How to properly organize the code base after release. CI/CD from github. restrict main branch to PR only. Assumption: Automated CI/CD depends on how much can the tests be stripped down.
-
-- github: deactivate the automatic / bot closing of issues
-
-
-- Ensure the install guide shows the new entitiy values for the HA Energy dashboard. The Energy dashboard is not prefilled, so the user has to do this manually. How to provide a guide for this?
-
-- devcontainer: bindmount to sungrow. this fails if the user has not the folder at the place. is there a workaround / auto create folder if not existing for this?
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/sungrow-manuals,target=${containerWorkspaceFolder}/tmp/manuals,type=bind"
-
-- How  the access the RAK module (predecessor of WiNetS) website?
-I don't know if I ever used the webiste/ changed the password. Check the documentaed credentials automataically via playwright.
-
+([`workflow.md`](workflow.md)). An entry is numbered **I1**, **I2** ... to be addressed by; next: **I3**.
 
 # Next steps
 
@@ -61,21 +45,14 @@ Nothing can start now (T038, T064).
 
 ## Wallbox
 
-**The managed test from Home Assistant at gerd's**: the pairing works on hardware (2026-11-20 evening,
-no car; the dev instance `tmp/config-gerd/` is set up and stopped), so what is left is the run with
-*May it write to the wallbox* on and a car charging. Then whether the mode select writes a whole day's
-window with 163 -- the [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), sections 10 and 13.
-*Needs*: a car charging at gerd's, the maintainer's leave for the write.
+**T059. The wallbox: the direct connection first**: the search's result says that a wallbox found on 516 beside a
+WiNet-S will be read on its own -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 5.
+*Needs*: nothing.
 
-**The rest of the gerd session** (section 9): test 4 (a mode change from the
-app while charging) needs a car plugged in (tried 2026-11-20, unplugged);
-7 needs the owner at the car, 5 and 6 a bright hour. Tests 1, 3 and 9 were done 2026-11-20, and the
-user-defined mode's daily window (33546-33549) was mapped; section 10 now asks
-what Home Assistant does with it. The tunnel now runs from the
-devcontainer (`doc/development.md`, *Pitfalls*). gerd's own Home Assistant
-has run the integration again since 2026-11-21 (its entries behind a modbus proxy), so his and a dev
-instance must never poll one device together. T003 and T004
-themselves still wait on a standalone wallbox (T040).
+**gerd's wallbox, what is left**: whether one-phase surplus charging holds (it ended after 10-30 s twice on 2026-11-24), what
+a plug-in does in PV surplus, and the wallbox put back to fast, grid purchase on and charging off, which it was found in
+-- [the source](.wiki/wiki/sources/gerd-wallbox-2026-11-24-summary.md).
+*Needs*: the tunnel or the maintainer's route to gerd's, once on the evening of 2026-11-24.
 
 ## Logger
 
@@ -90,13 +67,21 @@ diagnosis (T005, T006, T042).
 
 ## Integration and tooling
 
-**T055. The integration's own dashboard**: a dashboard strategy the integration serves, which finds its
-entities by translation key and device rather than entity id, builds only what the house has, and puts the
-controls behind a hold-to-unlock card of its own (or an admin-only view) -- no HACS. Users adapt it with
-*Take control*. Released in 0.1.0a50 ([doc/dashboard.md](doc/dashboard.md)), and running at the maintainer's
-house and gerd's. Left: the maintainer's verdict there, and at gerd's whether it replaces the two hand-made
-dashboards. [Plan](plans/T055-generated-dashboard.md).
-*Needs*: the maintainer's look at both houses.
+**T055. The integration's own dashboard**: after the maintainer's review of the Diagnosis view (0.1.0a54) and the wallbox's
+controls, left are the maintainer's look, whether *Today*'s energy flow shows the day's figures on real statistics, 13017
+switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
+*Needs*: the next release at both houses.
+
+**T086. The history sensors of the old YAML package**: each month and each year of PV generation and export (45 sensors,
+`sg_monthly_pv_generation_01_january`, `sg_yearly_pv_generation_2019` ..., taken out on 2025-11-10), and direct consumption beside
+them. The registers are read today, as attributes of the six *this month / this year* sensors
+([energy history](.wiki/wiki/concepts/energy-history.md)); left are sensors of their own, created where
+`Capability.ENERGY_HISTORY` is and only for years that hold something, the old ids claimed, and readings checks of them.
+*Needs*: nothing.
+
+**T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
+to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
+*Needs*: the maintainer's word on the plan; *Allow GitHub Actions to create pull requests* switched on.
 
 **T079. A night restart on an empty pack reads as a house left changed**: at peter-sm the
 capability test stopped the inverter after dark with the pack at 1.0 % (under its 5 % minimum) and
@@ -109,13 +94,13 @@ dropped link when no poll was refused. Outcome 5 is the hard-constraint code, so
 changes only with the maintainer.
 *Needs*: the maintainer's call on what Standby at the deadline means.
 
-**T071. A migration that did not claim the legacy entity ids**
-([#798](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/798)): the likeliest cause
-is fixed since 0.1.0a46 -- an entry first set up on device-scoped ids and deleted leaves its ids in the
-registry's deleted entities, and re-adding to migrate got them back ahead of the claim; the claim now renames
-onto the free legacy id (`tests/test_migration.py`). The correction and the user's way back (**Configure ->
-Entity IDs**) are posted on the issue.
-*Needs*: the user's answer whether they had set it up before.
+**T082. The full gate takes 24 minutes**: measure where the time goes (9000 tests, one core), then run it in parallel or thin
+what repeats; CI and branch protection after the release depend on it (T047).
+*Needs*: nothing.
+
+**T083. The way from the YAML package's `_inv1` / `_inv2` ids**: whether a house with several inverters migrates each to its
+own slot, against what `tests/test_migration.py` and the [legacy slot](.wiki/wiki/concepts/legacy-slot.md) already cover.
+*Needs*: nothing.
 
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
@@ -128,30 +113,6 @@ not HACS's old `hacs_repository`, and *add integration* is
 `config_flow_start`, not `config_flow` (my.home-assistant.io's FAQ lists
 them).
 *Needs*: T047's merge.
-
-**T069. Retire the stale remote branches**: all of them go except
-`2025-legacy`, which holds the pre-2026 YAML line. Ahead/behind `main`,
-measured 2026-11-20: `experimental-archived` 17/424, last touched 2023-10-15;
-`dev` 25/108 and `inverter_self_consumption` 28/108, both 2026-01-05;
-`wrap-string-registers` 5/7, 2026-06-02. Tag each `archive/<name>` before
-deleting it: a tag costs nothing and keeps the commits reachable, where a
-deleted branch's are not.
-*Needs*: `inverter_self_consumption` read against
-[T002's plan](plans/T002-inverter-self-consumption.md) for anything the branch
-still holds alone; the other three can go today.
-
---> maintainer: delete `experimental-archived, inverter_self_consumption, wrap-string-registers and dev
-
-archive 2025-legacy to archive/2025-legacy
-current main (last yaml version) to archive/
-
-
-**T014. Decide the wording a fresh entry shows** now that watching the
-readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
-where it said "no runs kept", on a house that may never run a capability test
--- which is also what *Diagnosis: tests, clear history* now leaves, since it
-keeps the readings.
-*Needs*: the maintainer's call, and a look at a real device page.
 
 **T065. Name the people who answer other people's questions** in the README's
 *Acknowledgements*: the discussions and the issues have a handful of regulars
@@ -211,13 +172,10 @@ hand run, through the production entry's entities.
 *Needs*: the battery under ~85 % with PV 0.2-2 kW over the load, steady for
 5 min -- a low-battery morning in clear or uniform light.
 
-**T007. A day and a night of *Extended test (auto repeat)* at the
-maintainer's SH10RT**, then ingest -- the new checks on hardware, the
-auto-repeat slot schedule, the status line's wording, and the *Diagnosis:*
-names on a real device page -- [plan](plans/T007-diagnosis-and-capability-tests.md).
-*Needs*: a **charged battery**, which is what the nine write-side rows left
-waiting all ask for, and a dusk for `ledger.TWO_MOMENTS`; the collection is
-armed and observing, 37 of 55 established and none failing.
+**T007. The diagnosis and its capability tests, what is left**: the collection at the maintainer's SH10RT is ingested
+(56 of 56); left are the status line's wording, the *Diagnosis:* names on a real device page, the new spacing
+on hardware and the forced startup on an SH-T -- [plan](plans/T007-diagnosis-and-capability-tests.md).
+*Needs*: nothing.
 
 **T078. Decide whether a cluster master is offered the Grid import limit**,
 now that 32998 failed on P023 at fwitten's master while it held at three
@@ -236,11 +194,16 @@ a named person.
 
 ## Inverter
 
-**T026. An SH-T through its WiNet-S, in daylight, with export**: settles
-13074's scale on P071, an SBH on a direct link, and 13018 / 33149-33150 on the
+**T026. A second SH-T through its WiNet-S, in daylight, with export**: confirms
+13074's scale on P071 (GalKar's SH15T: stored as handed, by one watched limit), an SBH on a direct link, and 13018 / 33149-33150 on the
 T -- [plan](plans/T026-sh-t-through-a-dongle.md).
 *Unblocked by*: any SH15T or SH10T owner running one capability test
 (`--enable-export-limit`) while the house exports.
+
+**T080. The export-limit fallback on an SH-T**: decided (maintainer, 2026-11-24): ten stays the general fallback, because
+a wrong one sets ten times the limit and a wrong ten only a tenth; P071 alone gets one, once a second watched run
+confirms it stores the word as handed ([register 13074](.wiki/wiki/entities/register-13074.md)) -- [plan](plans/T026-sh-t-through-a-dongle.md).
+*Unblocked by*: T026's run, at a P071 house.
 
 **T063. Forced startup (13017) on an SH-T** -- the switch is confirmed on
 P020, P022 and P023 ([register 13017](.wiki/wiki/entities/register-13017.md));
@@ -278,7 +241,7 @@ waits for a watched write.
 
 **T033. The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
 source's model table, many rows unverified.
-*Unblocked by*: a diagnosis of any other SG (devices-wanted, row 10).
+*Unblocked by*: a diagnosis of any other SG (devices-wanted, row 9).
 
 **T034. The PV cut (31211, #738) beyond the four confirmed firmwares**, and
 whether a cut survives a night or a restart or iSolarCloud rewrites it.
@@ -318,12 +281,10 @@ the behaviour `scripts/generate/tables/writes.py` already predicts.
 
 ## Wallbox
 
-**T003. Controlling the wallbox**: the managed test from Home Assistant once the
-pairing is tested (Next steps), the user-defined window and scheduled charging
-(162) in the controls, a standalone wallbox, and the first writing run --
-[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), sections 10 and 11.
-*Unblocked by*: gerd's AC22E-01 with a car charging and his own Home Assistant
-stopped; or a standalone wallbox, which nobody has offered (T040).
+**T003. Controlling the wallbox**: the managed half is done (the test passed from Home Assistant at gerd's on 2026-11-24);
+left are the user-defined window and scheduled charging (162) in the controls, which the maintainer decides, and a
+standalone wallbox -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), sections 10 and 11.
+*Unblocked by*: a standalone wallbox, which nobody has offered (T040).
 
 **T020. Whether the standalone inference is right**: it is built, shown and
 asked for, so what is left is measuring it where it matters --
@@ -372,12 +333,9 @@ a PROD.CT.
 
 ## Integration and tooling
 
-**T043. mDNS and DHCP discovery: what is still open.** The zeroconf and DHCP
-matchers ship; what is left is other houses, a browse the reader cannot have
-spoiled, and the fields nothing explains --
-[plan](plans/T043-mdns-and-dhcp-discovery.md).
-*Unblocked by*: diagnoses carrying `network_names` from houses with a dongle,
-and one whose inverter port takes its address by DHCP.
+**T043. DHCP discovery at one house**: the matcher ships and nobody has been seen found by it; a diagnosis
+says so from schema 29 -- [plan](plans/T043-mdns-and-dhcp-discovery.md).
+*Unblocked by*: a diagnosis from a house whose inverter port takes its address by DHCP.
 
 **T044. The capability test's restore through a WiNet-S, on hardware.** Two
 dongle-only runs reported all 46 settings written back, but the battery was at
@@ -422,6 +380,7 @@ readings (`tests/test_one_setup_path.py`). `MODE_DIAGNOSTICS` stays for the
 entries made while it was offered.
 
 **T047. When to merge into `main`** -- [plan](plans/T047-T053-release.md).
+After it: `main` takes pull requests only, with CI as the gate (T082).
 *Needs*: the brand in `home-assistant/brands`, and the
 `proper-ha-integration` links moved to `main`.
 
@@ -467,9 +426,8 @@ Wanted, not scheduled.
 (one cable day: 0.984 of *Daily PV generation*).
 *Needs*: more days from the production recorder, and a house through a WiNet-S.
 
-**T056. Helping users set up the Energy dashboard** --
-[plan](plans/T056-energy-dashboard-help.md). *Needs*: nothing; core cannot be
-pre-filled, so what is left is wording and links.
+**T056. Helping users set up the Energy dashboard**: built and released in 0.1.0a54 (the Energy view lists the sensors and can
+add them); left is what a house without a meter reads -- [plan](plans/T056-energy-dashboard-help.md). *Needs*: one such house.
 
 **T057. Site-wide sensors for several inverters** --
 [plan](plans/T057-site-wide-sensors.md). *Needs*: users asking for them; today the
@@ -480,9 +438,24 @@ Prometheus, MQTT statestream, Node-RED) --
 [plan](plans/T058-renames-outside-home-assistant.md). *Needs*: nothing; the script
 and the guide exist.
 
-**T059. The wallbox: the direct connection first** --
-[plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 5. *Needs*: gerd's two entries side
-by side, and a retaken options screenshot.
+**T069. Retire the stale remote branches** (deferred by the maintainer, 2026-11-24): `experimental-archived`, `inverter_self_consumption`,
+`wrap-string-registers` and `dev` go (maintainer), each tagged `archive/<name>` first so the commits stay reachable.
+*Needs*: `inverter_self_consumption` read against [T002's plan](plans/T002-inverter-self-consumption.md) first; and whether
+`2025-legacy` and today's `main` are to be named under `archive/`, as the maintainer wrote, or keep the names
+`2025-legacy` and `2026-legacy` that T068 and every published link rely on.
+**T014. Decide the wording a fresh entry shows** now that watching the
+readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
+where it said "no runs kept", on a house that may never run a capability test
+-- which is also what *Diagnosis: tests, clear history* now leaves, since it
+keeps the readings.
+*Needs*: the maintainer's call, and a look at a real device page.
+
+**T084. A clean migration at gerd's**: his installation grew through every preview, so a fresh one from the YAML package's
+history, the package stopped first, shows what a first-time user gets. It touches his production history.
+*Needs*: a plan, a full backup and his consent.
+
+**T085. The RAK module's web page** (the dongle before the WiNet-S): how it is reached and with which documented login.
+*Needs*: a house with one, and the maintainer's word before any login is tried.
 
 **T060. Hand inverter and wallbox readings to evcc**, so it need not open a
 Modbus session of its own -- [plan](plans/T060-evcc-integration.md), which has the
@@ -502,21 +475,16 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-22T20:30:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-22T20:30:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-24T12:50:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T12:50:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-22 20:30 UTC**: peter_sm's twenty-third reading (posted by Korsberg to #786)
-is ingested; its outcome 5 is T079.
+Last checked **2026-11-24 12:50 UTC**: nothing new to ingest; before that, GalKar83's second SH15T reading (#786) is ingested; benji-beit's SH5.0RT
+was offered for Wednesday 2026-11-25, and the maintainer answered to wait.
 Maximo101's
-**AC22E-01** still could not be ingested -- the 0.1.0a44 download carries
-`"diagnosis": null` because an upgrade restarts Home Assistant and a wallbox
-entry's download hands over the last run's document from memory
-(`DiagnosisState.document`). **Worth asking that house again**, in this order:
-*Diagnosis: start* on the wallbox's own device page, then Download diagnostics
-in the same session -- and worth weighing whether a wallbox entry's download
-should build its document on the spot, as an inverter entry's does.
+**AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download
+reads the wallbox on the spot, so **Download diagnostics on a current version is worth asking that house for**.
 
 ## T062. Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
