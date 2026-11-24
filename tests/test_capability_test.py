@@ -2808,3 +2808,63 @@ async def test_the_export_scale_is_asked_while_the_export_check_still_writes(
 
     assert "export_power_limit" not in {row.field for row in outcome.probes}
     assert asked == [True]
+
+
+@pytest.mark.parametrize(("multiplies", "factor"), [(False, 1), (True, 10)])
+@pytest.mark.parametrize("leave", [True, False])
+async def test_a_skipped_readback_still_lifts_the_mode_to_ask_the_export_scale(
+    *, multiplies: bool, factor: int, leave: bool
+) -> None:
+    """With feed-in limitation off the probe declines, so the mode is lifted.
+
+    At swo14 on 2026-11-24 a second run skipped the established readback, so
+    nothing lifted the mode, the scale was not determined, and the export
+    check wrote 125 for 1250 W on a firmware that stores the word as handed.
+    Without leave the mode stays as it was found, and nothing is asked.
+    """
+    from modbus_connection.mock import MockModbusConnection
+
+    from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
+
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = dict(SH10RT_INPUT_REGISTERS)
+    unit.holding = dict(SH10RT_HOLDING_REGISTERS)
+    unit.input[5621] = 0
+    unit.input[5622] = 1000
+    unit.holding[EXPORT_LIMIT_ADDRESS] = 10000
+    unit.holding[EXPORT_MODE_ADDRESS] = 0x55
+    _firmware(unit, multiplies=multiplies)
+    modes: list[int] = []
+    plain = unit.write_register
+
+    async def write_register(address: int, value: int) -> None:
+        if address == EXPORT_MODE_ADDRESS:
+            modes.append(value)
+        await plain(address, value)
+
+    unit.write_register = write_register  # type: ignore[method-assign]
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = CapabilityTest(
+        inverter,
+        options=Options(
+            skip=frozenset({"export_power_limit"}), enable_export_limit=leave
+        ),
+        clock=FakeClock(),
+    )
+    await run._preflight()
+
+    rows = await run._readback()
+
+    assert "export_power_limit" not in {row.field for row in rows}
+    assert run.export_write_scale == (factor if leave else None)
+    assert modes == ([0xAA, 0x55] if leave else [])
+    assert unit.holding[EXPORT_LIMIT_ADDRESS] == 10000
+    assert unit.holding[EXPORT_MODE_ADDRESS] == 0x55
+
+    if leave:
+        # What the export check then writes lands at the watts it means.
+        unit.holding[EXPORT_MODE_ADDRESS] = 0xAA
+        export = next(row for row in PROBES if row.field == "export_power_limit")
+        assert await run._write(export, 1250.0) is None
+        assert unit.holding[EXPORT_LIMIT_ADDRESS] == 1250

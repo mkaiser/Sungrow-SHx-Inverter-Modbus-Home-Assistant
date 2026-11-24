@@ -40,9 +40,6 @@ reporter (Diegocampy) offered on #797 to test once the fix is out.
 `src/sungrow_modbus/hybrid_inverter/derived.py` would show -62365 W, so read it as two's complement there
 ([the query](.wiki/wiki/queries/is-battery-power-firmware-dependent.md)). *Needs*: nothing.
 
-**T088. The export check forgets a scale an earlier run established**: with the readback skipped it writes the
-limit divided by ten, 125 for 1250 W at swo14 ([13074](.wiki/wiki/entities/register-13074.md)). *Needs*: nothing.
-
 The rest waits on other firmware or other houses.
 
 ## Battery

@@ -97,7 +97,11 @@ CHECK_REVISIONS: dict[str, int] = {
     # never be asked again. The PV cut shares the branch, but PV power is
     # never negative, and keeps its evidence.
     "charge ceiling": 2,
-    "export power limit": 1,
+    # 2 since 2026-11-24: a run that skipped the readback of 13074 left the
+    # write scale unasked with feed-in limitation off, so the check divided by
+    # ten on a firmware that stores the word as handed, and judged a cap a
+    # tenth of the one it meant (125 W for 1250 W, measured).
+    "export power limit": 2,
     "PV generation cut": 1,
     "forced-charging window": 2,
     "discharge windows away from now": 2,

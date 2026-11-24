@@ -227,23 +227,28 @@ class ReadbackSteps(PreflightSteps):
                 # end of the phase. While it is up the house is capped at
                 # whatever 13074 holds, and 13074 is holding a probe value --
                 # so every second of this is a second of real curtailment.
-                #
-                # Back to the *snapshot's* word, not to a named "off". Nothing
-                # in this module restores a register to a default, because a
-                # default is a guess about what the owner wanted and the
-                # snapshot is a measurement of it.
-                was = self.snapshot.values.get(EXPORT_MODE.field)
-                if was is not None:
-                    await self._write(EXPORT_MODE, float(was))
+                await self._lower_export_mode()
+        export = next(
+            (probe for probe in self.plan if probe.field == "export_power_limit"),
+            None,
+        )
         if (
             "export_power_limit" in self.options.skip
             and "export power limit" not in self.options.skip
-            and any(probe.field == "export_power_limit" for probe in self.plan)
+            and export is not None
+            and not self.stopped
         ):
             # The export check still writes 13074, and at the wrong factor it
             # lands a decade off: the scale is asked whether or not the
-            # readback of the same register was left out.
-            await self._measure_export_scale()
+            # readback of the same register was left out. With feed-in
+            # limitation off the probe declines, so the mode is lifted for it
+            # exactly as it is for the readback, and on the same leave.
+            lifted = await self._lift_export_mode(export)
+            try:
+                await self._measure_export_scale()
+            finally:
+                if lifted:
+                    await self._lower_export_mode()
         return results
 
     async def _slope(
@@ -339,6 +344,17 @@ class ReadbackSteps(PreflightSteps):
         if self.snapshot.values.get(EXPORT_MODE.field) == MODE_ON:
             return False
         return await self._write(EXPORT_MODE, MODE_ON) is None
+
+    async def _lower_export_mode(self) -> None:
+        """Put feed-in limitation back after `_lift_export_mode`.
+
+        Back to the *snapshot's* word, not to a named "off". Nothing in this
+        module restores a register to a default, because a default is a guess
+        about what the owner wanted and the snapshot is a measurement of it.
+        """
+        was = self.snapshot.values.get(EXPORT_MODE.field)
+        if was is not None:
+            await self._write(EXPORT_MODE, float(was))
 
     async def _measure_export_scale(self) -> None:
         """Ask how this firmware writes 13074, before writing it.

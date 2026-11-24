@@ -34,8 +34,9 @@ a different model, through a Modbus proxy. On the SH-RS, P065 stores as handed;
 probe, not a family rule, is what keeps an RS right.
 
 **swo14 answered 1:1 again on 2026-11-24**, both inverters ([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md),
-[slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)). A later run that skips the established readback does not lift the mode, so it
-asks no scale and divides by ten: its export check wrote 125 for 1250 W ([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)).
+[slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)). A later run there skipped the established readback, so it did not lift the
+mode, asked no scale and divided by ten: its export check wrote 125 for 1250 W, and that verdict says
+nothing about the register. The test now lifts the mode for the probe alone ([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)).
 
 **Two cluster masters do not hold the limit under a manufactured discharge**:
 [fwitten](installation-fwitten.md) on P023 and swo14 here, where the single inverters did

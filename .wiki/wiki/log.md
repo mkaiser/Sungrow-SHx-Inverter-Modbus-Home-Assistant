@@ -2161,3 +2161,9 @@ discharge. The earlier host page's "communication module: none fitted" is correc
 32998 at fwitten's cluster, over the cable, on the master, the slave and both, under 1250 W and 3601 W
 forced charges ([the source](sources/fwitten-import-limit-cluster-2026-11-24-summary.md)): four caps, each read back, none held. The register, installation, P023 and SH-RT
 pages and the forced-charge query say so; a slave's 32998 is no longer unmeasured.
+
+## [2026-11-24] updated | register-13074: a skipped readback still asks the write scale
+
+With the readback of 13074 skipped and feed-in limitation off, the capability test left the scale unasked and
+divided by ten (T088, measured at swo14). It now lifts the mode for the probe, on the same leave as the readback;
+the export check's revision is 2, so a kept verdict is asked again.
