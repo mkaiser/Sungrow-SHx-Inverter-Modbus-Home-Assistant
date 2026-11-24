@@ -6,8 +6,31 @@ Two things are left: how they stay current, and how the author is thanked.
 
 ## Status log
 
+- **2026-11-24**: the maintainer's Home Assistant raised a repair, *flixlix/energy-period-selector-plus removed from the
+  catalog* ("no activity in the repository for over two years"). **Not a sign the author left**; see *Where upstream lives
+  now*. Nothing of ours uses that card.
+
 - **2026-11-24**: planned, nothing built. The versions and SHA-256 digests are written in `fetch_cards.py` (`POWER`,
   `ENERGY`) and move only by hand: v0.6.1 and v0.5.1, both from 2026-11-10.
+
+## Where upstream lives now
+
+Read 2026-11-24 from GitHub. In 2026 flixlix moved every card into **one monorepo, `flixlix/flixlix-cards`** (MIT, issues and
+discussions on, commits almost daily: the Energy Period Selector's own features landed on 2026-11-21 and 22). The old
+per-card repositories are now **release repos**: their only commits are `github-actions[bot]` release commits and the
+README says the source lives in the monorepo. Stable tags there are cut from the monorepo's changesets; most of what is
+published is a `-beta.N` pre-release (power-flow v0.6.2-beta.3 on 2026-11-23, against our pinned v0.6.1 of 2026-11-10).
+
+- **The repair** is the catalog's check seeing `energy-period-selector-plus` with no commit between 2023-11 and 2026-11-08,
+  when it became a release repo. A stale entry rather than a dead card; it stays installed and it simply gets no
+  updates through the Marketplace until the entry is re-listed, or is added back as a custom repository.
+  The same check should pass for the two cards we bundle (their last human commits are 2026-04-16 and a release commit
+  on 2026-11-23), but a release repo with only bot commits is exactly what it flagged once.
+- **For us**: our pins and download URLs point at the per-card release repos' stable assets, which still exist; and
+  nothing of ours is in the catalog. The risks are (a) the author one day stopping the release repos and publishing only
+  from the monorepo, which would leave the weekly check below seeing nothing forever, and (b) our reading *pre-release*
+  as the next version. So the workflow checks stable releases of the per-card repos **and** the monorepo's tags, and goes red
+  when the monorepo is more than a quarter ahead of the last per-card stable release.
 
 ## Keeping them current
 
@@ -18,7 +41,7 @@ bump, and a machine does the arithmetic**.
 
 1. **`.github/workflows/cards.yml`, weekly and on demand.** For each card: the latest GitHub release of its repository
    (`gh api repos/flixlix/<repo>/releases/latest`), skipping pre-releases. Newer than the pinned version: download the asset,
-   compute its SHA-256, run `Card.patched` on it, and open **one pull request** against the integration branch that
+   compute its SHA-256, run `Card.patched` on it, and read stable releases only (`prerelease: false`), and open **one pull request** against the integration branch that
    changes only `VERSION` and the digest in `fetch_cards.py`. The patch's failure (`expected exactly one ...`) is the
    result worth having: the run goes red and the pull request says why instead of being opened green.
 2. **The review is the pull request's body**: both versions, the release notes upstream wrote, the diff of the two bundles'
@@ -34,7 +57,7 @@ pull requests (repository setting *Allow GitHub Actions to create pull requests*
 ## Crediting the author
 
 MIT asks only that the licence text travel with the code, and it does: `LICENSE.power-flow-card-plus` is in the wheel, a
-header names each bundle, and `doc/attribution.md` and `doc/dashboard.md` name the author. What is left is to be seen
+header names each bundle, and `doc/attribution.md` and `doc/dashboard.md` name the author, and name the per-card repositories rather than the monorepo they now come from (to change with the README). What is left is to be seen
 doing it, in three places users read, and one the author does.
 
 ### README, *Acknowledgements*
@@ -44,8 +67,9 @@ A third group after the wallbox sources, in the section's voice (what it gave us
 > The dashboard's power flow and the day's energy flow are drawn by two cards from one author, who published them under
 > the MIT licence:
 >
-> - **[flixlix/power-flow-card-plus](https://github.com/flixlix/power-flow-card-plus)** (v0.6.1) and
->   **[flixlix/energy-flow-card-plus](https://github.com/flixlix/energy-flow-card-plus)** (v0.5.1), by Luca Félix. They
+> - **[Power Flow Card Plus](https://github.com/flixlix/power-flow-card-plus)** (v0.6.1) and
+>   **[Energy Flow Card Plus](https://github.com/flixlix/energy-flow-card-plus)** (v0.5.1), by Luca Félix, from his
+>   [flixlix-cards](https://github.com/flixlix/flixlix-cards) collection. They
 >   come with the integration unchanged but for the element's name, so that nothing needs HACS and a copy of yours is
 >   left alone. Their licence travels in the package.
 
@@ -55,7 +79,7 @@ The versions in that text are the pins, so a bump of `fetch_cards.py` edits the 
 ### The dashboard
 
 - **Where**: the Diagnosis view's *Info* group, beside *Integration* and *Device page*, as a third link button,
-  **Power flow cards by flixlix** (`Leistungsflusskarten von flixlix`), opening `https://cards.flixlix.com` in a new tab.
+  **Power flow cards by flixlix** (`Leistungsflusskarten von flixlix`), opening `https://cards.flixlix.com` (the collection's own documentation) in a new tab.
   Not on Home: a credit beside a circle is clutter every day for something needed once.
 - **How**: a new layout card `{"type": "credit-link"}` built like `integration-link` (`linkButton`, an external address
   instead of a path), its two texts in `shared.js`. It shows only where the flow cards could be shown, so it is left out
@@ -75,8 +99,8 @@ The versions in that text are the pins, so a bump of `fetch_cards.py` edits the 
 
 ### The author
 
-- **Telling them**, once, as a courtesy and not a request for leave: an issue on `flixlix/power-flow-card-plus`
-  (discussions are off) that says the cards are bundled unchanged except for the element's name, links the integration,
+- **Telling them**, once, as a courtesy and not a request for leave: a discussion on `flixlix/flixlix-cards` (where the
+  author asks for feedback; the release repos send people there) that says the cards are bundled unchanged except for the element's name, links the integration,
   and thanks them. It is outward-facing and in the maintainer's name, so **the maintainer sends it, or says so**; the text is
   drafted in the session that does it, and one issue covers both cards.
 - **Supporting them**: neither repository carries a funding file, and the profile names no sponsor page. Nothing to link
