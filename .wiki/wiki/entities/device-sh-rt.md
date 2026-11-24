@@ -38,7 +38,8 @@ the integration knows was measured on these.
   [capability test](../concepts/capability-test.md).
 - **The site import limit, [register 32998](register-32998.md), reads 2000 (20.00 kW)** on every
   SH-RT diagnosed but one, where the owner sets it. On P020 it holds during a forced charge
-  ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)); on one SH10RT-V112 it does not, by its owner's report;
+  ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)); at [fwitten](installation-fwitten.md)'s cluster on P023 it
+  does not, on either unit ([the run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)), and on one SH10RT-V112 it does not, by its owner's report;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 - **Inverter-reported load misses another generator.** `load_power` is the
   inverter's own output plus grid import; see

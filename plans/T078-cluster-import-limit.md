@@ -29,6 +29,9 @@ Not in it: the cap written through the WiNet-S. Do it only if B or D holds over 
 
 ## Status log
 
+- **2026-11-24, run**: done 18:13-18:27 CET, exit 0, all restored and read back by a second client. A, B, C and D
+  all **did not hold**, every cap read back ([the source](../.wiki/wiki/sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). Not run through the WiNet-S,
+  which B or D holding was the condition for. The slave's 13050 was **not** read, so the mirroring stays open (T089). Next: the maintainer's decision on the control.
 - **2026-11-24**: script written and run against a fake cluster (cap held, not held, held by the slave only,
   a flaky link, an outage during the run, Ctrl-C); restored every time. Not run on hardware.
   fwitten is reached with `vpn.sh up witten`. Waits for the battery to fall under 85 % and the

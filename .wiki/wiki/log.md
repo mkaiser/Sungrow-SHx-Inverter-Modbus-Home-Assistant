@@ -2155,3 +2155,9 @@ Host and slave, without and with the car charging (#786): [host](sources/sh10rt-
 **outcome 5** and nothing is left changed; a query opened on a slave mirroring the master's EMS mode. 13022 is signed on
 01011.95.03, which overturns "never signed". Two cluster masters now miss the export limit under a manufactured
 discharge. The earlier host page's "communication module: none fitted" is corrected: both inverters have a WiNet-S.
+
+## [2026-11-24] ingested | fwitten-import-limit-cluster-2026-11-24
+
+32998 at fwitten's cluster, over the cable, on the master, the slave and both, under 1250 W and 3601 W
+forced charges ([the source](sources/fwitten-import-limit-cluster-2026-11-24-summary.md)): four caps, each read back, none held. The register, installation, P023 and SH-RT
+pages and the forced-charge query say so; a slave's 32998 is no longer unmeasured.

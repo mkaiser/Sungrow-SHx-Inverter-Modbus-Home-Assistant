@@ -78,9 +78,12 @@ in kW. The diagnosis's register dump reads it too.
   under the engine's 1250 W forced charge left import at 1718 W (1724 W before, 1710 W after),
   with the charge itself obeying, the battery at 15.2 % against a 7 % floor and PV at 0 W
   ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)). The range words
-  answered as everywhere: 0 and 5001 refused with 0x04, 5000 taken. Neither house is wrong;
-  what differs is open. The one difference on record: fwitten's master leads a **cluster**, as
-  swo14's did where it failed below, and every house where it held is a single inverter.
+  answered as everywhere: 0 and 5001 refused with 0x04, 5000 taken. **Nor did it on any of four further
+  caps**, the word read back in every sample: 1150 W under a 1250 W charge (1783 W), and 2190 W
+  under a 3601 W charge on the master (4263 W), on the slave (4236 W) and on both (4185 W), the charge
+  never moving by more than 2 W, the battery at 79-88 % ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). So the cap's size, the unit and
+  a low battery do not explain it. What does is open. The one difference on record: fwitten's master leads a
+  **cluster**, as swo14's did where it failed below, and every house where it held is a single inverter.
 - **On an [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) it holds**, the
   first SH-RS watched: at [icefest](installation-icefest.md)'s, over RS485, a 520 W cap took import from
   1040 W to 528 W, 1029 W after; the house's own setting is 10.0 kW (word 1000)
@@ -111,7 +114,8 @@ in kW. The diagnosis's register dump reads it too.
 
 On [swo14](installation-swo14.md)'s cluster both inverters read 2000 as well, the slave included
 -- but its capability test counts the register absent, because the snapshot gates it behind the
-battery capability and the slave has no pack. So a cluster slave's import limit is unmeasured.
+battery capability and the slave has no pack. At fwitten a slave's takes a word, reads it back and
+caps nothing ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)).
 
 Whether 2000 on the SH-RT and 1300 on the SH-RS are factory defaults is not on record: only
 Jam3s97 is known to have written theirs. Every value is the device's own word, read through
@@ -126,8 +130,8 @@ firmware gets one.
 
 So on P020, P022, P023 and the SH-RS's P066 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
 in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
-SH10RT and the SH10RS accept. There the read-only sensor is not created. On P023 one watched write has now failed, at a cluster
-master ([fwitten](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)), against three that
-held at single inverters: whether a cluster master should be offered the control is open. Elsewhere the sensor
+SH10RT and the SH10RS accept. There the read-only sensor is not created. On P023 it fails at a cluster
+([fwitten](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md), five caps) and holds at single inverters: whether a
+cluster master should be offered the control is open. Elsewhere the sensor
 stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the
 register refuses 0, so a 0 is a dongle answering for nothing).

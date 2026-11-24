@@ -21,10 +21,12 @@ block with the owner's Home Assistant polling.
 On P023 the master **did not obey [register 32998](register-32998.md)**, the site import limit: a
 1090 W cap under the capability test's 1250 W forced charge left import at 1718 W, the battery at
 15 % against a 7 % floor ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)).
-The same run found 13074 multiplying by ten, as before, and the battery power bounds not enforced.
+Four more caps, on the master, on the slave and on both, all read back and all did nothing
+([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). The check's run found 13074 multiplying by ten, as before, and the battery power bounds not enforced.
 
 ## Measurements
 
+- [The site import limit by master, slave and both, 2026-11-24](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)
 - [The capability test's import limit check, master, 2026-11-22](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)
 
 ## Diagnoses

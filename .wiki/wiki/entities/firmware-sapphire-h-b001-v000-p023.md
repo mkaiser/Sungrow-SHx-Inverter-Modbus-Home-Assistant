@@ -34,7 +34,8 @@ The most-measured firmware in the corpus.
   scheduled charge too ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
   It held at peter-sm's SH10RT-V112 as well, but **not at [fwitten](installation-fwitten.md)'s cluster
   master**: a 1090 W cap left a 1250 W forced charge's 1718 W of import as it was
-  ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)).
+  ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)), and four more, on either unit and both, changed
+  nothing ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)).
 - [Register 13017](register-13017.md) is a **switch**: `0xAA` wakes a low-SoC standby inverter and
   keeps it running, `0x55` returns it to Standby, any other word is refused
   ([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)). A forced charge, EMS or
