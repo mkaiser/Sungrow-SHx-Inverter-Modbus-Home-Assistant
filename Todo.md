@@ -86,9 +86,6 @@ dropped link when no poll was refused. Outcome 5 is the hard-constraint code, so
 changes only with the maintainer.
 *Needs*: the maintainer's call on what Standby at the deadline means.
 
-**T082. The gate in CI**: run the suite in parallel there too, with its coverage (`.github/workflows/validate.yml`), as `make test` does
-here (6-10 minutes on 8 cores). *Needs*: nothing.
-
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
 prefilled) is in the README and in step 1 of
@@ -347,7 +344,7 @@ readings (`tests/test_one_setup_path.py`). `MODE_DIAGNOSTICS` stays for the
 entries made while it was offered.
 
 **T047. When to merge into `main`** -- [plan](plans/T047-T053-release.md).
-After it: `main` takes pull requests only, with CI as the gate (T082).
+After it: `main` takes pull requests only, with CI as the gate.
 *Needs*: the brand in `home-assistant/brands`, and the
 `proper-ha-integration` links moved to `main`.
 

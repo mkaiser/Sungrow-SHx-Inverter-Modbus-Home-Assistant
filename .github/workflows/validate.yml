@@ -96,7 +96,9 @@ jobs:
       - name: Mypy
         run: mypy
       - name: Pytest
-        run: pytest -q --cov --cov-report=term:skip-covered
+        # Parallel as in `make test`: pytest-cov combines the workers' data
+        # before `fail_under` is applied.
+        run: pytest -q -n auto --dist loadfile --cov --cov-report=term:skip-covered
 
       # The release workflow is the only thing that publishes the library,
       # once per tag, to an index where uploads are immutable -- the worst
