@@ -43,10 +43,6 @@ reporter (Diegocampy) offered on #797 to test once the fix is out.
 **T088. The export check forgets a scale an earlier run established**: with the readback skipped it writes the
 limit divided by ten, 125 for 1250 W at swo14 ([13074](.wiki/wiki/entities/register-13074.md)). *Needs*: nothing.
 
-**T089. Two capability tests on one cluster at once**: refuse, warn, or wait, after swo14's outcome 5
-([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; the
-fwitten run (T078) can settle the mirroring.
-
 The rest waits on other firmware or other houses.
 
 ## Battery
@@ -130,6 +126,16 @@ aggregate.
 
 Nothing is built on these until the maintainer answers them.
 
+**T078. Is a cluster master offered the Grid import limit?** At fwitten's on P023 five caps, the last four on the
+master, the slave and both, read back and did nothing
+([the run](.wiki/wiki/sources/fwitten-import-limit-cluster-2026-11-24-summary.md), [plan](plans/T078-cluster-import-limit.md));
+recommended: not offered, with the read-only sensor kept. *Needs*: the maintainer's choice, and a way to tell a
+cluster member, which the library does not have; ask on #546 whether ulfben's house is a cluster.
+
+**T089. Two capability tests on one cluster at once**: refuse, warn, or wait, after swo14's outcome 5
+([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; reading
+the slave's 13050 while a cluster master is in forced mode settles the mirroring.
+
 **T021. Are the entity names final?** They are reviewed and decided in English
 and German (`doc/entity_names.md`, `plans/_gen_text_translation_review.md`,
 `scripts/generate/tables/naming.py`), and entity ids stay English in every
@@ -169,14 +175,6 @@ holds. Two owner settings are deliberate and stay as they are:
 (56 of 56); left are the status line's wording, the *Diagnosis:* names on a real device page, the new spacing
 on hardware and the forced startup on an SH-T -- [plan](plans/T007-diagnosis-and-capability-tests.md).
 *Needs*: nothing.
-
-**T078. Decide whether a cluster master is offered the Grid import limit**,
-now that 32998 failed on P023 at fwitten's master while it held at three
-single inverters
-([the run](.wiki/wiki/sources/fwitten-import-limit-engine-2026-11-22-summary.md)):
-first the hand run there ([plan](plans/T078-cluster-import-limit.md)),
-and ask on #546 whether ulfben's house is a cluster.
-*Needs*: the maintainer's go for the writes, after dark, battery 15-85 %.
 
 # Blockers
 
