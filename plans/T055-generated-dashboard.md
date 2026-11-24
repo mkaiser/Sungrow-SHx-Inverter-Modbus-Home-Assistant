@@ -6,6 +6,26 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-24, 23:50 CET**, looked at on the maintainer's production (0.1.0a55, layout revision 5; headless Chromium, read
+  only, English, desktop; every view captured, Home, Energy, History, Controls and Diagnosis looked at): no console error.
+  *Today*'s energy flow **shows the day's figures** (PV, export, import and charge equal the sensors; the house circle is the
+  balance of the flows, and equals Home Assistant's own Energy card). It reads statistics, so it is up to an hour behind
+  the sensors. The History view draws. Fixed: its bars ignored the profile's number format (`numberLocale` in `shared.js`),
+  seen right there with the edited files swapped in by the browser; not released.
+  Found, the maintainer's to decide:
+  1. *Daily consumed energy* and its smoothed twin are `state_class: total` without `last_reset`, so statistics book the
+     reset as about minus the day's figure: the day's change read 0.3 kWh beside a state of 35.5. No card of ours
+     shows that change; an owner's statistics card would. The maintainer asked how to fix it properly; proposed, not built: a
+     `last_reset`, the `state_class` kept. It is the poll in which the five *input* counters have fallen (not the balance,
+     which wobbles), never set before the first reset seen (setting it mid-day would count that day twice), and it is restored over
+     a restart together with the inputs, so a reset missed while Home Assistant was down is seen. The smoothed twin's average is
+     emptied at it. What is already recorded stays.
+  2. PV and export of 2022-2024 in the History view are not credible (wiki: energy-history). **Done**, the maintainer's word:
+     a note under the Years card, in the card itself so no revision; seen in English.
+  3. Two tile names are cut off in History (*Used directly, month*, *PV export, month*); names to be chosen by the
+     maintainer, a new revision.
+  Left: the maintainer's look; gerd's (tunnel down, not tried); 13017 before the battery is low (a write; not done).
+
 - **2026-11-24**: a help page for owners, `doc/dashboard_diagnosis.md` (add the dashboard, start a run, download the file), with
   six shots from `scripts/dev/screenshot.py`, linked from the diagnosis README and issue #786's text. The download link was
   clicked in Chromium on the simulator and gives the named `.json`. Nothing of it is uncommitted.

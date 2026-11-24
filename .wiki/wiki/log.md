@@ -2206,3 +2206,7 @@ A second capability test in a cluster is refused; the page says so.
 ## [2026-11-24] ingested | github-ulfben-cluster-2026-11-24
 
 ulfben's plant, the third import-limit failure, is a cluster by the owner's posts ([the source](sources/github-ulfben-cluster-2026-11-24-summary.md)); the register page and the query say so.
+
+## [2026-11-24] changed | energy-history
+
+The yearly slots against the lifetime counters, over the committed diagnoses: PV and export carry the same excess at six inverters, direct consumption none; the page says so.

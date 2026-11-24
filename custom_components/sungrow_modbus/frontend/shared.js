@@ -12,6 +12,7 @@ const TEXT = {
     hold: "Hold {s} s to change",
     unlocked: "Unlocked, locks in {s} s",
     lock: "Lock",
+    history_note: "On some inverters the yearly PV and PV export read too high; the lifetime totals are not affected.",
     strategy_description: "Inverter, battery and wallbox, built from what your house has.",
     lock_description: "Guards any card against changes until it is held for a few seconds.",
     flow_description: "Power between PV, house, grid and battery, live.",
@@ -78,6 +79,7 @@ const TEXT = {
     hold: "{s} s halten zum Ändern",
     unlocked: "Entsperrt, sperrt in {s} s",
     lock: "Sperren",
+    history_note: "Bei manchen Wechselrichtern sind die Jahreswerte für PV und PV-Einspeisung zu hoch; die Gesamtzähler sind davon nicht betroffen.",
     strategy_description: "Wechselrichter, Batterie und Wallbox, gebaut aus dem, was das Haus hat.",
     lock_description: "Schützt eine Karte vor Änderungen, bis sie einige Sekunden gehalten wird.",
     flow_description: "Leistung zwischen PV, Haus, Netz und Batterie, live.",
@@ -141,6 +143,23 @@ const TEXT = {
 
 // On the development branch until the merge into main, which moves it.
 export const DOCS = "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/proper-ha-integration/doc";
+
+// The profile's number format, which need not be its language's. An array is
+// tried in order, as Home Assistant's own formatter does.
+const NUMBER_LOCALES = {
+  comma_decimal: ["en-US", "en"],
+  decimal_comma: ["de", "es", "it"],
+  space_comma: ["fr", "sv", "cs"],
+  quote_decimal: ["de-CH"],
+  system: undefined,
+};
+export const numberLocale = (hass) => {
+  const format = hass.locale?.number_format;
+  return {
+    locale: format in NUMBER_LOCALES ? NUMBER_LOCALES[format] : hass.locale?.language,
+    options: format === "none" ? { useGrouping: false } : {},
+  };
+};
 
 export const language = (hass) => {
   const lang = (hass?.locale?.language || hass?.language || navigator.language || "en").split("-")[0];

@@ -66,10 +66,9 @@ diagnosis (T005, T006, T042).
 ## Integration and tooling
 
 **T055. The integration's own dashboard**: after the maintainer's review of the Diagnosis view (0.1.0a54) and the wallbox's
-controls, left are the maintainer's look, whether *Today*'s energy flow shows the day's figures on real statistics, 13017
+controls, left are the maintainer's look and their word on *Daily consumed energy*'s `last_reset` and two tile names (in the plan), a release of the History fixes, 13017
 switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
-The History view (T086) is not seen on a real cable house; the maintainer's is the first.
-*Needs*: 0.1.0a55 at both houses.
+*Needs*: 0.1.0a55 at gerd's.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
 to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).

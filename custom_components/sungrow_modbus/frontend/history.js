@@ -7,7 +7,7 @@
 // The strategy hands over only the entities a house has, so a month or a year
 // without one has no bar. A tap on a bar opens that sensor.
 
-const { el, language } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { el, language, numberLocale, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 const COLORS = {
   amber: "var(--amber-color, #ffc107)", blue: "var(--blue-color, #2196f3)", green: "var(--green-color, #4caf50)",
@@ -27,7 +27,7 @@ export class SungrowModbusHistoryCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    const seen = `${language(hass)} ${this._config.bars.map((bar) => hass.states[bar.entity]?.state).join()}`;
+    const seen = `${language(hass)} ${hass.locale?.number_format} ${this._config.bars.map((bar) => hass.states[bar.entity]?.state).join()}`;
     if (seen === this._seen) return;
     this._seen = seen;
     this._render();
@@ -47,7 +47,8 @@ export class SungrowModbusHistoryCard extends HTMLElement {
   }
 
   _number(value) {
-    return value.toLocaleString(this._hass.locale?.language, { maximumFractionDigits: 0 });
+    const { locale, options } = numberLocale(this._hass);
+    return value.toLocaleString(locale, { maximumFractionDigits: 0, ...options });
   }
 
   _render() {
@@ -66,6 +67,7 @@ export class SungrowModbusHistoryCard extends HTMLElement {
       button.none { background: var(--divider-color) !important; }
       .label { font-size: 12px; margin-top: 4px; white-space: nowrap; }
       .top { font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
+      .note { margin-top: 12px; font-size: 13px; color: var(--secondary-text-color); }
     `;
     const card = el("ha-card");
     const content = el("div", "content");
@@ -106,5 +108,6 @@ export class SungrowModbusHistoryCard extends HTMLElement {
     const scroll = el("div", "scroll");
     scroll.append(chart);
     content.append(legend, scroll, el("div", "top", "kWh"));
+    if (this._config.period === "year") content.append(el("div", "note", say("history_note", language(this._hass))));
   }
 }
