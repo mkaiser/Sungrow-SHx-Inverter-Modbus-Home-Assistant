@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+import types
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -110,10 +112,11 @@ async def test_what_home_assistant_s_discovery_knows(hass: HomeAssistant) -> Non
     hass.config.components.add("dhcp")
     for address, known in ((HOST, True), ("192.0.2.11", False)):
         seen = [DhcpServiceInfo(ip=address, hostname="x", macaddress="aabbccddeeff")]
-        with patch(
-            "homeassistant.components.dhcp.async_discovered_service_info",
-            return_value=seen,
-        ):
+        # The component itself is not imported here: its libraries are only
+        # installed where it runs.
+        fake = types.ModuleType("homeassistant.components.dhcp")
+        fake.async_discovered_service_info = lambda _hass, seen=seen: seen  # type: ignore[attr-defined]
+        with patch.dict(sys.modules, {"homeassistant.components.dhcp": fake}):
             section = await network_records.async_network_names(hass, found)
         assert section["home_assistant"] == {
             "set_up_by": ["dhcp"],
