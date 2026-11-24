@@ -6,6 +6,13 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-24, 01 CET**: **0.1.0a53 is released** (PyPI, GitHub, the preview mirror pinned; 0.1.0a52 stopped in CI at a test
+  importing a Home Assistant component CI does not install, and was never published). It carries the power flow and, under
+  Home's *Today*, the day's energy flow (`energy-flow-card-plus`, from long-term statistics; its figures are **not seen on real
+  values**, the simulator's daily sensors are constant), the Diagnosis view's Settings, one tab for a wallbox entry, and the
+  lock at 2 s / 60 s. Left: the maintainer's look, then gerd's (where the doubled tabs were seen), and a check that *Today*'s
+  circles show the day's figures once statistics exist.
+
 - **2026-11-23, 23 CET**: gerd's house showed Home and Diagnosis twice (0.1.0a51), because his wallbox is an entry of
   its own and so a family of its own: the Home *Car* section alone filled a Home. Fixed: with one inverter, a wallbox
   entry lends its entities to the inverter's Home and Controls and its Diagnosis is a part of the inverter's; inverters

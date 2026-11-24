@@ -235,6 +235,12 @@ tree.
 
 ## Pitfalls
 
+- **CI does not install every Home Assistant component's libraries.** A test that imports
+  `homeassistant.components.dhcp` passes here and fails in CI (0.1.0a52). Fake such a module
+  in `sys.modules`, as `tests/test_network_records.py` does, and import it in the code only
+  where Home Assistant has loaded it.
+- **Old wheels in `dist/` break `make build`'s last step** (its glob names every wheel).
+  Run `check_pinned_library.py --wheel` and `fetch_cards.py --check` on the new files.
 Each of these is verified in a container or against hardware.
 
 - **A remote owner's WireGuard tunnel runs in here, or on the host, never in
