@@ -530,6 +530,15 @@ The *Add integration* screenshot (`HACS-add-integration-sungrow-modbus.png`,
 named for where it was first taken) is Home Assistant's own dialog, so any
 instance with the integration installed can retake it.
 
+On the scratch instance's first boot, wait until it has installed its
+requirements before adding the entry: a config flow request that times out
+meanwhile leaves the integration's load cancelled, and every later request
+for that flow gets an empty reply with nothing logged. Restart it.
+While a release is being prepared, start it with
+`hass --skip-pip-packages sungrow-modbus --config <dir>`, on a copy of
+`custom_components` instead of the symlink, or it may fetch the pinned
+library over the editable install.
+
 **Looking is also a test.** A screenshot session is where these were found:
 a description placeholder missing on a step's first showing renders as
 `Translation [formatjs Error: MISSING_VALUE]`, and a section's description is

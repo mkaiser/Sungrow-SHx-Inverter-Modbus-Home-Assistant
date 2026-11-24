@@ -6,6 +6,10 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-24**: a help page for owners, `doc/dashboard_diagnosis.md` (add the dashboard, start a run, download the file), with
+  six shots from `scripts/dev/screenshot.py`, linked from the diagnosis README and issue #786's text. The download link was
+  clicked in Chromium on the simulator and gives the named `.json`. Nothing of it is uncommitted.
+
 - **2026-11-24**: a History view (T086), bars of the inverter's own months and years, there only where those sensors are.
   Checked in Chromium on made-up houses with and without them; not seen on a real cable house.
 
