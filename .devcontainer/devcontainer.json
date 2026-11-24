@@ -116,7 +116,8 @@
         "ms-python.vscode-pylance",
         "mhutchie.git-graph",
         "redhat.vscode-yaml",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "Anthropic.claude-code"
       ],
       "settings": {
         "files.eol": "\n",
