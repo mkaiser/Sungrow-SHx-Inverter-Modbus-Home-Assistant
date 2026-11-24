@@ -43,8 +43,8 @@ integration overnight answers it, with no writes and no capability test.
 reporter (Diegocampy) offered on #797 to test once the fix is out.
 
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
-[Plan](plans/T090-import-limit-support.md). *Needs*: the daylight cap at fwitten, deferred by the maintainer (2026-11-24);
-owners' diagnoses for the SH-T, other SH-RS and a lone 01011.95.03.
+[Plan](plans/T090-import-limit-support.md). *Needs*: owners' diagnoses (an SH-T, another SH-RS, a lone 01011.95.03, a second cluster);
+the maintainer's answer on I3; the daylight cap at fwitten, which the maintainer deferred.
 
 The rest waits on other firmware or other houses.
 
@@ -92,8 +92,8 @@ dropped link when no poll was refused. Outcome 5 is the hard-constraint code, so
 changes only with the maintainer.
 *Needs*: the maintainer's call on what Standby at the deadline means.
 
-**T082. The gate in CI**: `make test` runs in parallel (6 minutes on 8 cores); left is CI's own step, which runs one process
-with coverage (`.github/workflows/validate.yml`). *Needs*: a push to see it run.
+**T082. The gate in CI**: run the suite in parallel there too, with its coverage (`.github/workflows/validate.yml`), as `make test` does
+here (6-10 minutes on 8 cores). *Needs*: nothing.
 
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
@@ -416,6 +416,7 @@ and the guide exist.
 *Needs*: `inverter_self_consumption` read against the integration's *Inverter self consumption (estimated)* first; and whether
 `2025-legacy` and today's `main` are to be named under `archive/`, as the maintainer wrote, or keep the names
 `2025-legacy` and `2026-legacy` that T068 and every published link rely on.
+
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
 where it said "no runs kept", on a house that may never run a capability test
@@ -448,12 +449,12 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-24T16:50:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T16:50:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-24T21:45:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T21:45:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-24 16:50 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
+Last checked **2026-11-24 21:45 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
 was offered for Wednesday 2026-11-25, and the maintainer answered to wait.
 Maximo101's
 **AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download

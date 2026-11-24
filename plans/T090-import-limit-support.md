@@ -37,19 +37,16 @@ the meter's place in a cluster; a site-level controller taking over the limit.
 
 ## Steps
 
-1. Read 33500-33502 wherever a house is reachable: bar12 and gerd (lone, P023 and P022, cable and WiNet-S),
-   fwitten's two WiNet-S. Read only. Add them to the diagnosis's register dump, so every later diagnosis says
-   whether it is a cluster.
-2. Compare the holding blocks of fwitten's master and peter-sm's, same model and firmware, for what else differs.
-   Read only; the register dumps first.
-3. At fwitten, with the maintainer's go: one cap with the slave running, in daylight; 13075 off as well if that fails.
-4. Ask for the `--import-limit` check in `device-diagnosis/devices-wanted.md`: an SH-T (any), an SH-RS not on P066,
-   a lone SH-RT on 01011.95.03 (decides swo14), a second cluster (decides question 2).
-5. Ask on #546 whether ulfben's house is a cluster and which 13250 firmware it runs.
-6. Write the answers in `register-32998.md` and its query; revise `WITHHELD_FROM` and `CONFIRMED_ON_FIRMWARE` by them.
+1. At fwitten, with the maintainer's go (deferred 2026-11-24): one cap in daylight with the slave running, a new gate set beside
+   `tmp/fwitten-t078/cluster_import_limit.py`; 13075 off as well if that fails, after asking the owner, whose backup it switches off.
+2. Answers to row 13 of `device-diagnosis/devices-wanted.md`; every diagnosis since 2026-11-24 carries 33500 and 33501.
+3. The #546 question to ulfben (Todo's I3; the maintainer posts it or says so).
+4. Write the answers in `register-32998.md` and its query; revise `WITHHELD_FROM` and `CONFIRMED_ON_FIRMWARE` by them.
 
 ## Status log
 
+- **2026-11-24, close**: everything above the open steps is done and pushed up to 4366e38; nothing uncommitted but this close.
+  33500 is 0xAA at one cluster and 0x55 at mkaiser, gerd and bar12. Next: step 2, as diagnoses come in.
 - **2026-11-24, 22:24**: bar12 read (0x55, cable and WiNet-S); its tunnel profile was replaced. Step 1 is done.
 - **2026-11-24, 22:20**: step 3 (the daylight cap at fwitten) deferred by the maintainer.
 - **2026-11-24, 21:50**: 33501 read beside 33500 (one request, measured) and published in every reading; bar12 tried again,
