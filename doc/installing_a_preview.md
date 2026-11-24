@@ -120,7 +120,7 @@ The easiest place is the Sungrow dashboard's **Diagnosis** view (administrators
 only): answer *About your installation* at the bottom, hold the lock open,
 choose the *Mode* and press **Start**. *Results* fills as it runs, and
 **Download the last diagnosis** is the file to send
-([what the view shows](dashboard.md#diagnosis)).
+([step by step, with screenshots](dashboard_diagnosis.md)).
 
 Without the dashboard, on the device page (Settings → Devices & services → Sungrow Modbus → the
 device):
@@ -138,7 +138,7 @@ Please do not restart Home Assistant while a run is going.
 - *Read-only* reads and never writes. The sensors beside it show progress.
 - *Extended test (single run)* adds the capability test, which writes
   settings and puts every one back, checked by reading it again. Read
-  [what it does, and how to opt out](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes)
+  [what it does, and how to opt out](../device-diagnosis/README.md#two-modes-read-only-or-with-capability-tests)
   first.
 - *Extended test (auto repeat)* starts a capability test on its own
   whenever the inverter is running and the house can answer a check still

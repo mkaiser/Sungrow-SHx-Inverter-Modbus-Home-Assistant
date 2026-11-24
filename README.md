@@ -82,6 +82,8 @@ SBR's per-module entities, and writing to the wallbox.
 
 [doc/dashboard.md](doc/dashboard.md) is the integration's own dashboard,
 with the controls behind a hold-to-unlock lock,
+[doc/dashboard_diagnosis.md](doc/dashboard_diagnosis.md) adds it and runs the
+diagnosis from it, step by step with screenshots,
 [doc/energy_dashboard.md](doc/energy_dashboard.md) says which sensors to pick
 for Home Assistant's Energy dashboard,
 [doc/architecture.md](doc/architecture.md) is how it is built and why,

@@ -22,7 +22,8 @@ It is the energy side of your house in one place. Home Assistant's own
 ## Add it
 
 **Settings → Dashboards → Add dashboard**, then **Sungrow Modbus** under
-*Community dashboards*, and give it a name.
+*Community dashboards*, and give it a name
+([step by step, up to the first diagnosis](dashboard_diagnosis.md)).
 
 ![The Add dashboard dialog, with Sungrow Modbus under Community dashboards](images/HA-dashboard-add.png)
 
@@ -88,6 +89,8 @@ start, stop and the capability test stay under **Configure → Permissions**
 ([integration_options.md](integration_options.md)).
 
 ## Diagnosis
+
+How to run one, step by step with screenshots: [dashboard_diagnosis.md](dashboard_diagnosis.md).
 
 **Run, Now** shows how many checks are answered over all runs (*Overall*) and,
 while a run is going, how far it is (*This run*) and what it measures. *Next

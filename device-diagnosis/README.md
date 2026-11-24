@@ -11,7 +11,7 @@ devices are missing and what each would settle.
 Any model is welcome, an RS, MG, T-series, wallbox, SBR or Logger above all.
 Send the result to
 [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
-Two ways to run it:
+Three ways to run it:
 
 ### 1. In Home Assistant, with the preview integration
 
@@ -30,27 +30,38 @@ Two ways to run it:
 
    <img src="images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
 
-4. On the device page, choose what to run in **Diagnosis: mode** and press
-   **Diagnosis: start**:
+4. Add the Sungrow dashboard (*Settings → Dashboards → Add dashboard →
+   Sungrow Modbus*) and open its **Diagnosis** tab
+   ([step by step, with screenshots](../doc/dashboard_diagnosis.md)).
+
+5. Answer *About your installation*, hold the bar under *Start* to unlock,
+   choose the *Mode* and press **Start**:
+
+   <img src="../doc/images/HA-dashboard-diagnosis-start.png" width="350" alt="The Start card on the Diagnosis tab, unlocked, with the mode and the Start button">
 
    - *Read-only* only reads;
    - *Extended test (single run)* adds the
-     [capability test](#it-reads-and-writes-only-if-you-say-yes), which writes
+     [capability test](#two-modes-read-only-or-with-capability-tests), which writes
      each setting and puts your original value back, checked by reading it
      again;
    - *Extended test (auto repeat)* repeats the capability test on its own
      whenever the house can answer a check still missing, until you press
-     **Diagnosis: stop**.
+     **Stop**.
 
    The run is in the background: you can leave the page, and a notification
    tells you when it has finished. Please do not restart Home Assistant while
-   it runs. **Diagnosis: stop** ends a run early and still puts everything
-   back.
+   it runs. **Stop** ends a run early and still puts everything back.
 
-   <img src="images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the diagnosis mode, Start and Stop">
+6. When it has finished, press **Download the last diagnosis** under
+   *Results*, and send that file.
 
-5. When it has finished, press **Download diagnostics** on the same device
-   page, and send that file.
+   <img src="../doc/images/HA-dashboard-diagnosis-download.png" width="550" alt="Results on the Diagnosis tab, with Download the last diagnosis at its foot">
+
+**Without the dashboard**, the device page has the same: choose what to run in
+**Diagnosis: mode**, press **Diagnosis: start**, and when it has finished
+**Download diagnostics**.
+
+<img src="images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the diagnosis mode, Start and Stop">
 
 ### 2. From a terminal
 
@@ -133,7 +144,7 @@ refused*, *inconclusive*, *readable* (it answered, and nothing wrote to it),
 capability, what each mode does with it, and what is still untested.
 
 You get the **capability test** only if you ask for it: in Home Assistant by
-pressing **Diagnosis: start** in an *Extended test* mode, in a terminal by
+pressing **Start** in an *Extended test* mode, in a terminal by
 answering yes to the last question. That test
 checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:
@@ -158,7 +169,8 @@ scripts/diagnosis.sh tests 192.168.1.50 --restore <the file it names>
 #### In Home Assistant, opt out of what you do not want
 
 The button is your yes. The restart, the feed-in limitation, the PV cut and
-the two timed windows are each **on unless you switch them off**, under *Settings → Devices &
+the two timed windows are each **on unless you switch them off**, under *Allowed
+tests* on the dashboard's Diagnosis tab, or under *Settings → Devices &
 services → Sungrow Modbus (preview) → Configure → What the capability test
 may do* ([every option there](../doc/integration_options.md)). Switch them
 off **before** pressing the button; what you switch off stays off. With all

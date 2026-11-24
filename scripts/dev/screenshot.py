@@ -228,10 +228,168 @@ def dashboard_controls(page: Page, url: str) -> Path:
     return target
 
 
+def dashboard_create(page: Page, url: str) -> Path:
+    """Shoot the dialog that names the new dashboard, filled in but not created."""
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    settle(page)
+    page.goto(f"{url}/config/lovelace/dashboards")
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("button", name="Add dashboard").first.click()
+    page.get_by_text("Sungrow Modbus").first.click()
+    title = page.locator("ha-form input").first
+    title.wait_for()
+    title.fill("Sungrow")
+    # The scratch instance may hold one already, and would suggest a "-2".
+    page.locator("ha-form input").nth(1).fill(DASHBOARD)
+    page.wait_for_timeout(1_000)
+    target = DOC_IMAGES / "HA-dashboard-create.png"
+    heading = page.get_by_text("Add new dashboard").last
+    box = dialog_surface(heading)
+    # The climb ends at the body; the buttons are below it.
+    create = page.get_by_role("button", name="Create", exact=True).bounding_box()
+    if create is None:
+        raise RuntimeError("the Create button was not found")
+    box["height"] = create["y"] + create["height"] + 16 - box["y"]
+    page.screenshot(path=str(target), clip=box)
+    return target
+
+
+def union_box(locators: list[Locator]) -> dict[str, float]:
+    """Return the box around some elements, with a little air."""
+    boxes = [locator.bounding_box() for locator in locators]
+    found = [box for box in boxes if box is not None]
+    if len(found) != len(locators):
+        raise RuntimeError("an element the shot wants has no box")
+    left = min(b["x"] for b in found)
+    top = min(b["y"] for b in found)
+    right = max(b["x"] + b["width"] for b in found)
+    bottom = max(b["y"] + b["height"] for b in found)
+    # Less than the gap to the next card, so none of it shows.
+    pad = 4
+    return {
+        "x": left - pad,
+        "y": top - pad,
+        "width": right - left + 2 * pad,
+        "height": bottom - top + 2 * pad,
+    }
+
+
+def run_card(page: Page, part: str) -> Locator:
+    """Return the Diagnosis view's run card of one part: now, start or clear."""
+    index = {"now": 0, "start": 1, "clear": 2}[part]
+    return page.locator("sungrow-modbus-run-card").nth(index)
+
+
+def answer_questions(page: Page) -> None:
+    """Answer the three required questions as a plain house on a cable would."""
+    card = page.locator("sungrow-modbus-settings-card").last
+    for key in ("diagnosis_transport", "diagnosis_proxy", "diagnosis_other_inverter"):
+        field = card.locator(f"select#{key}")
+        field.wait_for()
+        wanted = "direct_lan" if key.endswith("transport") else "no"
+        if field.input_value() != wanted:
+            field.select_option(wanted)
+            page.wait_for_timeout(1_500)
+
+
+def unlock(page: Page) -> None:
+    """Hold the Start card's lock open, as a person does."""
+    lock = page.locator("sungrow-modbus-lock-card").first
+    box = lock.bounding_box()
+    if box is None:
+        raise RuntimeError("the lock has no box")
+    page.mouse.move(box["x"] + 60, box["y"] + 16)
+    page.mouse.down()
+    page.wait_for_timeout(2_200)
+    page.mouse.up()
+    page.wait_for_timeout(500)
+
+
+def choose_mode(page: Page, option: str) -> None:
+    """Choose a diagnosis mode through the frontend's own connection."""
+    page.evaluate(
+        """async (option) => {
+            const hass = document.querySelector("home-assistant").hass;
+            const id = Object.keys(hass.states).find(
+                (one) => /^select\\..*diagnosis_mode$/.test(one));
+            await hass.callService("select", "select_option", {entity_id: id, option});
+        }""",
+        option,
+    )
+    page.wait_for_timeout(1_500)
+
+
+def diagnosis_tab(page: Page, url: str) -> Path:
+    """Shoot the dashboard's tabs, with Diagnosis open."""
+    open_dashboard(page, url, "diagnosis")
+    target = DOC_IMAGES / "HA-dashboard-diagnosis-tab.png"
+    page.screenshot(
+        path=str(target), clip={"x": 0, "y": 0, "width": 1280, "height": 510}
+    )
+    return target
+
+
+def diagnosis_questions(page: Page, url: str) -> Path:
+    """Shoot About your installation, with the required questions answered."""
+    page.set_viewport_size({"width": 1280, "height": 5000})
+    open_dashboard(page, url, "diagnosis")
+    answer_questions(page)
+    target = DOC_IMAGES / "HA-dashboard-diagnosis-questions.png"
+    page.locator("sungrow-modbus-settings-card").last.screenshot(path=str(target))
+    return target
+
+
+def diagnosis_start(page: Page, url: str) -> Path:
+    """Shoot the Start card, unlocked, with the read-only mode chosen."""
+    open_dashboard(page, url, "diagnosis")
+    choose_mode(page, "read_only")
+    unlock(page)
+    target = DOC_IMAGES / "HA-dashboard-diagnosis-start.png"
+    locks = page.locator("sungrow-modbus-lock-card")
+    start = run_card(page, "start")
+    page.screenshot(path=str(target), clip=union_box([locks.first, start]))
+    return target
+
+
+def diagnosis_running(page: Page, url: str) -> Path:
+    """Shoot Now while an extended run is going. It takes some minutes to end."""
+    page.set_viewport_size({"width": 1280, "height": 5000})
+    open_dashboard(page, url, "diagnosis")
+    answer_questions(page)
+    choose_mode(page, "extended")
+    unlock(page)
+    run_card(page, "start").get_by_role("button", name="Start", exact=True).click()
+    page.wait_for_timeout(20_000)
+    target = DOC_IMAGES / "HA-dashboard-diagnosis-running.png"
+    stop = page.locator("hui-tile-card").filter(has_text="Stop").first
+    page.screenshot(path=str(target), clip=union_box([run_card(page, "now"), stop]))
+    return target
+
+
+def diagnosis_download(page: Page, url: str) -> Path:
+    """Shoot the foot of Results, where a finished run's download link is."""
+    page.set_viewport_size({"width": 1280, "height": 5000})
+    open_dashboard(page, url, "diagnosis")
+    card = page.locator("sungrow-modbus-tests-card")
+    card.get_by_text("Download the last diagnosis").wait_for(timeout=600_000)
+    for group in card.locator("details.group[open] > summary").all()[::-1]:
+        group.click()
+    page.wait_for_timeout(1_000)
+    target = DOC_IMAGES / "HA-dashboard-diagnosis-download.png"
+    card.screenshot(path=str(target))
+    return target
+
+
 SHOTS: dict[str, Callable[[Page, str], Path]] = {
     "dashboard-add": dashboard_add,
     "dashboard-controls": dashboard_controls,
+    "dashboard-create": dashboard_create,
     "dashboard-home": dashboard_home,
+    "diagnosis-download": diagnosis_download,
+    "diagnosis-questions": diagnosis_questions,
+    "diagnosis-running": diagnosis_running,
+    "diagnosis-start": diagnosis_start,
+    "diagnosis-tab": diagnosis_tab,
     "setup-menu": setup_menu,
     "device-diagnosis": device_diagnosis,
     "options-capability-test": options_capability_test,
