@@ -2180,6 +2180,9 @@
     "skip_completed_tests_during_auto_repeat": {
       "message": "Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten."
     },
+    "cluster_under_test": {
+      "message": "{other} gehört zum selben Master/Slave-Verbund wie {title}, und dort läuft gerade der Funktionstest. Die Wechselrichter eines Verbunds werden nacheinander getestet: Ein Slave folgt dem EMS-Modus seines Masters, ein zweiter Test könnte seine eigenen Einstellungen also nicht zurückstellen."
+    },
     "diagnosis_already_running": {
       "message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren."
     },

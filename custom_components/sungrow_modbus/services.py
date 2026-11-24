@@ -60,7 +60,7 @@ from .const import (
     PERMISSION_START_STOP,
 )
 from .coordinator import SungrowConfigEntry
-from .write_owner import refuse_while_test_writes
+from .write_owner import refuse_while_cluster_tested, refuse_while_test_writes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -162,6 +162,7 @@ async def _async_run_capability_test(call: ServiceCall) -> None:
     from .testimony import async_refuse_if_unanswered
 
     async_refuse_if_unanswered(call.hass, entry)
+    refuse_while_cluster_tested(call.hass, entry)
     _LOGGER.warning(
         "%s: capability test requested through the %s.%s action by %s. It writes to "
         "every control this integration can write to, and puts each one back.",

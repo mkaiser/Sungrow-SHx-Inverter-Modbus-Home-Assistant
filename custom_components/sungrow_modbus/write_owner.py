@@ -44,6 +44,7 @@ from modbus_connection.model import PackedBitsField, RegisterField
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.hybrid_inverter import ev_charger as ev
+from sungrow_modbus.hybrid_inverter.capabilities import Capability
 from sungrow_modbus.hybrid_inverter.registers import COMPONENTS
 
 from .const import DOMAIN
@@ -136,6 +137,47 @@ def refuse_while_test_writes(runtime: SungrowRuntimeData, target: str) -> None:
             "by": owner.by,
             "since": f"{dt_util.as_local(owner.since):%H:%M}",
         },
+    )
+
+
+def cluster_busy(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> SungrowConfigEntry | None:
+    """Return another member of the cluster whose controls a run holds, or None.
+
+    A cluster slave's 13050 follows the master's (wiki:
+    does-a-cluster-slave-mirror-the-masters-ems-mode), so a run on one member
+    changes what a run on the other reads and cannot put back: swo14's slave
+    ended in outcome 5 beside the host's run. No register says *which* cluster
+    an inverter is in, so two members on one instance are taken for one
+    cluster; a house with two clusters tests them one after the other.
+
+    Only runs of this Home Assistant are seen. A restore is never refused.
+    """
+    runtime = entry.runtime_data
+    if Capability.CLUSTER_MEMBER not in runtime.capabilities:
+        return None
+    for other in hass.config_entries.async_entries(DOMAIN):
+        if other.entry_id == entry.entry_id:
+            continue
+        theirs = getattr(other, "runtime_data", None)
+        if (
+            theirs is not None
+            and Capability.CLUSTER_MEMBER in getattr(theirs, "capabilities", ())
+            and holder(theirs) is not None
+        ):
+            return other
+    return None
+
+
+def refuse_while_cluster_tested(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
+    """Raise when another member of the cluster is under test."""
+    if (other := cluster_busy(hass, entry)) is None:
+        return
+    raise ServiceValidationError(
+        translation_domain=DOMAIN,
+        translation_key="cluster_under_test",
+        translation_placeholders={"title": entry.title, "other": other.title},
     )
 
 

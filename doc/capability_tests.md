@@ -31,6 +31,9 @@ The per-firmware results are in [firmware_support.md](firmware_support.md): the 
 says what the diagnosis reaches, and *What the capability test measured* says what it found. Each
 diagnosis document carries its own `features` section ([reference](../device-diagnosis/reference.md)).
 
+**In a master/slave cluster, test one inverter at a time.** Home Assistant refuses a second run while one is going;
+from a terminal nothing can see the other run, so wait for it yourself.
+
 ## Capabilities that only gate readings
 
 Nothing here can be written, so a read is the whole test.

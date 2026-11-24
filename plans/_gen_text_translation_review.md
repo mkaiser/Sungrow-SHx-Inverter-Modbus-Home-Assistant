@@ -1,6 +1,6 @@
 # The texts, for review
 
-**364 texts**: everything in `strings.json` that is not an entity name, by its
+**365 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -2331,7 +2331,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (24)
+## Error messages (25)
 
 ### `exceptions.device_not_found.message`
 
@@ -2356,6 +2356,12 @@ and bold are kept.
 > **EN** Auto repeat always skips completed tests. Stop it with Diagnosis: stop first, then this switch can be turned off.
 
 > **DE** Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten.
+
+### `exceptions.cluster_under_test.message`
+
+> **EN** {other} is in the same master/slave cluster as {title} and its capability test is running. Test a cluster's inverters one at a time: a slave follows its master's EMS mode, so a second test could not put its own settings back.
+
+> **DE** {other} gehört zum selben Master/Slave-Verbund wie {title}, und dort läuft gerade der Funktionstest. Die Wechselrichter eines Verbunds werden nacheinander getestet: Ein Slave folgt dem EMS-Modus seines Masters, ein zweiter Test könnte seine eigenen Einstellungen also nicht zurückstellen.
 
 ### `exceptions.diagnosis_already_running.message`
 

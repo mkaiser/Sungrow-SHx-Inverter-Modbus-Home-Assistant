@@ -2180,6 +2180,9 @@
     "skip_completed_tests_during_auto_repeat": {
       "message": "Auto repeat always skips completed tests. Stop it with Diagnosis: stop first, then this switch can be turned off."
     },
+    "cluster_under_test": {
+      "message": "{other} is in the same master/slave cluster as {title} and its capability test is running. Test a cluster's inverters one at a time: a slave follows its master's EMS mode, so a second test could not put its own settings back."
+    },
     "diagnosis_already_running": {
       "message": "A diagnosis is already running on this inverter. Two at once would compete for one of its very few Modbus connections."
     },

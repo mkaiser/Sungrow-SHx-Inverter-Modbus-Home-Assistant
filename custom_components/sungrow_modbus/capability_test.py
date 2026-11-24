@@ -47,7 +47,7 @@ from .const import (
     CONF_CAPABILITY_TEST_RESTART,
     DOMAIN,
 )
-from .write_owner import async_test_owns_writes
+from .write_owner import async_test_owns_writes, cluster_busy
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -62,6 +62,10 @@ class UnfinishedRestoreError(HomeAssistantError):
     over it before the first write: the test's values would become "the
     owner's", and the repair would offer to put back the wrong thing.
     """
+
+
+class ClusterBusyError(HomeAssistantError):
+    """A run refused because another member of the cluster is under test."""
 
 
 #: One store per config entry, because one entry is one endpoint and a house
@@ -381,6 +385,13 @@ class CapabilityTestRunner:
         )
         if self._stop_requested:
             self._test.request_stop()
+        # Nothing is awaited between this and the hold below, so two members'
+        # runs cannot both pass it.
+        if (other := cluster_busy(self.hass, self.entry)) is not None:
+            raise ClusterBusyError(
+                f"{other.title} is in the same cluster and its capability test "
+                "is running; a cluster's inverters are tested one at a time"
+            )
         _LOGGER.warning(
             "%s: running the capability test. It writes to every control this "
             "integration can write to, and puts each one back.",

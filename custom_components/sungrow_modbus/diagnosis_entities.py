@@ -58,7 +58,7 @@ from .const import (
 from .entity import EnglishEntityId
 from .services import async_authorize
 from .testimony import async_check, async_refuse_if_unanswered
-from .write_owner import holder
+from .write_owner import holder, refuse_while_cluster_tested
 
 if TYPE_CHECKING:
     from .coordinator import SungrowRuntimeData
@@ -319,6 +319,9 @@ class DiagnosisStartButton(DiagnosisEntity, ButtonEntity):
             # it needs each have a truthful answer for every house
             # (`testimony.py`). A read-only run is never refused.
             async_refuse_if_unanswered(self.hass, self._runner.entry)
+        # Auto repeat is let through: it waits for the other run by itself.
+        if mode == DIAGNOSIS_MODE_EXTENDED:
+            refuse_while_cluster_tested(self.hass, self._runner.entry)
         if mode == DIAGNOSIS_MODE_AUTO_REPEAT:
             self._runner.async_announce_start(mode)
             self._runner.continuous.async_turn_on()

@@ -225,6 +225,7 @@
  "exceptions.entry_not_loaded.message": "{title} ist nicht geladen und kann daher nicht gestartet oder gestoppt werden. Prüfe die Integrationsseite auf einen Einrichtungsfehler.",
  "exceptions.not_a_sungrow_device.message": "{name} ist kein Sungrow-Modbus-Gerät.",
  "exceptions.skip_completed_tests_during_auto_repeat.message": "Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten.",
+ "exceptions.cluster_under_test.message": "{other} gehört zum selben Master/Slave-Verbund wie {title}, und dort läuft gerade der Funktionstest. Die Wechselrichter eines Verbunds werden nacheinander getestet: Ein Slave folgt dem EMS-Modus seines Masters, ein zweiter Test könnte seine eigenen Einstellungen also nicht zurückstellen.",
  "exceptions.diagnosis_already_running.message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren.",
  "exceptions.not_on_string_inverter.message": "{title} ist ein String-Wechselrichter. Diese Aktion schreibt in die Register eines Hybrid-Wechselrichters, und nichts in dieser Integration schreibt in einen String-Wechselrichter.",
  "exceptions.write_failed.message": "{entity_id} konnte nicht geschrieben werden: {error}",

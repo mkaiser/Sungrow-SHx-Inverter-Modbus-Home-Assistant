@@ -43,7 +43,7 @@ integration overnight answers it, with no writes and no capability test.
 reporter (Diegocampy) offered on #797 to test once the fix is out.
 
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
-[Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the daylight cap at fwitten, deferred by the maintainer (2026-11-24);
+[Plan](plans/T090-import-limit-support.md). *Needs*: the daylight cap at fwitten, deferred by the maintainer (2026-11-24);
 owners' diagnoses for the SH-T, other SH-RS and a lone 01011.95.03.
 
 The rest waits on other firmware or other houses.
@@ -118,10 +118,6 @@ aggregate.
 # Open decisions
 
 Nothing is built on these until the maintainer answers them.
-
-**T089. Two capability tests on one cluster at once**: refuse, warn, or wait, after swo14's outcome 5
-([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; a slave's
-13050 follows the master's on P023, and 33500 tells a cluster member.
 
 **T021. Are the entity names final?** They are reviewed and decided in English
 and German (`doc/entity_names.md`, `plans/_gen_text_translation_review.md`,

@@ -50,7 +50,13 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import is_running, ledger, low_soc_standby
 from sungrow_modbus.hybrid_inverter.capabilities import Capability
 
-from .write_owner import EV_CHARGER, OWNER_QUIET, OWNER_QUIET_EV, owner_quiet_until
+from .write_owner import (
+    EV_CHARGER,
+    OWNER_QUIET,
+    OWNER_QUIET_EV,
+    cluster_busy,
+    owner_quiet_until,
+)
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -378,6 +384,9 @@ class ContinuousCapabilityTest:
                 "the owner changed a control; the next run not before "
                 f"{dt_util.as_local(held):%H:%M}"
             )
+            return False
+        if (other := cluster_busy(self.hass, self.entry)) is not None:
+            self._say(f"waiting for {other.title}'s test: the same cluster")
             return False
         if asleep:
             if due:
