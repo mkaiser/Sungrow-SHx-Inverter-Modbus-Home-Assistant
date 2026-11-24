@@ -20,6 +20,7 @@ from custom_components.sungrow_modbus.const import (
     CONF_ENTITY_IDS,
     CONF_REGISTER_DUMP,
     CONF_UNIT_ID,
+    CONF_WALLBOX_MANAGED_BY,
     DOMAIN,
     ENTITY_IDS_NEW,
 )
@@ -27,6 +28,7 @@ from custom_components.sungrow_modbus.diagnostics import (
     NO_BLOCK_READ_TEST,
     async_get_config_entry_diagnostics,
 )
+from homeassistant.components.diagnostics import REDACTED
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
@@ -255,6 +257,19 @@ async def test_a_wallbox_entry_reads_its_diagnosis_for_the_download(
     assert report["diagnosis"]["wallbox"]["readings"]
     assert report["device"]["serial_number"] != WALLBOX_SERIAL
     assert WALLBOX_SERIAL not in json.dumps(report)
+
+
+async def test_the_managing_inverters_serial_is_redacted(hass: HomeAssistant) -> None:
+    """The wallbox's *managed by* option holds an inverter's serial."""
+    entry = await _setup_wallbox(hass)
+    hass.config_entries.async_update_entry(
+        entry, options={CONF_WALLBOX_MANAGED_BY: SERIAL}
+    )
+    await hass.async_block_till_done()
+    report = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert report["entry"]["options"][CONF_WALLBOX_MANAGED_BY] == REDACTED
+    assert SERIAL not in json.dumps(report)
 
 
 async def test_a_wallbox_run_in_flight_keeps_the_download_off_the_wire(

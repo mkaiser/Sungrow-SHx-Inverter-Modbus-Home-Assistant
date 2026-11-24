@@ -60,7 +60,13 @@ from sungrow_modbus.hybrid_inverter.capabilities import OUTPUT_TYPES, known_abse
 from sungrow_modbus.string_inverter import TIER_COMPONENTS as STRING_INVERTER_TIERS
 
 from . import wifi_module
-from .const import CONF_KIND, CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
+from .const import (
+    CONF_KIND,
+    CONF_REGISTER_DUMP,
+    CONF_UNIT_ID,
+    CONF_WALLBOX_MANAGED_BY,
+    DOMAIN,
+)
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .diagnosis_document import async_build, attach_capability_test
 from .migration import DESCRIPTIONS, legacy_entity_id
@@ -72,7 +78,13 @@ _LOGGER = logging.getLogger(__name__)
 #: serial is *also* a register reading — key-based redaction of the identity
 #: block alone leaves it sitting in the readings, which is what
 #: `test_the_serial_and_host_are_redacted` exists to catch.
-TO_REDACT = {CONF_HOST, "serial_number", "sungrow_inverter_serial"}
+#: `CONF_WALLBOX_MANAGED_BY` is an option whose value is an inverter's serial.
+TO_REDACT = {
+    CONF_HOST,
+    "serial_number",
+    "sungrow_inverter_serial",
+    CONF_WALLBOX_MANAGED_BY,
+}
 
 #: Register addresses holding the serial number, excluded from the raw dump.
 #: A dump is words, not strings, so no amount of key redaction reaches it —

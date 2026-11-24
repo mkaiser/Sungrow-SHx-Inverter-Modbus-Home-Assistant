@@ -291,6 +291,22 @@ def test_the_import_limit_is_due_after_dark_and_not_at_noon() -> None:
     assert ledger.due(folded, NIGHT) == ["site import limit"]
 
 
+def test_a_forced_startup_run_alone_leaves_every_check_awaited() -> None:
+    """Auto repeat began at night with a cleared history: the mode ran first."""
+    forced = _run(
+        "t1", _block(effects=[_effect(ledger.FORCED_STARTUP_CHECK, CONFIRMED)])
+    )
+    refused = _run("t0", _block(outcome=1))
+    for runs in ([forced], [refused, forced]):
+        folded = ledger.fold(runs)
+        assert folded["still_missing"] == []
+        assert ledger.awaited(folded) == [("every check", "a first run")]
+        assert ledger.due(folded, NOON) == ["every check"]
+
+    day = _run("t2", _block(readback=[_probe("battery_max_soc", MATCH)]))
+    assert ledger.awaited(ledger.fold([forced, day])) == []
+
+
 def test_the_pv_cut_is_due_in_sun() -> None:
     folded = _missing("PV cut")
     assert ledger.due(folded, NOON) == ["PV generation cut"]

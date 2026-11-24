@@ -794,6 +794,20 @@ def needs_leave(item: Mapping[str, Any]) -> bool:
     return any(words in str(item.get("why")) for words in NEEDS_LEAVE)
 
 
+def _modes_only(folded: Mapping[str, Any]) -> bool:
+    """Whether the kept runs answered for modes of their own and nothing else.
+
+    A run of a mode leaves no row for an ordinary check, so nothing is in
+    `still_missing` although no ordinary check has been tried.
+    """
+    tried = {
+        name
+        for name, row in (folded.get("summary") or {}).items()
+        if row.get("kind") != PLAUSIBILITY
+    }
+    return bool(tried) and tried <= MODES
+
+
 def awaited(folded: Mapping[str, Any] | None) -> list[tuple[str, str]]:
     """Return (check, what it needs) for every check waiting can still answer.
 
@@ -801,7 +815,7 @@ def awaited(folded: Mapping[str, Any] | None) -> list[tuple[str, str]]:
     that wait on leave, and the modes of their own, are left out: no moment of
     the day answers them.
     """
-    if folded is None:
+    if folded is None or _modes_only(folded):
         return [("every check", "a first run")]
     out = []
     for item in folded.get("still_missing") or []:
