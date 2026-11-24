@@ -24,7 +24,11 @@ import zipfile
 
 REPO = Path(__file__).resolve().parents[2]
 CARDS = REPO / "src" / "sungrow_modbus" / "cards"
-LICENCE = "LICENSE.power-flow-card-plus"
+#: Each card's licence, beside its bundle. MIT asks that the text travel.
+LICENCES = {
+    "LICENSE.power-flow-card-plus": "power-flow-card-plus",
+    "LICENSE.energy-flow-card-plus": "energy-flow-card-plus",
+}
 #: Both cards carry this text, from the same author's repositories.
 LICENCE_DIGEST = "91efab740137d92f5a21ab8196b10973aaf417a0b3fbce4c15535ca61baa01cd"
 
@@ -96,18 +100,20 @@ def _download(url: str, digest: str) -> bytes:
 
 
 def fetch() -> None:
-    """Download, verify and write the cards and the licence."""
+    """Download, verify and write the cards and their licences."""
     for card in CARDS_BY_BUNDLE.values():
         text = _download(card.url, card.digest).decode("utf-8")
         (CARDS / card.bundle).write_text(card.patched(text), encoding="utf-8")
         print(f"{card.bundle}: {card.url}")
-    url = f"{RAW}/{POWER.repo}/{POWER.version}/LICENSE"
-    (CARDS / LICENCE).write_bytes(_download(url, LICENCE_DIGEST))
-    print(f"{LICENCE}: {url}")
+    versions = {card.repo: card.version for card in CARDS_BY_BUNDLE.values()}
+    for licence, repo in LICENCES.items():
+        url = f"{RAW}/{repo}/{versions[repo]}/LICENSE"
+        (CARDS / licence).write_bytes(_download(url, LICENCE_DIGEST))
+        print(f"{licence}: {url}")
 
 
 def check(archives: list[Path]) -> None:
-    """Fail unless every archive carries both cards and the licence."""
+    """Fail unless every archive carries both cards and their licences."""
     for archive in archives:
         if archive.suffix == ".whl":
             with zipfile.ZipFile(archive) as built:
@@ -115,7 +121,7 @@ def check(archives: list[Path]) -> None:
         else:
             with tarfile.open(archive) as packed:
                 names = packed.getnames()
-        for name in (*CARDS_BY_BUNDLE, LICENCE):
+        for name in (*CARDS_BY_BUNDLE, *LICENCES):
             wanted = f"sungrow_modbus/cards/{name}"
             if not any(member.endswith(wanted) for member in names):
                 raise SystemExit(f"{archive.name} has no cards/{name}")

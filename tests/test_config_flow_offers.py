@@ -204,3 +204,24 @@ async def test_none_of_these_offers_nothing(
     result = await _pick(hass, NOT_LISTED)
     assert _offers(hass) == {}
     assert result["step_id"] == "manual"
+
+
+@pytest.mark.parametrize(
+    ("direct", "wallboxes", "expected"),
+    [(False, True, True), (True, True, False), (False, False, False)],
+)
+async def test_a_wallbox_beside_a_dongle_is_said_to_be_read_on_its_own(
+    hass: HomeAssistant, *, direct: bool, wallboxes: bool, expected: bool
+) -> None:
+    """Only a dongle forwards a wallbox, so only there could both be expected."""
+
+    async def sweep(self: SungrowConfigFlow) -> None:
+        self._found = {"192.168.1.51": _inverter("192.168.1.51", SECOND, direct=direct)}
+        self._wallboxes = dict(WALLBOXES) if wallboxes else {}
+        self._unit_247 = dict(UNIT_247)
+
+    with patch.object(SungrowConfigFlow, "_async_sweep_and_identify", sweep):
+        result = await _search(hass)
+
+    note = result["description_placeholders"]["note"]
+    assert ("The wallbox has an address of its own" in note) is expected

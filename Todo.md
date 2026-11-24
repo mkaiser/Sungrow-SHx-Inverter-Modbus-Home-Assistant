@@ -43,7 +43,7 @@ integration overnight answers it, with no writes and no capability test.
 reporter (Diegocampy) offered on #797 to test once the fix is out.
 
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
-[Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the maintainer's go for a write;
+[Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the daylight cap at fwitten, deferred by the maintainer (2026-11-24);
 owners' diagnoses for the SH-T, other SH-RS and a lone 01011.95.03.
 
 The rest waits on other firmware or other houses.
@@ -53,10 +53,6 @@ The rest waits on other firmware or other houses.
 Nothing can start now (T038, T064).
 
 ## Wallbox
-
-**T059. The wallbox: the direct connection first**: the search's result says that a wallbox found on 516 beside a
-WiNet-S will be read on its own -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 5.
-*Needs*: nothing.
 
 **gerd's wallbox, what is left**: why one-phase surplus charging ends after 10-30 s (four attempts on 2026-11-24, at up to
 1.6 kW over the house), and what a plug-in does in PV surplus -- [the source](.wiki/wiki/sources/gerd-wallbox-2026-11-24-summary.md).
@@ -82,8 +78,7 @@ The History view (T086) is not seen on a real cable house; the maintainer's is t
 *Needs*: 0.1.0a55 at both houses.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
-to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md). The wheel carries a licence
-file for Power Flow Card Plus and none for Energy Flow Card Plus, which MIT asks for.
+to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
 *Needs*: the maintainer's word on the plan; *Allow GitHub Actions to create pull requests* switched on.
 
 **T079. A night restart on an empty pack reads as a house left changed**: at peter-sm the

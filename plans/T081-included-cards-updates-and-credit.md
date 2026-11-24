@@ -6,6 +6,8 @@ Two things are left: how they stay current, and how the author is thanked.
 
 ## Status log
 
+- **2026-11-24**: the wheel carries a licence file for each card (the same text, MIT); nothing else built.
+
 - **2026-11-24**: the maintainer's Home Assistant raised a repair, *flixlix/energy-period-selector-plus removed from the
   catalog* ("no activity in the repository for over two years"). **Not a sign the author left**; see *Where upstream lives
   now*. Nothing of ours uses that card.

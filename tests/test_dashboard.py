@@ -114,4 +114,7 @@ def test_the_bundle_s_patches_must_match(card) -> None:
     with pytest.raises(SystemExit):
         card.patched(bundle.replace(card.patches[0][0], ""))
     assert tuple(fetch_cards.CARDS_BY_BUNDLE) == cards.BUNDLES
-    assert fetch_cards.LICENCE == cards.LICENCE
+    assert tuple(fetch_cards.LICENCES) == cards.LICENCES
+    assert set(fetch_cards.LICENCES.values()) == {
+        card.repo for card in fetch_cards.CARDS_BY_BUNDLE.values()
+    }

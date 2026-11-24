@@ -1,6 +1,6 @@
 # The texts, for review
 
-**363 texts**: everything in `strings.json` that is not an entity name, by its
+**364 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -697,7 +697,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (104)
+## Selector options (105)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -868,6 +868,12 @@ and bold are kept.
 > **DE** **Zwei davon sind ein Wechselrichter hinter einem WiNet-S** — dessen Netzwerkbuchse und dessen WLAN, die getrennte Adressen haben. Modbus kann nicht sagen, welche welche ist: Nichts im Protokoll meldet es.
 >
 > Es macht keinen Unterschied, welche du wählst. Beide gehen über denselben Dongle zum selben Wechselrichter, und beide antworten gleich — gemessen an einem Dongle, der über beide Adressen gelesen wurde, wobei jedes Register übereinstimmte. Wenn du es trotzdem wissen willst: Die Geräteliste deines Routers zeigt sie als zwei Geräte mit unterschiedlichen MAC-Adressen, und die Weboberfläche des WiNet-S nennt die, die er benutzt.
+
+### `selector.flow_text.options.search_wallbox_own_entry`
+
+> **EN** **The wallbox has an address of its own.** Once you add it, it is read there, and the inverter behind the WiNet-S no longer reads it.
+
+> **DE** **Die Wallbox hat eine eigene Adresse.** Sobald sie hinzugefügt ist, wird sie dort gelesen, und der Wechselrichter hinter dem WiNet-S liest sie nicht mehr.
 
 ### `selector.flow_text.options.search_already_tried`
 

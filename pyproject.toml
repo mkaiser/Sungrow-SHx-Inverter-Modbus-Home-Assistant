@@ -29,6 +29,7 @@ artifacts = [
     "/src/sungrow_modbus/cards/power-flow.js",
     "/src/sungrow_modbus/cards/energy-flow.js",
     "/src/sungrow_modbus/cards/LICENSE.power-flow-card-plus",
+    "/src/sungrow_modbus/cards/LICENSE.energy-flow-card-plus",
 ]
 
 [tool.hatch.build.targets.wheel]

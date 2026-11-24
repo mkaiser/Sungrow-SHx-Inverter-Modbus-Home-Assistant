@@ -1406,6 +1406,17 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "\n\n" + texts("search_same_dongle")
                     if any(entry.get("same_dongle") for entry in self._found.values())
                     else ""
+                )
+                + (
+                    # The inverter entry gives a wallbox up to the entry at its
+                    # own address. Only a dongle forwards one, so only there
+                    # could somebody expect both.
+                    "\n\n" + texts("search_wallbox_own_entry")
+                    if self._wallboxes
+                    and any(
+                        entry.get("direct") is False for entry in self._found.values()
+                    )
+                    else ""
                 ),
             },
             last_step=False,

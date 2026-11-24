@@ -50,6 +50,7 @@ the meter's place in a cluster; a site-level controller taking over the limit.
 
 ## Status log
 
+- **2026-11-24, 22:20**: step 3 (the daylight cap at fwitten) deferred by the maintainer.
 - **2026-11-24, 21:50**: 33501 read beside 33500 (one request, measured) and published in every reading; bar12 tried again,
   no answer. Next: the daylight cap at fwitten, bar12, and the answers to row 13. Uncommitted.
 - **2026-11-24, 21:00**: backup mode tried at mkaiser, restored: not the cause there. Next: a second cluster (row 13 of
