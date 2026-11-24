@@ -73,7 +73,10 @@ exist so that a house is never left changed without anyone knowing.
   ([the watch](../sources/mkaiser-forced-startup-left-on-2026-11-17-summary.md)).
   Such a watch presses through `scripts/dev/ha_watch.py`, which mints its
   credential at the moment of restoring and never holds one.
-- **Exit 5 is the one code meaning a house is left changed.**
+- **Exit 5 is the one code meaning a house is left changed.** It can also be a value held by something else: at
+  [swo14](../entities/installation-swo14.md) a cluster slave's 13050 read 2 through five restore writes while the
+  host's run was under way, and 0 six minutes later ([the run](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-2-summary.md),
+  [open](../queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). Test one inverter of a cluster at a time.
 - **A failed restore is logged with its traceback** (`_LOGGER.exception` in
   `repairs.py`). It is the only record of why somebody's inverter still
   carries a test's values.

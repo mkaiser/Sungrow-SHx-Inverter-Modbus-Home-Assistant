@@ -4,7 +4,7 @@ title: Does a WiNet-S advertise over mDNS, and can discovery start there?
 tags: [winet-s, wallbox, mdns, discovery]
 created: '2026-11-11'
 query: Does a WiNet-S, and a wallbox at its own address, advertise itself over multicast mDNS, on every firmware, with the TXT record measured at gerd?
-results_count: 7
+results_count: 8
 ---
 
 # Does a WiNet-S advertise over mDNS, and can discovery start there?
@@ -48,6 +48,11 @@ inverter and the board
 So the layout extends to a second pack with units of its own, and the record is where a house's
 **per-pack serials** are legible at all. Its `inverter` field ends `1;3` where the two SH-RTs
 measured end `1;4`, on a machine with four trackers, so that field is not the tracker count.
+
+**Two dongles at one house are told apart**: at [swo14](../entities/installation-swo14.md) the browse heard
+`WiNet-WebServer` and `WiNet-WebServer-2`, each naming its own inverter, the trailing pair `1;4` at the host and
+`2;4` at the slave, so the first of the pair is **the inverter's unit id** there
+([the reading](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md)). `ethinfo` is empty on both.
 
 **The first real reverse-DNS label is `espressif`**, the same dongle's. peter-sm's was masked in
 its document, so nothing was known of the shape before. A matcher keyed on "sungrow" in a hostname

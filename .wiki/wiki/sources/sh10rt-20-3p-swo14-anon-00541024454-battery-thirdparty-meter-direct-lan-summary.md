@@ -32,7 +32,7 @@ was read separately. Posted to issue #786. Source:
 | Inverter firmware | **not read**: the 13250 block is refused on this firmware |
 | ARM / DSP firmware | `ARM_SAPPHIRE-H_V11_V01_B` / `MDSP_SAPPHIRE-H_V11_V01_B` |
 | Version 1 / 2 | [`SAPPHIRE-H_01011.95.03`](../entities/firmware-sapphire-h-01011-95-03.md) / `SAPPHIRE-H_03011.95.03` |
-| Communication module | none fitted |
+| Communication module | none read; a WiNet-S is fitted, heard over mDNS a week later ([the reading](sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md)) |
 | Transport (owner) | the inverter's own LAN port, through a Modbus proxy |
 | Transport (measured) | direct to the inverter's LAN port; register 6100 **answered** |
 | Battery | **third party: a BYD HVM 11 kWh**, 11.1 kWh reported, 202.5 V, SoH 97 % |

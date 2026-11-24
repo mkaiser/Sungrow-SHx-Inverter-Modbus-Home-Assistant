@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T087.** Numbers are minted in order, never reused and
+**Next free item number: T090.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -35,6 +35,17 @@ The readings check *daily counters keep up with the totals* names exactly this (
 integration overnight answers it, with no writes and no capability test.
 *Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check; the
 reporter (Diegocampy) offered on #797 to test once the fix is out.
+
+**T087. 13022 is signed on 01011.95.03** (62365 for -3171 W at swo14): the fallback in
+`src/sungrow_modbus/hybrid_inverter/derived.py` would show -62365 W, so read it as two's complement there
+([the query](.wiki/wiki/queries/is-battery-power-firmware-dependent.md)). *Needs*: nothing.
+
+**T088. The export check forgets a scale an earlier run established**: with the readback skipped it writes the
+limit divided by ten, 125 for 1250 W at swo14 ([13074](.wiki/wiki/entities/register-13074.md)). *Needs*: nothing.
+
+**T089. Two capability tests on one cluster at once**: refuse, warn, or wait, after swo14's outcome 5
+([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; the
+fwitten run (T078) can settle the mirroring.
 
 The rest waits on other firmware or other houses.
 
@@ -456,12 +467,12 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-24T12:50:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T12:50:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-24T16:50:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T16:50:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-24 12:50 UTC**: nothing new to ingest; before that, GalKar83's second SH15T reading (#786) is ingested; benji-beit's SH5.0RT
+Last checked **2026-11-24 16:50 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
 was offered for Wednesday 2026-11-25, and the maintainer answered to wait.
 Maximo101's
 **AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download

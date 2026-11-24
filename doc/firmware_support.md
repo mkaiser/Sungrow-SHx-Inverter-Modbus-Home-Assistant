@@ -103,7 +103,11 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh10rs-b000v002p067-1p-maximo101-anon-09651441112-battery-sungrow-direct-lan`
 - `sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan`
 - `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2`
+- `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3`
+- `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4`
 - `sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan`
+- `sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-2`
+- `sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan`

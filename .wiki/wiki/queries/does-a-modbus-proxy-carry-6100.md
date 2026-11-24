@@ -4,7 +4,7 @@ title: "Does a Modbus proxy carry register 6100?"
 tags: [proxy, transport, register-6100, mkaiser, open]
 created: '2026-11-16'
 query: "Through a modbus-proxy, does input 6100 answer for every session, or only for a short one of the reader's own?"
-results_count: 5
+results_count: 6
 ---
 
 # Does a Modbus proxy carry register 6100?
@@ -21,6 +21,8 @@ proxy as well, each on a port of its own, and on the entry's ordinary polling co
 than a probe of its own -- which is the case mkaiser's entry could not get an answer for
 ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md),
 [the slave](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)).
+Both answered again a week later, with evcc and the YAML package polling beside
+([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md), [slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)).
 At [mkaiser](../entities/installation-mkaiser.md) the config flow's own probe
 of the proxy's address answered too, which is why the search labelled the
 proxy "the inverter's own LAN port"

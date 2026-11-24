@@ -92,6 +92,7 @@ in kW. The diagnosis's register dump reads it too.
   SH-RT that obeyed is on P020, P022 or P023, and the integration offers the control there only
   ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md)).
   The range words answered there as at mkaiser: 0 and 5001 refused with 0x04, 5000 taken.
+  Not checked again on 2026-11-24, the battery too full ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)).
   That house is a cluster master too, like fwitten's, where the cap failed on P023 with the
   battery well above its floor; so the low battery may not be the whole explanation here.
 - **On one other SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with

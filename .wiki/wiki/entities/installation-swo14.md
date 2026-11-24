@@ -3,6 +3,7 @@ type: entity
 title: Installation swo14
 tags: [installation, swo14, cluster, proxy, third-party-battery]
 created: '2026-11-18'
+updated: '2026-11-24'
 ---
 
 # Installation swo14
@@ -11,7 +12,9 @@ A **master/slave cluster of two [SH10RT-20](device-sh-rt.md)**, both on the olde
 [`SAPPHIRE-H_01011.95.03`](firmware-sapphire-h-01011-95-03.md) numbering, with a **third-party
 BYD HVM 11 kWh** pack on the host and none on the slave, read from Home Assistant through a
 **Modbus proxy**: the host on port 502 at unit 1, the slave on port 503 at unit 2. Three readings
-on 2026-11-17, each with a capability test, the inverter restart left out. Stand-ins
+on 2026-11-17 and four on 2026-11-24, each with a capability test, the inverter restart left out. Both
+inverters have a [WiNet-S](device-winet-s.md), heard over mDNS, which the polling does not use. evcc and the
+YAML package poll too, by the second set. Stand-ins
 `anon-00541024454` (host) and `anon-25617150722` (slave).
 
 - **The second cluster in the corpus**, after [fwitten](installation-fwitten.md)'s, and it keeps
@@ -44,8 +47,26 @@ on 2026-11-17, each with a capability test, the inverter restart left out. Stand
 - The owner's EV was charging through all three readings; the inverter's own EV charger block
   reads mode "PV surplus" and a user current of 16 A throughout.
 
+- **On 2026-11-24 the slave's second run ended in outcome 5**: 13050 read 2 at the restore and held it against
+  five writes of 0, while the host's run was under way; it read 0 six minutes later, so nothing is left changed
+  ([the slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-2-summary.md), [the query](../queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)).
+- **The export limit held PV export and not a manufactured discharge**: 7641.5 to 1162 W for 1250 W
+  ([first run](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md)), then 3748 to 3496.5 W
+  against a word of 125 ([second](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)). Neither verdict is a pass.
+- **The host's load power leaves the slave's output out**, and goes negative for it: -1650 W with 2450 W
+  coming from the slave ([the reading](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md)).
+- **13022 is signed here**: 62365 beside 5214's -3171 W
+  ([the reading](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md), [the query](../queries/is-battery-power-firmware-dependent.md)).
+- With the battery full, forced discharge (1251 W for 1250 W) and the discharge windows (1726, 0, 1758.5 W) did as
+  they were told. Forced charge and [32998](register-32998.md) were not checked again. Plausibility, over
+  1227 polls: every established check matches.
+
 ## Diagnoses
 
 - [SH10RT-20 on 01011.95.03, swo14's host inverter, a BYD pack, through a Modbus proxy](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT-20 on 01011.95.03, swo14's host inverter, 53 minutes later](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-2-summary.md)
 - [SH10RT-20 on 01011.95.03, swo14's slave inverter, no battery of its own](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)
+- [SH10RT-20 on 01011.95.03, swo14's host, battery full, no car charging](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md)
+- [SH10RT-20 on 01011.95.03, swo14's host, the car charging](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)
+- [SH10RT-20 on 01011.95.03, swo14's slave, no car charging](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)
+- [SH10RT-20 on 01011.95.03, swo14's slave, the car charging, outcome 5](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-2-summary.md)

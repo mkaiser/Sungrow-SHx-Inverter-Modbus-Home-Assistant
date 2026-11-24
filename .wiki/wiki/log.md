@@ -2147,3 +2147,11 @@ pages and both queries say so.
 
 The run's second half already had PV above the load with a bracket after the cap (PV ~1.05-1.1 kW, load ~0.6 kW).
 `register-32998.md` and the summary say so; T001 is closed on it.
+
+## [2026-11-24] ingested | four readings of swo14's cluster
+
+Host and slave, without and with the car charging (#786): [host](sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md), [host, car](sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md),
+[slave](sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md), [slave, car](sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-2-summary.md). The slave's second run ended in
+**outcome 5** and nothing is left changed; a query opened on a slave mirroring the master's EMS mode. 13022 is signed on
+01011.95.03, which overturns "never signed". Two cluster masters now miss the export limit under a manufactured
+discharge. The earlier host page's "communication module: none fitted" is corrected: both inverters have a WiNet-S.
