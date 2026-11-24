@@ -25,16 +25,25 @@ TRANSLATIONS = json.loads(
     (COMPONENT / "translations" / "en.json").read_text(encoding="utf-8")
 )
 #: The views the strategy's `views` option names, in the strategy's order.
-VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "diagnosis"]
+VIEW_IDS = [
+    "home",
+    "energy",
+    "history",
+    "battery",
+    "inverter",
+    "wallbox",
+    "controls",
+    "diagnosis",
+]
 #: The layout's revision and the digest of its views. **A change to the views
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
-REVISION = (5, "e5a025020b9e")
+REVISION = (5, "153f658f5e93")
 #: What building the layout takes (`BUILDS` in the module) and the digest of the
 #: keys and card types it uses. **A new word the module has to understand raises
 #: `module` and `BUILDS`**, so that an older module says "reload" rather than fail.
-MODULE = (3, "3cf617dee157")
-#: Card types the strategy builds: the last eight are its own, the rest core's.
+MODULE = (3, "5a7895f6b89e")
+#: Card types the strategy builds: the last nine are its own, the rest core's.
 CARD_TYPES = {
     "tile",
     "entities",
@@ -47,6 +56,7 @@ CARD_TYPES = {
     "tests",
     "settings",
     "run",
+    "history",
     "device-link",
     "integration-link",
 }

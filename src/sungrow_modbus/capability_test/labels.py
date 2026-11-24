@@ -124,6 +124,21 @@ CHECKS: dict[str, Label] = {
     "battery level follows its power": _label(
         "Battery level follows its power", "Ladestand folgt der Batterieleistung"
     ),
+    "pv_generation this month against daily_pv_generation": _label(
+        "PV generation: month and day agree", "PV-Erzeugung: Monat und Tag passen"
+    ),
+    "direct_consumption this month against daily_direct_energy_consumption": _label(
+        "Direct consumption: month and day agree",
+        "Direktverbrauch: Monat und Tag passen",
+    ),
+    "export_from_pv this month against daily_exported_energy_from_pv": _label(
+        "Export from PV: month and day agree",
+        "Einspeisung aus PV: Monat und Tag passen",
+    ),
+    "history year contains its month": _label(
+        "The year's total contains the month's",
+        "Die Jahressumme enthält die des Monats",
+    ),
     "running states": _label(
         "Running states are known", "Betriebszustände sind bekannt"
     ),

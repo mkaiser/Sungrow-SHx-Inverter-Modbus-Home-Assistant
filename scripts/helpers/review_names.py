@@ -147,6 +147,9 @@ def _descriptions() -> list[tuple[Device, str, object]]:
         DERIVED_SENSORS,
     )
     from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+    from custom_components.sungrow_modbus.history_descriptions import (
+        HISTORY_DESCRIPTIONS,
+    )
     from custom_components.sungrow_modbus.ihomemanager_descriptions import (
         IHOMEMANAGER_DESCRIPTIONS,
     )
@@ -165,7 +168,11 @@ def _descriptions() -> list[tuple[Device, str, object]]:
     )
 
     groups: tuple[tuple[Device, str, tuple[object, ...]], ...] = (
-        (INVERTER, "sensor", (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)),
+        (
+            INVERTER,
+            "sensor",
+            (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS, *HISTORY_DESCRIPTIONS),
+        ),
         (INVERTER, "sensor", EXTERNAL_SENSORS),
         (INVERTER, "binary_sensor", DERIVED_BINARY_SENSORS),
         (INVERTER, "number", NUMBER_DESCRIPTIONS),

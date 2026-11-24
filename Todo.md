@@ -49,10 +49,9 @@ Nothing can start now (T038, T064).
 WiNet-S will be read on its own -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 5.
 *Needs*: nothing.
 
-**gerd's wallbox, what is left**: whether one-phase surplus charging holds (it ended after 10-30 s twice on 2026-11-24), what
-a plug-in does in PV surplus, and the wallbox put back to fast, grid purchase on and charging off, which it was found in
--- [the source](.wiki/wiki/sources/gerd-wallbox-2026-11-24-summary.md).
-*Needs*: the tunnel or the maintainer's route to gerd's, once on the evening of 2026-11-24.
+**gerd's wallbox, what is left**: why one-phase surplus charging ends after 10-30 s (four attempts on 2026-11-24, at up to
+1.6 kW over the house), and what a plug-in does in PV surplus -- [the source](.wiki/wiki/sources/gerd-wallbox-2026-11-24-summary.md).
+*Needs*: a brighter day there, over 3 kW of surplus with the battery nearly full; someone at the car for the plug-in.
 
 ## Logger
 
@@ -70,17 +69,12 @@ diagnosis (T005, T006, T042).
 **T055. The integration's own dashboard**: after the maintainer's review of the Diagnosis view (0.1.0a54) and the wallbox's
 controls, left are the maintainer's look, whether *Today*'s energy flow shows the day's figures on real statistics, 13017
 switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
-*Needs*: the next release at both houses.
-
-**T086. The history sensors of the old YAML package**: each month and each year of PV generation and export (45 sensors,
-`sg_monthly_pv_generation_01_january`, `sg_yearly_pv_generation_2019` ..., taken out on 2025-11-10), and direct consumption beside
-them. The registers are read today, as attributes of the six *this month / this year* sensors
-([energy history](.wiki/wiki/concepts/energy-history.md)); left are sensors of their own, created where
-`Capability.ENERGY_HISTORY` is and only for years that hold something, the old ids claimed, and readings checks of them.
-*Needs*: nothing.
+The History view (T086) is not seen on a real cable house; the maintainer's is the first.
+*Needs*: 0.1.0a55 at both houses.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
-to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
+to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md). The wheel carries a licence
+file for Power Flow Card Plus and none for Energy Flow Card Plus, which MIT asks for.
 *Needs*: the maintainer's word on the plan; *Allow GitHub Actions to create pull requests* switched on.
 
 **T079. A night restart on an empty pack reads as a house left changed**: at peter-sm the
@@ -357,8 +351,8 @@ single write of 33213's held value.
 **T046. Battery power where 5214 is refused** (#655, #770). The fallback to
 13022 is built on ten firmwares' evidence but has never met a house that
 refuses 5214; then decide whether the *Battery power* entity falls back too,
-and check *Inverter self consumption (estimated)* on that path
-([T002's plan](plans/T002-inverter-self-consumption.md)).
+and check *Inverter self consumption (estimated)* on that path there (its other questions are
+settled: a 15-minute mean, an energy sensor, and the number kept in Standby).
 Not to be asked for on #655 (maintainer, 2026-11-11).
 *Unblocked by*: a diagnosis of an SH8.0RS on #655's firmware, or of SAPPHIRE
 51.0x. **A third-party battery is not enough**: the maintainer's is one and
@@ -440,7 +434,7 @@ and the guide exist.
 
 **T069. Retire the stale remote branches** (deferred by the maintainer, 2026-11-24): `experimental-archived`, `inverter_self_consumption`,
 `wrap-string-registers` and `dev` go (maintainer), each tagged `archive/<name>` first so the commits stay reachable.
-*Needs*: `inverter_self_consumption` read against [T002's plan](plans/T002-inverter-self-consumption.md) first; and whether
+*Needs*: `inverter_self_consumption` read against the integration's *Inverter self consumption (estimated)* first; and whether
 `2025-legacy` and today's `main` are to be named under `archive/`, as the maintainer wrote, or keep the names
 `2025-legacy` and `2026-legacy` that T068 and every published link rely on.
 **T014. Decide the wording a fresh entry shows** now that watching the

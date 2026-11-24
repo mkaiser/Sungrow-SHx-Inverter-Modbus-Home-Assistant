@@ -3,7 +3,7 @@
 > **Still a preview**, like the integration. For the YAML package's
 > dashboards, see [its guide](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/dashboard.md).
 
-The integration brings a dashboard of its own: home, energy, battery, inverter,
+The integration brings a dashboard of its own: home, energy, history, battery, inverter,
 wallbox, controls and diagnosis. It is built in your browser from what your house has,
 so it fits whatever your devices are called and whatever they are:
 
@@ -33,7 +33,8 @@ It is the energy side of your house in one place. Home Assistant's own
 | View | Shows |
 | --- | --- |
 | **Home** | The power flow, the battery, today's energy flow, the car, and the last 24 hours. Badges at the top: the inverter's state, whether a car is plugged in, and an alarm, a fault or a running test while there is one |
-| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; until then, which of your sensors it takes, and **Add these for me**; energy per day over 30 days; this month's and year's totals from the inverter, over its own LAN port only; totals since installation |
+| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; until then, which of your sensors it takes, and **Add these for me**; energy per day over 30 days; totals since installation |
+| **History** | The inverter's own record: this month and year, each month of this year and every year it holds, of PV generation, direct consumption and export from PV. Only where the inverter is reached over its own LAN port; a WiNet-S does not forward these registers, and the view is then not there |
 | **Battery** | Level, charge and discharge, temperature, health, cells and modules, and 48 hours of history |
 | **Inverter** | State, alarms and faults, the MPPTs, the grid phases, backup output, the device and its firmware |
 | **Wallbox** | Whether a car is plugged in, status, power, this session, phases and settings; for administrators and behind the lock, start and stop charging, its mode and current, where the inverter manages the wallbox; and 24 hours beside PV, export and house load |
@@ -147,7 +148,7 @@ controls: hold            # hold (default), admin, or hidden
 hold_seconds: 1.5         # how long to hold to unlock
 unlock_seconds: 60        # how long it stays unlocked
 power_flow: auto          # auto (default), or tiles
-views: [home, energy, battery, inverter, wallbox, controls, diagnosis]   # which views, in which order
+views: [home, energy, history, battery, inverter, wallbox, controls, diagnosis]   # which views, in which order
 device_id: 0123456789abcdef0123456789abcdef               # only this inverter (or its wallbox)
 ```
 

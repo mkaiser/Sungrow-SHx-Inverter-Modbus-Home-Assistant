@@ -70,7 +70,23 @@ ACRONYMS: frozenset[str] = frozenset(
 #: Proper nouns, capitalised anywhere in a name. "Sungrow" is one, even though
 #: a name may not *start* with it: "Firmware version part 4 (Sungrow battery)"
 #: distinguishes a Sungrow pack from a third-party one, which is information.
-PROPER_NOUNS: frozenset[str] = frozenset({"Sungrow"})
+PROPER_NOUNS: frozenset[str] = frozenset(
+    [
+        "Sungrow",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+)
 
 #: Home Assistant prefixes the device name, so a name starting with one of
 #: these says it twice. Stripped from the front, never from the middle.
@@ -717,6 +733,12 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "ihm_vpp_heartbeat",
         "ihm_protocol_version",
     }
+) | frozenset(
+    # Up to eighty entities a house, which would bury its readings.
+    f"{_quantity}_{_period}_{_n}"
+    for _quantity in ("pv_generation", "direct_consumption", "export_from_pv")
+    for _period, _numbers in (("month", range(1, 13)), ("year", range(2015, 2030)))
+    for _n in _numbers
 )
 
 #: **German names**, one per translation key, decided beside the English
@@ -1235,6 +1257,34 @@ def text_leaves(document: dict[str, object]) -> dict[str, str]:
                         walk(text, ["entity", domain, key, field])
     return found
 
+
+#: The energy history's names, one per month and year: English, German.
+_HISTORY_QUANTITIES = {
+    "pv_generation": ("PV generation", "PV-Erzeugung"),
+    "direct_consumption": ("Direct consumption", "Direktverbrauch"),
+    "export_from_pv": ("Export from PV", "Einspeisung aus PV"),
+}
+_HISTORY_MONTHS = (
+    ("January", "Januar"),
+    ("February", "Februar"),
+    ("March", "März"),
+    ("April", "April"),
+    ("May", "Mai"),
+    ("June", "Juni"),
+    ("July", "Juli"),
+    ("August", "August"),
+    ("September", "September"),
+    ("October", "Oktober"),
+    ("November", "November"),
+    ("December", "Dezember"),
+)
+for _key, (_en, _de) in _HISTORY_QUANTITIES.items():
+    for _number, (_month_en, _month_de) in enumerate(_HISTORY_MONTHS, start=1):
+        OVERRIDES[f"{_key}_month_{_number}"] = f"{_en} {_month_en}"
+        GERMAN[f"{_key}_month_{_number}"] = f"{_de} {_month_de}"
+    for _year in range(2015, 2030):
+        OVERRIDES[f"{_key}_year_{_year}"] = f"{_en} {_year}"
+        GERMAN[f"{_key}_year_{_year}"] = f"{_de} {_year}"
 
 _ACRONYM_BY_UPPER = {a.upper(): a for a in ACRONYMS}
 _PROPER_BY_UPPER = {p.upper(): p for p in PROPER_NOUNS}

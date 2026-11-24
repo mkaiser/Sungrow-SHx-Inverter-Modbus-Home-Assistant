@@ -187,3 +187,13 @@ As found was fast, grid purchase on, charging off.
 - 12:51:57 the word on after our press, off by itself by 12:52:47: PV 1.3 kW, house 0.3-0.4 kW, too little. Defect 3 above
   is therefore not settled as one: in this mode the inverter drives the word anyway, and with 1.6 kW of surplus from
   11:05 to 11:08 it had not put it on again, where from 11:10:42 to 11:11:30 it did.
+
+## 12:53-14:50 the afternoon in PV surplus, grid purchase off, from his Home Assistant's history
+
+- PV 1.25 -> 1.7 kW (2.1 kW at 14:47), house about 0.2-0.5 kW (2.3 kW at 13:00): 0.9-1.6 kW over. The **battery took it**:
+  3 % at 12:53, 34 % at 14:49. The car: **one attempt**, 14:09:55 *suspended by the vehicle*, 14:10:05 *charging*, 1209 W,
+  14:10:25 *completed*, 5 Wh. *Phase mode* read single phase from 13:24:42 to 14:14:45, as polled every 5 min.
+  The charging word's entity read off throughout, at its one-minute poll.
+- So at 1 to 1.6 kW over, surplus charging did not hold at this house: four attempts in the day, none over 30 s.
+- 14:51 put back from Home Assistant, read through the proxy: 33540 85, 33541 160, 33545 160, 33550 170 -- fast, grid
+  purchase on, charging off, 16.0 A, as found at 10:45.

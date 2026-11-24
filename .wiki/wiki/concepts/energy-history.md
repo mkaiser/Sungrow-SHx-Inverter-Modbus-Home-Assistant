@@ -11,6 +11,8 @@ The inverter keeps its own monthly and yearly totals for three quantities: PV ge
 (months 6227-6238, years 6250-6279), direct consumption from PV (6417-6428, 6429-6458) and export
 from PV (6596-6607, 6608-6637). Defined in `src/sungrow_modbus/hybrid_inverter/registers.py`
 (`_energy_history`), gated on `Capability.ENERGY_HISTORY`.
+Each month, and each year that holds something, is a sensor (`custom_components/sungrow_modbus/history_descriptions.py`),
+and the readings checks compare this month with the daily counter and the year with its month.
 
 ## The layout
 

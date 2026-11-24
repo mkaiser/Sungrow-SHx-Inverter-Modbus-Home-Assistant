@@ -243,6 +243,13 @@ tree.
   Run `check_pinned_library.py --wheel` and `fetch_cards.py --check` on the new files.
 Each of these is verified in a container or against hardware.
 
+- **No handshake on a tunnel that worked an hour ago** usually means the host took the same config up. Take the
+  container's down and use the host's route, but prove the host first: sites share address ranges, so check its SSH
+  host key (`StrictHostKeyChecking=yes`) before any token is sent to that address.
+- **`pkill -f` matches the shell that runs it** when the pattern stands anywhere in its command line, a heredoc
+  included. Put the script in a file, or bracket a letter and keep the plain word out of the rest.
+- **The gate tests the tree as it is while it runs.** A file changed under it makes its result worthless, so batch the
+  edits; what it does not read (`Todo.md`) is safe.
 - **A remote owner's WireGuard tunnel runs in here, or on the host, never in
   both.** The container has `wg` and `wg-quick` and the NET_ADMIN that
   `runArgs` grants, so `sudo wg-quick up <copy>.conf` brings a site's tunnel

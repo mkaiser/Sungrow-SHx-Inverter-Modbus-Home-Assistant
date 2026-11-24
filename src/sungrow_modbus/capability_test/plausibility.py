@@ -704,6 +704,53 @@ COUNTER_POWERS: tuple[tuple[str, str, float], ...] = (
     ("daily_battery_discharge", "battery_power", 1.0),
 )
 
+#: The inverter's own history -> the daily counter that fills it.
+HISTORY_QUANTITIES: dict[str, str] = {
+    "pv_generation": "daily_pv_generation",
+    "direct_consumption": "daily_direct_energy_consumption",
+    "export_from_pv": "daily_exported_energy_from_pv",
+}
+HISTORY_CLOCK = ("system_clock_year", "system_clock_month")
+
+
+def _history_fields(quantity: str) -> tuple[str, ...]:
+    return tuple(f"{quantity}_month_{month:02d}" for month in range(1, 13))
+
+
+def _history_years(quantity: str) -> tuple[str, ...]:
+    return tuple(f"{quantity}_year_{year}" for year in range(2015, 2030))
+
+
+def _this_month(quantity: str) -> Callable[[Values], float | None]:
+    def rate(values: Values) -> float | None:
+        month = _get(values, "system_clock_month")
+        if month is None or not 1 <= int(month) <= 12:
+            return None
+        return _get(values, f"{quantity}_month_{int(month):02d}")
+
+    return rate
+
+
+def _year_contains_month(
+    _previous: Values, current: Values, _at: datetime
+) -> tuple[bool, str] | None:
+    """Judge that this year's PV total is no less than this month's.
+
+    Not that it is the sum of its months: at gerd's it stands 1610 kWh above
+    them, unexplained (wiki: energy-history).
+    """
+    year = _get(current, "system_clock_year")
+    month = _this_month("pv_generation")(current)
+    if year is None or month is None:
+        return None
+    total = _get(current, f"pv_generation_year_{int(year)}")
+    if total is None:
+        return None
+    if month > total:
+        return False, f"{month:g} kWh this month, {total:g} kWh this year"
+    return True, ""
+
+
 DAILY = tuple(daily for daily, _total in COUNTER_PAIRS)
 TOTALS = tuple(total for _daily, total in COUNTER_PAIRS)
 
@@ -1048,7 +1095,35 @@ def checks() -> list[Check]:
                 tolerance=0.15,
             )
         )
+    for quantity, daily in HISTORY_QUANTITIES.items():
+        out.append(
+            CounterCheck(
+                name=f"{quantity} this month against {daily}",
+                needs="10 kWh on the daily counter",
+                minimum=2,
+                # A month first: a house whose dongle refuses the history
+                # has none, and does not wait for this check.
+                fields=(*_history_fields(quantity), daily, *HISTORY_CLOCK),
+                counter=daily,
+                rate=_this_month(quantity),
+                integrate=False,
+                # Coarse, because the two are read ten minutes apart.
+                step=5.0,
+                tolerance=0.25,
+            )
+        )
     out += [
+        EventCheck(
+            name="history year contains its month",
+            needs="the inverter's energy history",
+            minimum=2,
+            fields=(
+                *_history_fields("pv_generation"),
+                *_history_years("pv_generation"),
+                *HISTORY_CLOCK,
+            ),
+            judge=_year_contains_month,
+        ),
         EventCheck(
             name="lifetime counters never fall",
             needs="a day of polls",

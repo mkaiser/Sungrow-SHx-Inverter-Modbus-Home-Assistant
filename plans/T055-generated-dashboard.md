@@ -6,7 +6,10 @@ Nothing to install from HACS.
 
 ## Status log
 
-- **2026-11-24**, from gerd's use of it, built, not released (layout revision 5, module 3): the Wallbox view has a locked,
+- **2026-11-24**: a History view (T086), bars of the inverter's own months and years, there only where those sensors are.
+  Checked in Chromium on made-up houses with and without them; not seen on a real cable house.
+
+- **2026-11-24**, from gerd's use of it, released in 0.1.0a55 (layout revision 5, module 3): the Wallbox view has a locked,
   administrators-only *Charging* section (start, mode, current, grid purchase, of the managing inverter by `~`), and the car is
   in Home's energy flow of the day (the lifetime counter; the card takes its change) and in its 24 hours. The strategy run
   in Chromium on gerd's registry, as administrator and as a plain user; not yet seen drawn there.

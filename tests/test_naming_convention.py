@@ -53,6 +53,7 @@ from custom_components.sungrow_modbus.derived_descriptions import (
 )
 from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+from custom_components.sungrow_modbus.history_descriptions import HISTORY_DESCRIPTIONS
 from custom_components.sungrow_modbus.ihomemanager_descriptions import (
     IHOMEMANAGER_DESCRIPTIONS,
 )
@@ -87,6 +88,7 @@ DESCRIPTIONS = {
     "sensor": (
         *SENSOR_DESCRIPTIONS,
         *DERIVED_SENSORS,
+        *HISTORY_DESCRIPTIONS,
         *BATTERY_DESCRIPTIONS,
         *WALLBOX_DESCRIPTIONS,
         # Hand-written for a third reason again: these are arithmetic over

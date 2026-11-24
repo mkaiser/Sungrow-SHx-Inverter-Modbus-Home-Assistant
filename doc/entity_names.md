@@ -1,6 +1,6 @@
 # The entity names
 
-**399 entities** that modern mode can create (Hybrid inverter 215, SBR battery 34, Wallbox 25, SG string inverter 85, iHomeManager 40).
+**480 entities** that modern mode can create (Hybrid inverter 296, SBR battery 34, Wallbox 25, SG string inverter 85, iHomeManager 40).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (215)
+## Hybrid inverter (296)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -168,13 +168,40 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | --- | --- | --- | --- | --- | --- | --- |
 | Inside Temperature (5008) | Inverter temperature **←** | Device temperature | Gerätetemperatur | `sensor.sh10rt_device_temperature` | `sensor.inverter_temperature` | °C |
 
-### The PV trackers (30)
+### The PV trackers (84)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
 | *not in the datasheet* (31211) |  | Cut PV generation | PV-Erzeugung abschalten | `switch.sh10rt_cut_pv_generation` |  |  |
 | Daily PV Generation (13002) | Daily PV generation | Daily PV generation | Tägliche PV-Erzeugung | `sensor.sh10rt_daily_pv_generation` | `sensor.daily_pv_generation` | kWh |
 | Daily export power from PV (13005) | Daily exported energy from PV | Daily exported energy from PV | Täglich aus PV eingespeiste Energie | `sensor.sh10rt_daily_exported_energy_from_pv` | `sensor.daily_exported_energy_from_pv` | kWh |
+| *not in the datasheet* (6608) |  | Export from PV 2015 | Einspeisung aus PV 2015 | `sensor.sh10rt_export_from_pv_2015` |  | kWh |
+| *not in the datasheet* (6610) |  | Export from PV 2016 | Einspeisung aus PV 2016 | `sensor.sh10rt_export_from_pv_2016` |  | kWh |
+| *not in the datasheet* (6612) |  | Export from PV 2017 | Einspeisung aus PV 2017 | `sensor.sh10rt_export_from_pv_2017` |  | kWh |
+| *not in the datasheet* (6614) |  | Export from PV 2018 | Einspeisung aus PV 2018 | `sensor.sh10rt_export_from_pv_2018` |  | kWh |
+| *not in the datasheet* (6616) | Yearly Export (2019) **←** | Export from PV 2019 | Einspeisung aus PV 2019 | `sensor.sh10rt_export_from_pv_2019` | `sensor.yearly_export_2019` | kWh |
+| *not in the datasheet* (6618) | Yearly Export (2020) **←** | Export from PV 2020 | Einspeisung aus PV 2020 | `sensor.sh10rt_export_from_pv_2020` | `sensor.yearly_export_2020` | kWh |
+| *not in the datasheet* (6620) | Yearly Export (2021) **←** | Export from PV 2021 | Einspeisung aus PV 2021 | `sensor.sh10rt_export_from_pv_2021` | `sensor.yearly_export_2021` | kWh |
+| *not in the datasheet* (6622) | Yearly Export (2022) **←** | Export from PV 2022 | Einspeisung aus PV 2022 | `sensor.sh10rt_export_from_pv_2022` | `sensor.yearly_export_2022` | kWh |
+| *not in the datasheet* (6624) | Yearly Export (2023) **←** | Export from PV 2023 | Einspeisung aus PV 2023 | `sensor.sh10rt_export_from_pv_2023` | `sensor.yearly_export_2023` | kWh |
+| *not in the datasheet* (6626) | Yearly Export (2024) **←** | Export from PV 2024 | Einspeisung aus PV 2024 | `sensor.sh10rt_export_from_pv_2024` | `sensor.yearly_export_2024` | kWh |
+| *not in the datasheet* (6628) | Yearly Export (2025) **←** | Export from PV 2025 | Einspeisung aus PV 2025 | `sensor.sh10rt_export_from_pv_2025` | `sensor.yearly_export_2025` | kWh |
+| *not in the datasheet* (6630) | Yearly Export (2026) **←** | Export from PV 2026 | Einspeisung aus PV 2026 | `sensor.sh10rt_export_from_pv_2026` | `sensor.yearly_export_2026` | kWh |
+| *not in the datasheet* (6632) | Yearly Export (2027) **←** | Export from PV 2027 | Einspeisung aus PV 2027 | `sensor.sh10rt_export_from_pv_2027` | `sensor.yearly_export_2027` | kWh |
+| *not in the datasheet* (6634) | Yearly Export (2028) **←** | Export from PV 2028 | Einspeisung aus PV 2028 | `sensor.sh10rt_export_from_pv_2028` | `sensor.yearly_export_2028` | kWh |
+| *not in the datasheet* (6636) |  | Export from PV 2029 | Einspeisung aus PV 2029 | `sensor.sh10rt_export_from_pv_2029` |  | kWh |
+| *not in the datasheet* (6599) | Monthly export (04 April) **←** | Export from PV April | Einspeisung aus PV April | `sensor.sh10rt_export_from_pv_april` | `sensor.monthly_export_04_april` | kWh |
+| *not in the datasheet* (6603) | Monthly export (08 August) **←** | Export from PV August | Einspeisung aus PV August | `sensor.sh10rt_export_from_pv_august` | `sensor.monthly_export_08_august` | kWh |
+| *not in the datasheet* (6607) | Monthly export (12 December) **←** | Export from PV December | Einspeisung aus PV Dezember | `sensor.sh10rt_export_from_pv_december` | `sensor.monthly_export_12_december` | kWh |
+| *not in the datasheet* (6597) | Monthly export (02 February) **←** | Export from PV February | Einspeisung aus PV Februar | `sensor.sh10rt_export_from_pv_february` | `sensor.monthly_export_02_february` | kWh |
+| *not in the datasheet* (6596) | Monthly export (01 January) **←** | Export from PV January | Einspeisung aus PV Januar | `sensor.sh10rt_export_from_pv_january` | `sensor.monthly_export_01_january` | kWh |
+| *not in the datasheet* (6602) | Monthly export (07 July) **←** | Export from PV July | Einspeisung aus PV Juli | `sensor.sh10rt_export_from_pv_july` | `sensor.monthly_export_07_july` | kWh |
+| *not in the datasheet* (6601) | Monthly export (06 June) **←** | Export from PV June | Einspeisung aus PV Juni | `sensor.sh10rt_export_from_pv_june` | `sensor.monthly_export_06_june` | kWh |
+| *not in the datasheet* (6598) | Monthly export (03 March) **←** | Export from PV March | Einspeisung aus PV März | `sensor.sh10rt_export_from_pv_march` | `sensor.monthly_export_03_march` | kWh |
+| *not in the datasheet* (6600) | Monthly export (05 May) **←** | Export from PV May | Einspeisung aus PV Mai | `sensor.sh10rt_export_from_pv_may` | `sensor.monthly_export_05_may` | kWh |
+| *not in the datasheet* (6606) | Monthly export (11 November) **←** | Export from PV November | Einspeisung aus PV November | `sensor.sh10rt_export_from_pv_november` | `sensor.monthly_export_11_november` | kWh |
+| *not in the datasheet* (6605) | Monthly export (10 October) **←** | Export from PV October | Einspeisung aus PV Oktober | `sensor.sh10rt_export_from_pv_october` | `sensor.monthly_export_10_october` | kWh |
+| *not in the datasheet* (6604) | Monthly export (09 September) **←** | Export from PV September | Einspeisung aus PV September | `sensor.sh10rt_export_from_pv_september` | `sensor.monthly_export_09_september` | kWh |
 |  |  | Export from PV this month | Einspeisung aus PV diesen Monat | `sensor.sh10rt_export_from_pv_this_month` |  | kWh |
 |  |  | Export from PV this year | Einspeisung aus PV dieses Jahr | `sensor.sh10rt_export_from_pv_this_year` |  | kWh |
 | MPPT 1 Current (5012) | MPPT1 current | MPPT1 current | MPPT1 Strom | `sensor.sh10rt_mppt1_current` | `sensor.mppt1_current` | A |
@@ -195,6 +222,33 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | MPPT 4 Voltage (5115) | MPPT4 voltage | MPPT4 voltage | MPPT4 Spannung | `sensor.sh10rt_mppt4_voltage` | `sensor.mppt4_voltage` | V |
 |  | PV generating | PV generating | PV-Erzeugung | `binary_sensor.sh10rt_pv_generating` | `binary_sensor.pv_generating` |  |
 |  | PV generating (delay) **←** | PV generating (delayed) | PV-Erzeugung (verzögert) | `binary_sensor.sh10rt_pv_generating_delayed` | `binary_sensor.pv_generating_delay` |  |
+| *not in the datasheet* (6250) |  | PV generation 2015 | PV-Erzeugung 2015 | `sensor.sh10rt_pv_generation_2015` |  | kWh |
+| *not in the datasheet* (6252) |  | PV generation 2016 | PV-Erzeugung 2016 | `sensor.sh10rt_pv_generation_2016` |  | kWh |
+| *not in the datasheet* (6254) |  | PV generation 2017 | PV-Erzeugung 2017 | `sensor.sh10rt_pv_generation_2017` |  | kWh |
+| *not in the datasheet* (6256) |  | PV generation 2018 | PV-Erzeugung 2018 | `sensor.sh10rt_pv_generation_2018` |  | kWh |
+| *not in the datasheet* (6258) | Yearly PV generation (2019) **←** | PV generation 2019 | PV-Erzeugung 2019 | `sensor.sh10rt_pv_generation_2019` | `sensor.yearly_pv_generation_2019` | kWh |
+| *not in the datasheet* (6260) | Yearly PV generation (2020) **←** | PV generation 2020 | PV-Erzeugung 2020 | `sensor.sh10rt_pv_generation_2020` | `sensor.yearly_pv_generation_2020` | kWh |
+| *not in the datasheet* (6262) | Yearly PV generation (2021) **←** | PV generation 2021 | PV-Erzeugung 2021 | `sensor.sh10rt_pv_generation_2021` | `sensor.yearly_pv_generation_2021` | kWh |
+| *not in the datasheet* (6264) | Yearly PV generation (2022) **←** | PV generation 2022 | PV-Erzeugung 2022 | `sensor.sh10rt_pv_generation_2022` | `sensor.yearly_pv_generation_2022` | kWh |
+| *not in the datasheet* (6266) | Yearly PV generation (2023) **←** | PV generation 2023 | PV-Erzeugung 2023 | `sensor.sh10rt_pv_generation_2023` | `sensor.yearly_pv_generation_2023` | kWh |
+| *not in the datasheet* (6268) | Yearly PV generation (2024) **←** | PV generation 2024 | PV-Erzeugung 2024 | `sensor.sh10rt_pv_generation_2024` | `sensor.yearly_pv_generation_2024` | kWh |
+| *not in the datasheet* (6270) | Yearly PV generation (2025) **←** | PV generation 2025 | PV-Erzeugung 2025 | `sensor.sh10rt_pv_generation_2025` | `sensor.yearly_pv_generation_2025` | kWh |
+| *not in the datasheet* (6272) | Yearly PV generation (2026) **←** | PV generation 2026 | PV-Erzeugung 2026 | `sensor.sh10rt_pv_generation_2026` | `sensor.yearly_pv_generation_2026` | kWh |
+| *not in the datasheet* (6274) | Yearly PV generation (2027) **←** | PV generation 2027 | PV-Erzeugung 2027 | `sensor.sh10rt_pv_generation_2027` | `sensor.yearly_pv_generation_2027` | kWh |
+| *not in the datasheet* (6276) | Yearly PV generation (2028) **←** | PV generation 2028 | PV-Erzeugung 2028 | `sensor.sh10rt_pv_generation_2028` | `sensor.yearly_pv_generation_2028` | kWh |
+| *not in the datasheet* (6278) | Yearly PV generation (2029) **←** | PV generation 2029 | PV-Erzeugung 2029 | `sensor.sh10rt_pv_generation_2029` | `sensor.yearly_pv_generation_2029` | kWh |
+| *not in the datasheet* (6230) | Monthly PV generation (04 April) **←** | PV generation April | PV-Erzeugung April | `sensor.sh10rt_pv_generation_april` | `sensor.monthly_pv_generation_04_april` | kWh |
+| *not in the datasheet* (6234) | Monthly PV generation (08 August) **←** | PV generation August | PV-Erzeugung August | `sensor.sh10rt_pv_generation_august` | `sensor.monthly_pv_generation_08_august` | kWh |
+| *not in the datasheet* (6238) | Monthly PV generation (12 December) **←** | PV generation December | PV-Erzeugung Dezember | `sensor.sh10rt_pv_generation_december` | `sensor.monthly_pv_generation_12_december` | kWh |
+| *not in the datasheet* (6228) | Monthly PV generation (02 February) **←** | PV generation February | PV-Erzeugung Februar | `sensor.sh10rt_pv_generation_february` | `sensor.monthly_pv_generation_02_february` | kWh |
+| *not in the datasheet* (6227) | Monthly PV generation (01 January) **←** | PV generation January | PV-Erzeugung Januar | `sensor.sh10rt_pv_generation_january` | `sensor.monthly_pv_generation_01_january` | kWh |
+| *not in the datasheet* (6233) | Monthly PV generation (07 July) **←** | PV generation July | PV-Erzeugung Juli | `sensor.sh10rt_pv_generation_july` | `sensor.monthly_pv_generation_07_july` | kWh |
+| *not in the datasheet* (6232) | Monthly PV generation (06 June) **←** | PV generation June | PV-Erzeugung Juni | `sensor.sh10rt_pv_generation_june` | `sensor.monthly_pv_generation_06_june` | kWh |
+| *not in the datasheet* (6229) | Monthly PV generation (03 March) **←** | PV generation March | PV-Erzeugung März | `sensor.sh10rt_pv_generation_march` | `sensor.monthly_pv_generation_03_march` | kWh |
+| *not in the datasheet* (6231) | Monthly PV generation (05 May) **←** | PV generation May | PV-Erzeugung Mai | `sensor.sh10rt_pv_generation_may` | `sensor.monthly_pv_generation_05_may` | kWh |
+| *not in the datasheet* (6237) | Monthly PV generation (11 November) **←** | PV generation November | PV-Erzeugung November | `sensor.sh10rt_pv_generation_november` | `sensor.monthly_pv_generation_11_november` | kWh |
+| *not in the datasheet* (6236) | Monthly PV generation (10 October) **←** | PV generation October | PV-Erzeugung Oktober | `sensor.sh10rt_pv_generation_october` | `sensor.monthly_pv_generation_10_october` | kWh |
+| *not in the datasheet* (6235) | Monthly PV generation (09 September) **←** | PV generation September | PV-Erzeugung September | `sensor.sh10rt_pv_generation_september` | `sensor.monthly_pv_generation_09_september` | kWh |
 |  |  | PV generation cut | PV-Erzeugung abgeschaltet | `binary_sensor.sh10rt_pv_generation_cut` |  |  |
 |  |  | PV generation this month | PV-Erzeugung diesen Monat | `sensor.sh10rt_pv_generation_this_month` |  | kWh |
 |  |  | PV generation this year | PV-Erzeugung dieses Jahr | `sensor.sh10rt_pv_generation_this_year` |  | kWh |
@@ -279,7 +333,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Total Import Energy (13037) | Total imported energy | Total imported energy | Gesamt bezogene Energie | `sensor.sh10rt_total_imported_energy` | `sensor.total_imported_energy` | kWh |
 | *not in the datasheet* (33550) |  | Wallbox grid purchase | Wallbox Netzbezug | `switch.sh10rt_wallbox_grid_purchase` |  |  |
 
-### The house (18)
+### The house (45)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -287,6 +341,33 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  | Daily consumed energy | Daily consumed energy | Tägliche Energieaufnahme Verbraucher | `sensor.sh10rt_daily_consumed_energy` | `sensor.daily_consumed_energy` | kWh |
 |  | Daily consumed energy (filtered) **←** | Daily consumed energy (smoothed) | Tägliche Energieaufnahme Verbraucher (geglättet) | `sensor.sh10rt_daily_consumed_energy_smoothed` | `sensor.daily_consumed_energy_filtered` | kWh |
 | Daily direct energy consumption (13017) | Daily direct energy consumption | Daily direct energy consumption | Täglicher Direktverbrauch | `sensor.sh10rt_daily_direct_energy_consumption` | `sensor.daily_direct_energy_consumption` | kWh |
+| *not in the datasheet* (6429) |  | Direct consumption 2015 | Direktverbrauch 2015 | `sensor.sh10rt_direct_consumption_2015` |  | kWh |
+| *not in the datasheet* (6431) |  | Direct consumption 2016 | Direktverbrauch 2016 | `sensor.sh10rt_direct_consumption_2016` |  | kWh |
+| *not in the datasheet* (6433) |  | Direct consumption 2017 | Direktverbrauch 2017 | `sensor.sh10rt_direct_consumption_2017` |  | kWh |
+| *not in the datasheet* (6435) |  | Direct consumption 2018 | Direktverbrauch 2018 | `sensor.sh10rt_direct_consumption_2018` |  | kWh |
+| *not in the datasheet* (6437) |  | Direct consumption 2019 | Direktverbrauch 2019 | `sensor.sh10rt_direct_consumption_2019` |  | kWh |
+| *not in the datasheet* (6439) |  | Direct consumption 2020 | Direktverbrauch 2020 | `sensor.sh10rt_direct_consumption_2020` |  | kWh |
+| *not in the datasheet* (6441) |  | Direct consumption 2021 | Direktverbrauch 2021 | `sensor.sh10rt_direct_consumption_2021` |  | kWh |
+| *not in the datasheet* (6443) |  | Direct consumption 2022 | Direktverbrauch 2022 | `sensor.sh10rt_direct_consumption_2022` |  | kWh |
+| *not in the datasheet* (6445) |  | Direct consumption 2023 | Direktverbrauch 2023 | `sensor.sh10rt_direct_consumption_2023` |  | kWh |
+| *not in the datasheet* (6447) |  | Direct consumption 2024 | Direktverbrauch 2024 | `sensor.sh10rt_direct_consumption_2024` |  | kWh |
+| *not in the datasheet* (6449) |  | Direct consumption 2025 | Direktverbrauch 2025 | `sensor.sh10rt_direct_consumption_2025` |  | kWh |
+| *not in the datasheet* (6451) |  | Direct consumption 2026 | Direktverbrauch 2026 | `sensor.sh10rt_direct_consumption_2026` |  | kWh |
+| *not in the datasheet* (6453) |  | Direct consumption 2027 | Direktverbrauch 2027 | `sensor.sh10rt_direct_consumption_2027` |  | kWh |
+| *not in the datasheet* (6455) |  | Direct consumption 2028 | Direktverbrauch 2028 | `sensor.sh10rt_direct_consumption_2028` |  | kWh |
+| *not in the datasheet* (6457) |  | Direct consumption 2029 | Direktverbrauch 2029 | `sensor.sh10rt_direct_consumption_2029` |  | kWh |
+| *not in the datasheet* (6420) |  | Direct consumption April | Direktverbrauch April | `sensor.sh10rt_direct_consumption_april` |  | kWh |
+| *not in the datasheet* (6424) |  | Direct consumption August | Direktverbrauch August | `sensor.sh10rt_direct_consumption_august` |  | kWh |
+| *not in the datasheet* (6428) |  | Direct consumption December | Direktverbrauch Dezember | `sensor.sh10rt_direct_consumption_december` |  | kWh |
+| *not in the datasheet* (6418) |  | Direct consumption February | Direktverbrauch Februar | `sensor.sh10rt_direct_consumption_february` |  | kWh |
+| *not in the datasheet* (6417) |  | Direct consumption January | Direktverbrauch Januar | `sensor.sh10rt_direct_consumption_january` |  | kWh |
+| *not in the datasheet* (6423) |  | Direct consumption July | Direktverbrauch Juli | `sensor.sh10rt_direct_consumption_july` |  | kWh |
+| *not in the datasheet* (6422) |  | Direct consumption June | Direktverbrauch Juni | `sensor.sh10rt_direct_consumption_june` |  | kWh |
+| *not in the datasheet* (6419) |  | Direct consumption March | Direktverbrauch März | `sensor.sh10rt_direct_consumption_march` |  | kWh |
+| *not in the datasheet* (6421) |  | Direct consumption May | Direktverbrauch Mai | `sensor.sh10rt_direct_consumption_may` |  | kWh |
+| *not in the datasheet* (6427) |  | Direct consumption November | Direktverbrauch November | `sensor.sh10rt_direct_consumption_november` |  | kWh |
+| *not in the datasheet* (6426) |  | Direct consumption October | Direktverbrauch Oktober | `sensor.sh10rt_direct_consumption_october` |  | kWh |
+| *not in the datasheet* (6425) |  | Direct consumption September | Direktverbrauch September | `sensor.sh10rt_direct_consumption_september` |  | kWh |
 |  |  | Direct consumption this month | Direktverbrauch diesen Monat | `sensor.sh10rt_direct_consumption_this_month` |  | kWh |
 |  |  | Direct consumption this year | Direktverbrauch dieses Jahr | `sensor.sh10rt_direct_consumption_this_year` |  | kWh |
 |  |  | Inverter self consumption (estimated) | Wechselrichter Eigenbedarf (geschätzt) | `sensor.sh10rt_inverter_self_consumption_estimated` |  | W |

@@ -55,8 +55,9 @@ read of 13074 was refused), wrote word 125, and export held at 106.5 W (MAD 36.5
 register was not read back, and 13088 read 0.5 % of 15000 W (75 W), where 125 W is 0.8 %; times ten would
 read 8.3 % and hold 1250 W. A second house would confirm it. **The consequence**: where the probe cannot
 answer, the integration divides by ten, so on an SH-T it sets **a tenth** of the limit asked; and at
-GalKar's, holding 0 W, the probe has no word to ask with. What to do about the fallback is open in
-`Todo.md`. Before this, at
+GalKar's, holding 0 W, the probe has no word to ask with. The fallback stays ten (the
+maintainer, 2026-11-24): a wrong one would set ten times the limit, a wrong ten only a tenth. P071 alone gets one
+once a second watched run confirms it (T080). Before this, at
 [ra1k-0](installation-ra1k-0.md) the register held 20000 W, its maximum, and
 ten times that wraps to 3392 W in sixteen bits, inside the bounds, so the
 probe had no word that changes nothing on both firmwares. The capability test then

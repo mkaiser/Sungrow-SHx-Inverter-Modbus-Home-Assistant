@@ -40,7 +40,7 @@ lets an owner, an installer or a Modbus client choose it.
   33538 and 33539, refused writes with charging off in fast charge and in PV surplus alike, and
   **did not move in a one-phase session** ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)).
 - **Grid purchase (33550) decides in PV surplus, measured** ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)): off, one phase at 5.4 A,
-  1.24 kW, the inverter switching its charging word on and off by itself; on, three phase at the 6 A minimum whatever
+  1.24 kW, the inverter switching its charging word on and off by itself, and no attempt lasting over 30 s at up to 1.6 kW over the house; on, three phase at the 6 A minimum whatever
   the surplus. Switched off in a three-phase charge it ends the session rather than change the phases.
 
 **What the integration does with it**: the phases in use are a sensor (21270, and 21272, the

@@ -1009,6 +1009,9 @@ def descriptions() -> list[tuple[str, str, str]]:
         DERIVED_SENSORS,
     )
     from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+    from custom_components.sungrow_modbus.history_descriptions import (
+        HISTORY_DESCRIPTIONS,
+    )
     from custom_components.sungrow_modbus.ihomemanager_descriptions import (
         IHOMEMANAGER_DESCRIPTIONS,
     )
@@ -1047,6 +1050,7 @@ def descriptions() -> list[tuple[str, str, str]]:
         for d in (
             *SENSOR_DESCRIPTIONS,
             *DERIVED_SENSORS,
+            *HISTORY_DESCRIPTIONS,
             *BATTERY_DESCRIPTIONS,
             *WALLBOX_DESCRIPTIONS,
             *EXTERNAL_SENSORS,

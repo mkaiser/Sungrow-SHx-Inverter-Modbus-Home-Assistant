@@ -106,7 +106,8 @@ feed-in limit and the start and stop actions refuse meanwhile, before a byte
 is sent. They refuse rather than go unavailable, because Home Assistant drops
 a call to an unavailable entity silently; *Diagnosis: controls held by test*
 shows the hold. The other way round, auto repeat waits after an owner's write
-(`OWNER_QUIET`, `OWNER_QUIET_EV`), and an owner's write replaces its register's
+(`OWNER_QUIET`, `OWNER_QUIET_EV`, ten minutes each: an hour outlasted a charging session, and a passed check is
+not run again -- decided 2026-11-24), and an owner's write replaces its register's
 entry in a leftover snapshot (decided 2026-11-15): the inverter's drops the
 field, a managed wallbox's takes the owner's word.
 

@@ -6,12 +6,14 @@ from datetime import timedelta
 from typing import Any
 
 from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
     RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT, EntityCategory
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from sungrow_modbus.capability_test import ledger
 from sungrow_modbus.energy_integral import EnergyIntegral
@@ -23,7 +25,7 @@ from .battery_descriptions import (
     MODULE_DESCRIPTIONS,
     PACK_DESCRIPTIONS,
 )
-from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
+from .const import CONF_MODE, DOMAIN, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_SENSORS
 from .diagnosis_entities import (
@@ -47,6 +49,7 @@ from .entity import (
 )
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
+from .history_descriptions import HISTORY_DESCRIPTIONS, YEAR_OF
 from .ihomemanager import SungrowIHomeManagerSensor
 from .ihomemanager_descriptions import IHOMEMANAGER_DESCRIPTIONS
 from .route import ROUTE_LABELS, address
@@ -175,6 +178,12 @@ async def async_setup_entry(
         for description in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)
         if runtime_data.serves(description)
     )
+    async_add_entities(
+        SungrowSensor(runtime_data, description)
+        for description in HISTORY_DESCRIPTIONS
+        if runtime_data.serves(description)
+        and _year_holds_something(hass, runtime_data, description)
+    )
 
     # The corrections, when the owner has said another inverter shares the
     # supply. Gated on an option rather than on a capability -- nothing the
@@ -216,6 +225,30 @@ async def async_setup_entry(
             SungrowWallboxSensor(wallbox, description)
             for description in WALLBOX_DESCRIPTIONS
         )
+
+
+def _year_holds_something(
+    hass: HomeAssistant,
+    runtime_data: SungrowRuntimeData,
+    description: SungrowSensorDescription,
+) -> bool:
+    """Whether a yearly total is worth an entity; a month always is.
+
+    A year at 0 kWh is before the installation or still to come, and nothing
+    ever removes an entity once made. The inverter's own year counts from its
+    first day, and one that has an entity keeps it through a failed read.
+    """
+    year = YEAR_OF.get(description.key)
+    if year is None:
+        return True
+    device = runtime_data.inverter_coordinator.device
+    if device.field("system_clock_year") == year or (
+        device.field(description.field) or 0
+    ):
+        return True
+    unique_id = f"{device.serial_number}_{description.key}"
+    registry = er.async_get(hass)
+    return registry.async_get_entity_id(SENSOR_DOMAIN, DOMAIN, unique_id) is not None
 
 
 class SungrowConnectionSensor(EnglishEntityId, SensorEntity):

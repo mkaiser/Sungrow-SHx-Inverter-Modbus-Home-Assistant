@@ -669,20 +669,182 @@
       "diagnosis_tests_passed": {
         "name": "Diagnosis: tests passed"
       },
+      "direct_consumption_month_1": {
+        "name": "Direct consumption January"
+      },
+      "direct_consumption_month_10": {
+        "name": "Direct consumption October"
+      },
+      "direct_consumption_month_11": {
+        "name": "Direct consumption November"
+      },
+      "direct_consumption_month_12": {
+        "name": "Direct consumption December"
+      },
+      "direct_consumption_month_2": {
+        "name": "Direct consumption February"
+      },
+      "direct_consumption_month_3": {
+        "name": "Direct consumption March"
+      },
+      "direct_consumption_month_4": {
+        "name": "Direct consumption April"
+      },
+      "direct_consumption_month_5": {
+        "name": "Direct consumption May"
+      },
+      "direct_consumption_month_6": {
+        "name": "Direct consumption June"
+      },
+      "direct_consumption_month_7": {
+        "name": "Direct consumption July"
+      },
+      "direct_consumption_month_8": {
+        "name": "Direct consumption August"
+      },
+      "direct_consumption_month_9": {
+        "name": "Direct consumption September"
+      },
       "direct_consumption_this_month": {
         "name": "Direct consumption this month"
       },
       "direct_consumption_this_year": {
         "name": "Direct consumption this year"
       },
+      "direct_consumption_year_2015": {
+        "name": "Direct consumption 2015"
+      },
+      "direct_consumption_year_2016": {
+        "name": "Direct consumption 2016"
+      },
+      "direct_consumption_year_2017": {
+        "name": "Direct consumption 2017"
+      },
+      "direct_consumption_year_2018": {
+        "name": "Direct consumption 2018"
+      },
+      "direct_consumption_year_2019": {
+        "name": "Direct consumption 2019"
+      },
+      "direct_consumption_year_2020": {
+        "name": "Direct consumption 2020"
+      },
+      "direct_consumption_year_2021": {
+        "name": "Direct consumption 2021"
+      },
+      "direct_consumption_year_2022": {
+        "name": "Direct consumption 2022"
+      },
+      "direct_consumption_year_2023": {
+        "name": "Direct consumption 2023"
+      },
+      "direct_consumption_year_2024": {
+        "name": "Direct consumption 2024"
+      },
+      "direct_consumption_year_2025": {
+        "name": "Direct consumption 2025"
+      },
+      "direct_consumption_year_2026": {
+        "name": "Direct consumption 2026"
+      },
+      "direct_consumption_year_2027": {
+        "name": "Direct consumption 2027"
+      },
+      "direct_consumption_year_2028": {
+        "name": "Direct consumption 2028"
+      },
+      "direct_consumption_year_2029": {
+        "name": "Direct consumption 2029"
+      },
       "ems_mode_selection_raw": {
         "name": "EMS mode selection code"
+      },
+      "export_from_pv_month_1": {
+        "name": "Export from PV January"
+      },
+      "export_from_pv_month_10": {
+        "name": "Export from PV October"
+      },
+      "export_from_pv_month_11": {
+        "name": "Export from PV November"
+      },
+      "export_from_pv_month_12": {
+        "name": "Export from PV December"
+      },
+      "export_from_pv_month_2": {
+        "name": "Export from PV February"
+      },
+      "export_from_pv_month_3": {
+        "name": "Export from PV March"
+      },
+      "export_from_pv_month_4": {
+        "name": "Export from PV April"
+      },
+      "export_from_pv_month_5": {
+        "name": "Export from PV May"
+      },
+      "export_from_pv_month_6": {
+        "name": "Export from PV June"
+      },
+      "export_from_pv_month_7": {
+        "name": "Export from PV July"
+      },
+      "export_from_pv_month_8": {
+        "name": "Export from PV August"
+      },
+      "export_from_pv_month_9": {
+        "name": "Export from PV September"
       },
       "export_from_pv_this_month": {
         "name": "Export from PV this month"
       },
       "export_from_pv_this_year": {
         "name": "Export from PV this year"
+      },
+      "export_from_pv_year_2015": {
+        "name": "Export from PV 2015"
+      },
+      "export_from_pv_year_2016": {
+        "name": "Export from PV 2016"
+      },
+      "export_from_pv_year_2017": {
+        "name": "Export from PV 2017"
+      },
+      "export_from_pv_year_2018": {
+        "name": "Export from PV 2018"
+      },
+      "export_from_pv_year_2019": {
+        "name": "Export from PV 2019"
+      },
+      "export_from_pv_year_2020": {
+        "name": "Export from PV 2020"
+      },
+      "export_from_pv_year_2021": {
+        "name": "Export from PV 2021"
+      },
+      "export_from_pv_year_2022": {
+        "name": "Export from PV 2022"
+      },
+      "export_from_pv_year_2023": {
+        "name": "Export from PV 2023"
+      },
+      "export_from_pv_year_2024": {
+        "name": "Export from PV 2024"
+      },
+      "export_from_pv_year_2025": {
+        "name": "Export from PV 2025"
+      },
+      "export_from_pv_year_2026": {
+        "name": "Export from PV 2026"
+      },
+      "export_from_pv_year_2027": {
+        "name": "Export from PV 2027"
+      },
+      "export_from_pv_year_2028": {
+        "name": "Export from PV 2028"
+      },
+      "export_from_pv_year_2029": {
+        "name": "Export from PV 2029"
       },
       "export_power": {
         "name": "Export power"
@@ -990,11 +1152,92 @@
       "pv_generation_cut_raw": {
         "name": "PV generation cut code"
       },
+      "pv_generation_month_1": {
+        "name": "PV generation January"
+      },
+      "pv_generation_month_10": {
+        "name": "PV generation October"
+      },
+      "pv_generation_month_11": {
+        "name": "PV generation November"
+      },
+      "pv_generation_month_12": {
+        "name": "PV generation December"
+      },
+      "pv_generation_month_2": {
+        "name": "PV generation February"
+      },
+      "pv_generation_month_3": {
+        "name": "PV generation March"
+      },
+      "pv_generation_month_4": {
+        "name": "PV generation April"
+      },
+      "pv_generation_month_5": {
+        "name": "PV generation May"
+      },
+      "pv_generation_month_6": {
+        "name": "PV generation June"
+      },
+      "pv_generation_month_7": {
+        "name": "PV generation July"
+      },
+      "pv_generation_month_8": {
+        "name": "PV generation August"
+      },
+      "pv_generation_month_9": {
+        "name": "PV generation September"
+      },
       "pv_generation_this_month": {
         "name": "PV generation this month"
       },
       "pv_generation_this_year": {
         "name": "PV generation this year"
+      },
+      "pv_generation_year_2015": {
+        "name": "PV generation 2015"
+      },
+      "pv_generation_year_2016": {
+        "name": "PV generation 2016"
+      },
+      "pv_generation_year_2017": {
+        "name": "PV generation 2017"
+      },
+      "pv_generation_year_2018": {
+        "name": "PV generation 2018"
+      },
+      "pv_generation_year_2019": {
+        "name": "PV generation 2019"
+      },
+      "pv_generation_year_2020": {
+        "name": "PV generation 2020"
+      },
+      "pv_generation_year_2021": {
+        "name": "PV generation 2021"
+      },
+      "pv_generation_year_2022": {
+        "name": "PV generation 2022"
+      },
+      "pv_generation_year_2023": {
+        "name": "PV generation 2023"
+      },
+      "pv_generation_year_2024": {
+        "name": "PV generation 2024"
+      },
+      "pv_generation_year_2025": {
+        "name": "PV generation 2025"
+      },
+      "pv_generation_year_2026": {
+        "name": "PV generation 2026"
+      },
+      "pv_generation_year_2027": {
+        "name": "PV generation 2027"
+      },
+      "pv_generation_year_2028": {
+        "name": "PV generation 2028"
+      },
+      "pv_generation_year_2029": {
+        "name": "PV generation 2029"
       },
       "pv_power_limitation_raw": {
         "name": "PV power limitation code"

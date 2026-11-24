@@ -15,7 +15,7 @@ tags:
 
 0.1.0a54 in [gerd](../entities/installation-gerd.md)'s own Home Assistant, the only client (the block read beside it
 through his Modbus proxy), a three-phase car on the managed AC22E-01, battery 27 % falling to 1 %, PV 1.2-2.4 kW.
-Everything was put back at 12:50. Source: `raw/gerd-wallbox-2026-11-24.md`.
+Put back at 12:50, and again at 14:51 after two hours in PV surplus. Source: `raw/gerd-wallbox-2026-11-24.md`.
 
 | Fact | Evidence |
 | --- | --- |
@@ -24,6 +24,7 @@ Everything was put back at 12:50. Source: `raw/gerd-wallbox-2026-11-24.md`.
 | **33538 (85) and 33539 (161) do not move in a one-phase session**; nothing else in 33538-33550 does but 33540 | the block every 2.5 s |
 | **PV surplus, grid purchase on: three phase at the 6 A minimum**, 3.9 kW at 1.6-2.2 kW of PV, the battery giving the rest | 11:14-11:17 |
 | Grid purchase switched off in that charge ends it in 18 s; it is not switched to one phase. In fast, switching it off changes nothing | 11:17, 11:04 |
+| Two hours in PV surplus, grid purchase off, at 0.9-1.6 kW over the house: **one attempt, 20 s, 5 Wh**; the battery took the surplus (3 to 34 %) | 12:53-14:50, the recorder |
 | Fast to PV surplus ends the session; charging on, written straight after the mode, read off about a minute later | 11:04-11:05 |
 | Fast to user defined and back, four times from Home Assistant (charging on written after the mode): **no session ended** | 11:34-11:42 |
 | The same from the app: fast to user defined keeps the session, **user defined to fast ends it** and nothing resumes it in the 90 s watched | 12:06-12:11 |

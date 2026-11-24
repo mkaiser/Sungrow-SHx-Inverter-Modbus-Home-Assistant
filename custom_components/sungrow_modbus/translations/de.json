@@ -669,20 +669,182 @@
       "diagnosis_tests_passed": {
         "name": "Diagnose: Tests bestanden"
       },
+      "direct_consumption_month_1": {
+        "name": "Direktverbrauch Januar"
+      },
+      "direct_consumption_month_10": {
+        "name": "Direktverbrauch Oktober"
+      },
+      "direct_consumption_month_11": {
+        "name": "Direktverbrauch November"
+      },
+      "direct_consumption_month_12": {
+        "name": "Direktverbrauch Dezember"
+      },
+      "direct_consumption_month_2": {
+        "name": "Direktverbrauch Februar"
+      },
+      "direct_consumption_month_3": {
+        "name": "Direktverbrauch März"
+      },
+      "direct_consumption_month_4": {
+        "name": "Direktverbrauch April"
+      },
+      "direct_consumption_month_5": {
+        "name": "Direktverbrauch Mai"
+      },
+      "direct_consumption_month_6": {
+        "name": "Direktverbrauch Juni"
+      },
+      "direct_consumption_month_7": {
+        "name": "Direktverbrauch Juli"
+      },
+      "direct_consumption_month_8": {
+        "name": "Direktverbrauch August"
+      },
+      "direct_consumption_month_9": {
+        "name": "Direktverbrauch September"
+      },
       "direct_consumption_this_month": {
         "name": "Direktverbrauch diesen Monat"
       },
       "direct_consumption_this_year": {
         "name": "Direktverbrauch dieses Jahr"
       },
+      "direct_consumption_year_2015": {
+        "name": "Direktverbrauch 2015"
+      },
+      "direct_consumption_year_2016": {
+        "name": "Direktverbrauch 2016"
+      },
+      "direct_consumption_year_2017": {
+        "name": "Direktverbrauch 2017"
+      },
+      "direct_consumption_year_2018": {
+        "name": "Direktverbrauch 2018"
+      },
+      "direct_consumption_year_2019": {
+        "name": "Direktverbrauch 2019"
+      },
+      "direct_consumption_year_2020": {
+        "name": "Direktverbrauch 2020"
+      },
+      "direct_consumption_year_2021": {
+        "name": "Direktverbrauch 2021"
+      },
+      "direct_consumption_year_2022": {
+        "name": "Direktverbrauch 2022"
+      },
+      "direct_consumption_year_2023": {
+        "name": "Direktverbrauch 2023"
+      },
+      "direct_consumption_year_2024": {
+        "name": "Direktverbrauch 2024"
+      },
+      "direct_consumption_year_2025": {
+        "name": "Direktverbrauch 2025"
+      },
+      "direct_consumption_year_2026": {
+        "name": "Direktverbrauch 2026"
+      },
+      "direct_consumption_year_2027": {
+        "name": "Direktverbrauch 2027"
+      },
+      "direct_consumption_year_2028": {
+        "name": "Direktverbrauch 2028"
+      },
+      "direct_consumption_year_2029": {
+        "name": "Direktverbrauch 2029"
+      },
       "ems_mode_selection_raw": {
         "name": "EMS-Modus Auswahl Code"
+      },
+      "export_from_pv_month_1": {
+        "name": "Einspeisung aus PV Januar"
+      },
+      "export_from_pv_month_10": {
+        "name": "Einspeisung aus PV Oktober"
+      },
+      "export_from_pv_month_11": {
+        "name": "Einspeisung aus PV November"
+      },
+      "export_from_pv_month_12": {
+        "name": "Einspeisung aus PV Dezember"
+      },
+      "export_from_pv_month_2": {
+        "name": "Einspeisung aus PV Februar"
+      },
+      "export_from_pv_month_3": {
+        "name": "Einspeisung aus PV März"
+      },
+      "export_from_pv_month_4": {
+        "name": "Einspeisung aus PV April"
+      },
+      "export_from_pv_month_5": {
+        "name": "Einspeisung aus PV Mai"
+      },
+      "export_from_pv_month_6": {
+        "name": "Einspeisung aus PV Juni"
+      },
+      "export_from_pv_month_7": {
+        "name": "Einspeisung aus PV Juli"
+      },
+      "export_from_pv_month_8": {
+        "name": "Einspeisung aus PV August"
+      },
+      "export_from_pv_month_9": {
+        "name": "Einspeisung aus PV September"
       },
       "export_from_pv_this_month": {
         "name": "Einspeisung aus PV diesen Monat"
       },
       "export_from_pv_this_year": {
         "name": "Einspeisung aus PV dieses Jahr"
+      },
+      "export_from_pv_year_2015": {
+        "name": "Einspeisung aus PV 2015"
+      },
+      "export_from_pv_year_2016": {
+        "name": "Einspeisung aus PV 2016"
+      },
+      "export_from_pv_year_2017": {
+        "name": "Einspeisung aus PV 2017"
+      },
+      "export_from_pv_year_2018": {
+        "name": "Einspeisung aus PV 2018"
+      },
+      "export_from_pv_year_2019": {
+        "name": "Einspeisung aus PV 2019"
+      },
+      "export_from_pv_year_2020": {
+        "name": "Einspeisung aus PV 2020"
+      },
+      "export_from_pv_year_2021": {
+        "name": "Einspeisung aus PV 2021"
+      },
+      "export_from_pv_year_2022": {
+        "name": "Einspeisung aus PV 2022"
+      },
+      "export_from_pv_year_2023": {
+        "name": "Einspeisung aus PV 2023"
+      },
+      "export_from_pv_year_2024": {
+        "name": "Einspeisung aus PV 2024"
+      },
+      "export_from_pv_year_2025": {
+        "name": "Einspeisung aus PV 2025"
+      },
+      "export_from_pv_year_2026": {
+        "name": "Einspeisung aus PV 2026"
+      },
+      "export_from_pv_year_2027": {
+        "name": "Einspeisung aus PV 2027"
+      },
+      "export_from_pv_year_2028": {
+        "name": "Einspeisung aus PV 2028"
+      },
+      "export_from_pv_year_2029": {
+        "name": "Einspeisung aus PV 2029"
       },
       "export_power": {
         "name": "Einspeiseleistung"
@@ -990,11 +1152,92 @@
       "pv_generation_cut_raw": {
         "name": "PV-Erzeugung abgeschaltet Code"
       },
+      "pv_generation_month_1": {
+        "name": "PV-Erzeugung Januar"
+      },
+      "pv_generation_month_10": {
+        "name": "PV-Erzeugung Oktober"
+      },
+      "pv_generation_month_11": {
+        "name": "PV-Erzeugung November"
+      },
+      "pv_generation_month_12": {
+        "name": "PV-Erzeugung Dezember"
+      },
+      "pv_generation_month_2": {
+        "name": "PV-Erzeugung Februar"
+      },
+      "pv_generation_month_3": {
+        "name": "PV-Erzeugung März"
+      },
+      "pv_generation_month_4": {
+        "name": "PV-Erzeugung April"
+      },
+      "pv_generation_month_5": {
+        "name": "PV-Erzeugung Mai"
+      },
+      "pv_generation_month_6": {
+        "name": "PV-Erzeugung Juni"
+      },
+      "pv_generation_month_7": {
+        "name": "PV-Erzeugung Juli"
+      },
+      "pv_generation_month_8": {
+        "name": "PV-Erzeugung August"
+      },
+      "pv_generation_month_9": {
+        "name": "PV-Erzeugung September"
+      },
       "pv_generation_this_month": {
         "name": "PV-Erzeugung diesen Monat"
       },
       "pv_generation_this_year": {
         "name": "PV-Erzeugung dieses Jahr"
+      },
+      "pv_generation_year_2015": {
+        "name": "PV-Erzeugung 2015"
+      },
+      "pv_generation_year_2016": {
+        "name": "PV-Erzeugung 2016"
+      },
+      "pv_generation_year_2017": {
+        "name": "PV-Erzeugung 2017"
+      },
+      "pv_generation_year_2018": {
+        "name": "PV-Erzeugung 2018"
+      },
+      "pv_generation_year_2019": {
+        "name": "PV-Erzeugung 2019"
+      },
+      "pv_generation_year_2020": {
+        "name": "PV-Erzeugung 2020"
+      },
+      "pv_generation_year_2021": {
+        "name": "PV-Erzeugung 2021"
+      },
+      "pv_generation_year_2022": {
+        "name": "PV-Erzeugung 2022"
+      },
+      "pv_generation_year_2023": {
+        "name": "PV-Erzeugung 2023"
+      },
+      "pv_generation_year_2024": {
+        "name": "PV-Erzeugung 2024"
+      },
+      "pv_generation_year_2025": {
+        "name": "PV-Erzeugung 2025"
+      },
+      "pv_generation_year_2026": {
+        "name": "PV-Erzeugung 2026"
+      },
+      "pv_generation_year_2027": {
+        "name": "PV-Erzeugung 2027"
+      },
+      "pv_generation_year_2028": {
+        "name": "PV-Erzeugung 2028"
+      },
+      "pv_generation_year_2029": {
+        "name": "PV-Erzeugung 2029"
       },
       "pv_power_limitation_raw": {
         "name": "PV-Leistungsbegrenzung Code"

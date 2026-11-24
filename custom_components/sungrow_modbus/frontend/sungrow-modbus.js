@@ -21,10 +21,11 @@ const UPDATE_CARD = "sungrow-modbus-update-card";
 const SETTINGS_CARD = "sungrow-modbus-settings-card";
 const RUN_CARD = "sungrow-modbus-run-card";
 const ENERGY_SETUP_CARD = "sungrow-modbus-energy-setup-card";
+const HISTORY_CARD = "sungrow-modbus-history-card";
 const HERE = new URL(import.meta.url);
 // The views were named `overview` before; an option that still says so is read as `home`.
 const RENAMED = { overview: "home" };
-const VIEW_ORDER = ["home", "energy", "battery", "inverter", "wallbox", "controls", "diagnosis"];
+const VIEW_ORDER = ["home", "energy", "history", "battery", "inverter", "wallbox", "controls", "diagnosis"];
 
 const MAX_COLUMNS = 3;
 
@@ -199,6 +200,17 @@ const buildCard = (card, ctx) => {
     }];
   }
   const grid = card.columns ? { grid_options: { columns: card.columns } } : {};
+  if (card.type === "history") {
+    const bars = card.entities.map((item) => ({ item, found: resolve(item.entity, family, everywhere) })).filter(({ found }) => found?.anchor);
+    if (!bars.length) return [];
+    return [{
+      anchor: true,
+      config: {
+        type: `custom:${HISTORY_CARD}`, period: card.period, ...grid,
+        bars: bars.map(({ item, found }) => ({ entity: found.entity, label: item.label, name: text(item.name, lang), color: item.color })),
+      },
+    }];
+  }
   if (card.entity) {
     const found = resolve(card.entity, family, everywhere);
     if (!found) return [];
@@ -508,6 +520,7 @@ SungrowModbusFlowCard.getStubConfig = async (hass) => {
 
 const { SungrowModbusRunCard } = await import(new URL(`run.js${HERE.search}`, HERE));
 const { SungrowModbusEnergySetupCard } = await import(new URL(`energy-setup.js${HERE.search}`, HERE));
+const { SungrowModbusHistoryCard } = await import(new URL(`history.js${HERE.search}`, HERE));
 const { SungrowModbusSettingsCard } = await import(new URL(`settings.js${HERE.search}`, HERE));
 
 const CARDS = [
@@ -518,6 +531,7 @@ const CARDS = [
 for (const [tag, element] of [
   [TESTS_CARD, SungrowModbusTestsCard], [UPDATE_CARD, SungrowModbusUpdateCard], [SETTINGS_CARD, SungrowModbusSettingsCard],
   [RUN_CARD, SungrowModbusRunCard], [ENERGY_SETUP_CARD, SungrowModbusEnergySetupCard],
+  [HISTORY_CARD, SungrowModbusHistoryCard],
 ]) {
   if (!customElements.get(tag)) customElements.define(tag, element);
 }

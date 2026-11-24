@@ -76,8 +76,8 @@ automation:
   client is what breaks it.
 - **Through a WiNet-S dongle**, some registers are not forwarded:
   - the daily, monthly and yearly history registers (6100 and up), which
-    Sungrow documents as cable-only, so the six *this month* and *this
-    year* energy sensors exist only over the inverter's own LAN port;
+    Sungrow documents as cable-only, so the energy sensors of each month and year, and *this
+    month* / *this year*, exist only over the inverter's own LAN port;
   - the inverter's sub-controller and battery firmware versions;
   - an SBR battery's cell and module details.
 
@@ -120,8 +120,9 @@ automation:
 - **Surplus charging**: mode *PV surplus* with grid purchase off charges on one
   phase from about 1.3 kW of surplus, the inverter switching it on and off by
   itself; with grid purchase on it charges on three phases at no less than 4 kW,
-  from the battery or the grid where the sun falls short. Measured at one house;
-  the one-phase charges there were short.
+  from the battery or the grid where the sun falls short. Measured at one house,
+  where at up to 1.6 kW of surplus no one-phase charge lasted 30 seconds and the
+  battery took the rest.
 - **An inverter's entry carries its readings, its controls and the
   diagnosis**: the diagnosis and the capability test are in the dashboard's
   [Diagnosis view](dashboard.md#diagnosis) and on the same device page, under *Diagnostic*, with *Diagnosis: mode* choosing what

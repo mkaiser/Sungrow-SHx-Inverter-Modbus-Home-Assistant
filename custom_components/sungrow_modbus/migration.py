@@ -54,6 +54,7 @@ from sungrow_modbus import Capability
 from .const import CONF_LEGACY_SLOT, DOMAIN
 from .derived_descriptions import DERIVED_BINARY_SENSORS, DERIVED_SENSORS
 from .entity import SungrowEntityDescription
+from .history_descriptions import HISTORY_DESCRIPTIONS
 from .number_descriptions import NUMBER_DESCRIPTIONS
 from .select_descriptions import SELECT_DESCRIPTIONS
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
@@ -63,7 +64,10 @@ _LOGGER = logging.getLogger(__name__)
 
 #: Every entity the integration can create, with the platform it belongs to.
 DESCRIPTIONS: tuple[tuple[str, SungrowEntityDescription], ...] = (
-    *((Platform.SENSOR.value, d) for d in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)),
+    *(
+        (Platform.SENSOR.value, d)
+        for d in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS, *HISTORY_DESCRIPTIONS)
+    ),
     *((Platform.BINARY_SENSOR.value, d) for d in DERIVED_BINARY_SENSORS),
     # A `number` reads the same register as a sensor but is a different
     # entity, with its own id and its own history. The YAML had both, so a
