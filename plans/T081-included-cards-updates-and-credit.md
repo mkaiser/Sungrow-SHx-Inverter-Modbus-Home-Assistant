@@ -35,22 +35,56 @@ pull requests (repository setting *Allow GitHub Actions to create pull requests*
 
 MIT asks only that the licence text travel with the code, and it does: `LICENSE.power-flow-card-plus` is in the wheel, a
 header names each bundle, and `doc/attribution.md` and `doc/dashboard.md` name the author. What is left is to be seen
-doing it, where users and the author will look:
+doing it, in three places users read, and one the author does.
 
-- **README's *Acknowledgements***, a line each for the two cards with their repositories (the README already thanks the
-  people behind the YAML package's history).
-- **The release notes**: each tag message that moves a card says which version it carries.
-- **In the dashboard**: the Diagnosis view's *Info* group gets a link to the author's cards (`cards.flixlix.com`), under
-  *Power flow cards by flixlix*. Not on Home: a credit line beside a circle is clutter every day for a thing needed once.
-- **Telling the author**, once, as a courtesy and not a request for leave: an issue or discussion on their repository
-  (flixlix/power-flow-card-plus has discussions off, so an issue) that says the cards are bundled unchanged except for the
-  element's name, links the integration, and thanks them. It is outward-facing and in the maintainer's name, so **the
-  maintainer sends it, or says so**; the text is drafted in the session that does it.
+### README, *Acknowledgements*
+
+A third group after the wallbox sources, in the section's voice (what it gave us, not that it is good):
+
+> The dashboard's power flow and the day's energy flow are drawn by two cards from one author, who published them under
+> the MIT licence:
+>
+> - **[flixlix/power-flow-card-plus](https://github.com/flixlix/power-flow-card-plus)** (v0.6.1) and
+>   **[flixlix/energy-flow-card-plus](https://github.com/flixlix/energy-flow-card-plus)** (v0.5.1), by Luca Félix. They
+>   come with the integration unchanged but for the element's name, so that nothing needs HACS and a copy of yours is
+>   left alone. Their licence travels in the package.
+
+The versions in that text are the pins, so a bump of `fetch_cards.py` edits the README line too: a test
+(`tests/test_dashboard.py`) holds the README's two versions to `fetch_cards.POWER` and `ENERGY`, so they cannot drift.
+
+### The dashboard
+
+- **Where**: the Diagnosis view's *Info* group, beside *Integration* and *Device page*, as a third link button,
+  **Power flow cards by flixlix** (`Leistungsflusskarten von flixlix`), opening `https://cards.flixlix.com` in a new tab.
+  Not on Home: a credit beside a circle is clutter every day for something needed once.
+- **How**: a new layout card `{"type": "credit-link"}` built like `integration-link` (`linkButton`, an external address
+  instead of a path), its two texts in `shared.js`. It shows only where the flow cards could be shown, so it is left out
+  for a house with neither (no inverter in the family).
+- **Revision**: the views change, so `layout.json`'s `revision` rises, `changes` gets a line, and the digest in
+  `tests/test_dashboard_layout.py` follows. `doc/dashboard.md` names the link in *Diagnosis* and the credit in
+  *The power flow*, which already carries the author's name.
+
+### Release notes
+
+- **A standing line in the tag message** while the cards ship, for every release, not only one that moves them:
+  *"Power and energy flow cards by flixlix (MIT): power-flow-card-plus v0.6.1, energy-flow-card-plus v0.5.1."* A release
+  that bumps a card says so in its own bullet above it, with what changed upstream in a sentence.
+- **Where it is written down**: `doc/maintainer_setup.md` (the paragraph on the tag message as the release note) and the
+  release skill's step 3, so the next session adds the line without being told; the versions come from
+  `scripts/release/fetch_cards.py`.
+
+### The author
+
+- **Telling them**, once, as a courtesy and not a request for leave: an issue on `flixlix/power-flow-card-plus`
+  (discussions are off) that says the cards are bundled unchanged except for the element's name, links the integration,
+  and thanks them. It is outward-facing and in the maintainer's name, so **the maintainer sends it, or says so**; the text is
+  drafted in the session that does it, and one issue covers both cards.
 - **Supporting them**: neither repository carries a funding file, and the profile names no sponsor page. Nothing to link
   until they publish one; look again at each bump.
 
 ## Order
 
-1. The README lines, the release-note habit and the *Info* link (a small change; a layout revision, since a view moves).
+1. The README group and its test, the release-note line (maintainer_setup, the release skill) and the *Info* link with its
+   layout revision -- one small change.
 2. The workflow and its section, tried once on a `workflow_dispatch` run against the current pins (it must open nothing).
 3. The note to the author, with the maintainer.
