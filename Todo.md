@@ -97,9 +97,8 @@ dropped link when no poll was refused. Outcome 5 is the hard-constraint code, so
 changes only with the maintainer.
 *Needs*: the maintainer's call on what Standby at the deadline means.
 
-**T082. The full gate takes 24 minutes**: measure where the time goes (9000 tests, one core), then run it in parallel or thin
-what repeats; CI and branch protection after the release depend on it (T047).
-*Needs*: nothing.
+**T082. The gate in CI**: `make test` runs in parallel (6 minutes on 8 cores); left is CI's own step, which runs one process
+with coverage (`.github/workflows/validate.yml`). *Needs*: a push to see it run.
 
 **T083. The way from the YAML package's `_inv1` / `_inv2` ids**: whether a house with several inverters migrates each to its
 own slot, against what `tests/test_migration.py` and the [legacy slot](.wiki/wiki/concepts/legacy-slot.md) already cover.

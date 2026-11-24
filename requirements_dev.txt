@@ -27,6 +27,7 @@ pytest>=8.0
 pytest-asyncio>=0.24
 pytest-cov  # CI runs the suite with --cov; pytest-homeassistant does not bring it
 pytest-homeassistant
+pytest-xdist  # `make test` runs the suite in parallel
 
 # Tooling.
 ruff>=0.14

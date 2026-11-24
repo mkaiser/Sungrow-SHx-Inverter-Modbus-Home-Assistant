@@ -47,7 +47,7 @@ landed in step 2; git keeps the file.
 ## 5. Run the gate
 
 `make check`, and read its real result -- the exit code and the test summary,
-not the last cheerful line. It takes about half an hour: give it a timeout
+not the last cheerful line. It takes 6 to 30 minutes by the cores free: give it a timeout
 well past that, because a timeout kill reads exactly like a red gate.
 
 `make quick` is enough only when nothing outside documentation changed.

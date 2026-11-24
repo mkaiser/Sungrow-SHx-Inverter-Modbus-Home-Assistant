@@ -101,6 +101,7 @@ The preview mirror's sync, for one, is then
 | `scripts/dev/fetch_references.sh` (`make refs`) | Clone upstream sources into `.reference/` for reading, hassfest included |
 | `scripts/dev/hassfest.sh` (`make hassfest`) | Run hassfest on the integration in the 2026.11 venv, against the clone from `make refs` |
 | `scripts/dev/ha_watch.py` | The helper a one-off hardware watch presses through, so its restore does not depend on a token that expires; `--restore <note>` finishes a dead watch's |
+| `make test` | The whole suite in parallel, one worker a core, each test file whole on one worker: about 6 minutes on 8 cores, 25 in one process (`pytest -q`) |
 | `pytest` | Library and integration tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
 | `mypy` | `--strict` over the library and the integration |

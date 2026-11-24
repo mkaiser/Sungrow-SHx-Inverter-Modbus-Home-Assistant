@@ -123,8 +123,8 @@ hooks: ## Run `make quick` before every commit, through a git pre-commit hook
 	ln -sf "$(CURDIR)/scripts/dev/pre-commit.sh" "$$(git rev-parse --git-path hooks)/pre-commit"
 .PHONY: hooks
 
-test: ## Run the test suite
-	pytest -q $(ARGS)
+test: ## Run the test suite, in parallel; with ARGS, those tests in one process
+	pytest -q $(if $(ARGS),$(ARGS),-n auto --dist loadfile)
 .PHONY: test
 
 lint: ## ruff check and ruff format --check
