@@ -572,19 +572,21 @@ class InverterSiteImportLimit(Component):
 
 
 class InverterClusterMode(Component):
-    """1 holding field, polled every 600s.
+    """2 holding fields, polled every 600s.
 
     Register 33500: 0xAA on both members of a master/slave cluster, 0x55 on a
     lone inverter. **Not in Sungrow's protocol document**; read alike over a
-    cable and through a WiNet-S (wiki: register-33500). 33501, the role, is not
-    mapped: a lone inverter answers it as a master does. Its own component, as
-    31211 is, so a firmware without it costs one refused read.
+    cable and through a WiNet-S (wiki: register-33500). 33501 is the role, and
+    means nothing on a lone inverter, which answers 160 as a master does. Its
+    own component, as 31211 is, so a firmware without it costs one refused read.
     """
 
     register_space = "holding"
 
     cluster_mode_raw = integer(reg(33500), signed=False, nan=65535)
     """Cluster mode raw: 0xAA cluster member, 0x55 lone inverter."""
+    cluster_role_raw = integer(reg(33501), signed=False, nan=65535)
+    """Cluster role raw: 160 master, 161-164 slave 1-4."""
 
 
 class InverterForcedCharging(Component):

@@ -37,9 +37,9 @@ cable, through a WiNet-S and through a Logger. In all 35:
   The two are read in different blocks, so they differ by what the battery did in between.
 - **On [01011.95.03](../entities/firmware-sapphire-h-01011-95-03.md) 13022 is signed**, the eleventh firmware and the
   one exception: at swo14's host, charging, 62365 (65536 - 3171) beside 5214's -3171; discharging, 1909 beside
-  1909 ([the reading](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)). The estimate's fallback, which signs 13022 by 13001
-  (`src/sungrow_modbus/hybrid_inverter/derived.py`), would make that -62365 W. 5214 answers there, so it is
-  not reached on that house.
+  1909 ([the reading](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)). The estimate's fallback reads it
+  as two's complement on that firmware (`src/sungrow_modbus/hybrid_inverter/derived.py`); 5214 answers there, so the
+  fallback is not reached on that house.
 - **With no battery, 13022 reads 65535**, the unavailable word: fwitten's slave
   ([cable](../sources/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)),
   and [swo14](../entities/installation-swo14.md)'s

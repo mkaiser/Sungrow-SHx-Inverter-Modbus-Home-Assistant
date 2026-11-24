@@ -69,6 +69,11 @@ RUNNING_STATES: dict[int, str] = {
 
 #: What Sungrow's writable mode registers mean. One pair, used by every one of
 #: them, and `scripts/generate/tables/writes.py` sends exactly these two values.
+#: Firmware whose 13022 is two's complement, not a magnitude: 62365 beside
+#: 5214's -3171 at swo14's (wiki: is-battery-power-firmware-dependent). The
+#: map keeps it unsigned: every other firmware measured reads a magnitude.
+SIGNED_13022_FIRMWARE: frozenset[str] = frozenset({"SAPPHIRE-H_01011.95.03"})
+
 MODE_ENABLED = 0xAA
 MODE_DISABLED = 0x55
 
@@ -499,7 +504,8 @@ class Derived:
 
         5214 (`battery_power`) where it answers. Where it is refused, as
         through an SH8.0RS's WiNet-S (#655), 13022's magnitude signed by
-        13001's charging and discharging bits, as evcc does. Neither bit set
+        13001's charging and discharging bits, as evcc does -- or 13022 alone
+        on `SIGNED_13022_FIRMWARE`, where it carries its own sign. Neither bit set
         reads as idle only if the magnitude is 0 too, and both set, or a
         magnitude with no bit, is None: a direction made up is a wrong sign.
         """
@@ -512,6 +518,9 @@ class Derived:
         )
         if magnitude is None or flow is None:
             return None
+        if self._inverter.firmware in SIGNED_13022_FIRMWARE:
+            word = int(magnitude)
+            return float(word - 0x10000 if word & 0x8000 else word)
         bits = int(flow)
         charging = bool(bits & POWER_FLOW_BITS["battery_charging"])
         discharging = bool(bits & POWER_FLOW_BITS["battery_discharging"])

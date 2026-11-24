@@ -10,6 +10,7 @@ number has to match what the entity showed yesterday.
 from __future__ import annotations
 
 import contextlib
+from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection
 import pytest
@@ -267,6 +268,25 @@ async def test_where_5214_is_refused_13022_takes_its_sign_from_13001(
 ) -> None:
     device = await _without_5214({**_BALANCE, 13000: flow, 13021: magnitude})
     assert device.derived.inverter_self_consumption == expected
+
+
+@pytest.mark.parametrize(
+    ("firmware", "flow", "word", "expected"),
+    [
+        # 62365 is -3171 W at swo14's host, charging: 6000 - 3171 - 2500 - 4000.
+        ("SAPPHIRE-H_01011.95.03", 0x02, 62365, -3671),
+        ("SAPPHIRE-H_01011.95.03", 0x04, 1909, 1409),
+        # A magnitude on every other firmware measured, the next one up included.
+        ("SAPPHIRE-H_01011.95.11", 0x02, 300, -800),
+        ("SAPPHIRE-H_01011.95.11", 0x04, 40000, 39500),
+    ],
+)
+async def test_13022_is_twos_complement_on_01011_95_03_alone(
+    firmware: str, flow: int, word: int, expected: int
+) -> None:
+    device = await _without_5214({**_BALANCE, 13000: flow, 13021: word})
+    with patch.object(SungrowInverter, "firmware", firmware):
+        assert device.derived.inverter_self_consumption == expected
 
 
 async def test_5214_wins_where_it_answers() -> None:

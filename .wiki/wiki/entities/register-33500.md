@@ -23,6 +23,7 @@ From [fwitten and mkaiser](../sources/fwitten-cluster-mirror-2026-11-24-summary.
 
 - **33500 tells a cluster member from a lone inverter**; 33501 and 33502 alone do not, since a lone
   inverter reads the master's values.
+- **They are read whole in one request**, over the cable and a WiNet-S ([the reads](../sources/cluster-mode-33500-two-words-2026-11-24-summary.md)).
 - **33501 gives the role** once 33500 is 0xAA.
 
 Not known: what another firmware (swo14's 01011.95.03 above all), an SH-RS or an SH-T answers. A

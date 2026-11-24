@@ -42,10 +42,6 @@ integration overnight answers it, with no writes and no capability test.
 *Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check; the
 reporter (Diegocampy) offered on #797 to test once the fix is out.
 
-**T087. 13022 is signed on 01011.95.03** (62365 for -3171 W at swo14): the fallback in
-`src/sungrow_modbus/hybrid_inverter/derived.py` would show -62365 W, so read it as two's complement there
-([the query](.wiki/wiki/queries/is-battery-power-firmware-dependent.md)). *Needs*: nothing.
-
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
 [Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the maintainer's go for a write;
 owners' diagnoses for the SH-T, other SH-RS and a lone 01011.95.03.

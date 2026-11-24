@@ -2186,3 +2186,11 @@ Backup mode, the other thing both failing clusters share, does not stop the impo
 ## [2026-11-24] changed | register-32998
 
 A cluster member (33500 = 0xAA) is no longer offered the number; the page says so.
+
+## [2026-11-24] ingested | cluster-mode-33500-two-words-2026-11-24
+
+33500-33502 in one request, cable and WiNet-S ([the source](sources/cluster-mode-33500-two-words-2026-11-24-summary.md)); `register-33500.md` says so.
+
+## [2026-11-24] changed | is-battery-power-firmware-dependent
+
+The fallback reads 13022 as two's complement on 01011.95.03; the page says so.

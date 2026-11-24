@@ -50,6 +50,8 @@ the meter's place in a cluster; a site-level controller taking over the limit.
 
 ## Status log
 
+- **2026-11-24, 21:50**: 33501 read beside 33500 (one request, measured) and published in every reading; bar12 tried again,
+  no answer. Next: the daylight cap at fwitten, bar12, and the answers to row 13. Uncommitted.
 - **2026-11-24, 21:00**: backup mode tried at mkaiser, restored: not the cause there. Next: a second cluster (row 13 of
   `devices-wanted.md`), step 3 in daylight, step 5's question (text with the maintainer), bar12's 33500.
 - **2026-11-24, 20:30**: steps 1, 2 and 4 done: 33500 read at fwitten, gerd and mkaiser, cable and WiNet-S (bar12 not
