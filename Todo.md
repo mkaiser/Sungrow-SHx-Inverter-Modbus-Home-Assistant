@@ -146,7 +146,7 @@ holds. Two owner settings are deliberate and stay as they are:
 `battery_max_soc` 90 % and the entry option `battery_max_power` 5000 W.
 
 **T007. The diagnosis and its capability tests, what is left**: the collection at the maintainer's SH10RT is ingested
-(56 of 56); left are the status line's wording, the *Diagnosis:* names on a real device page, the new spacing
+(56 of 56); left are translating the notifications, the cards' German in a browser, the *Diagnosis:* names on a real device page, the new spacing
 on hardware and the forced startup on an SH-T -- [plan](plans/T007-diagnosis-and-capability-tests.md).
 *Needs*: nothing.
 

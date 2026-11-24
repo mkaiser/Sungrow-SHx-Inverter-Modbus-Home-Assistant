@@ -9,7 +9,32 @@ what the dashboard's results card shows beside them.
 
 from __future__ import annotations
 
-from .procedure import CLAMPED, CONFIRMED, NO_EFFECT, REFUSED
+import re
+
+from .procedure import (
+    CLAMPED,
+    CONFIRMED,
+    DROPPED,
+    EFFECT_SCALED,
+    INCONCLUSIVE,
+    MATCH,
+    NO_BOUNDS,
+    NO_EFFECT,
+    NO_SNAPSHOT,
+    NO_WINDOW,
+    NOT_CAPABLE,
+    OFF_BY,
+    OUT_OF_TIME,
+    REFUSED,
+    SCALED,
+    SIGN_INVERTED,
+    SKIPPED,
+    SLOPE_WRONG,
+    STOPPED,
+    UNCHANGED,
+    UNSAFE_STATE,
+    USER_DECLINED,
+)
 
 type Label = dict[str, str]
 
@@ -257,6 +282,108 @@ STEPS: tuple[tuple[str, str], ...] = (
     ("user current", "wallbox user current"),
 )
 _AGAINST_POWER = " against power"
+
+
+#: A verdict's German; the ledger's English is the verdict itself.
+VERDICTS_DE: dict[str, str] = {
+    MATCH: "stimmt überein",
+    SCALED: "um genau eine Zehnerpotenz daneben",
+    SLOPE_WRONG: "zwei Punkte, falsche Steigung",
+    OFF_BY: "um etwas anderes daneben",
+    CLAMPED: "das Gerät hat den Wert begrenzt",
+    REFUSED: "mit einer Fehlermeldung abgelehnt",
+    UNCHANGED: "das Gerät hat seinen alten Wert behalten",
+    DROPPED: "die Verbindung brach ab",
+    SKIPPED: "nicht gelaufen",
+    CONFIRMED: "der Wechselrichter hat getan, was verlangt war",
+    EFFECT_SCALED: (
+        "der Wechselrichter hat auf einen um eine Zehnerpotenz falschen Wert reagiert"
+    ),
+    SIGN_INVERTED: "richtige Größe, falsche Richtung",
+    NO_EFFECT: "nichts Messbares ist passiert",
+    INCONCLUSIVE: "nicht zu entscheiden",
+    OUT_OF_TIME: "die Zeit reichte nicht",
+    STOPPED: "vom Besitzer gestoppt",
+    NOT_CAPABLE: "das Gerät hat es nicht",
+    UNSAFE_STATE: "das Haus war nicht im passenden Zustand",
+    USER_DECLINED: "nicht verlangt",
+    NO_BOUNDS: "die Grenzen ließen sich nicht bestimmen",
+    NO_SNAPSHOT: "der aktuelle Wert ließ sich nicht lesen",
+    NO_WINDOW: "kein Prüfwert kann hier einen Zehnerfehler zeigen",
+}
+
+#: What a check waits for, in German, by the words its need is written in
+#: (`ledger.NEEDS`, the readings' `Check.needs`, the wallbox's `CHECKS`).
+NEEDS_DE: dict[str, str] = {
+    "1 kWh into or out of the battery": "1 kWh in die oder aus der Batterie",
+    "10 kWh on the daily counter": "10 kWh auf dem Tageszähler",
+    "10 kWh through the counters": "10 kWh über die Zähler",
+    "100 kWh through the battery": "100 kWh durch die Batterie",
+    "2 kWh on the daily counter": "2 kWh auf dem Tageszähler",
+    "300 W through the meter": "300 W über den Zähler",
+    "PV above 1000 W": "PV über 1000 W",
+    "PV above 300 W": "PV über 300 W",
+    "PV above 700 W": "PV über 700 W",
+    "a car charging (status 3, drawing 5 A or more)": (
+        "ein ladendes Auto (Status 3, mindestens 5 A)"
+    ),
+    "a car drawing 500 W": "ein Auto, das 500 W zieht",
+    "a car plugged in, and one charging": "ein angestecktes und ein ladendes Auto",
+    "a charging session": "ein Ladevorgang",
+    "a day of polls": "ein Tag Messwerte",
+    "a house load of 500 W": "500 W Hausverbrauch",
+    "a midnight": "eine Mitternacht",
+    "a run": "ein Lauf",
+    "a session that delivers 0.5 kWh": "ein Ladevorgang mit 0,5 kWh",
+    "any state": "jeder Zustand",
+    "dark (PV under 200 W), the battery under 85 %": (
+        "Dunkelheit (PV unter 200 W), Batterie unter 85 %"
+    ),
+    "export, or a battery to discharge into the grid": (
+        "Einspeisung oder eine Batterie, die ins Netz entladen kann"
+    ),
+    "low-SoC standby, the battery at its minimum and no PV": (
+        "Standby bei niedrigem Ladestand, Batterie am Minimum und keine PV"
+    ),
+    "nothing flowing": "kein Ladestrom",
+    "the battery above 15 %": "Batterie über 15 %",
+    "the battery above 30 %": "Batterie über 30 %",
+    "the battery above 57 %": "Batterie über 57 %",
+    "the battery charging 200 to 800 W, nothing exported": (
+        "Batterie lädt mit 200 bis 800 W, keine Einspeisung"
+    ),
+    "the battery charging, above 55 %": "Batterie lädt, über 55 %",
+    "the battery discharging": "Batterie entlädt",
+    "the battery discharging 200 to 800 W, nothing imported": (
+        "Batterie entlädt mit 200 bis 800 W, kein Netzbezug"
+    ),
+    "the battery moving 300 W": "300 W in die oder aus der Batterie",
+    "the battery under 85 %": "Batterie unter 85 %",
+    "the battery under 85 % and not charging": "Batterie unter 85 % und lädt nicht",
+    "the inverter delivering 1000 W": "1000 W vom Wechselrichter",
+    "the inverter's energy history": "der Energieverlauf des Wechselrichters",
+    "the wallbox's power stepping by 1 kW": "ein Leistungssprung der Wallbox um 1 kW",
+    "three kilowatt-hours of flow": "drei Kilowattstunden",
+}
+
+_COUNT = re.compile(r"(\d+) of (\d+) [a-z ]+")
+
+
+def need(words: str, detail: str | None = None) -> Label:
+    """Return what a check waits for; a need without German stays English."""
+    en, de = words, NEEDS_DE.get(words, words)
+    if detail:
+        en = f"{en} ({detail})"
+        counted = _COUNT.fullmatch(detail)
+        de = f"{de} ({f'{counted[1]} von {counted[2]}' if counted else detail})"
+    return _label(en, de)
+
+
+def verdict_label(verdict: str | None) -> Label | None:
+    """Return a verdict as it is shown."""
+    if verdict is None:
+        return None
+    return _label(verdict, VERDICTS_DE.get(verdict, verdict))
 
 
 def _counter(name: str) -> Label | None:

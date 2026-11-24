@@ -50,7 +50,7 @@ const TEXT = {
     download: "Download the last diagnosis",
     download_failed: "The document is no longer there: it is kept until Home Assistant restarts. Download diagnostics on the device page has the results.",
     test_docs: "What the tests do",
-    measuring: "Measuring now: {what}", auto_waits: "Auto repeat waits for changed conditions.", starting: "Starting",
+    measuring: "Measuring now: {what}", auto_waits: "Auto repeat is on, and no run is in progress.", starting: "Starting",
     run_overall: "Overall", run_overall_value: "{n} of {total} checks", run_none: "no test kept yet", run_this: "This run",
     run_next: "Next attempt", next_running: "after this run", next_house: "as soon as conditions fit, checked every minute", next_off: "auto repeat is off",
     start: "Start", start_anyway: "Start anyway", started: "Started.", action_failed: "That did not work: {error}",
@@ -116,7 +116,7 @@ const TEXT = {
     download: "Letzte Diagnose herunterladen",
     download_failed: "Das Dokument ist nicht mehr da: es bleibt bis zum Neustart von Home Assistant. Diagnose herunterladen auf der Geräteseite enthält die Ergebnisse.",
     test_docs: "Was die Tests tun",
-    measuring: "Wird gerade gemessen: {what}", auto_waits: "Die automatische Wiederholung wartet auf andere Bedingungen.", starting: "Startet",
+    measuring: "Wird gerade gemessen: {what}", auto_waits: "Die automatische Wiederholung ist an, gerade läuft kein Test.", starting: "Startet",
     run_overall: "Insgesamt", run_overall_value: "{n} von {total} Prüfungen", run_none: "noch kein Test aufbewahrt", run_this: "Dieser Lauf",
     run_next: "Nächster Versuch", next_running: "nach diesem Lauf", next_house: "sobald die Bedingungen passen, jede Minute geprüft", next_off: "automatische Wiederholung ist aus",
     start: "Starten", start_anyway: "Trotzdem starten", started: "Gestartet.", action_failed: "Das hat nicht geklappt: {error}",
@@ -232,13 +232,25 @@ export const errorText = async (hass, err) => {
 };
 
 // What `sensor.diagnosis_step` starts with while auto repeat waits.
-export const WAITING = "waiting for changed test conditions";
+export const WAITING = "auto repeat";
+// Its earlier start, still in the recorded history the log is drawn from.
+const WAITING_BEFORE = "waiting for changed test conditions";
+export const isWaiting = (state) => state.startsWith(`${WAITING}: `) || state.startsWith(WAITING_BEFORE);
 // The same sensor's state, read: whether a run is in flight, and at what.
 export const readStep = (state) => {
   if (!state || ["unknown", "unavailable", "never run", "stopped", "finished"].includes(state)) return { running: false, waiting: false, what: "" };
-  if (state.startsWith(WAITING)) return { running: false, waiting: true, what: "" };
+  if (isWaiting(state)) return { running: false, waiting: true, what: "" };
   if (state.startsWith("failed:")) return { running: false, waiting: false, what: state };
   return { running: true, waiting: false, what: state.startsWith("starting the ") ? "" : state.replace(/^(wallbox )?capability test: /, "").replaceAll("_", " ") };
+};
+
+// The check a step belongs to, by its ledger name. The table before the names:
+// "discharging 4712 W to make the house export" is not the check "discharging
+// start threshold", which is its own step. Names longest first: one may start another.
+export const checkOf = (state, names, steps) => {
+  const step = state?.match(/test: (.*)$/)?.[1];
+  const own = step && names.find((name) => step.startsWith(name));
+  return own ?? (step && steps.find(([start]) => step.startsWith(start))?.[1]);
 };
 
 // Asks the settings card of an entry to show its questions.

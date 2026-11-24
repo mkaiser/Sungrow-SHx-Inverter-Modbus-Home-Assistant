@@ -7,7 +7,7 @@
 // The server guards all of it (`testimony.py`, the permissions); this says
 // beforehand what it would refuse, and afterwards what came of a press.
 
-const { el, errorText, language, loadTexts, readStep, say, SHOW_ANSWERS } = await import(
+const { checkOf, el, errorText, language, loadTexts, readStep, say, SHOW_ANSWERS } = await import(
   new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url)
 );
 
@@ -120,7 +120,7 @@ export class SungrowModbusRunCard extends HTMLElement {
     else if (status) this._line(say("run_overall", lang), say("run_none", lang));
     const progress = this._state("progress")?.state;
     if (running && progress && !GONE.includes(progress)) this._line(say("run_this", lang), `${Math.round(Number(progress))} %`, Number(progress));
-    if (running) this._content.append(el("div", "note", say("measuring", lang, { what: what || say("starting", lang) })));
+    if (running) this._content.append(el("div", "note", say("measuring", lang, { what: this._checkLabel(this._state("step")?.state, lang) ?? (what || say("starting", lang)) })));
     if (!status) return;
     const next = this._state("next")?.state;
     let when;
@@ -129,6 +129,35 @@ export class SungrowModbusRunCard extends HTMLElement {
     else if (next && !GONE.includes(next)) when = this._time(next);
     else when = say("next_house", lang);
     this._line(say("run_next", lang), when);
+  }
+
+  // A check's name for a person, once the names were fetched.
+  _checkLabel(state, lang) {
+    if (!this._names) {
+      this._names = { names: [], steps: [], labels: new Map() };
+      this._fetchNames();
+    }
+    const label = this._names.labels.get(checkOf(state, this._names.names, this._names.steps));
+    return label?.[lang] ?? label?.en;
+  }
+
+  async _fetchNames() {
+    try {
+      const { rows, steps } = await this._hass.callWS({ type: "sungrow_modbus/diagnosis/results", device_id: this._config.device_id });
+      // A first run has no rows yet, so the next run asks again.
+      if (!rows.length) {
+        this._names = undefined;
+        return;
+      }
+      this._names = {
+        names: rows.map((row) => row.name).sort((a, b) => b.length - a.length),
+        steps,
+        labels: new Map(rows.map((row) => [row.name, row.label])),
+      };
+      this._update();
+    } catch (err) {
+      console.warn("sungrow-modbus: no names of the checks", err);
+    }
   }
 
   _time(iso) {

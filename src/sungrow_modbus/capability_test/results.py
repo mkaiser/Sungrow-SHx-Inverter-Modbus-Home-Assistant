@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from . import ledger
-from .labels import OUTCOMES, STEPS, label
+from .labels import OUTCOMES, STEPS, Label, label, need, verdict_label
 
 #: What of an effect's or a readback's row is evidence, in this order.
 _EFFECT_FIELDS = (
@@ -23,6 +23,8 @@ _EFFECT_FIELDS = (
     "after",
     "detail",
 )
+#: How the wallbox's ledger starts the reason of a check without a run.
+_NEVER_RAN = "never ran: needs "
 _READBACK_FIELDS = ("original", "written", "library_read", "unit", "detail")
 
 
@@ -65,6 +67,26 @@ def _run(index: int, run: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _waits(name: str, row: Mapping[str, Any], why: str | None) -> Label | None:
+    """Return what a check waits for, in both languages.
+
+    The English is the ledger's own reason. The German says the need, where
+    one is known and waiting answers it; a reason in free text, and one that
+    only the owner's options change, stays as it was written.
+    """
+    if why is None:
+        return None
+    if row.get("needs"):
+        return need(str(row["needs"]), row.get("detail"))
+    en = why.removeprefix(f"{name}: ").removeprefix("waits for ")
+    de = en
+    if en.startswith(_NEVER_RAN):
+        de = need(en.removeprefix(_NEVER_RAN))["de"]
+    elif name in ledger.NEEDS and not ledger.needs_leave({"why": why}):
+        de = need(ledger.NEEDS[name][0])["de"]
+    return {"en": en, "de": de}
+
+
 def view(folded: Mapping[str, Any] | None) -> dict[str, Any]:
     """Return the results of a fold, or an empty view where nothing is kept."""
     folded = folded or {}
@@ -76,7 +98,7 @@ def view(folded: Mapping[str, Any] | None) -> dict[str, Any]:
     readback = {row.get("field"): row for row in folded.get("readback") or []}
     rows = []
     for name, row in summary.items():
-        why = missing.get(name)
+        waits = _waits(name, row, missing.get(name))
         run = row.get("run")
         evidence = (
             _evidence(effects.get(name), _EFFECT_FIELDS)
@@ -94,12 +116,9 @@ def view(folded: Mapping[str, Any] | None) -> dict[str, Any]:
                 "verdict": row.get("verdict"),
                 "established": bool(row.get("established")),
                 "disputed": name in disputed,
-                # A readings' check says "waits for" itself.
-                "waits_for": (
-                    why.removeprefix(f"{name}: ").removeprefix("waits for ")
-                    if why
-                    else None
-                ),
+                "waits_for": waits["en"] if waits else None,
+                "waits_label": waits,
+                "verdict_label": verdict_label(row.get("verdict")),
                 "run": run + 1 if isinstance(run, int) else None,
                 "read_at": row.get("read_at"),
                 "evidence": evidence,

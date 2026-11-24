@@ -104,6 +104,41 @@ def test_every_outcome_has_a_label() -> None:
     assert set(OUTCOMES) == set(CODES)
 
 
+def test_every_verdict_has_german() -> None:
+    assert set(labels.VERDICTS_DE) == set(ledger.RANK)
+
+
+def test_every_need_has_german() -> None:
+    """A need reworded, or whose threshold moved, changes its row here."""
+    needs = {
+        ledger.FORCED_STARTUP_NEEDS,
+        *(words for words, _due in ledger.NEEDS.values()),
+        *(check.needs for check in plausibility.checks()),
+        *(check.needs for check in wallbox_plausibility.checks()),
+        *(words for words, _option in wallbox_ledger.CHECKS.values()),
+    }
+    assert set(labels.NEEDS_DE) == needs
+
+
+def test_what_a_check_waits_for_is_said_in_german() -> None:
+    row = {"kind": "effect"}
+    why = "no forced discharge check: the battery is low"
+    said = results._waits("forced discharge", row, why)
+    assert said == {"en": why, "de": "Batterie über 30 %"}
+    left = f"forced discharge: {ledger.NEEDS_LEAVE[0]}"
+    said = results._waits("forced discharge", row, left)
+    assert said is not None
+    assert said["de"] == said["en"]
+    said = results._waits(
+        "wallbox phase", {"kind": "wallbox"}, "never ran: needs nothing flowing"
+    )
+    assert said is not None
+    assert said["de"] == "kein Ladestrom"
+    assert (
+        labels.need("a midnight", "2 of 3 events")["de"] == "eine Mitternacht (2 von 3)"
+    )
+
+
 def test_an_unknown_check_has_none() -> None:
     assert label("something new") is None
     assert label("total_pv_generation against daily_exported_energy") is None
@@ -181,6 +216,8 @@ def test_a_view_says_what_was_measured_and_what_is_missing() -> None:
     assert "detail" not in charge["evidence"]
     assert charge["waits_for"] is None
     assert "the battery is low" in rows["forced discharge"]["waits_for"]
+    assert charge["verdict_label"]["de"] == labels.VERDICTS_DE[CONFIRMED]
+    assert rows["power balance"]["waits_label"]["de"] == "any time (2 von 20)"
     assert rows["power balance"]["waits_for"] == "any time (2 of 20 observations)"
     (run,) = view["runs"]
     assert run["restored"] == 1

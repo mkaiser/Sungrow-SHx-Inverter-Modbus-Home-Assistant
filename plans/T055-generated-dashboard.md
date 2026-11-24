@@ -87,7 +87,8 @@ Nothing to install from HACS.
   reload would end a collection; the server refuses a save during a run, and an allowed test through the unlocked part.
 - **Results**: `sungrow_modbus/diagnosis/results` (`websocket.py`, administrators, the host taken out), built by
   `capability_test/results.py`; a person's name for every check in `capability_test/labels.py`, the ledger's names
-  unchanged. What a check waits for, and verdicts, are still English (T007's item 4.3).
+  unchanged. What a check waits for, and verdicts, are said in German too
+  (`NEEDS_DE`, `VERDICTS_DE`); a run's notes and the log stay English, being the record.
 - **Logs**: each run's notes come with the results; the live log is the recorded history of *Diagnosis: current
   step*, read by the card (`logLines` in `frontend/tests.js`), so nothing new is recorded.
 - **Revisions**: a change to `layout.json`'s views raises `revision` and adds to `changes`, which a digest in the test

@@ -95,8 +95,10 @@ RETIRED_ENTITIES: tuple[tuple[str, str], ...] = (
     ("switch", "continuous_capability_test"),
 )
 
-#: What *Diagnosis: current step* starts with while auto repeat waits.
-WAITING = "waiting for changed test conditions"
+#: What *Diagnosis: current step* starts with while auto repeat waits; what for
+#: follows, and it may be the clock as well as the house. The frontend
+#: (`shared.js`) reads the same word.
+WAITING = "auto repeat"
 
 #: How many log lines the status sensor's attribute carries. The whole log is
 #: in the ledger and in Download diagnostics; this is the tail worth a glance.

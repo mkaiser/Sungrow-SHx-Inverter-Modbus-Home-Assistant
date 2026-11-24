@@ -89,8 +89,8 @@ be tested with is `doc/capability_tests.md`. Left:
      still did not show: *Diagnosis: next attempt* stayed `unknown` with
      the reason only in its `waiting_for` attribute, because what it waits
      on is a condition and not a slot.
-     Decide whether that sensor should name a time at all when nothing is
-     scheduled, or say what it is waiting for in its state. Runs are kept
+     It keeps that: a timestamp sensor cannot say a condition, so it is
+     unknown, and *Diagnosis: current step* says what is waited for. Runs are kept
      with no cap, so a long collection grows the stored ledger and the
      diagnostics download (19 runs were 265 kB); clear the history
      between collections.
@@ -99,14 +99,13 @@ be tested with is `doc/capability_tests.md`. Left:
      written (2026-11-09); the 300 W floor after it still skips a battery
      charging a few hundred watts with kilowatts of headroom, unless the
      bracket confirms the start first.
-  3. **Translate** the status line, the step sensor's states (*waiting
-     for changed test conditions*, *stopped*) and the notifications once
-     their wording settles; English for now. One wording to settle first:
-     for about half a minute after a run ends the status line reads
-     *waiting for changed test conditions: a run is in progress*, which
-     contradicts itself -- the run is finished, progress is 100 and the
-     controls are released, but the continuous state has not caught up
-     (seen 2026-11-16, 23:20:11 to 23:20:41).
+  3. **The German, on a real dashboard.** The dashboard says the waiting
+     line, verdicts, what a check waits for and the step being measured in
+     German (maintainer, 2026-11-24: the cards, not the sensor states).
+     The states, the log and a run's notes stay English, being the record.
+     Not yet seen in a browser. The notifications are still English.
+     While auto repeat waits, the step and summary states start with *auto
+     repeat*, then say what for, which may be the clock.
   4. **Diagnosis: stop on hardware** -- **done 2026-11-17**, at the
      maintainer's SH10RT. Pressed 60 s into part B, after six settings had
      been written and during the forced charge probe: the restore ran to
@@ -125,6 +124,8 @@ be tested with is `doc/capability_tests.md`. Left:
 
 | When | Status |
 | --- | --- |
+| 2026-11-24 | **The cards in German**: verdicts, needs and the measured step (`labels.NEEDS_DE`, `VERDICTS_DE`, held to every need and verdict by a test). A free-text reason only the owner's options change stays English. Starting next: the notifications, then the cards in a browser. |
+| 2026-11-24 | **The waiting wording**: *waiting for changed test conditions: waiting for ...* doubled itself and was wrong when only the clock decided; the step and summary sensors now start with *auto repeat*, and the dashboard reads the old start too, for the recorded log. *Diagnosis: next attempt* stays a time or unknown. Left: the names on a real device page, the new spacing on hardware, the forced startup on an SH-T (T063). |
 | 2026-11-23, 22:10 CET | **Ingested** (the maintainer brought it forward): the diagnosis section of a diagnostics download from the production instance, `…-direct-lan-6.json`, with its wiki pages. The local copy in `tmp/mkaiser-t007-2026-11-23/` and the history in Home Assistant may go. |
 | 2026-11-23, 19:37 CET | **The collection at mkaiser's production entry is complete: 56 of 56, 0 failed** (51 passed, 5 bounds not enforced), 26 runs, every setting put back each time; auto repeat switched itself off. Today's runs 22-26 settled 13059 and 13100's readback, the forced discharge (1250 W asked: -3686 W to 1017 W), the export limit (1250 W asked, 6674 W to 1247.5 W), the charge ceiling at 53 % (4499 W to 0 and back), 13059 refusing 51 % with 0x04, and the discharging threshold (229 W to 0, 272 W after); run 21 the forced startup (122 s, 206 s, 16 s). The last two readings' checks settled on the evening's discharge. **Not ingested**, by the maintainer's word for the morning of 2026-11-24: a copy of both stores is in `tmp/mkaiser-t007-2026-11-23/`, local only. |
 | 2026-11-23 | **Auto repeat's spacing changed** (0.1.0a51): no fixed 30-minute slot, but 5 min after a run that settled a check and 30, then 60, after vain ones, a newly possible check shortening it once; the two SoC readbacks wait for 15 %. Not yet watched on hardware: what to look at is *Diagnosis: next attempt* and the Log after the next collection starts, at mkaiser's after the ingest. |

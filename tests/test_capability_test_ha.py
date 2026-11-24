@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 from datetime import timedelta
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
@@ -29,6 +30,7 @@ from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
+import custom_components.sungrow_modbus as component
 from custom_components.sungrow_modbus.const import (
     CONF_CAPABILITY_TEST_EXPORT,
     CONF_CAPABILITY_TEST_PV_CUT,
@@ -42,7 +44,11 @@ from custom_components.sungrow_modbus.const import (
     MODE_DIAGNOSTICS,
 )
 from custom_components.sungrow_modbus.diagnosis import PART_A, PART_B
-from custom_components.sungrow_modbus.diagnosis_entities import _last_outcome, elapsed
+from custom_components.sungrow_modbus.diagnosis_entities import (
+    WAITING,
+    _last_outcome,
+    elapsed,
+)
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
@@ -851,9 +857,11 @@ async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     assert len(runner.state.capability_test["runs"]) == 1
     assert "the next run at" in hass.states.get(STATUS).attributes["continuous_waiting"]
     # Waiting is visible where a person looks, and the clock says when.
-    assert hass.states.get(STEP).state.startswith(
-        "waiting for changed test conditions: "
-    )
+    assert hass.states.get(STEP).state.startswith("auto repeat: ")
+    assert hass.states.get(STATUS).state.startswith("auto repeat · ")
+    # The dashboard reads the same word to tell waiting from running.
+    shared = Path(component.__file__).parent / "frontend" / "shared.js"
+    assert f'WAITING = "{WAITING}"' in shared.read_text(encoding="utf-8")
     next_start = hass.states.get("sensor.sh10rt_diagnosis_next_attempt").state
     assert next_start not in ("unknown", "unavailable")
 
@@ -881,9 +889,7 @@ async def test_auto_repeat_says_what_it_waits_for_as_soon_as_a_run_ends(
     # last thing a tick said while the run went: "running for ..." or "a run
     # is in progress".
     assert runner.continuous.waiting.startswith("the next run at")
-    assert hass.states.get(STEP).state.startswith(
-        "waiting for changed test conditions: the next run at"
-    )
+    assert hass.states.get(STEP).state.startswith("auto repeat: the next run at")
 
 
 async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(

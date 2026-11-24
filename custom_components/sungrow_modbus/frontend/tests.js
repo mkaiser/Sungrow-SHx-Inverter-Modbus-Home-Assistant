@@ -7,7 +7,7 @@
 // The server judges; this only lays out what `sungrow_modbus/diagnosis/results`
 // answers, and asks again when the status sensor changes.
 
-const { DOCS, el, language, readStep, say, WAITING } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { checkOf, DOCS, el, isWaiting, language, readStep, say, WAITING } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 // Each outcome's mark and colour, worst first: the order of a list and of the bar.
 const BUCKETS = [
@@ -38,7 +38,7 @@ const logLines = (states, now) => {
     .filter(({ state }) => !["unknown", "unavailable", ""].includes(state))
     .filter(({ state }, index, all) => state !== all[index - 1]?.state);
   known.forEach(({ at, state }, index) => {
-    if (!state.startsWith(WAITING)) {
+    if (!isWaiting(state)) {
       lines.push({ at, text: state });
       return;
     }
@@ -143,11 +143,7 @@ export class SungrowModbusTestsCard extends HTMLElement {
 
   // Turn the mark of the check being measured into a moving one, and back.
   _markRunning(state) {
-    const step = state.match(/test: (.*)$/)?.[1];
-    // The table before the names: "discharging 4712 W to make the house
-    // export" is not the check "discharging start threshold", which is its own step.
-    const own = step && this._names.find((name) => step.startsWith(name));
-    const name = own ?? (step && this._steps.find(([start]) => step.startsWith(start))?.[1]);
+    const name = checkOf(state, this._names, this._steps);
     if (name === this._running) return;
     for (const [key, marks] of this._marks) {
       if (key !== this._running && key !== name) continue;
@@ -329,7 +325,7 @@ export class SungrowModbusTestsCard extends HTMLElement {
     const list = el("dl");
     const line = (key, value) => list.append(el("dt", "", say(`ev_${key}`, lang)), el("dd", "", String(value)));
     line("name", row.name);
-    if (row.verdict) line("verdict", row.verdict);
+    if (row.verdict) line("verdict", row.verdict_label?.[lang] ?? row.verdict);
     const unit = row.evidence.commanded_unit ?? row.evidence.unit ?? "";
     for (const key of EVIDENCE) {
       if (key in row.evidence) line(key, MEASURED.has(key) ? `${row.evidence[key]} ${unit}`.trim() : row.evidence[key]);
@@ -339,7 +335,7 @@ export class SungrowModbusTestsCard extends HTMLElement {
     if (!row.waits_for) return details;
     // What it waits for is the point of the row, so it shows without opening.
     const both = el("div");
-    both.append(details, el("div", "waits", `${say("waits_for", lang)}: ${row.waits_for}`));
+    both.append(details, el("div", "waits", `${say("waits_for", lang)}: ${row.waits_label?.[lang] ?? row.waits_for}`));
     return both;
   }
 
