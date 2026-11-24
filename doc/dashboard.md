@@ -33,7 +33,7 @@ It is the energy side of your house in one place. Home Assistant's own
 | View | Shows |
 | --- | --- |
 | **Home** | The power flow, the battery, today's energy flow, the car, and the last 24 hours. Badges at the top: the inverter's state, whether a car is plugged in, and an alarm, a fault or a running test while there is one |
-| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; energy per day over 30 days; totals since installation |
+| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; until then, which of your sensors it takes, and **Add these for me**; energy per day over 30 days; totals since installation |
 | **Battery** | Level, charge and discharge, temperature, health, cells and modules, and 48 hours of history |
 | **Inverter** | State, alarms and faults, the MPPTs, the grid phases, backup output, the device and its firmware |
 | **Wallbox** | Whether a car is plugged in, status, power, this session, phases and settings, and 24 hours beside PV, export and house load |
@@ -74,7 +74,7 @@ also in the card picker, as *Sungrow power flow*, for your own dashboards.
 
 Everything on **Controls** writes to your inverter at once and stays as set.
 So the view is for administrators only, and it is locked until you **hold it
-for 2 seconds**: you can read every value, but a tap changes nothing. The whole
+for 1.5 seconds**: you can read every value, but a tap changes nothing. The whole
 view then unlocks for 60 seconds and locks again by itself, or at once with
 **Lock**.
 
@@ -88,23 +88,48 @@ start, stop and the capability test stay under **Configure → Permissions**
 
 ## Diagnosis
 
-**Run** starts what *Mode* says. *Read-only* changes nothing; the extended
-tests write settings, read them back and put everything back. **Start** and
-the clear buttons are behind the lock and still under **Configure →
+**Run, Now** shows how many checks are answered over all runs (*Overall*) and,
+while a run is going, how far it is (*This run*) and what it measures. *Next
+attempt* is auto repeat's: a time while it waits after a run, *as soon as
+conditions fit* while it waits for the house (sun, a load, a battery level; it
+looks every minute), or that it is off.
+
+**Start** runs what *Mode* says. *Read-only* changes nothing; the extended
+tests write settings, read them back and put everything back. Before an
+extended test, three questions under *About your installation* (marked \*) must
+be answered: Start lists the missing ones and leads to them. *Read-only* lists
+them too and can be started anyway.
+
+**Clear** has two buttons, each asking once and saying when it is done:
+
+| Button | Forgets | To get it back |
+| --- | --- | --- |
+| *Clear test results* | The kept test runs, with what they wrote and measured | Run the tests again, about a day and a night |
+| *Clear collected readings* | What the plausibility checks collected, minute by minute | Days of ordinary operation |
+
+Neither changes anything on the device, and neither touches your history.
+
+**Start** and **Clear** are behind the lock and still under **Configure →
 Permissions**; **Stop** never is.
 
 **Results** is a checklist of every check in plain words, with a mark for how
-it came out: passed, failed, not clear yet, waiting (and for what), or not
+it came out, in groups: *Control response* (the device does what it is told),
+*Settings write & read* (a setting is stored as written), *Plausibility* (the
+readings agree with each other) and *Wallbox*. A check is passed, failed, not clear yet, waiting (and for what), or not
 enforced by, or not available on, your device. A
 turning mark is the check being measured. Tap a check for what was asked for and measured. *Runs* shows each
 run and whether every setting was put back; open one for what it did and why it
 left a check out. *Log* is what the test did step by step over the last 24
 hours, and follows a run while it happens; waiting is one line an hour with a
-dot for every five minutes. What the tests do is in
+dot for every five minutes. **Download the last diagnosis** gives the document
+of the last run, until Home Assistant restarts, to send to
+[the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
+What the tests do is in
 [capability_tests.md](capability_tests.md).
 
 **Settings** holds what a run goes by, the same options as under **Configure**.
-*Allowed tests* is behind the lock; *About your installation* (your name, how
+*Allowed tests* is behind the lock; *About your installation*, which the
+maintainers need to judge the results correctly (your name, how
 the inverter is connected, a Modbus proxy, whether the end of its address may
 be published) is not. Each is saved when you leave the field, without
 interrupting a collection, and is fixed while a test runs.
@@ -119,7 +144,7 @@ them are optional:
 ```yaml
 type: custom:sungrow-modbus
 controls: hold            # hold (default), admin, or hidden
-hold_seconds: 2           # how long to hold to unlock
+hold_seconds: 1.5         # how long to hold to unlock
 unlock_seconds: 60        # how long it stays unlocked
 power_flow: auto          # auto (default), or tiles
 views: [home, energy, battery, inverter, wallbox, controls, diagnosis]   # which views, in which order
@@ -177,7 +202,7 @@ integration is installed. Wrap a card in it:
 
 ```yaml
 type: custom:sungrow-modbus-lock-card
-hold_seconds: 2
+hold_seconds: 1.5
 unlock_seconds: 60
 group: inverter           # cards with the same group unlock together
 card:

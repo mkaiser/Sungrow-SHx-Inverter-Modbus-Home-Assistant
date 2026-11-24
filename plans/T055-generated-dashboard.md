@@ -6,6 +6,13 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-24**, the maintainer's review of the Diagnosis view, built, not released (layout revision 4, module 2): a run card
+  (`frontend/run.js`) with the overall progress, *This run* only while one runs, what decides the next attempt, a Start
+  that asks for the missing answers first (the settings command's `missing`) and clears that ask and confirm; results under
+  *Control response*, *Settings write & read*, *Plausibility*, *Wallbox*; the download asks for a fresh link; the lock opens
+  after 1.5 s; the *so far* notices are gone. Checked in Chromium on the simulator (English, German, phone). Not seen: a
+  wallbox entry's Start, several inverters, a link that has expired, hardware.
+
 - **2026-11-24**: the maintainer's tab, open over the update, ran 0.1.0a50's module on 0.1.0a53's layout and failed
   (`ref.split is not a function`); a reload is the cure. Guard built, not released: the layout's `module` against the
   module's `BUILDS`, and a too-old module says *reload*. It helps from the release that carries it on; 0.1.0a53's

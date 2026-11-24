@@ -97,7 +97,7 @@ def ws_settings(
             msg["id"], websocket_api.ERR_NOT_FOUND, "No loaded Sungrow Modbus device"
         )
         return
-    connection.send_result(msg["id"], diagnosis_settings.view(entry))
+    connection.send_result(msg["id"], diagnosis_settings.view(hass, entry))
 
 
 @websocket_api.websocket_command(
@@ -136,4 +136,4 @@ def ws_save_settings(
         )
         return
     hass.config_entries.async_update_entry(entry, options=options)
-    connection.send_result(msg["id"], diagnosis_settings.view(entry))
+    connection.send_result(msg["id"], diagnosis_settings.view(hass, entry))

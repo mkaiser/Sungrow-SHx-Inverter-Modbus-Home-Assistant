@@ -18,6 +18,7 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.testimony import (
     REQUIRED,
     async_refuse_if_unanswered,
+    missing_keys,
     unanswered,
 )
 from homeassistant.core import HomeAssistant
@@ -63,6 +64,7 @@ async def test_a_managed_wallbox_is_answered_by_its_inverter(
     inverter = _inverter(hass, {})
     with patch(MANAGING, return_value=inverter):
         assert len(unanswered(hass, wallbox)) == 3
+        assert missing_keys(hass, wallbox) == (inverter, [key for key, _ in REQUIRED])
         with pytest.raises(ServiceValidationError, match="testimony_missing") as err:
             async_refuse_if_unanswered(hass, wallbox)
         # The refusal names the entry where the answers go.
@@ -70,6 +72,7 @@ async def test_a_managed_wallbox_is_answered_by_its_inverter(
 
         hass.config_entries.async_update_entry(inverter, options=ANSWERS)
         assert unanswered(hass, wallbox) == []
+        assert missing_keys(hass, wallbox) == (inverter, [])
         async_refuse_if_unanswered(hass, wallbox)
 
 
@@ -79,5 +82,6 @@ async def test_a_wallbox_no_inverter_manages_is_asked_nothing(
     """No inverter to describe: the three questions do not apply."""
     wallbox = _wallbox(hass)
     with patch(MANAGING, return_value=None):
+        assert missing_keys(hass, wallbox) == (wallbox, [])
         assert unanswered(hass, wallbox) == []
         async_refuse_if_unanswered(hass, wallbox)

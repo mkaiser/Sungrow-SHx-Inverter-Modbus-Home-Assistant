@@ -61,7 +61,7 @@ itself is **Diagnosis: start** on the device page, in mode *Read-only*.
 | *Is there another inverter here that is not a Sungrow?* | as answered | Asks for its make and size next |
 | *Battery make and model* | empty | No register reports it |
 | *Anything else worth knowing* | empty | |
-| *May the last two octets of the address be published?* | on | Only the last two octets, never the third. Off writes `xxx.xxx` |
+| *Publish the last two octets of the address* | on | Only the last two octets, never the third. Off writes `xxx.xxx` |
 | *Also sweep the raw register bands* | on | Also reads 2181 addresses across sixteen bands, including undocumented ones: about five minutes on a cable, longer through a WiNet-S. Off reads only the known registers, in seconds |
 
 ## What the capability test may do
@@ -77,12 +77,12 @@ off, the test still forces the battery and checks every setting's scale. A wallb
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| *May it stop and restart the inverter?* | on | Stops it and starts it again, timing each step. 3 to 4 minutes without generation in daylight, over 6 at night; the backup output loses power meanwhile |
-| *May it switch feed-in limitation on?* | on | Where it is off, switches it on for about a minute to test the export limit. Where it is on already, this changes nothing |
-| *May it cut PV generation for about a minute?* | on | Where the inverter answers register 31211: cuts PV, checks DC power falls to zero, and allows it again. Needs 500 W of PV or more, so it skips itself at night. A passed check is how your firmware gets the **Cut PV generation** switch |
-| *May it set a forced-charging window around now?* | on | Where your own forced-charging schedule is off: writes a window around the inverter's clock, checks the battery starts charging, and puts every word of the schedule back. Skips itself when the battery is full |
-| *May it move the discharge windows away from now?* | on | Where the inverter answers the discharge schedules: moves every weekday and weekend window away from now, checks the battery stops discharging, and puts every word back. Skips itself when the battery is not discharging |
-| *May it cap grid import during a short forced charge?* | on | Where the inverter answers register 32998 (the **Grid import limit** reading): force-charges the battery for about two minutes, sets the limit halfway between the import that causes and the import without it, checks grid import comes down to it, and puts your limit back. Then writes 0, 5001 and 5000 once each to record which the inverter refuses. Skips itself when PV covers most of the charge, or the battery is full |
+| *Stop and restart the inverter* | on | Stops it and starts it again, timing each step. 3 to 4 minutes without generation in daylight, over 6 at night; the backup output loses power meanwhile |
+| *Switch feed-in limitation on* | on | Where it is off, switches it on for about a minute to test the export limit. Where it is on already, this changes nothing |
+| *Cut PV generation for about a minute* | on | Where the inverter answers register 31211: cuts PV, checks DC power falls to zero, and allows it again. Needs 500 W of PV or more, so it skips itself at night. A passed check is how your firmware gets the **Cut PV generation** switch |
+| *Set a forced-charging window around now* | on | Where your own forced-charging schedule is off: writes a window around the inverter's clock, checks the battery starts charging, and puts every word of the schedule back. Skips itself when the battery is full |
+| *Move the discharge windows away from now* | on | Where the inverter answers the discharge schedules: moves every weekday and weekend window away from now, checks the battery stops discharging, and puts every word back. Skips itself when the battery is not discharging |
+| *Limit grid import during a short forced charge* | on | Where the inverter answers register 32998 (the **Grid import limit** reading): force-charges the battery for about two minutes, sets the limit halfway between the import that causes and the import without it, checks grid import comes down to it, and puts your limit back. Then writes 0, 5001 and 5000 once each to record which the inverter refuses. Skips itself when PV covers most of the charge, or the battery is full |
 
 Anything the test could not put back becomes a repair under **Settings →
 Repairs** that restores it. The terminal diagnosis has no such switches: it
@@ -97,6 +97,6 @@ inverter's WiNet-S stays read only. Its options:
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| *May it write to the wallbox, with a car charging?* | **off** | Writes its output current, start/stop, enable and phase settings, reads each back, watches what the car draws and puts every value back. **A charge in progress is interrupted**: stopped and started again, paused below 6 A, the phase switched with the charge stopped first, and the wallbox left without a read for 75 seconds to see what it falls back to. Runs while a car charges, every 15 minutes in *Extended test (auto repeat)* until each question has an answer. Off until you switch it on, because it is the one test that interrupts a car |
-| *The highest charging current the wallbox test may offer* | empty (10 A) | Never above the wallbox's own rating. The offer below the 6 A minimum, the offer above the rating and the silence test wait until you have set it: a default is not consent to them |
+| *Write to the wallbox while a car charges* | **off** | Writes its output current, start/stop, enable and phase settings, reads each back, watches what the car draws and puts every value back. **A charge in progress is interrupted**: stopped and started again, paused below 6 A, the phase switched with the charge stopped first, and the wallbox left without a read for 75 seconds to see what it falls back to. Runs while a car charges, every 15 minutes in *Extended test (auto repeat)* until each question has an answer. Off until you switch it on, because it is the one test that interrupts a car |
+| *Highest charging current in the test* | empty (10 A) | Never above the wallbox's own rating. The offer below the 6 A minimum, the offer above the rating and the silence test wait until you have set it: a default is not consent to them |
 

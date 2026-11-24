@@ -39,7 +39,6 @@ from .const import (
     DIAGNOSIS_MODE_AUTO_REPEAT,
     DIAGNOSIS_MODE_EXTENDED,
     DIAGNOSIS_MODE_READ_ONLY,
-    DOMAIN,
     LINK_VALID,
 )
 from .continuous import WALLBOX_ALONE_INTERVAL
@@ -308,9 +307,6 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
         self._wallbox_folded = None
         self._wallbox_runs = []
         self._set(part=None)
-        persistent_notification.async_dismiss(
-            self.hass, f"{DOMAIN}_wallbox_ledger_{self.entry.entry_id}"
-        )
 
     async def async_clear_readings(self) -> None:
         """Forget what the wallbox's readings checks have gathered."""

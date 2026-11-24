@@ -161,6 +161,33 @@ async def test_settings_are_the_options_and_saving_does_not_reload(
     assert entry.runtime_data is runtime
 
 
+async def test_settings_say_what_an_extended_test_misses(
+    hass: HomeAssistant, hass_ws_client: Any, sungrow_unit: MockModbusUnit
+) -> None:
+    entry = await _setup(hass, sungrow_unit)
+    client = await hass_ws_client(hass)
+    device = _device(hass, entry.entry_id)
+    view = (await _settings(client, device))["result"]
+    keys = ["diagnosis_transport", "diagnosis_proxy", "diagnosis_other_inverter"]
+    assert view["missing"] == {
+        "entry_id": entry.entry_id,
+        "title": "SH10RT",
+        "keys": keys,
+    }
+    assert view["entry_id"] == entry.entry_id
+    required = [row["key"] for row in view["answers"] if row.get("required")]
+    assert required == keys
+    saved = await _settings(
+        client,
+        device,
+        "answers",
+        diagnosis_transport="unsure",
+        diagnosis_proxy="unknown",
+        diagnosis_other_inverter="no",
+    )
+    assert saved["result"]["missing"]["keys"] == []
+
+
 async def test_settings_refuse_what_is_not_theirs(
     hass: HomeAssistant, hass_ws_client: Any, sungrow_unit: MockModbusUnit
 ) -> None:

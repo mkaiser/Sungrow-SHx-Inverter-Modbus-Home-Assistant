@@ -74,7 +74,7 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written. In Home
-  Assistant that is a wallbox entry's own option, *Does no inverter manage this wallbox?*, off
+  Assistant that is a wallbox entry's own option, *No inverter manages this wallbox*, off
   until it is switched on. **Behaviour is what can be inferred**, and it is shown rather than
   acted on: 21203 moving during a charge with nothing written says managed, holding still through
   a charge suggests standalone, and an idle wallbox says nothing

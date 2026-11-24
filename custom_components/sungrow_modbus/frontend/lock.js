@@ -21,7 +21,7 @@ export class SungrowModbusLockCard extends HTMLElement {
     const changed = JSON.stringify(config.card) !== JSON.stringify(this._config?.card);
     this._config = {
       group: config.group ?? null,
-      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 2,
+      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 1.5,
       unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 60,
       card: config.card,
     };
@@ -161,7 +161,7 @@ export class SungrowModbusLockCard extends HTMLElement {
   _label() {
     if (!this._root || !this._config) return;
     const lang = language(this._hass);
-    this._root.querySelector(".hold").textContent = say("hold", lang, { s: this._config.hold_seconds });
+    this._root.querySelector(".hold").textContent = say("hold", lang, { s: this._config.hold_seconds.toLocaleString(lang) });
     this._root.querySelector(".left").textContent = say("unlocked", lang, { s: this._remaining() });
     this._root.querySelector("button").textContent = say("lock", lang);
   }

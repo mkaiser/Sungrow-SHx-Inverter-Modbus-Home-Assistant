@@ -17,7 +17,7 @@ You are asked once, during setup, and either answer is a real answer:
 | --- | --- | --- |
 | Entity IDs | `sensor.total_dc_power` | `sensor.sh10rt_total_pv_input_power` |
 | Recorder history | continues, uninterrupted | old history stays under the old IDs |
-| Energy dashboard | keeps its statistics | needs the new sensors selected |
+| Energy dashboard | keeps its statistics | needs the new sensors selected ([which](energy_dashboard.md)) |
 | Your dashboards | keep working unchanged | need updating |
 | Multiple inverters | each takes its own `inv <n>` IDs -- see below | works for any number |
 

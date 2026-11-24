@@ -545,11 +545,12 @@ device page, with the diagnostic sensors beside them, every name starting *Diagn
 | `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
 | `sensor.<name>_diagnosis_current_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_diagnosis_last_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
-| `sensor.<name>_diagnosis_next_attempt` | When auto repeat looks again whether a run is due, where the clock decides (`continuous.next_start`): the next 30-minute slot counted from the press of *Diagnosis: start*, once this slot has had its run; unknown while the house decides, with `waiting_for` |
+| `sensor.<name>_diagnosis_next_attempt` | When auto repeat may start its next run, where the clock decides (`continuous.next_start`): 5 minutes after a run that settled something, 30 then 60 after one that did not; unknown while the house decides, which is looked at every minute, with `waiting_for` |
 | `sensor.<name>_diagnosis_test_runs` | How many capability test runs are kept, with `runs_started` (auto repeat's, since *Diagnosis: start*) |
 | `sensor.<name>_diagnosis_test_summary` | The capability test runs kept for this firmware, folded: `running 12 min · 41/58 established · 3 runs · waiting for: …`. The time counts from the press of an extended run and moves on every minute (`running_since` as an attribute) |
 | `sensor.<name>_diagnosis_tests_passed`, `_failed`, `_not_supported`, `_inconclusive`, `_not_run_yet` | The summary's checks by outcome (`ledger.BUCKETS`), each `n/total`; the five add up to the total, which differs by model and firmware. `checks` names them |
 | `button.<name>_diagnosis_tests_clear_history` | Forgets the kept runs |
+| `button.<name>_diagnosis_readings_clear_history` | Forgets what the plausibility checks gathered, which takes days to get back |
 | `switch.<name>_diagnosis_skip_completed_tests` | On (the default), a single extended run and the action leave out the checks the kept runs established (`ledger.established`, the restart included) and write only for what is missing; a check two runs contradict is never left out. Off, the full test. Auto repeat always leaves them out, and switches it on. A check whose `CHECK_REVISIONS` number rose since the run that established it is not established. Kept over a restart: it narrows writes, it grants none |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at

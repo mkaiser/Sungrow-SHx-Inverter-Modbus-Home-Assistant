@@ -274,7 +274,7 @@ class DiagnosisRunner:
     def tests(self) -> dict[str, Any] | None:
         """The kept runs, folded, with the readings' checks counted in.
 
-        What the counters, the test summary and the notification show. The
+        What the counters, the test summary and the dashboard show. The
         document a run publishes carries the two apart: `capability_test` is
         the runs, `plausibility` the readings.
         """
@@ -577,19 +577,6 @@ class DiagnosisRunner:
             block,
         )
         self._wallbox_folded = wallbox_ledger.fold(runs)
-        try:
-            persistent_notification.async_create(
-                self.hass,
-                wallbox_ledger.markdown(
-                    self._wallbox_folded, wallbox_check_options(self.entry, self.hass)
-                ),
-                title=f"Wallbox capability tests so far: {self.entry.title}",
-                notification_id=f"{DOMAIN}_wallbox_ledger_{self.entry.entry_id}",
-            )
-        except Exception:  # the run succeeded; losing its summary must not fail it
-            _LOGGER.exception(
-                "%s: the wallbox test history could not be announced", self.entry.title
-            )
         self.async_notify()
         return block
 
@@ -929,7 +916,7 @@ class DiagnosisRunner:
             )
 
     async def async_clear_ledger(self) -> None:
-        """Forget every kept run, and the notification that showed them.
+        """Forget every kept run.
 
         **The readings' own evidence stays**, and the two are separate
         because they are gathered differently: a run is minutes of writing
@@ -947,7 +934,6 @@ class DiagnosisRunner:
             await async_wallbox_ledger_clear(self.hass, self.entry)
             self._wallbox_folded = None
         self._set(capability_test=None)
-        persistent_notification.async_dismiss(self.hass, self._ledger_notification_id)
 
     async def async_clear_readings(self) -> None:
         """Forget what the readings' checks have gathered. The runs stay.
@@ -990,38 +976,7 @@ class DiagnosisRunner:
         )
         folded = self._fold(runs)
         assert folded is not None
-        try:
-            self._async_announce_ledger(folded)
-        except Exception:  # the run succeeded; losing its summary must not fail it
-            _LOGGER.exception(
-                "%s: the capability test history could not be announced",
-                self.entry.title,
-            )
         return folded
-
-    @property
-    def _ledger_notification_id(self) -> str:
-        """One id per entry, so each run rewrites the summary in place."""
-        return f"{DOMAIN}_capability_ledger_{self.entry.entry_id}"
-
-    @callback
-    def _async_announce_ledger(self, folded: dict[str, Any]) -> None:
-        """Show every kept run in one notification, rewritten after each run.
-
-        A notification because a sensor state stops at 255 characters, and
-        what an owner collecting runs over a day needs is the list of checks
-        still waiting and for what. English for now, like the document.
-        """
-        shown = ledger.with_plausibility(folded, self.plausibility.summary())
-        assert shown is not None
-        persistent_notification.async_create(
-            self.hass,
-            ledger.markdown(shown)
-            + "\n\n**Download diagnostics** on the device page carries every "
-            "run in one document.",
-            title=f"Capability tests so far: {self.entry.title}",
-            notification_id=self._ledger_notification_id,
-        )
 
     @callback
     def _async_offer_the_document(self, document: dict[str, Any]) -> None:

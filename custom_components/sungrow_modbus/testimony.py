@@ -83,6 +83,18 @@ def answering_entry(
     return managing_entry(hass, entry)
 
 
+def missing_keys(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> tuple[SungrowConfigEntry, list[str]]:
+    """Return the entry that answers `REQUIRED`, and the keys it has no answer for."""
+    answering = answering_entry(hass, entry)
+    if answering is None:
+        return entry, []
+    return answering, [
+        key for key, _ in REQUIRED if not str(answering.options.get(key) or "").strip()
+    ]
+
+
 def unanswered(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,

@@ -20,7 +20,7 @@ back.
 It needs **Home Assistant 2026.11 or later**, and installs through
 **Settings → Marketplace**, from a second repository, the *preview channel*:
 the Marketplace reads a repository's default branch, and this one's is the
-YAML package. Four steps; the third is the one people forget.
+YAML package. Five steps; the third is the one people forget.
 
 ## 1. Add the preview channel to the Marketplace
 
@@ -87,9 +87,42 @@ that polls it (the YAML package, another Home Assistant, another tool)
 before adding the integration, or the first read fails with *could not
 reach*.
 
+## 5. The dashboards
+
+**The Sungrow dashboard**: **Settings → Dashboards → Add dashboard**, then
+*Sungrow Modbus* under *Community dashboards* ([the guide](dashboard.md)).
+
+**Home Assistant's Energy dashboard** is not filled in by itself; no
+integration can do that during setup. Two ways:
+
+- The Sungrow dashboard's **Energy** view lists, field by field, which of your
+  sensors to pick. With one inverter and an empty Energy dashboard, **Add
+  these for me** enters them after asking; it never changes one that is set up.
+- By hand, **Settings → Dashboards → Energy**:
+
+  | In the dashboard | Pick |
+  | --- | --- |
+  | **Grid consumption** | *Total imported energy* |
+  | **Return to grid** | *Total exported energy* |
+  | **Solar production energy** | *Total PV generation* |
+  | **Energy charged into the battery** | *Total battery charge energy* |
+  | **Energy discharged from the battery** | *Total battery discharge energy* |
+
+  [The Energy dashboard guide](energy_dashboard.md) has the entity ids, the
+  power sensors, the wallbox and several inverters.
+
+Coming from the YAML package with its entity ids taken over, your Energy
+dashboard keeps working as it is.
+
 ## Running the diagnosis
 
-On the device page (Settings → Devices & services → Sungrow Modbus → the
+The easiest place is the Sungrow dashboard's **Diagnosis** view (administrators
+only): answer *About your installation* at the bottom, hold the lock open,
+choose the *Mode* and press **Start**. *Results* fills as it runs, and
+**Download the last diagnosis** is the file to send
+([what the view shows](dashboard.md#diagnosis)).
+
+Without the dashboard, on the device page (Settings → Devices & services → Sungrow Modbus → the
 device):
 
 ![Device page with the diagnosis mode, Start and Stop](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
@@ -122,6 +155,11 @@ Please do not restart Home Assistant while a run is going.
   does: on (the default), it tests only what earlier runs have not answered
   yet; off, it is the full test again. Auto repeat switches it on. A test
   whose logic an update changed counts as not answered, and runs again.
+
+An extended test is refused until *How this inverter is connected*, the Modbus
+proxy question and the other-inverter question are answered, in the Diagnosis
+view or under **Configure**. Each has an answer for every house, *not sure*
+included.
 
 Send the document to
 [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).

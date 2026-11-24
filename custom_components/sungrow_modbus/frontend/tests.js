@@ -7,7 +7,7 @@
 // The server judges; this only lays out what `sungrow_modbus/diagnosis/results`
 // answers, and asks again when the status sensor changes.
 
-const { DOCS, language, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { DOCS, el, language, readStep, say, WAITING } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 // Each outcome's mark and colour, worst first: the order of a list and of the bar.
 const BUCKETS = [
@@ -24,8 +24,6 @@ const KINDS = ["effect", "readback", "plausibility", "wallbox"];
 const EVIDENCE = ["observable", "commanded", "before", "during", "after", "original", "written", "library_read", "detail"];
 const MEASURED = new Set(["before", "during", "after", "commanded", "original", "written", "library_read"]);
 
-// What `sensor.diagnosis_step` starts with while auto repeat waits.
-const WAITING = "waiting for changed test conditions";
 const LOG_HOURS = 24;
 const LOG_LINES = 1500;
 const DOT_MS = 5 * 60_000;
@@ -51,13 +49,6 @@ const logLines = (states, now) => {
     }
   });
   return lines.slice(-LOG_LINES);
-};
-
-const el = (tag, className, content) => {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (content !== undefined) node.textContent = content;
-  return node;
 };
 
 export class SungrowModbusTestsCard extends HTMLElement {
@@ -141,8 +132,13 @@ export class SungrowModbusTestsCard extends HTMLElement {
   _updateStep() {
     if (!this._step) return;
     const state = this._config.step ? this._hass.states[this._config.step]?.state : undefined;
-    this._step.textContent = state && !["unknown", "unavailable"].includes(state) ? state : "";
     this._markRunning(state ?? "");
+    const lang = language(this._hass);
+    const { running, waiting, what } = readStep(state);
+    if (running) {
+      const label = this._labels.get(this._running);
+      this._step.textContent = say("measuring", lang, { what: label?.[lang] ?? label?.en ?? (what || say("starting", lang)) });
+    } else this._step.textContent = waiting ? say("auto_waits", lang) : what;
   }
 
   // Turn the mark of the check being measured into a moving one, and back.
@@ -218,6 +214,7 @@ export class SungrowModbusTestsCard extends HTMLElement {
     this._running = undefined;
     this._steps = view.steps;
     // Longest first: one name may start another.
+    this._labels = new Map(view.rows.map((row) => [row.name, row.label]));
     this._names = view.rows.map((row) => row.name).sort((a, b) => b.length - a.length);
     if (view.total) content.append(this._bar(view, lang));
     if (view.total) content.append(this._legend(view, lang));
@@ -230,8 +227,11 @@ export class SungrowModbusTestsCard extends HTMLElement {
     const links = el("div", "links");
     if (view.document_url) {
       const link = el("a", "", say("download", lang));
-      link.href = view.document_url;
-      link.download = "";
+      link.href = "#";
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        this._download(link, lang);
+      });
       links.append(link);
     }
     const docs = el("a", "", say("test_docs", lang));
@@ -241,6 +241,26 @@ export class SungrowModbusTestsCard extends HTMLElement {
     links.append(docs);
     content.append(links);
     this._updateStep();
+  }
+
+  // The link is signed for a limited time, so a fresh one is asked for.
+  async _download(link, lang) {
+    try {
+      const { document_url: url } = await this._hass.callWS({
+        type: "sungrow_modbus/diagnosis/results", device_id: this._config.device_id,
+      });
+      if (!url) throw new Error("no document");
+      const file = el("a");
+      file.href = url;
+      file.target = "_blank";
+      file.download = "";
+      document.body.append(file);
+      file.click();
+      file.remove();
+    } catch (err) {
+      console.warn("sungrow-modbus: no document", err);
+      link.replaceWith(el("span", "note", say("download_failed", lang)));
+    }
   }
 
   _bar(view, lang) {

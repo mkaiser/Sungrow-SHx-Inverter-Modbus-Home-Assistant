@@ -8,34 +8,11 @@
 // about the installation (`answers`), and what the test may do (`tests`, which
 // the layout puts behind the lock). Each field is saved when it is left.
 
-const { language, say } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
+const { el, language, loadTexts, say, SHOW_ANSWERS } = await import(new URL(`shared.js${new URL(import.meta.url).search}`, import.meta.url));
 
 const DOMAIN = "sungrow_modbus";
 const SECTION = { answers: "diagnosis", tests: "capability_test" };
 const DETAIL = "diagnosis_other_inverter_detail";
-
-const el = (tag, className, content) => {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (content !== undefined) node.textContent = content;
-  return node;
-};
-
-// Configure's texts are loaded with its dialog, so asked for here. Once for all
-// cards: a second question while the first is open is answered without them.
-let texts;
-let textsOf;
-const loadTexts = (hass, lang) => {
-  if (textsOf !== lang) {
-    textsOf = lang;
-    texts = (async () => ({
-      options: await hass.loadBackendTranslation("options", DOMAIN),
-      selector: await hass.loadBackendTranslation("selector", DOMAIN),
-    }))();
-    texts.catch(() => (textsOf = undefined));
-  }
-  return texts;
-};
 
 export class SungrowModbusSettingsCard extends HTMLElement {
   static getStubConfig() {
@@ -57,6 +34,24 @@ export class SungrowModbusSettingsCard extends HTMLElement {
     this._seen = seen;
     // Typing is not interrupted; leaving the field fetches.
     if (!this._root?.activeElement) this._fetch();
+  }
+
+  connectedCallback() {
+    this._onShow = (event) => this._showAnswers(event);
+    window.addEventListener(SHOW_ANSWERS, this._onShow);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener(SHOW_ANSWERS, this._onShow);
+  }
+
+  // Cancelling tells the asker that there is a card to go to.
+  _showAnswers(event) {
+    if (this._config?.part !== "answers" || !this._view || event.detail.entry_id !== this._view.entry_id) return;
+    event.preventDefault();
+    const field = event.detail.keys.map((key) => this._root?.getElementById(key)).find(Boolean);
+    (field ?? this).scrollIntoView({ behavior: "smooth", block: "center" });
+    field?.focus({ preventScroll: true });
   }
 
   getCardSize() {
@@ -141,6 +136,7 @@ export class SungrowModbusSettingsCard extends HTMLElement {
 
   _render(view) {
     this._root ??= this.attachShadow({ mode: "open" });
+    this._view = view;
     const focus = this._root.activeElement?.id;
     const style = el("style");
     style.textContent = `
@@ -148,6 +144,7 @@ export class SungrowModbusSettingsCard extends HTMLElement {
       .field { display: grid; gap: 4px; }
       .check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
       .hint, .note { color: var(--secondary-text-color); font-size: 12px; overflow-wrap: anywhere; white-space: pre-line; }
+      .intro { font-size: 14px; color: var(--primary-text-color); }
       .note:empty { display: none; }
       details > summary { cursor: pointer; color: var(--secondary-text-color); font-size: 12px; }
       input:not([type=checkbox]), select, textarea {
@@ -165,6 +162,8 @@ export class SungrowModbusSettingsCard extends HTMLElement {
     else if (view.running) content.append(el("div", "hint", say("settings_running", this._lang)));
     const rows = view?.[this._config.part] ?? [];
     if (view && !rows.length) content.append(el("div", "hint", say("settings_none", this._lang)));
+    const asks = this._config.part === "answers" && rows.length;
+    if (asks) content.append(el("div", "hint intro", say("answers_intro", this._lang)));
     for (const row of rows) {
       // What the other inverter is, only after a yes.
       if (row.key === DETAIL && rows.find((other) => other.key === "diagnosis_other_inverter")?.value !== "yes") continue;
@@ -172,6 +171,7 @@ export class SungrowModbusSettingsCard extends HTMLElement {
       const label = el("label", row.kind === "boolean" ? "check" : "");
       label.htmlFor = row.key;
       const name = el("span", "", this._label(view.step, row.key, "data") || row.key);
+      if (row.required) name.append(" *");
       const input = this._input(row, view.running);
       label.append(...(row.kind === "boolean" ? [input, name] : [name]));
       field.append(label);
@@ -184,6 +184,7 @@ export class SungrowModbusSettingsCard extends HTMLElement {
       }
       content.append(field);
     }
+    if (asks && rows.some((row) => row.required)) content.append(el("div", "hint", say("answers_required", this._lang)));
     content.append(this._note);
     this._root.replaceChildren(style, card);
     if (focus) this._root.getElementById(focus)?.focus();

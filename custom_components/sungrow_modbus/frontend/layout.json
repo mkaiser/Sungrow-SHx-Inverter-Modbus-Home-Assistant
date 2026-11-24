@@ -1,8 +1,11 @@
 {
   "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
-  "module": 1,
-  "revision": 3,
+  "module": 2,
+  "revision": 4,
   "changes": [
+    {"revision": 4, "text": {
+      "en": "The Diagnosis view shows the overall progress, asks for missing answers before a start and confirms what it clears; the Energy view lists the sensors the Energy dashboard takes and can add them.",
+      "de": "Die Diagnose-Ansicht zeigt den Gesamtfortschritt, fragt vor dem Start nach fehlenden Angaben und bestätigt das Löschen; die Energie-Ansicht nennt die Sensoren für das Energie-Dashboard und kann sie eintragen."}},
     {"revision": 3, "text": {
       "en": "The power flow and the day's energy flow come with the integration, and the Diagnosis view holds the diagnosis's settings.",
       "de": "Leistungs- und Energiefluss des Tages kommen mit der Integration, und die Diagnose-Ansicht enthält die Einstellungen der Diagnose."}},
@@ -107,7 +110,17 @@
           "heading": {"en": "Energy dashboard", "de": "Energie-Dashboard"},
           "icon": "mdi:lightning-bolt-circle",
           "column_span": 3,
-          "cards": [{"type": "energy"}]
+          "cards": [{"type": "energy", "roles": {
+            "solar": "sensor.total_pv_generation|sensor.sg_total_pv_generation",
+            "import": "sensor.total_imported_energy|sensor.sg_total_imported_energy",
+            "export": "sensor.total_exported_energy|sensor.sg_total_exported_energy",
+            "charge": "sensor.total_battery_charge",
+            "discharge": "sensor.total_battery_discharge",
+            "solar_power": "sensor.total_dc_power|sensor.sg_total_dc_power",
+            "grid_power": "sensor.meter_active_power",
+            "battery_power": "sensor.battery_discharging_power_signed",
+            "soc": "sensor.battery_level",
+            "car": "~sensor.wallbox_lifetime_energy"}}]
         },
         {
           "heading": {"en": "Last 30 days", "de": "Letzte 30 Tage"},
@@ -420,9 +433,10 @@
           "icon": "mdi:play-circle",
           "groups": [
             {"heading": {"en": "Now", "de": "Jetzt"}, "cards": [
-              {"type": "tile", "entity": "sensor.diagnosis_progress", "name": {"en": "Progress", "de": "Fortschritt"}, "icon": "mdi:progress-check", "color": "blue", "features": [{"type": "bar-gauge", "min": 0, "max": 100}]},
+              {"type": "run", "part": "now", "roles": {
+                "status": "sensor.capability_test_status", "progress": "sensor.diagnosis_progress",
+                "step": "sensor.diagnosis_step", "next": "sensor.diagnosis_next_start"}},
               {"type": "entities", "entities": [
-                {"entity": "sensor.diagnosis_next_start", "name": {"en": "Next attempt", "de": "Nächster Versuch"}},
                 {"entity": "sensor.diagnosis_finished", "name": {"en": "Last finished", "de": "Zuletzt fertig"}},
                 {"entity": "binary_sensor.controls_held_by_test", "name": {"en": "Controls held by the test", "de": "Steuerung vom Test belegt"}}]},
               {"type": "tile", "entity": "button.diagnosis_stop", "name": {"en": "Stop", "de": "Stoppen"}, "icon": "mdi:stop-circle", "color": "red", "hide_state": true, "features": [{"type": "button"}]}]},
@@ -432,12 +446,11 @@
                 "de": "*Nur lesen* ändert nichts. Die *erweiterten* Tests schreiben Einstellungen, lesen sie zurück und stellen alles wieder her."}},
               {"type": "entities", "entities": [
                 {"entity": "select.diagnosis_mode", "name": {"en": "Mode", "de": "Modus"}},
-                {"entity": "switch.skip_established_capability_tests", "name": {"en": "Skip completed tests", "de": "Abgeschlossene überspringen"}},
-                {"entity": "button.diagnosis_start", "name": {"en": "Start", "de": "Starten"}}]}]},
+                {"entity": "switch.skip_established_capability_tests", "name": {"en": "Skip completed tests", "de": "Abgeschlossene überspringen"}}]},
+              {"type": "run", "part": "start", "roles": {"start": "button.diagnosis_start", "mode": "select.diagnosis_mode"}}]},
             {"heading": {"en": "Clear", "de": "Löschen"}, "locked": true, "cards": [
-              {"type": "entities", "entities": [
-                {"entity": "button.clear_capability_test_history", "name": {"en": "Test history", "de": "Testverlauf"}},
-                {"entity": "button.clear_capability_test_readings", "name": {"en": "Readings' history", "de": "Messwertverlauf"}}]}]},
+              {"type": "run", "part": "clear", "roles": {
+                "history": "button.clear_capability_test_history", "readings": "button.clear_capability_test_readings"}}]},
             {"heading": {"en": "Info", "de": "Info"}, "cards": [{"type": "integration-link"}, {"type": "device-link"}]}
           ]
         },

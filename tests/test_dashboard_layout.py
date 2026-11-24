@@ -29,12 +29,12 @@ VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "dia
 #: The layout's revision and the digest of its views. **A change to the views
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
-REVISION = (3, "e2ba8519c0de")
+REVISION = (4, "8a8d1e766eca")
 #: What building the layout takes (`BUILDS` in the module) and the digest of the
 #: keys and card types it uses. **A new word the module has to understand raises
 #: `module` and `BUILDS`**, so that an older module says "reload" rather than fail.
-MODULE = (1, "c7e8643f83e7")
-#: Card types the strategy builds: the last seven are its own, the rest core's.
+MODULE = (2, "b7f8487ed774")
+#: Card types the strategy builds: the last eight are its own, the rest core's.
 CARD_TYPES = {
     "tile",
     "entities",
@@ -46,6 +46,7 @@ CARD_TYPES = {
     "energy-flow",
     "tests",
     "settings",
+    "run",
     "device-link",
     "integration-link",
 }
@@ -145,6 +146,15 @@ def test_stop_is_never_locked() -> None:
             for group in section.get("groups", [section]):
                 if any("button.diagnosis_stop" in _refs(c) for c in group["cards"]):
                     assert not (view.get("locked") or group.get("locked"))
+
+
+def test_starting_and_clearing_are_locked_and_the_status_is_not() -> None:
+    for view in LAYOUT["views"]:
+        for section in view["sections"]:
+            for group in section.get("groups", [section]):
+                for card in group["cards"]:
+                    if card["type"] == "run":
+                        assert bool(group.get("locked")) == (card["part"] != "now")
 
 
 def test_a_changed_layout_raises_its_revision() -> None:

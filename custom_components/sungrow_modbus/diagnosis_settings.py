@@ -11,12 +11,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from homeassistant.core import HomeAssistant
 from sungrow_modbus.diagnosis_document import (
     OTHER_INVERTER_CLAIMS,
     PROXY_CLAIMS,
     TRANSPORT_CLAIMS,
 )
 
+from . import testimony
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
     CONF_CAPABILITY_TEST_CHARGE_WINDOW,
@@ -93,6 +95,9 @@ _WALLBOX_ALLOWED: dict[str, Field] = {
 #: Read when a run starts and by nothing at setup.
 RUN_OPTIONS = frozenset({*_SAID, *_ALLOWED})
 
+#: What an extended test is refused without.
+_REQUIRED = frozenset(key for key, _ in testimony.REQUIRED)
+
 #: Where an answer ends, so a paste cannot fill the config entry's storage.
 MAX_TEXT = 2000
 
@@ -109,8 +114,12 @@ def parts(entry: SungrowConfigEntry) -> dict[str, dict[str, Field]]:
     return {ANSWERS: _SAID, TESTS: _ALLOWED}
 
 
-def view(entry: SungrowConfigEntry) -> dict[str, Any]:
-    """Return what the view shows: each field, what it holds and may hold."""
+def view(hass: HomeAssistant, entry: SungrowConfigEntry) -> dict[str, Any]:
+    """Return what the view shows: each field, what it holds and may hold.
+
+    `missing` is what an extended test is refused without, and the entry whose
+    answers those are: a managed wallbox's are its inverter's.
+    """
     wallbox = entry.data.get(CONF_KIND) == KIND_WALLBOX
     shown: dict[str, list[dict[str, Any]]] = {}
     for part, fields in parts(entry).items():
@@ -122,12 +131,22 @@ def view(entry: SungrowConfigEntry) -> dict[str, Any]:
                 "kind": kind,
                 "value": entry.options.get(key, None if fixed else extra),
             }
+            if key in _REQUIRED:
+                row["required"] = True
             if kind == "select":
                 row["options"] = list(extra)
             if kind == "number":
                 row["min"], row["max"] = extra
             rows.append(row)
+    answering, missing = testimony.missing_keys(hass, entry)
+    asked = parts(answering)[ANSWERS]
     return {
+        "entry_id": entry.entry_id,
+        "missing": {
+            "entry_id": answering.entry_id,
+            "title": answering.title,
+            "keys": [key for key in missing if key in asked],
+        },
         "step": "wallbox" if wallbox else "init",
         "running": entry.runtime_data.diagnosis.state.running,
         **shown,

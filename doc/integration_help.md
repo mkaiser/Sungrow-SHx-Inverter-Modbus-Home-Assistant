@@ -113,8 +113,8 @@ automation:
   switches to one phase by itself in PV surplus with grid purchase off, and
   nothing sets them by hand.
 - **An inverter's entry carries its readings, its controls and the
-  diagnosis**: the diagnosis and the capability test are on the same device
-  page, under *Diagnostic*, with *Diagnosis: mode* choosing what
+  diagnosis**: the diagnosis and the capability test are in the dashboard's
+  [Diagnosis view](dashboard.md#diagnosis) and on the same device page, under *Diagnostic*, with *Diagnosis: mode* choosing what
   *Diagnosis: start* runs.
   A wallbox at its own address and an iHomeManager, each an entry of its own
   found by the network search, show their readings, read only; the wallbox's
@@ -138,10 +138,9 @@ hybrid and gets a map of its own, **read only**: what it makes, its trackers
 and phases, its totals, its work state, `Fault reported`, and the power
 limitation as set.
 
-- **Energy dashboard**: under *Solar production*, add **Total PV generation
-  (precise)**, in tenths of a kWh; where your model does not have it, **Total
-  PV generation**, in whole kWh. Not *Daily PV generation*: the dashboard
-  wants a total that only climbs.
+- **Energy dashboard**: under *Solar production*, add **Total PV generation**.
+  Not *Daily PV generation*: the dashboard wants a total that only climbs
+  ([the guide](energy_dashboard.md)).
 - **The meter block** (*Meter active power*, *Load power*, the import and
   export totals) reads only if a meter is wired to the SG itself. A meter
   that something else reads leaves these at 0.

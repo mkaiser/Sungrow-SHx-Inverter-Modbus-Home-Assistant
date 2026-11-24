@@ -137,7 +137,7 @@
       "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502, 503, 504, 505 und 516 werden alle versucht, du musst also nicht wissen, welchen deine Geräte verwenden. Das kann einige Minuten dauern, je nachdem, wie viele Geräte (Sungrow und andere) geprüft werden müssen."
     },
     "create_entry": {
-      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\n**Ein Dashboard liegt bereit**: **Einstellungen → Dashboards → Dashboard hinzufügen**, dann *Sungrow Modbus* unter *Community-Dashboards* ([die Anleitung]({dashboard_url})).\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
+      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\n**Ein Dashboard liegt bereit**: **Einstellungen → Dashboards → Dashboard hinzufügen**, dann *Sungrow Modbus* unter *Community-Dashboards* ([die Anleitung]({dashboard_url})).\n\nFür das Energie-Dashboard von Home Assistant listet seine Ansicht **Energie** die passenden Sensoren auf und kann sie für dich eintragen; [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt sie auch. Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
     }
   },
   "entity": {
@@ -1758,7 +1758,7 @@
               "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
               "diagnosis_battery": "Hersteller und Modell der Batterie",
               "diagnosis_comment": "Sonst noch etwas Wissenswertes",
-              "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
+              "publish_address": "Die letzten zwei Oktette der Adresse veröffentlichen",
               "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)",
               "register_dump": "Rohen Registerauszug in die Diagnose aufnehmen"
             },
@@ -1779,12 +1779,12 @@
             "name": "Was der Funktionstest darf",
             "description": "Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Starten in einem erweiterten Modus ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
-              "capability_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
-              "capability_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
-              "capability_test_pv_cut": "Darf er die PV-Erzeugung für etwa eine Minute abschalten?",
-              "capability_test_charge_window": "Darf er ein Zwangslade-Fenster um jetzt herum setzen?",
-              "capability_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?",
-              "capability_test_import_limit": "Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?"
+              "capability_test_restart": "Wechselrichter stoppen und neu starten",
+              "capability_test_export_limit": "Einspeisebegrenzung einschalten",
+              "capability_test_pv_cut": "PV-Erzeugung etwa eine Minute abschalten",
+              "capability_test_charge_window": "Zwangslade-Fenster um jetzt setzen",
+              "capability_test_discharge_window": "Entladefenster von jetzt weg verschieben",
+              "capability_test_import_limit": "Netzbezug während kurzer Zwangsladung begrenzen"
             },
             "data_description": {
               "capability_test_restart": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung schreibt der Test das Stoppregister, wartet, bis sich der Wechselrichter als gestoppt meldet, startet ihn wieder und misst alle drei Übergänge, damit die Zahlen jedes Modells festgehalten sind.\n\nWährend er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.",
@@ -1834,10 +1834,10 @@
             "name": "Was der Wallbox-Funktionstest darf",
             "description": "Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt die Einstellungen der Wallbox, liest jede zurück, beobachtet, was das Auto zieht, und setzt deinen Wert zurück. Er schreibt nichts, bis du ihn hier einschaltest.",
             "data": {
-              "capability_test_wallbox": "Darf er mit einem ladenden Auto auf die Wallbox schreiben?",
-              "wallbox_standalone": "Verwaltet kein Wechselrichter diese Wallbox?",
+              "capability_test_wallbox": "Auf die Wallbox schreiben, während ein Auto lädt",
+              "wallbox_standalone": "Kein Wechselrichter verwaltet diese Wallbox",
               "wallbox_managed_by": "Welcher Wechselrichter verwaltet diese Wallbox?",
-              "wallbox_max_amps": "Der höchste Ladestrom, den der Wallbox-Test anbieten darf"
+              "wallbox_max_amps": "Höchster Ladestrom im Test"
             },
             "data_description": {
               "capability_test_wallbox": "Aus, bis du es einschaltest. Eine Wallbox, die ein Hybrid-Wechselrichter verwaltet (sein E-Auto-Ladegerät in iSolarCloud), ignoriert Schreibzugriffe auf ihre eigenen Einstellungen. Ist der Wechselrichter hier ebenfalls eingerichtet, schreibt der Test deshalb stattdessen die Ladeeinstellungen **des Wechselrichters**: benutzerdefinierter Modus, ein Ladestrom von 6, 8 und 10 A (nie über dem höchsten Ladestrom unten), 5 A, die der Wechselrichter ablehnen soll, und ein Stopp und Start. Er beobachtet, was das Auto zieht, und setzt die Einstellungen des Wechselrichters zurück, die Ladung eingeschlossen. **Eine laufende Ladung ändert ihren Strom und wird für etwa 15 Sekunden gestoppt.** Auf eine Wallbox ohne hier eingerichteten Wechselrichter wird nicht geschrieben. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle 15 Minuten wiederholt, bis jede Frage eine Antwort hat.",
@@ -1852,7 +1852,7 @@
             "data": {
               "reporter": "Dein Name oder Pseudonym",
               "diagnosis_comment": "Sonst noch etwas Wissenswertes",
-              "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?"
+              "publish_address": "Die letzten zwei Oktette der Adresse veröffentlichen"
             },
             "data_description": {
               "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",

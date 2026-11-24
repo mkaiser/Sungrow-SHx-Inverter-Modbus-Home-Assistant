@@ -10,18 +10,31 @@ creates more than fifty energy sensors, and several have names that look right
 and are not, so this lists the ones to pick. Pick by **name**: an entity's id
 starts with your device's name, which you chose.
 
+**The easy way**: the [Sungrow dashboard](dashboard.md)'s **Energy** view lists
+your own sensors, by name and entity id, for each field below. While the Energy
+dashboard is empty and you have one inverter, an administrator can press **Add
+these for me** there: it asks, then enters them (no prices), and never changes
+a dashboard that is already set up.
+
+Nothing can fill it in during setup: the sources are your own settings.
+
 Names are the English ones; on a German system they are German
 ([entity_names.md](entity_names.md) has both). Entity ids stay English.
 
 ## A hybrid inverter (SH…RT, SH…RS, SH…T)
 
-| In the dashboard | Pick | Not |
-| --- | --- | --- |
-| **Grid → Grid consumption** | *Total imported energy* | *Daily imported energy* |
-| **Grid → Return to grid** | *Total exported energy* | *Total exported energy from PV*, which leaves out what the battery exported |
-| **Solar panels → Solar production energy** | *Total PV generation* | *Total PV generation & battery discharge*, which counts the battery's output again |
-| **Home battery storage → Energy charged into the battery** | *Total battery charge energy* | *Total battery charge energy from PV*, which leaves out grid charging |
-| **Home battery storage → Energy discharged from the battery** | *Total battery discharge energy* | |
+`<device>` is your device's name as Home Assistant writes it in ids, such as
+`sh10rt`. With the YAML package's ids taken over it is `sensor.` and the last
+part alone, and the battery's two are `sensor.total_battery_charge` and
+`sensor.total_battery_discharge`.
+
+| In the dashboard | Pick | Entity id | Not |
+| --- | --- | --- | --- |
+| **Grid → Grid consumption** | *Total imported energy* | `sensor.<device>_total_imported_energy` | *Daily imported energy* |
+| **Grid → Return to grid** | *Total exported energy* | `sensor.<device>_total_exported_energy` | *Total exported energy from PV*, which leaves out what the battery exported |
+| **Solar panels → Solar production energy** | *Total PV generation* | `sensor.<device>_total_pv_generation` | *Total PV generation & battery discharge*, which counts the battery's output again |
+| **Home battery storage → Energy charged into the battery** | *Total battery charge energy* | `sensor.<device>_total_battery_charge_energy` | *Total battery charge energy from PV*, which leaves out grid charging |
+| **Home battery storage → Energy discharged from the battery** | *Total battery discharge energy* | `sensor.<device>_total_battery_discharge_energy` | |
 
 The optional power sensors, which only draw the *Now* tab:
 

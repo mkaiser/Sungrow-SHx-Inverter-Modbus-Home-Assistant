@@ -37,10 +37,6 @@ this one's is the YAML package.
 under *Configure*, and [doc/integration_help.md](doc/integration_help.md) the
 actions, the known limitations and what to try when something fails.
 
-**The preview sets up diagnostics only**: it identifies the inverter and runs
-the diagnosis, and creates no sensors for the readings. Everything below is
-built and tested, and switched on in a later release.
-
 ## What this is
 
 A Home Assistant integration on the Modbus architecture Home Assistant

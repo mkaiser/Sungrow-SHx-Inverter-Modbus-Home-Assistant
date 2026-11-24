@@ -549,7 +549,7 @@ and bold are kept.
 >
 > **A dashboard is ready for you**: **Settings → Dashboards → Add dashboard**, then *Sungrow Modbus* under *Community dashboards* ([the guide]({dashboard_url})).
 >
-> To see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.
+> For Home Assistant's Energy dashboard, its **Energy** view lists the sensors to pick and can add them for you; [the Energy dashboard guide]({energy_dashboard_url}) has them too. Several energy sensors have names that look right and are not.
 >
 > **If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more.
 
@@ -557,7 +557,7 @@ and bold are kept.
 >
 > **Ein Dashboard liegt bereit**: **Einstellungen → Dashboards → Dashboard hinzufügen**, dann *Sungrow Modbus* unter *Community-Dashboards* ([die Anleitung]({dashboard_url})).
 >
-> Um ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
+> Für das Energie-Dashboard von Home Assistant listet seine Ansicht **Energie** die passenden Sensoren auf und kann sie für dich eintragen; [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt sie auch. Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
 >
 > **Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller.
 
@@ -1745,9 +1745,9 @@ and bold are kept.
 
 ### `options.step.init.sections.diagnosis.data.publish_address`
 
-> **EN** May the last two octets of the address be published?
+> **EN** Publish the last two octets of the address
 
-> **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
+> **DE** Die letzten zwei Oktette der Adresse veröffentlichen
 
 ### `options.step.init.sections.diagnosis.data.diagnosis_register_dump`
 
@@ -1835,39 +1835,39 @@ and bold are kept.
 
 ### `options.step.init.sections.capability_test.data.capability_test_restart`
 
-> **EN** May it stop and restart the inverter?
+> **EN** Stop and restart the inverter
 
-> **DE** Darf er den Wechselrichter stoppen und neu starten?
+> **DE** Wechselrichter stoppen und neu starten
 
 ### `options.step.init.sections.capability_test.data.capability_test_export_limit`
 
-> **EN** May it switch feed-in limitation on?
+> **EN** Switch feed-in limitation on
 
-> **DE** Darf er die Einspeisebegrenzung einschalten?
+> **DE** Einspeisebegrenzung einschalten
 
 ### `options.step.init.sections.capability_test.data.capability_test_pv_cut`
 
-> **EN** May it cut PV generation for about a minute?
+> **EN** Cut PV generation for about a minute
 
-> **DE** Darf er die PV-Erzeugung für etwa eine Minute abschalten?
+> **DE** PV-Erzeugung etwa eine Minute abschalten
 
 ### `options.step.init.sections.capability_test.data.capability_test_charge_window`
 
-> **EN** May it set a forced-charging window around now?
+> **EN** Set a forced-charging window around now
 
-> **DE** Darf er ein Zwangslade-Fenster um jetzt herum setzen?
+> **DE** Zwangslade-Fenster um jetzt setzen
 
 ### `options.step.init.sections.capability_test.data.capability_test_discharge_window`
 
-> **EN** May it move the discharge windows away from now?
+> **EN** Move the discharge windows away from now
 
-> **DE** Darf er die Entladefenster von jetzt weg verschieben?
+> **DE** Entladefenster von jetzt weg verschieben
 
 ### `options.step.init.sections.capability_test.data.capability_test_import_limit`
 
-> **EN** May it cap grid import during a short forced charge?
+> **EN** Limit grid import during a short forced charge
 
-> **DE** Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?
+> **DE** Netzbezug während kurzer Zwangsladung begrenzen
 
 ### `options.step.init.sections.capability_test.data_description.capability_test_restart`
 
@@ -2077,15 +2077,15 @@ and bold are kept.
 
 ### `options.step.wallbox.sections.capability_test.data.capability_test_wallbox`
 
-> **EN** May it write to the wallbox, with a car charging?
+> **EN** Write to the wallbox while a car charges
 
-> **DE** Darf er mit einem ladenden Auto auf die Wallbox schreiben?
+> **DE** Auf die Wallbox schreiben, während ein Auto lädt
 
 ### `options.step.wallbox.sections.capability_test.data.wallbox_standalone`
 
-> **EN** Does no inverter manage this wallbox?
+> **EN** No inverter manages this wallbox
 
-> **DE** Verwaltet kein Wechselrichter diese Wallbox?
+> **DE** Kein Wechselrichter verwaltet diese Wallbox
 
 ### `options.step.wallbox.sections.capability_test.data.wallbox_managed_by`
 
@@ -2095,9 +2095,9 @@ and bold are kept.
 
 ### `options.step.wallbox.sections.capability_test.data.wallbox_max_amps`
 
-> **EN** The highest charging current the wallbox test may offer
+> **EN** Highest charging current in the test
 
-> **DE** Der höchste Ladestrom, den der Wallbox-Test anbieten darf
+> **DE** Höchster Ladestrom im Test
 
 ### `options.step.wallbox.sections.capability_test.data_description.capability_test_wallbox`
 
@@ -2149,9 +2149,9 @@ and bold are kept.
 
 ### `options.step.wallbox.sections.diagnosis.data.publish_address`
 
-> **EN** May the last two octets of the address be published?
+> **EN** Publish the last two octets of the address
 
-> **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
+> **DE** Die letzten zwei Oktette der Adresse veröffentlichen
 
 ### `options.step.wallbox.sections.diagnosis.data_description.reporter`
 

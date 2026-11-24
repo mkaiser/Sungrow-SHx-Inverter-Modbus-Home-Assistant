@@ -80,8 +80,8 @@ its own address over TLS: a dry run without `--leave`, and **with it only on a w
 current driven by the inverter, which overwrites a write within seconds; it is controlled at the
 inverter instead (`src/sungrow_modbus/hybrid_inverter/ev_charger.py`). The test also refuses a
 setting that moves with nothing written, never disables the charge point and never offers under
-6 A. From Home Assistant the same answer is the entry's own question, *Does no inverter manage
-this wallbox?* in **Configure**, off until it is switched on: the integration shows what it makes
+6 A. From Home Assistant the same answer is the entry's own option, *No inverter manages
+this wallbox* in **Configure**, off until it is switched on: the integration shows what it makes
 of the wallbox's behaviour but never writes on its own reading
 (`src/sungrow_modbus/wallbox/management.py`, below). Its document is separate from the inverter's
 feature report.

@@ -11,9 +11,12 @@ power total), and the ordinary setup's success dialog links it
 anything that writes them needs an explicit action and a confirmation, never
 a setup step.
 
-Still proposed, in order of cost: a repair or a notification after setup
-that names the same entities; an action that adds them to the dashboard,
-only on request.
+The dashboard's Energy view names the house's own entities field by field
+(`frontend/energy-setup.js`), and while nothing is set up an administrator
+with one inverter can have them added (`energy/save_prefs`, confirmed, never
+over an existing setup). Checked on the simulator 2026-11-24, where
+`energy/validate` reported only statistics not there yet; not released. The
+grid power's sign (import positive) is what 26 of the committed diagnoses show.
 
 Unverified, each answered by one house, and stated as open in the guide:
 whether the import and export totals need a meter fitted (what a house

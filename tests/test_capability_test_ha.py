@@ -647,7 +647,9 @@ async def test_runs_are_kept_folded_and_survive_a_reload(
         counted += int(number)
     assert counted == total
     notifications = persistent_notification._async_get_or_create_notifications(hass)
-    assert f"{DOMAIN}_capability_ledger_{entry.entry_id}" in notifications
+    # The Diagnosis view shows every run; only the finished notice is posted.
+    assert f"{DOMAIN}_diagnosis_{entry.entry_id}" in notifications
+    assert f"{DOMAIN}_capability_ledger_{entry.entry_id}" not in notifications
 
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit

@@ -19,6 +19,8 @@ const FLOW_CARD = "sungrow-modbus-flow-card";
 const TESTS_CARD = "sungrow-modbus-tests-card";
 const UPDATE_CARD = "sungrow-modbus-update-card";
 const SETTINGS_CARD = "sungrow-modbus-settings-card";
+const RUN_CARD = "sungrow-modbus-run-card";
+const ENERGY_SETUP_CARD = "sungrow-modbus-energy-setup-card";
 const HERE = new URL(import.meta.url);
 // The views were named `overview` before; an option that still says so is read as `home`.
 const RENAMED = { overview: "home" };
@@ -28,7 +30,7 @@ const MAX_COLUMNS = 3;
 
 // What this module can build. A tab open over an update still runs the old
 // module, but the server hands it the new layout, whose `module` says what it needs.
-const BUILDS = 1;
+const BUILDS = 2;
 
 const { DOCS, language, say, text } = await import(new URL(`shared.js${HERE.search}`, HERE));
 
@@ -115,28 +117,28 @@ const linkButton = (name, icon, path) => ({
 });
 
 // The energy flow is Home Assistant's own card, which shows what the user's
-// Energy dashboard is set up with; without one, how to set it up.
-const energyCards = (ctx) => {
+// Energy dashboard is set up with; without one, which sensors it takes.
+const energyCards = (card, ctx) => {
+  const found = Object.entries(card.roles).map(([role, ref]) => [role, resolve(ref, ctx.family, ctx.everywhere)]);
+  const entities = Object.fromEntries(found.filter(([, f]) => f).map(([role, f]) => [role, f.entity]));
+  const setup = {
+    anchor: false,
+    config: { type: `custom:${ENERGY_SETUP_CARD}`, entities, several: ctx.several, done: ctx.energy, grid_options: { columns: "full" } },
+  };
   if (ctx.energy) {
-    return ["energy-date-selection", "energy-distribution", "energy-usage-graph", "energy-sources-table"].map((type) => ({
+    return [...["energy-date-selection", "energy-distribution", "energy-usage-graph", "energy-sources-table"].map((type) => ({
       anchor: false,
       config: { type, grid_options: { columns: type === "energy-distribution" || type === "energy-usage-graph" ? 18 : "full" } },
-    }));
+    })), setup];
   }
-  return [{
-    anchor: false,
-    config: {
-      type: "markdown",
-      content: `${say("energy_hint", ctx.lang)}\n\n[${say("energy_setup", ctx.lang)}](/config/energy) · [${say("energy_guide", ctx.lang)}](${DOCS}/energy_dashboard.md)`,
-    },
-  }];
+  return [setup];
 };
 
 // One layout card to zero or more Lovelace cards, each with `anchor`: whether
 // it shows something of this family, which is what keeps a section.
 const buildCard = (card, ctx) => {
   const { family, everywhere, lang, root } = ctx;
-  if (card.type === "energy") return energyCards(ctx);
+  if (card.type === "energy") return energyCards(card, ctx);
   if (card.type === "markdown") return [{ anchor: false, config: { type: "markdown", content: text(card.content, lang) } }];
   if (card.type === "device-link") {
     return [{ anchor: false, config: linkButton(say("device_page", lang), "mdi:chip", `/config/devices/device/${root}`) }];
@@ -168,6 +170,19 @@ const buildCard = (card, ctx) => {
       config: {
         type: `custom:${SETTINGS_CARD}`, device_id: ctx.hass.entities[status.entity].device_id, part: card.part,
         watch: [progress?.entity].filter(Boolean), grid_options: { columns: "full" },
+      },
+    }];
+  }
+  if (card.type === "run") {
+    const found = Object.entries(card.roles).map(([role, ref]) => [role, resolve(ref, family, everywhere)]).filter(([, f]) => f);
+    if (!found.some(([, f]) => f.anchor)) return [];
+    const entities = Object.fromEntries(found.map(([role, f]) => [role, f.entity]));
+    const anchor = found.find(([, f]) => f.anchor)[1];
+    return [{
+      anchor: true,
+      config: {
+        type: `custom:${RUN_CARD}`, part: card.part, device_id: ctx.hass.entities[anchor.entity].device_id, entities,
+        grid_options: { columns: "full" },
       },
     }];
   }
@@ -244,7 +259,7 @@ const buildCards = (layoutCards, ctx, locked) => {
   const built = layoutCards.flatMap(expand).flatMap((card) => buildCard(card, ctx));
   const anchor = built.some((card) => card.anchor);
   // Cards without any entity (the energy flow) stay, but do not make a view.
-  if (!anchor && layoutCards.some((card) => card.entity || card.entities || card.roles || card.status)) return null;
+  if (!anchor && layoutCards.some((card) => card.entity || card.entities || (card.roles && card.type !== "energy") || card.status)) return null;
   let cards = built.map((card) => card.config);
   if (locked && ctx.options.controls !== "admin") cards = [lockCard(cards, ctx.options, ctx.view)];
   else if (locked) {
@@ -383,7 +398,7 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     const lang = language(hass);
     const options = {
       controls: ["hold", "admin", "hidden"].includes(config.controls) ? config.controls : "hold",
-      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 2,
+      hold_seconds: Number(config.hold_seconds) > 0 ? Number(config.hold_seconds) : 1.5,
       unlock_seconds: Number(config.unlock_seconds) > 0 ? Number(config.unlock_seconds) : 60,
       power_flow: config.power_flow === "tiles" ? "tiles" : "auto",
     };
@@ -405,11 +420,13 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     const admins = views.some((view) => view.admin) ? await adminVisibility(hass) : null;
 
     const energy = wanted.includes("energy") && (await energyIsSetUp(hass));
+    let several = false;
     const context = (root, paths, family = house.families.get(root)) => ({
-      family, everywhere: house.everywhere, hass, lang, root, options, admins, energy, paths,
+      family, everywhere: house.everywhere, hass, lang, root, options, admins, energy, paths, several,
     });
 
     const { inverters, wallboxes, host, lent, merged } = guests(layout, roots, context, house.families);
+    several = inverters.length > 1;
     // Inverters first, so that a wallbox never takes the first tab.
     roots.sort((a, b) => inverters.includes(b) - inverters.includes(a));
     const familyFor = (view, root) =>
@@ -483,6 +500,8 @@ SungrowModbusFlowCard.getStubConfig = async (hass) => {
   return { entities: {} };
 };
 
+const { SungrowModbusRunCard } = await import(new URL(`run.js${HERE.search}`, HERE));
+const { SungrowModbusEnergySetupCard } = await import(new URL(`energy-setup.js${HERE.search}`, HERE));
 const { SungrowModbusSettingsCard } = await import(new URL(`settings.js${HERE.search}`, HERE));
 
 const CARDS = [
@@ -492,6 +511,7 @@ const CARDS = [
 // Parts of the dashboard, of no use in the card picker.
 for (const [tag, element] of [
   [TESTS_CARD, SungrowModbusTestsCard], [UPDATE_CARD, SungrowModbusUpdateCard], [SETTINGS_CARD, SungrowModbusSettingsCard],
+  [RUN_CARD, SungrowModbusRunCard], [ENERGY_SETUP_CARD, SungrowModbusEnergySetupCard],
 ]) {
   if (!customElements.get(tag)) customElements.define(tag, element);
 }

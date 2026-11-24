@@ -549,8 +549,8 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     extended run, and rewritten every minute while it lasts. The tail of the
     log and each missing check's reason are attributes, kept out of the
     recorder: they grow with every run, and the recorded history of the
-    state is already the log over time. The long form is the notification
-    the runner rewrites after every run.
+    state is already the log over time. The long form is the dashboard's
+    Diagnosis view.
     """
 
     _unrecorded_attributes = frozenset({"still_missing", "log"})
