@@ -36,8 +36,7 @@ integration overnight answers it, with no writes and no capability test.
 *Needs*: that download from an RS house, the reporter's or icefest's, on a build with the check; the
 reporter (Diegocampy) offered on #797 to test once the fix is out.
 
-What the maintainer's own inverter can answer is a planned test below
-(T001); the rest waits on other firmware or other houses.
+The rest waits on other firmware or other houses.
 
 ## Battery
 
@@ -147,24 +146,13 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
-**At the maintainer's SH10RT** (T001, T007) one instance serves
-them all: `make dev-real`, on :8125 against `config-real/`
+**At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
 a restart costs an armed auto repeat). Its entities are prefixed
 `hwr_sh10rt_`, and *Diagnosis: test summary* reports only when a run or a
 restart makes it -- `config-real/.storage/` is what the ledger actually
 holds. Two owner settings are deliberate and stay as they are:
 `battery_max_soc` 90 % and the entry option `battery_max_power` 5000 W.
-
-**T001. The site import limit (32998) at the maintainer's SH10RT, in
-daylight** -- [plan](plans/T001-T063-import-limit-and-forced-startup.md). What it
-settles: whether the cap is on the grid's share alone with PV counted. It held
-by hand on 2026-11-21 with PV above the load, but under passing clouds, with
-no clean after-bracket; what is left is that bracket. The engine cannot take
-this case (its 1250 W charge is absorbed by the surplus); the plan has the
-hand run, through the production entry's entities.
-*Needs*: the battery under ~85 % with PV 0.2-2 kW over the load, steady for
-5 min -- a low-battery morning in clear or uniform light.
 
 **T007. The diagnosis and its capability tests, what is left**: the collection at the maintainer's SH10RT is ingested
 (56 of 56); left are the status line's wording, the *Diagnosis:* names on a real device page, the new spacing
@@ -175,10 +163,9 @@ on hardware and the forced startup on an SH-T -- [plan](plans/T007-diagnosis-and
 now that 32998 failed on P023 at fwitten's master while it held at three
 single inverters
 ([the run](.wiki/wiki/sources/fwitten-import-limit-engine-2026-11-22-summary.md)):
-first rerun the check there once, with 32998 read back during the cap and through the WiNet-S too,
+first the hand run there ([plan](plans/T078-cluster-import-limit.md)),
 and ask on #546 whether ulfben's house is a cluster.
-*Needs*: fwitten's tunnel from the maintainer's host (the container has no
-IPv6 for that endpoint), after dark, battery under 90 %.
+*Needs*: the maintainer's go for the writes, after dark, battery 15-85 %.
 
 # Blockers
 

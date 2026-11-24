@@ -2142,3 +2142,8 @@ and the P020 page say so.
 A morning at gerd's from his own Home Assistant ([the source](sources/gerd-wallbox-2026-11-24-summary.md)): the managed test passed there, grid
 purchase chooses the phases in PV surplus and no block word does, Plug&Play decides a plug-in. The wallbox and phases
 pages and both queries say so.
+
+## [2026-11-24] updated | mkaiser-import-limit-pv-2026-11-07
+
+The run's second half already had PV above the load with a bracket after the cap (PV ~1.05-1.1 kW, load ~0.6 kW).
+`register-32998.md` and the summary say so; T001 is closed on it.

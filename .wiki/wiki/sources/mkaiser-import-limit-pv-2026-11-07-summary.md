@@ -18,6 +18,7 @@ in self-consumption. It follows [the night run](mkaiser-import-limit-2026-11-07-
 | Claim | Evidence | Status |
 | --- | --- | --- |
 | The cap is on grid import alone, with PV counted | at 200 the battery took PV + 2.00 kW - load: ~1205 W at a 1810 W load, ~2396 W at 615 W | watched by this repository, one run |
+| It holds with PV above the load, bracketed after | PV ~1.05-1.1 kW over a ~0.6 kW load: import 2047 W at 200, 20 W at 1, 4269 W with the cap lifted | one run; the bracket before the cap had the load at 1.8 kW |
 | It follows a load step | the load fell from 1810 to 615 W during the cap, and import stayed at the cap within ~4 s | one run, one step |
 | At 1 (0.01 kW) a forced charge draws only on PV | import ~15 W, battery charging at PV minus load | one run |
 | It settles within ~4-6 s, both ways | 2 s samples, one sample in between | one run |

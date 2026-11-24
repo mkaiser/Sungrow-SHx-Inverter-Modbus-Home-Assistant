@@ -27,11 +27,13 @@ in kW. The diagnosis's register dump reads it too.
 - **There it caps grid import alone, with PV counted.** With ~1.1 kW of PV at 200, the battery took
   PV + 2.00 kW - load, and it followed a load step from 1810 W to 615 W within ~4 s. At 1 (0.01 kW) a
   forced charge drew only on PV (import ~15 W). It settles within ~4-6 s and holds 0-3 % above the
-  cap. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
+  cap. **PV was above the load there, with a clean after-bracket**: at ~1.05-1.1 kW of PV and ~0.6 kW of
+  load, import was 2047 W under the 2.00 kW cap, 20 W under 0.01 kW and 4269 W with the cap lifted, the
+  4500 W charge commanded throughout. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
   ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The capability test's
   `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)),
   and again from the integration on 0.1.0a46 (1830 W cap, import 2439 W -> 1876.5 W -> 2323 W, PV below
-  the load). **With PV above the load** it held as well, by hand under passing clouds: a 2190 W cap
+  the load). **With PV above the load** it held again, by hand under passing clouds: a 2190 W cap
   under a 4500 W forced charge took median import from 4386 W to 1933 W while PV (2.6-3.6 kW) exceeded
   the ~2.1 kW load, the charge cut to 2.4-3.0 kW; single samples overshot to ~4 kW for ~10 s where PV
   dipped, and no clean after-bracket was possible
