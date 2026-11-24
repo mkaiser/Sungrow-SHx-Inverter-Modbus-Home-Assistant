@@ -29,11 +29,11 @@ VIEW_IDS = ["home", "energy", "battery", "inverter", "wallbox", "controls", "dia
 #: The layout's revision and the digest of its views. **A change to the views
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
-REVISION = (4, "8a8d1e766eca")
+REVISION = (5, "e5a025020b9e")
 #: What building the layout takes (`BUILDS` in the module) and the digest of the
 #: keys and card types it uses. **A new word the module has to understand raises
 #: `module` and `BUILDS`**, so that an older module says "reload" rather than fail.
-MODULE = (2, "b7f8487ed774")
+MODULE = (3, "3cf617dee157")
 #: Card types the strategy builds: the last eight are its own, the rest core's.
 CARD_TYPES = {
     "tile",
@@ -116,7 +116,7 @@ def test_a_setting_is_behind_the_lock_or_opens_no_dialog() -> None:
             continue
         for section in view["sections"]:
             for group in section.get("groups", [section]):
-                if group.get("locked"):
+                if group.get("locked") or section.get("control"):
                     continue
                 for card in group["cards"]:
                     refs = set(_refs(card)) - {"button.diagnosis_stop"}

@@ -6,7 +6,12 @@ Nothing to install from HACS.
 
 ## Status log
 
-- **2026-11-24**, the maintainer's review of the Diagnosis view, built, not released (layout revision 4, module 2): a run card
+- **2026-11-24**, from gerd's use of it, built, not released (layout revision 5, module 3): the Wallbox view has a locked,
+  administrators-only *Charging* section (start, mode, current, grid purchase, of the managing inverter by `~`), and the car is
+  in Home's energy flow of the day (the lifetime counter; the card takes its change) and in its 24 hours. The strategy run
+  in Chromium on gerd's registry, as administrator and as a plain user; not yet seen drawn there.
+
+- **2026-11-24**, the maintainer's review of the Diagnosis view, released in 0.1.0a54 (layout revision 4, module 2): a run card
   (`frontend/run.js`) with the overall progress, *This run* only while one runs, what decides the next attempt, a Start
   that asks for the missing answers first (the settings command's `missing`) and clears that ask and confirm; results under
   *Control response*, *Settings write & read*, *Plausibility*, *Wallbox*; the download asks for a fresh link; the lock opens

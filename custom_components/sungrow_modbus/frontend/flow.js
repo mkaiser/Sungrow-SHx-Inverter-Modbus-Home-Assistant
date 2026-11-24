@@ -48,6 +48,10 @@ const energyConfig = (e, lang) => {
     };
   }
   entities.home = { entity: e.home, name: say("home", lang), color_icon: true };
+  // The lifetime counter: the card takes what it rose by in the period.
+  if (e.car) {
+    entities.individual = [{ entity: e.car, name: say("car", lang), icon: "mdi:car-electric", color: "#9c27b0", display_zero: true }];
+  }
   return { type: `custom:${KINDS.energy[0]}`, entities, clickable_entities: true };
 };
 

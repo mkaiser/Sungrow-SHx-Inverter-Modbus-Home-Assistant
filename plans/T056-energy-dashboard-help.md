@@ -15,7 +15,7 @@ The dashboard's Energy view names the house's own entities field by field
 (`frontend/energy-setup.js`), and while nothing is set up an administrator
 with one inverter can have them added (`energy/save_prefs`, confirmed, never
 over an existing setup). Checked on the simulator 2026-11-24, where
-`energy/validate` reported only statistics not there yet; not released. The
+`energy/validate` reported only statistics not there yet; released in 0.1.0a54. The
 grid power's sign (import positive) is what 26 of the committed diagnoses show.
 
 Unverified, each answered by one house, and stated as open in the guide:

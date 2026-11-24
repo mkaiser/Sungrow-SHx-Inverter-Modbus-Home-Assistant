@@ -30,7 +30,7 @@ const MAX_COLUMNS = 3;
 
 // What this module can build. A tab open over an update still runs the old
 // module, but the server hands it the new layout, whose `module` says what it needs.
-const BUILDS = 2;
+const BUILDS = 3;
 
 const { DOCS, language, say, text } = await import(new URL(`shared.js${HERE.search}`, HERE));
 
@@ -255,11 +255,12 @@ const lockCard = (cards, options, group) => ({
 
 // The cards of a section, or of one group of it, and whether they show
 // something of this family; null where they name entities and found none.
-const buildCards = (layoutCards, ctx, locked) => {
+const buildCards = (layoutCards, ctx, locked, lent = false) => {
   const built = layoutCards.flatMap(expand).flatMap((card) => buildCard(card, ctx));
   const anchor = built.some((card) => card.anchor);
   // Cards without any entity (the energy flow) stay, but do not make a view.
-  if (!anchor && layoutCards.some((card) => card.entity || card.entities || (card.roles && card.type !== "energy") || card.status)) return null;
+  if (lent && !built.length) return null;
+  if (!anchor && !lent && layoutCards.some((card) => card.entity || card.entities || (card.roles && card.type !== "energy") || card.status)) return null;
   let cards = built.map((card) => card.config);
   if (locked && ctx.options.controls !== "admin") cards = [lockCard(cards, ctx.options, ctx.view)];
   else if (locked) {
@@ -270,6 +271,9 @@ const buildCards = (layoutCards, ctx, locked) => {
 };
 
 const buildSection = (section, ctx, locked) => {
+  // Controls in a view everyone sees: for administrators, locked, and of the
+  // inverter's where the view is the wallbox's, so they do not make the view.
+  if (section.control && (ctx.options.controls === "hidden" || !ctx.hass.user?.is_admin)) return null;
   let cards;
   let anchor;
   if (section.groups) {
@@ -283,7 +287,7 @@ const buildSection = (section, ctx, locked) => {
     anchor = cards.length > 0;
     if (!anchor) return null;
   } else {
-    const built = buildCards(section.cards, ctx, locked);
+    const built = buildCards(section.cards, ctx, locked || Boolean(section.control), Boolean(section.control));
     if (!built) return null;
     ({ cards, anchor } = built);
   }
@@ -291,6 +295,8 @@ const buildSection = (section, ctx, locked) => {
   if (section.view && ctx.paths[section.view]) heading.tap_action = navigate(ctx.paths[section.view]);
   const grid = { type: "grid", cards: [heading, ...cards] };
   if (section.column_span) grid.column_span = section.column_span; // "fill" is settled by buildView
+  // For a copy taken over, which everyone then loads as it was saved.
+  if (section.control && ctx.admins) grid.visibility = [{ condition: "user", users: ctx.admins.map(({ user }) => user) }];
   return { grid, anchor };
 };
 
@@ -417,7 +423,7 @@ class SungrowModbusDashboardStrategy extends HTMLElement {
     const roots = config.device_id
       ? house.roots.filter((root) => root === house.rootOf(config.device_id))
       : house.roots;
-    const admins = views.some((view) => view.admin) ? await adminVisibility(hass) : null;
+    const admins = views.some((view) => view.admin || view.sections.some((section) => section.control)) ? await adminVisibility(hass) : null;
 
     const energy = wanted.includes("energy") && (await energyIsSetUp(hass));
     let several = false;

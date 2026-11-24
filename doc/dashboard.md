@@ -33,10 +33,10 @@ It is the energy side of your house in one place. Home Assistant's own
 | View | Shows |
 | --- | --- |
 | **Home** | The power flow, the battery, today's energy flow, the car, and the last 24 hours. Badges at the top: the inverter's state, whether a car is plugged in, and an alarm, a fault or a running test while there is one |
-| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; until then, which of your sensors it takes, and **Add these for me**; energy per day over 30 days; totals since installation |
+| **Energy** | Home Assistant's own energy flow, where your [Energy dashboard](energy_dashboard.md) is set up; until then, which of your sensors it takes, and **Add these for me**; energy per day over 30 days; this month's and year's totals from the inverter, over its own LAN port only; totals since installation |
 | **Battery** | Level, charge and discharge, temperature, health, cells and modules, and 48 hours of history |
 | **Inverter** | State, alarms and faults, the MPPTs, the grid phases, backup output, the device and its firmware |
-| **Wallbox** | Whether a car is plugged in, status, power, this session, phases and settings, and 24 hours beside PV, export and house load |
+| **Wallbox** | Whether a car is plugged in, status, power, this session, phases and settings; for administrators and behind the lock, start and stop charging, its mode and current, where the inverter manages the wallbox; and 24 hours beside PV, export and house load |
 | **Controls** | The settings the integration can write, by device. Administrators only, and locked, see below |
 | **Diagnosis** | Start and stop a test, and read its results. Administrators only, see below |
 
@@ -61,7 +61,7 @@ install, and a copy of yours from HACS is left alone. If it cannot be loaded,
 the same numbers are tiles.
 
 Under **Today** the same circles show the day's energy, from
-[Energy Flow Card Plus](https://github.com/flixlix/energy-flow-card-plus), also
+[Energy Flow Card Plus](https://github.com/flixlix/energy-flow-card-plus), with the car where there is a wallbox, also
 flixlix's and also shipped with the integration. It draws from Home Assistant's
 long-term statistics of the day's sensors, so on a new installation it reads
 zero until the first hour has been recorded; it needs no Energy dashboard. If it
