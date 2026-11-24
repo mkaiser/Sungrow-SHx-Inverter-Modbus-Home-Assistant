@@ -55,7 +55,8 @@ cap left import at 1718 W against 1724 W before; the charge obeyed and the batte
 its floor ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)). Four
 more caps there, on the master, the slave and both, under charges of 1250 W and 3601 W, did nothing
 either, every word read back ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). The other failure on record,
-swo14's on 01011.95.03, is a cluster master too. Whether ulfben's house is a
+swo14's on 01011.95.03, is a cluster master too. Backup mode, on at both, does not stop
+it at a lone SH10RT on P020 ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). Whether ulfben's house is a
 cluster is not known, and it is now worth asking.
 
 What would answer it: how ulfben's charge is commanded (iSolarCloud's own forced charge is not

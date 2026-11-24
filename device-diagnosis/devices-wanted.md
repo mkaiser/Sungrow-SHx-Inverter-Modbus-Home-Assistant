@@ -24,6 +24,7 @@ details are under [Why each one](#why-each-one).
 | 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 | 11 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether register 13017 (the *Low-SoC standby* switch) wakes this firmware and sends it back to sleep. Watched on P020, P022 and P023 only, so the switch is created there only: an SH-T above all |
 | 12 | **A Sungrow wallbox switched off (disabled) in the app**, once with a car plugged in and once without | What the control pilot (register 21312) reads then, which is what *Car connected* is made from: it has been read unplugged, connected and charging, but never while the wallbox is disabled |
+| 13 | **A hybrid whose grid import limit nobody has watched**: an SH-T, an SH-RS on other firmware than P066, a single SH-RT on version 1 `.95.03`, or, above all, **any master/slave cluster**; with `--import-limit` (in Home Assistant, the `run_capability_test` action), after dark | Which firmware and models obey the site import limit (register 32998), and whether a cluster is what stops it: it held at every single inverter tried and failed at both clusters |
 
 ## Not needed any more
 
@@ -195,3 +196,10 @@ plugged in and without, say whether it can be trusted then.
 - Readings from an installation whose owner has not agreed. A stand-in serial
   is not consent.
 - A reading taken while something else polled the inverter.
+
+### 13. A hybrid whose grid import limit nobody has watched
+
+Register 32998 held on P020, P022, P023 and the SH-RS's P066
+([register 32998](../.wiki/wiki/entities/register-32998.md)). It did not at two
+clusters. The `--import-limit` check
+measures it and puts everything back; it writes only with your leave.

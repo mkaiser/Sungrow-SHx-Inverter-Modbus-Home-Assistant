@@ -2162,8 +2162,23 @@ discharge. The earlier host page's "communication module: none fitted" is correc
 forced charges ([the source](sources/fwitten-import-limit-cluster-2026-11-24-summary.md)): four caps, each read back, none held. The register, installation, P023 and SH-RT
 pages and the forced-charge query say so; a slave's 32998 is no longer unmeasured.
 
+## [2026-11-24] ingested | fwitten-cluster-mirror-2026-11-24
+
+A cluster slave's 13050 follows the master's on P023, and 33500 tells a cluster member from a lone inverter
+([the source](sources/fwitten-cluster-mirror-2026-11-24-summary.md)). The query is answered, `register-33500.md` is new.
+
 ## [2026-11-24] updated | register-13074: a skipped readback still asks the write scale
 
 With the readback of 13074 skipped and feed-in limitation off, the capability test left the scale unasked and
 divided by ten (T088, measured at swo14). It now lifts the mode for the probe, on the same leave as the readback;
 the export check's revision is 2, so a kept verdict is asked again.
+
+## [2026-11-24] ingested | cluster-mode-33500-reads-2026-11-24
+
+33500-33502 at three houses, cable and WiNet-S ([the source](sources/cluster-mode-33500-reads-2026-11-24-summary.md)). The register dumps compared for T090: backup mode
+(13075, and 33000 with it) fits the import limit's failures as well as a cluster does; `register-32998.md` and the query say so.
+
+## [2026-11-24] ingested | mkaiser-import-limit-backup-mode-2026-11-24
+
+Backup mode, the other thing both failing clusters share, does not stop the import limit at mkaiser's lone SH10RT
+([the source](sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)): it held with 13075 on as off. `register-32998.md` and the query say so.

@@ -128,6 +128,8 @@ that a one-minute cadence catches a transient state by luck. Together they take 
 daily counters reset together at two more midnights.
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
+The import limit holds there with **backup mode on** too ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)).
+
 ## Diagnoses
 
 - [SH10RT, B001.V000.P020, mkaiser, seventh reading: every check established](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)

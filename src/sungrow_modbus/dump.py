@@ -61,6 +61,9 @@ DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ),
     ("input", 5241, 1, "grid frequency, the 0.01 Hz one the specification recommends"),
     ("holding", 33273, 1, "load rated power"),
+    # Registers 33500-33502, outside Sungrow's document: 33500 is 0xAA on a
+    # cluster member and 0x55 on a lone inverter (wiki: register-33500).
+    ("holding", 33499, 3, "cluster mode, role and count"),
     # Registers 33538-33550: the EV charger block of a wallbox the inverter
     # manages, outside Sungrow's document, with the two unnamed words below
     # it. Read whole at gerd's over the cable and the WiNet-S alike (wiki:

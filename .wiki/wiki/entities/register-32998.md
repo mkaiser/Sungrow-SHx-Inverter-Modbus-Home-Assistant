@@ -84,6 +84,12 @@ in kW. The diagnosis's register dump reads it too.
   never moving by more than 2 W, the battery at 79-88 % ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). So the cap's size, the unit and
   a low battery do not explain it. What does is open. The one difference on record: fwitten's master leads a
   **cluster**, as swo14's did where it failed below, and every house where it held is a single inverter.
+- **Backup mode does not stop it on a lone SH-RT.** 13075 reads 0xAA at fwitten and swo14 and 0x55 in the dumps
+  of every SH-RT where the cap had held, so it fitted the failures as well as a cluster does; at mkaiser with it
+  switched on the cap held, 4656 / 3437 / 4698 W against 3460 W, as with it off
+  ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). On the SH-RS it held at [icefest](installation-icefest.md) with backup mode on
+  (`device-diagnosis/results/inverter/`, `backup_mode_raw`). A cluster is the likelier cause, by two houses; not
+  proven, as backup mode was tried on P020 only and no cluster has been tried with it off.
 - **On an [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) it holds**, the
   first SH-RS watched: at [icefest](installation-icefest.md)'s, over RS485, a 520 W cap took import from
   1040 W to 528 W, 1029 W after; the house's own setting is 10.0 kW (word 1000)
@@ -131,7 +137,8 @@ firmware gets one.
 So on P020, P022, P023 and the SH-RS's P066 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
 in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
 SH10RT and the SH10RS accept. There the read-only sensor is not created. On P023 it fails at a cluster
-([fwitten](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md), five caps) and holds at single inverters: whether a
-cluster master should be offered the control is open. Elsewhere the sensor
+([fwitten](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md), five caps) and holds at single inverters, so
+a cluster member is not to be offered it for the moment (`plans/T078-cluster-import-limit.md`, not built yet; until then it still is);
+[register 33500](register-33500.md) tells one. Elsewhere the sensor
 stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the
 register refuses 0, so a 0 is a dongle answering for nothing).

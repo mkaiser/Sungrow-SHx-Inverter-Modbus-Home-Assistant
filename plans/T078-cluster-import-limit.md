@@ -27,8 +27,22 @@ It ends early, and restores, at 89 % battery, over 12 kW of import, or when the 
 
 Not in it: the cap written through the WiNet-S. Do it only if B or D holds over the cable.
 
+## Decided
+
+The maintainer, 2026-11-24, **for the moment** (T090 investigates further): a cluster member is not offered
+*Grid import limit*. Only a read 33500 = 0xAA withholds it; the read-only sensor stays; 0x55, a refusal, 0 or a
+failed read changes nothing.
+
+To build: 33500 as a register and a probe; the gate on `SITE_IMPORT_LIMIT_CONTROL`, with tests; the comment there
+naming fwitten's failure; first, what becomes of the number entity's id and history at a cluster that has it.
+`doc/architecture.md` takes the decision with the code.
+
 ## Status log
 
+- **2026-11-24, decided**: option A, above; not built. Next: the entity id question, then the probe.
+- **2026-11-24, mirror**: done 19:24 CET, restored. The slave's 13050 follows the master's; 33500 is 0xAA in the
+  cluster and 0x55 on a lone inverter ([the source](../.wiki/wiki/sources/fwitten-cluster-mirror-2026-11-24-summary.md)), so the control can be withheld
+  by it. Next: the maintainer's decision.
 - **2026-11-24, run**: done 18:13-18:27 CET, exit 0, all restored and read back by a second client. A, B, C and D
   all **did not hold**, every cap read back ([the source](../.wiki/wiki/sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). Not run through the WiNet-S,
   which B or D holding was the condition for. The slave's 13050 was **not** read, so the mirroring stays open (T089). Next: the maintainer's decision on the control.

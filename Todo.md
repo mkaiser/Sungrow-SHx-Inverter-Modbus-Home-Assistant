@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T090.** Numbers are minted in order, never reused and
+**Next free item number: T091.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -39,6 +39,13 @@ reporter (Diegocampy) offered on #797 to test once the fix is out.
 **T087. 13022 is signed on 01011.95.03** (62365 for -3171 W at swo14): the fallback in
 `src/sungrow_modbus/hybrid_inverter/derived.py` would show -62365 W, so read it as two's complement there
 ([the query](.wiki/wiki/queries/is-battery-power-firmware-dependent.md)). *Needs*: nothing.
+
+**T078. Withhold the Grid import limit from a cluster member** (33500 = 0xAA), the read-only sensor kept; 0x55, a
+refusal or a failed read changes nothing -- [plan](plans/T078-cluster-import-limit.md). *Needs*: nothing.
+
+**T090. Which firmware and models support the site import limit, and is only a cluster without it?**
+[Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the maintainer's go for a write;
+owners' diagnoses for the SH-T, other SH-RS and a lone 01011.95.03.
 
 The rest waits on other firmware or other houses.
 
@@ -123,15 +130,9 @@ aggregate.
 
 Nothing is built on these until the maintainer answers them.
 
-**T078. Is a cluster master offered the Grid import limit?** At fwitten's on P023 five caps, the last four on the
-master, the slave and both, read back and did nothing
-([the run](.wiki/wiki/sources/fwitten-import-limit-cluster-2026-11-24-summary.md), [plan](plans/T078-cluster-import-limit.md));
-recommended: not offered, with the read-only sensor kept. *Needs*: the maintainer's choice, and a way to tell a
-cluster member, which the library does not have; ask on #546 whether ulfben's house is a cluster.
-
 **T089. Two capability tests on one cluster at once**: refuse, warn, or wait, after swo14's outcome 5
-([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; reading
-the slave's 13050 while a cluster master is in forced mode settles the mirroring.
+([the query](.wiki/wiki/queries/does-a-cluster-slave-mirror-the-masters-ems-mode.md)). *Needs*: the maintainer's choice; a slave's
+13050 follows the master's on P023, and 33500 tells a cluster member.
 
 **T021. Are the entity names final?** They are reviewed and decided in English
 and German (`doc/entity_names.md`, `plans/_gen_text_translation_review.md`,

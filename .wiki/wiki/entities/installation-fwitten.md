@@ -24,8 +24,12 @@ On P023 the master **did not obey [register 32998](register-32998.md)**, the sit
 Four more caps, on the master, on the slave and on both, all read back and all did nothing
 ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). The check's run found 13074 multiplying by ten, as before, and the battery power bounds not enforced.
 
+On P023 the **slave's 13050 follows the master's** within a sample, and [register 33500](register-33500.md) reads
+0xAA on both inverters ([the run](../sources/fwitten-cluster-mirror-2026-11-24-summary.md)).
+
 ## Measurements
 
+- [The slave's EMS mode and 33500, 2026-11-24](../sources/fwitten-cluster-mirror-2026-11-24-summary.md)
 - [The site import limit by master, slave and both, 2026-11-24](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)
 - [The capability test's import limit check, master, 2026-11-22](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)
 
