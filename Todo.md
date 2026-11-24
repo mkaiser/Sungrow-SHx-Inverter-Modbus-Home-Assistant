@@ -100,10 +100,6 @@ changes only with the maintainer.
 **T082. The gate in CI**: `make test` runs in parallel (6 minutes on 8 cores); left is CI's own step, which runs one process
 with coverage (`.github/workflows/validate.yml`). *Needs*: a push to see it run.
 
-**T083. The way from the YAML package's `_inv1` / `_inv2` ids**: whether a house with several inverters migrates each to its
-own slot, against what `tests/test_migration.py` and the [legacy slot](.wiki/wiki/concepts/legacy-slot.md) already cover.
-*Needs*: nothing.
-
 **T067. The *Add integration* badge, once the merge lands**: the preview
 channel's badge (`marketplace_repository`, owner, repository and *Integration*
 prefilled) is in the README and in step 1 of

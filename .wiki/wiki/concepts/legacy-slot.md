@@ -42,4 +42,6 @@ Each of these rules, if broken, loses somebody's history:
   costs nothing visible: it simply never matches, and a two-inverter house
   migrates as though it had one.
 
+Held by `tests/test_legacy_slots.py`: three layouts (plain and 2; 1 and 2; 1, 2 and 3), live, recorded and claimed.
+
 See [adopting the legacy entity ids](legacy-id-adoption.md).
