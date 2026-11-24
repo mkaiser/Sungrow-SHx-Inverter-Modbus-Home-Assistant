@@ -104,8 +104,9 @@ in kW. The diagnosis's register dump reads it too.
   Not checked again on 2026-11-24, the battery too full ([the host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-4-summary.md)).
   That house is a cluster master too, like fwitten's, where the cap failed on P023 with the
   battery well above its floor; so the low battery may not be the whole explanation here.
-- **On one other SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
-  how the charge was commanded and the B001 firmware unknown;
+- **On ulfben's SH10RT-V112 plant it does not hold during a forced charge**, by the owner's report, with how the
+  charge was commanded and the B001 firmware unknown. **That plant is a master/slave cluster too**, by the owner's own
+  posts ([the source](../sources/github-ulfben-cluster-2026-11-24-summary.md)): all three failures on record are clusters;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 
 ## What the diagnoses read

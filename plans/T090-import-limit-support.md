@@ -22,7 +22,7 @@ Watched under a forced charge; details in [register 32998](../.wiki/wiki/entitie
 | SH-RS | P065 | holds by the owner's meter: Jam3s97 (SH10RS), no forced charge known | none measured |
 | SH-RS | P057, P059, P067, P068 | not measured | none measured |
 | SH-T | P038, P067, P071 | not measured; a dump reads 43.47 kW (ra1k-0) | none measured |
-| any | ulfben's SH10RT-V112, firmware unknown | does not, by report; whether it is a cluster is not known | |
+| SH-RT | 95.14 (2582; B001 unknown) | none measured | does not, by report: ulfben (SH10RT-V112 master and slave, by their posts) |
 
 So no firmware has both a lone inverter and a cluster measured except P023, where they differ, and
 01011.95.03 has no lone inverter at all: there, firmware and cluster cannot be told apart.
@@ -40,11 +40,14 @@ the meter's place in a cluster; a site-level controller taking over the limit.
 1. At fwitten, with the maintainer's go (deferred 2026-11-24): one cap in daylight with the slave running, a new gate set beside
    `tmp/fwitten-t078/cluster_import_limit.py`; 13075 off as well if that fails, after asking the owner, whose backup it switches off.
 2. Answers to row 13 of `device-diagnosis/devices-wanted.md`; every diagnosis since 2026-11-24 carries 33500 and 33501.
-3. The #546 question to ulfben (Todo's I3; the maintainer posts it or says so).
+3. ulfben's cluster: established from their own posts. They offered (2026-11-07) to run a test with evcc off: a diagnosis
+   with `--import-limit` there is a second measured cluster, if the maintainer wants to ask.
 4. Write the answers in `register-32998.md` and its query; revise `WITHHELD_FROM` and `CONFIRMED_ON_FIRMWARE` by them.
 
 ## Status log
 
+- **2026-11-24, 22:55**: ulfben's plant is a cluster too ([the source](../.wiki/wiki/sources/github-ulfben-cluster-2026-11-24-summary.md)); the maintainer dropped I3.
+  Three failures, three clusters. Next: step 2, or ulfben's offer.
 - **2026-11-24, close**: everything above the open steps is done and pushed up to 4366e38; nothing uncommitted but this close.
   33500 is 0xAA at one cluster and 0x55 at mkaiser, gerd and bar12. Next: step 2, as diagnoses come in.
 - **2026-11-24, 22:24**: bar12 read (0x55, cable and WiNet-S); its tunnel profile was replaced. Step 1 is done.

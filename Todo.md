@@ -22,12 +22,6 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 A holding area, not a queue: taken in only when the maintainer asks
 ([`workflow.md`](workflow.md)). An entry is numbered **I1**, **I2** ... to be addressed by; next: **I4**.
 
-**I3.** Reply for #546, to ulfben (not posted):
-
-> Is your SH10RT-V112 part of a master/slave cluster, and which firmware does it run
-> (`SAPPHIRE-H_B001...`, shown in the diagnosis)? We found the import limit ignored in a cluster
-> and obeyed on single inverters.
-
 # Next steps
 
 ## Inverter
@@ -44,7 +38,7 @@ reporter (Diegocampy) offered on #797 to test once the fix is out.
 
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
 [Plan](plans/T090-import-limit-support.md). *Needs*: owners' diagnoses (an SH-T, another SH-RS, a lone 01011.95.03, a second cluster);
-the maintainer's answer on I3; the daylight cap at fwitten, which the maintainer deferred.
+the daylight cap at fwitten, which the maintainer deferred.
 
 The rest waits on other firmware or other houses.
 

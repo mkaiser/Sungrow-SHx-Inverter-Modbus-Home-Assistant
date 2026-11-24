@@ -4,7 +4,7 @@ title: "Does the site import limit hold during a forced charge on an SH-RT?"
 tags: [register-32998, import-limit, sh-rt, forced-charge, open]
 created: '2026-11-07'
 query: "Does register 32998 cap grid import while an SH-RT force-charges its battery, and does it depend on how the charge is commanded?"
-results_count: 11
+results_count: 12
 ---
 
 # Does the site import limit hold during a forced charge on an SH-RT?
@@ -40,7 +40,7 @@ through 13050 and 13051: 800 W against 1438 W of import, and 1730 W against 2359
 when the cap came off
 ([the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
 and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
-That leaves how ulfben's charge was commanded as the only untried explanation.
+That left how ulfben's charge was commanded, until their plant turned out to be a cluster (below).
 
 A scheduled charge is capped too: at bar12 the forced-charging schedule's 4099 W charge was cut to
 ~510-690 W under a 1.00 kW cap ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
@@ -56,9 +56,10 @@ its floor ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.m
 more caps there, on the master, the slave and both, under charges of 1250 W and 3601 W, did nothing
 either, every word read back ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). The other failure on record,
 swo14's on 01011.95.03, is a cluster master too. Backup mode, on at both, does not stop
-it at a lone SH10RT on P020 ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). Whether ulfben's house is a
-cluster is not known, and it is now worth asking.
+it at a lone SH10RT on P020 ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). **ulfben's plant is a master/slave
+pair as well**, by their own posts ([the source](../sources/github-ulfben-cluster-2026-11-24-summary.md)), so every failure on record is a cluster
+and every lone inverter has obeyed.
 
 What would answer it: how ulfben's charge is commanded (iSolarCloud's own forced charge is not
-among those tried), his B001 firmware, and whether a cap was set at all when it charged. The model
+among those tried), their B001 firmware, and whether a cap was set at all when it charged. The model
 and the firmware are no longer candidates.

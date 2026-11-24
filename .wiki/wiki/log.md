@@ -2202,3 +2202,7 @@ bar12's 33500 ([the source](sources/cluster-mode-33500-bar12-2026-11-24-summary.
 ## [2026-11-24] changed | capability-test-restore
 
 A second capability test in a cluster is refused; the page says so.
+
+## [2026-11-24] ingested | github-ulfben-cluster-2026-11-24
+
+ulfben's plant, the third import-limit failure, is a cluster by the owner's posts ([the source](sources/github-ulfben-cluster-2026-11-24-summary.md)); the register page and the query say so.
