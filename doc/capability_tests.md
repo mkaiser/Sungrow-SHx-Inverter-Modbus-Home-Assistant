@@ -65,7 +65,7 @@ Nothing here can be written, so a read is the whole test.
 | Control | Register | Read-only diagnosis | Capability test today, and how | Could still test |
 | --- | --- | --- | --- | --- |
 | Feed-in limit and its mode | 13074, 13087 | reads them | **leg B** readback at the factor this firmware writes; **leg C**, *export power limit*: the mode switched on, export capped and watched; and `--export-scale`, one write each firmware refuses or accepts, so it holds through a dongle (×10 on B001, 1:1 on 01011.95.03) | nothing missing |
-| Site import limit | 32998 (a number on P020, P022 and P023; a sensor elsewhere) | reads it | **leg C**, *site import limit*: capped during a forced charge, watched as grid import comes down | the cap on more firmware |
+| Site import limit | 32998 (a number on P020, P022 and P023, unless the inverter is in a cluster; a sensor elsewhere) | reads it | **leg C**, *site import limit*: capped during a forced charge, watched as grid import comes down | the cap on more firmware |
 | EMS mode | 13050 | reads it | written to forced mode (2) by the forced checks and put back; **write path**, *EMS mode options*: each of 0, 2, 3 and 4 once, the snapshot's word straight after each, refusals named | nothing missing |
 | Backup mode | 13075 | reads it | **write path**: its own word written back | nothing missing |
 | Load control and its mode | 13011, 13002 | reads them | **write path**: their own words written back; switching a real load is not something to test | nothing missing |

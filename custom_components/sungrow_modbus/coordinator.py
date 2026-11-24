@@ -26,7 +26,10 @@ from sungrow_modbus import (
     SungrowStringInverter,
     UpdateReport,
 )
-from sungrow_modbus.hybrid_inverter.capabilities import LINE_VOLTAGE_OUTPUT_TYPE
+from sungrow_modbus.hybrid_inverter.capabilities import (
+    LINE_VOLTAGE_OUTPUT_TYPE,
+    WITHHELD_FROM,
+)
 
 from .const import DEFAULT_EXTERNAL_PLACEMENT, DOMAIN, PLACEMENT_BEHIND_METER
 
@@ -259,6 +262,13 @@ class SungrowDataUpdateCoordinator(InverterCoordinator[SungrowInverter]):
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
             return
         gained = self.device.capabilities() - runtime.capabilities
+        # A control setup withheld comes back only because the read that
+        # withheld it was missed this time, so it is not growth.
+        gained -= {
+            control
+            for control, withheld_by in WITHHELD_FROM.items()
+            if withheld_by in runtime.capabilities
+        }
         if not gained:
             return
         self._reload_scheduled = True

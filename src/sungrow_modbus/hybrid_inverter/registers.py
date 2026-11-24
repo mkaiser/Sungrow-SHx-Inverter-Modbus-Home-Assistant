@@ -571,6 +571,22 @@ class InverterSiteImportLimit(Component):
     """Site import power limit."""
 
 
+class InverterClusterMode(Component):
+    """1 holding field, polled every 600s.
+
+    Register 33500: 0xAA on both members of a master/slave cluster, 0x55 on a
+    lone inverter. **Not in Sungrow's protocol document**; read alike over a
+    cable and through a WiNet-S (wiki: register-33500). 33501, the role, is not
+    mapped: a lone inverter answers it as a master does. Its own component, as
+    31211 is, so a firmware without it costs one refused read.
+    """
+
+    register_space = "holding"
+
+    cluster_mode_raw = integer(reg(33500), signed=False, nan=65535)
+    """Cluster mode raw: 0xAA cluster member, 0x55 lone inverter."""
+
+
 class InverterForcedCharging(Component):
     """12 holding fields, polled every 60s.
 
@@ -1074,6 +1090,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "firmware_block_inverter": InverterFirmwareBlockInverter,
     "sub_controller_firmware": InverterSubControllerFirmware,
     "clock": InverterClock,
+    "cluster_mode": InverterClusterMode,
     "pv_generation_history": InverterPvGenerationHistory,
     "direct_consumption_history": InverterDirectConsumptionHistory,
     "export_from_pv_history": InverterExportFromPvHistory,
@@ -1107,6 +1124,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "firmware_block_inverter",
         "sub_controller_firmware",
         "clock",
+        "cluster_mode",
         "pv_generation_history",
         "direct_consumption_history",
         "export_from_pv_history",

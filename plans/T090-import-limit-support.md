@@ -1,7 +1,7 @@
 # T090 - Which firmware and models support the site import limit (32998), and is only a cluster without it
 
-Asked for by the maintainer on 2026-11-24. T078's decision (withhold the control when
-[33500](../.wiki/wiki/entities/register-33500.md) reads 0xAA) stands until this answers.
+Asked for by the maintainer on 2026-11-24. Until it answers, the control is withheld when
+[33500](../.wiki/wiki/entities/register-33500.md) reads 0xAA (`doc/architecture.md`, *Decisions*).
 
 ## Questions
 
@@ -46,7 +46,7 @@ the meter's place in a cluster; a site-level controller taking over the limit.
 4. Ask for the `--import-limit` check in `device-diagnosis/devices-wanted.md`: an SH-T (any), an SH-RS not on P066,
    a lone SH-RT on 01011.95.03 (decides swo14), a second cluster (decides question 2).
 5. Ask on #546 whether ulfben's house is a cluster and which 13250 firmware it runs.
-6. Write the answers in `register-32998.md` and its query; revise T078's rule and `CONFIRMED_ON_FIRMWARE` by them.
+6. Write the answers in `register-32998.md` and its query; revise `WITHHELD_FROM` and `CONFIRMED_ON_FIRMWARE` by them.
 
 ## Status log
 

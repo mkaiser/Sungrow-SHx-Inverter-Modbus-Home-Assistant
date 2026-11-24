@@ -479,6 +479,10 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   system.
 - **13074's write scale is measured per device** (`sungrow_modbus.hybrid_inverter.export_scale`)
   and stored with the firmware it was measured on.
+- **A cluster member is not offered *Grid import limit***, for the moment (T090):
+  fwitten's cluster stored 32998 and limited nothing, and lone inverters obey. Only a read 33500 = 0xAA
+  withholds the number (`capabilities.WITHHELD_FROM`); the read-only sensor stays, and 0x55, a refusal or a
+  missed read changes nothing. A number already created there is left in the registry for its owner to delete.
 - **Delivery is the Marketplace** (HACS as built into Home Assistant
   2026.11, the minimum), through the preview channel until the merge into
   `main` ([maintainer_setup.md](maintainer_setup.md)), then the catalog.

@@ -28,6 +28,7 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 #: Protocol addresses, one below the register numbers 32998 and 13250.
 IMPORT_LIMIT_ADDRESS = 32997
+CLUSTER_MODE_ADDRESS = 33499
 INVERTER_FIRMWARE_ADDRESS = 13249
 CONFIRMED = (
     "SAPPHIRE-H_B001.V000.P020",
@@ -145,3 +146,69 @@ async def test_a_value_in_watts_is_written_as_counts_of_ten_watts(
         )
 
     assert written == [50, 1, 5000]
+
+
+async def test_a_cluster_member_keeps_the_read_only_sensor(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """32998 is stored and ignored in a cluster (wiki: register-32998)."""
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = 0xAA
+    entry = await _setup(hass, sungrow_unit, CONFIRMED[2], 2000)
+
+    assert _entity_id(hass, "number") is None
+    sensor_id = _entity_id(hass, "sensor")
+    assert sensor_id is not None
+    assert float(hass.states.get(sensor_id).state) == 20.0
+    assert Capability.CLUSTER_MEMBER in entry.runtime_data.capabilities
+
+
+@pytest.mark.parametrize("word", [0x55, 0, 0xFFFF])
+async def test_any_other_word_at_33500_withholds_nothing(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, word: int
+) -> None:
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = word
+    await _setup(hass, sungrow_unit, CONFIRMED[2], 2000)
+
+    assert _entity_id(hass, "number") is not None
+    assert _entity_id(hass, "sensor") is None
+
+
+async def test_a_refused_33500_withholds_nothing(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    sungrow_unit.holding.pop(CLUSTER_MODE_ADDRESS, None)
+    await _setup(hass, sungrow_unit, CONFIRMED[2], 2000)
+
+    assert _entity_id(hass, "number") is not None
+
+
+async def test_losing_33500_does_not_reload_the_control_back(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = 0xAA
+    entry = await _setup(hass, sungrow_unit, CONFIRMED[2], 2000)
+    runtime = entry.runtime_data
+    coordinator = runtime.coordinators["cluster_mode"]
+
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = 0xFFFF
+    with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+        await coordinator.async_refresh()
+        await hass.async_block_till_done()
+
+    assert Capability.SITE_IMPORT_LIMIT_CONTROL in coordinator.device.capabilities()
+    reload.assert_not_called()
+
+
+async def test_a_late_33500_reloads_so_the_control_goes(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = 0xFFFF
+    entry = await _setup(hass, sungrow_unit, CONFIRMED[2], 2000)
+    coordinator = entry.runtime_data.coordinators["cluster_mode"]
+
+    sungrow_unit.holding[CLUSTER_MODE_ADDRESS] = 0xAA
+    with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+        await coordinator.async_refresh()
+        await hass.async_block_till_done()
+
+    reload.assert_called_once_with(entry.entry_id)

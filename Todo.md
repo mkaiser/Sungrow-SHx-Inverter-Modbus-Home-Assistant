@@ -20,7 +20,13 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 # Incoming items by maintainer
 
 A holding area, not a queue: taken in only when the maintainer asks
-([`workflow.md`](workflow.md)). An entry is numbered **I1**, **I2** ... to be addressed by; next: **I3**.
+([`workflow.md`](workflow.md)). An entry is numbered **I1**, **I2** ... to be addressed by; next: **I4**.
+
+**I3.** Reply for #546, to ulfben (not posted):
+
+> Is your SH10RT-V112 part of a master/slave cluster, and which firmware does it run
+> (`SAPPHIRE-H_B001...`, shown in the diagnosis)? We found the import limit ignored in a cluster
+> and obeyed on single inverters.
 
 # Next steps
 
@@ -39,9 +45,6 @@ reporter (Diegocampy) offered on #797 to test once the fix is out.
 **T087. 13022 is signed on 01011.95.03** (62365 for -3171 W at swo14): the fallback in
 `src/sungrow_modbus/hybrid_inverter/derived.py` would show -62365 W, so read it as two's complement there
 ([the query](.wiki/wiki/queries/is-battery-power-firmware-dependent.md)). *Needs*: nothing.
-
-**T078. Withhold the Grid import limit from a cluster member** (33500 = 0xAA), the read-only sensor kept; 0x55, a
-refusal or a failed read changes nothing -- [plan](plans/T078-cluster-import-limit.md). *Needs*: nothing.
 
 **T090. Which firmware and models support the site import limit, and is only a cluster without it?**
 [Plan](plans/T090-import-limit-support.md). *Needs*: reachable houses for the reads; the maintainer's go for a write;

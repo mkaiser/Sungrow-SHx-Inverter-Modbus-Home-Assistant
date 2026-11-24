@@ -138,7 +138,7 @@ So on P020, P022, P023 and the SH-RS's P066 it is the number *Grid import limit*
 in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
 SH10RT and the SH10RS accept. There the read-only sensor is not created. On P023 it fails at a cluster
 ([fwitten](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md), five caps) and holds at single inverters, so
-a cluster member is not to be offered it for the moment (`plans/T078-cluster-import-limit.md`, not built yet; until then it still is);
-[register 33500](register-33500.md) tells one. Elsewhere the sensor
+a cluster member ([register 33500](register-33500.md) = 0xAA) keeps the read-only sensor instead
+(`Capability.CLUSTER_MEMBER`, `WITHHELD_FROM` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`). Elsewhere the sensor
 stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the
 register refuses 0, so a 0 is a dongle answering for nothing).

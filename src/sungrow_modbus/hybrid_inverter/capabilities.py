@@ -208,6 +208,13 @@ class Capability(StrEnum):
     *read*; writing it is `SITE_IMPORT_LIMIT_CONTROL`.
     """
 
+    CLUSTER_MEMBER = "cluster_member"
+    """Register 33500 reads 0xAA: this inverter is in a master/slave cluster.
+
+    Granted by 0xAA alone (`CLUSTER_CODES_ONLY`): 0x55, 0, a refusal and a
+    missed read all mean "not known to be one", and withhold nothing.
+    """
+
     SITE_IMPORT_LIMIT_CONTROL = "site_import_limit_control"
     """Register 32998 may be written, because a write was watched here.
 
@@ -669,6 +676,16 @@ def confirmed_on_firmware(
     )
 
 
+#: A confirmed write withheld from a device that has the other capability,
+#: whatever its firmware. At fwitten's cluster on P023, 32998 stored five caps
+#: and limited nothing, on the master, the slave and both, while it held on
+#: every lone inverter (wiki: register-32998). A control that is accepted and
+#: ignored is worse than none, so a cluster member keeps the read-only sensor.
+WITHHELD_FROM: dict[Capability, Capability] = {
+    Capability.SITE_IMPORT_LIMIT_CONTROL: Capability.CLUSTER_MEMBER,
+}
+
+
 #: A capability to a register that is present only when it is. The
 #: specification defines 0xFFFF as "unavailable", so a field decoding to None
 #: is the device saying the feature is not there — which beats any table.
@@ -692,6 +709,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
     Capability.SITE_IMPORT_LIMIT: ("site_import_power_limit",),
+    Capability.CLUSTER_MEMBER: ("cluster_mode_raw",),
     Capability.EV_CHARGER: ("ev_charger_mode_raw",),
     Capability.FORCED_CHARGING: ("forced_charging_raw",),
     Capability.DISCHARGE_SCHEDULE: ("weekend_discharge_raw",),
@@ -716,6 +734,9 @@ MODE_CODES_ONLY: frozenset[Capability] = frozenset(
 
 #: The two codes every Sungrow mode register uses.
 MODE_CODES: frozenset[int] = frozenset({0xAA, 0x55})
+
+#: Capabilities granted only by the "on" code, where 0x55 means "no".
+CLUSTER_CODES_ONLY: frozenset[Capability] = frozenset({Capability.CLUSTER_MEMBER})
 
 #: Capabilities granted only by a charging mode somebody has named.
 EV_CHARGER_CODES_ONLY: frozenset[Capability] = frozenset({Capability.EV_CHARGER})
@@ -803,6 +824,8 @@ def probe(read: Callable[[str], object]) -> frozenset[Capability]:
             continue
         if capability in MODE_CODES_ONLY and not all(v in MODE_CODES for v in values):
             continue
+        if capability in CLUSTER_CODES_ONLY and not all(v == 0xAA for v in values):
+            continue
         if capability in EV_CHARGER_CODES_ONLY and not all(
             v in ev_charger.MODES for v in values
         ):
@@ -827,7 +850,8 @@ def resolve(
 
     A write in `CONFIRMED_ON_FIRMWARE` is added last, and only where the read
     it acts on is among the result: a firmware entry says the write does what
-    it should, and only the device can say the register is there.
+    it should, and only the device can say the register is there. One in
+    `WITHHELD_FROM` is left out where the device is known not to obey it.
     """
     absent = known_absent(device_type_code, firmware)
     resolved = set(probed or frozenset())
@@ -844,8 +868,11 @@ def resolve(
 
     resolved -= absent - set(probed or frozenset())
     for capability in confirmed_on_firmware(firmware):
-        if CONTROL_REQUIRES.get(capability) in resolved:
-            resolved.add(capability)
+        if CONTROL_REQUIRES.get(capability) not in resolved:
+            continue
+        if WITHHELD_FROM.get(capability) in resolved:
+            continue
+        resolved.add(capability)
     return frozenset(resolved)
 
 

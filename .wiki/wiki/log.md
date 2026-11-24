@@ -2182,3 +2182,7 @@ the export check's revision is 2, so a kept verdict is asked again.
 
 Backup mode, the other thing both failing clusters share, does not stop the import limit at mkaiser's lone SH10RT
 ([the source](sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)): it held with 13075 on as off. `register-32998.md` and the query say so.
+
+## [2026-11-24] changed | register-32998
+
+A cluster member (33500 = 0xAA) is no longer offered the number; the page says so.
