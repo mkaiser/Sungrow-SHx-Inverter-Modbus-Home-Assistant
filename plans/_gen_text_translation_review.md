@@ -1,6 +1,6 @@
 # The texts, for review
 
-**365 texts**: everything in `strings.json` that is not an entity name, by its
+**393 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -559,7 +559,7 @@ and bold are kept.
 >
 > Für das Energie-Dashboard von Home Assistant listet seine Ansicht **Energie** die passenden Sensoren auf und kann sie für dich eintragen; [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt sie auch. Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
 >
-> **Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller.
+> **Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnosedaten herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller.
 
 
 ## Select states (22)
@@ -697,7 +697,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (105)
+## Selector options (133)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -1337,6 +1337,174 @@ and bold are kept.
 
 > **DE** Rolle nicht lesbar: ein Dongle verbirgt die Geräteadresse
 
+### `selector.flow_text.options.notice_title_started`
+
+> **EN** Diagnosis started: {title}
+
+> **DE** Diagnose gestartet: {title}
+
+### `selector.flow_text.options.notice_title_finished`
+
+> **EN** Diagnosis finished: {title}
+
+> **DE** Diagnose beendet: {title}
+
+### `selector.flow_text.options.notice_title_stopped`
+
+> **EN** Diagnosis stopped: {title}
+
+> **DE** Diagnose gestoppt: {title}
+
+### `selector.flow_text.options.notice_title_unanswered`
+
+> **EN** Diagnosis questions unanswered: {title}
+
+> **DE** Fragen der Diagnose unbeantwortet: {title}
+
+### `selector.flow_text.options.notice_start_read_only`
+
+> **EN** A read-only diagnosis is running. It only reads; nothing on the device changes.
+
+> **DE** Eine rein lesende Diagnose läuft. Sie liest nur, am Gerät ändert sich nichts.
+
+### `selector.flow_text.options.notice_start_extended`
+
+> **EN** An extended test is running: the diagnosis, then one capability test. It writes each setting, reads it back and puts your original value back, checked by reading it again.
+
+> **DE** Ein erweiterter Test läuft: die Diagnose, dann ein Funktionstest. Er schreibt jede Einstellung, liest sie zurück und stellt deinen ursprünglichen Wert wieder her, geprüft durch erneutes Lesen.
+
+### `selector.flow_text.options.notice_start_auto_repeat`
+
+> **EN** The extended test repeats on its own: whenever the house can answer a check still missing, a capability test starts, and leaves out what earlier runs established. The next one waits 5 minutes if that settled something, and 30 to 60 if not. Each writes its settings and puts your original values back. **Diagnosis: current step** shows what it waits for; **Diagnosis: stop** ends it, and so does a restart.
+
+> **DE** Der erweiterte Test wiederholt sich von selbst: Sobald das Haus eine noch fehlende Prüfung beantworten kann, startet ein Funktionstest und lässt aus, was frühere Läufe schon geklärt haben. Der nächste wartet 5 Minuten, wenn das etwas geklärt hat, sonst 30 bis 60. Jeder schreibt seine Einstellungen und stellt deine ursprünglichen Werte wieder her. **Diagnose: aktueller Schritt** zeigt, worauf er wartet; **Diagnose: stoppen** beendet ihn, ein Neustart auch.
+
+### `selector.flow_text.options.notice_start_background`
+
+> **EN** It runs in the background: you can leave this page. A notification tells you when it has finished. **Please do not restart Home Assistant meanwhile** — the test would still put everything back, but the run is lost. **Diagnosis: stop** ends a run early; every value it changed is still put back.
+
+> **DE** Das läuft im Hintergrund, du kannst diese Seite verlassen. Eine Benachrichtigung sagt dir, wenn es fertig ist. **Bitte starte Home Assistant währenddessen nicht neu** — der Test würde trotzdem alles zurückstellen, aber der Lauf ist verloren. **Diagnose: stoppen** beendet einen Lauf vorzeitig; jeder geänderte Wert wird trotzdem zurückgestellt.
+
+### `selector.flow_text.options.notice_start_tells`
+
+> **EN** A notification tells you when it has finished.
+
+> **DE** Eine Benachrichtigung sagt dir, wenn sie fertig ist.
+
+### `selector.flow_text.options.notice_wallbox_extended`
+
+> **EN** An extended test is running: the diagnosis, then the wallbox capability test. Most checks need a car charging; one that has none to judge is recorded as waiting. Every setting it changes is put back and read again.
+
+> **DE** Ein erweiterter Test läuft: die Diagnose, dann der Funktionstest der Wallbox. Die meisten Prüfungen brauchen ein ladendes Auto; fehlt es, wird die Prüfung als wartend vermerkt. Jede geänderte Einstellung wird zurückgestellt und erneut gelesen.
+
+### `selector.flow_text.options.notice_wallbox_auto_repeat`
+
+> **EN** The wallbox capability test repeats on its own: whenever a check still missing can be answered (most need a car charging), a run starts, at most every 15 minutes, and leaves out what earlier runs established. **A charge in progress is interrupted** by some checks. **Diagnosis: current step** shows what it waits for; **Diagnosis: stop** ends it, and so does a restart.
+
+> **DE** Der Funktionstest der Wallbox wiederholt sich von selbst: Sobald eine noch fehlende Prüfung beantwortet werden kann (die meisten brauchen ein ladendes Auto), startet ein Lauf, höchstens alle 15 Minuten, und lässt aus, was frühere Läufe schon geklärt haben. Einige Prüfungen **unterbrechen einen laufenden Ladevorgang**. **Diagnose: aktueller Schritt** zeigt, worauf er wartet; **Diagnose: stoppen** beendet ihn, ein Neustart auch.
+
+### `selector.flow_text.options.notice_wallbox_background`
+
+> **EN** It runs in the background: you can leave this page. **Diagnosis: stop** ends a run early; every value it changed is still put back.
+
+> **DE** Das läuft im Hintergrund, du kannst diese Seite verlassen. **Diagnose: stoppen** beendet einen Lauf vorzeitig; jeder geänderte Wert wird trotzdem zurückgestellt.
+
+### `selector.flow_text.options.notice_wallbox_no_leave`
+
+> **EN** The capability test did not run: it writes to the wallbox only once you switch it on in this entry's options (**Configure**).
+
+> **DE** Der Funktionstest lief nicht: Er schreibt erst auf die Wallbox, wenn du ihn in den Optionen dieses Eintrags einschaltest (**Konfigurieren**).
+
+### `selector.flow_text.options.notice_wallbox_running`
+
+> **EN** The diagnosis is running.
+
+> **DE** Die Diagnose läuft.
+
+### `selector.flow_text.options.notice_wallbox_nothing`
+
+> **EN** Nothing will run.
+
+> **DE** Es wird nichts laufen.
+
+### `selector.flow_text.options.notice_wallbox_runs`
+
+> **EN** Capability test: {count} run(s) kept.
+
+> **DE** Funktionstest: {count} Läufe aufbewahrt.
+
+### `selector.flow_text.options.notice_download`
+
+> **EN** Download the document
+
+> **DE** Dokument herunterladen
+
+### `selector.flow_text.options.notice_link`
+
+> **EN** {link} — this link stops working at {time}. After that, press **Diagnosis: start** again for a fresh one.
+
+> **DE** {link} — dieser Link funktioniert bis {time}. Danach gibt **Diagnose: starten** einen neuen.
+
+### `selector.flow_text.options.notice_expired`
+
+> **EN** The download link in this notification has expired. Press **Diagnosis: start** again for a fresh one.
+
+> **DE** Der Link in dieser Benachrichtigung ist abgelaufen. **Diagnose: starten** gibt einen neuen.
+
+### `selector.flow_text.options.notice_never_expires`
+
+> **EN** **Download diagnostics** on the device page carries the same document and never expires.
+
+> **DE** **Diagnosedaten herunterladen** auf der Geräteseite enthält dasselbe Dokument und läuft nie ab.
+
+### `selector.flow_text.options.notice_send`
+
+> **EN** It carries a stand-in rather than the real serial number, and your address only if you allowed it. Send it to [the diagnosis issue]({url}).
+
+> **DE** Es enthält einen Platzhalter statt der echten Seriennummer und deine Adresse nur, wenn du es erlaubt hast. Schicke es an [das Diagnose-Issue]({url}).
+
+### `selector.flow_text.options.notice_send_why`
+
+> **EN** What varies between installations is the thing no specification has told this project reliably.
+
+> **DE** Was sich zwischen Anlagen unterscheidet, hat diesem Projekt noch keine Spezifikation verlässlich gesagt.
+
+### `selector.flow_text.options.notice_refused`
+
+> **EN** **An extended test is refused until these are answered**, because a capability test's findings are read against the house they were taken in and no register reports any of this:
+
+> **DE** **Ein erweiterter Test wird abgelehnt, bis diese Fragen beantwortet sind**, denn was ein Funktionstest findet, lässt sich nur zusammen mit dem Haus verstehen, in dem er lief, und kein Register meldet davon etwas:
+
+### `selector.flow_text.options.notice_no_guess`
+
+> **EN** Each has an answer for every house -- *not sure*, *I do not know*, *no* -- so none of them asks you to guess.
+
+> **DE** Jede hat für jedes Haus eine Antwort — *nicht sicher*, *weiß ich nicht*, *nein* — keine verlangt also zu raten.
+
+### `selector.flow_text.options.notice_name_missing`
+
+> **EN** The diagnosis will run and write its document. One question is unanswered, and it is the one that decides whether anybody can come back to you about what it finds:
+
+> **DE** Die Diagnose läuft und schreibt ihr Dokument. Eine Frage ist unbeantwortet, und sie entscheidet, ob sich jemand wegen der Ergebnisse bei dir melden kann:
+
+### `selector.flow_text.options.notice_anonymous`
+
+> **EN** Leaving it empty contributes anonymously, which is a choice this project offers; it is not required.
+
+> **DE** Bleibt sie leer, trägst du anonym bei. Das bietet dieses Projekt bewusst an; sie ist nicht nötig.
+
+### `selector.flow_text.options.notice_suggested`
+
+> **EN** Not required, and worth having: **{question}** -- an anonymous reading cannot be asked a follow-up question.
+
+> **DE** Nicht nötig, aber hilfreich: **{question}** — bei einer anonymen Messung kann niemand nachfragen.
+
+### `selector.flow_text.options.notice_answer_where`
+
+> **EN** Answer them under **Settings → Devices & services → Sungrow Modbus → Configure**, in *Contribute a capability diagnosis*. Saving the options reloads this entry, so answer them before a long run rather than during one.
+
+> **DE** Beantworte sie unter **Einstellungen → Geräte & Dienste → Sungrow Modbus → Konfigurieren**, im Abschnitt *Eine Funktionsdiagnose beisteuern*. Das Speichern lädt diesen Eintrag neu, also besser vor einem langen Lauf als währenddessen.
+
 
 ## Repairs (14)
 
@@ -1825,7 +1993,7 @@ and bold are kept.
 
 > **EN** Not the sweep above: this one adds every mapped register's raw value to Download diagnostics on the device page, which describes this setup with the serial number and address removed. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.
 
-> **DE** Nicht der Durchlauf darüber: Dies fügt den Rohwert jedes abgebildeten Registers zu „Diagnose herunterladen“ auf der Geräteseite hinzu, die diese Einrichtung ohne Seriennummer und Adresse beschreibt. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.
+> **DE** Nicht der Durchlauf darüber: Dies fügt den Rohwert jedes abgebildeten Registers zu „Diagnosedaten herunterladen“ auf der Geräteseite hinzu, die diese Einrichtung ohne Seriennummer und Adresse beschreibt. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.
 
 ### `options.step.init.sections.capability_test.name`
 
@@ -2481,4 +2649,4 @@ and bold are kept.
 
 > **EN** {title}: answer the diagnosis's questions before an extended test. An extended test writes settings and reads them back, and what it finds can only be understood together with the house it ran in — no register reports any of this. On Settings → Devices & services → Sungrow Modbus → Configure, under "Contribute a capability diagnosis", answer: "How this inverter is connected", "Is a Modbus proxy in the path?" and "Is there another inverter here that is not a Sungrow?". Each has an answer for every house — "not sure", "I do not know", "no" — so none of them asks you to guess. A read-only diagnosis runs without them.
 
-> **DE** {title}: Beantworte die Fragen der Diagnose, bevor ein erweiterter Test läuft. Ein erweiterter Test schreibt Einstellungen und liest sie zurück, und was er findet, lässt sich nur zusammen mit dem Haus verstehen, in dem er lief — kein Register meldet davon etwas. Unter Einstellungen → Geräte & Dienste → Sungrow Modbus → Konfigurieren, im Abschnitt „Eine Funktionsdiagnose beisteuern“, beantworte: „Wie dieser Wechselrichter angebunden ist“, „Ist ein Modbus-Proxy im Pfad?“ und „Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?“. Jede davon hat für jedes Haus eine Antwort — „nicht sicher“, „weiß ich nicht“, „nein“ — keine verlangt also zu raten. Eine rein lesende Diagnose läuft auch ohne sie.
+> **DE** {title}: Beantworte die Fragen der Diagnose, bevor ein erweiterter Test läuft. Ein erweiterter Test schreibt Einstellungen und liest sie zurück, und was er findet, lässt sich nur zusammen mit dem Haus verstehen, in dem er lief — kein Register meldet davon etwas. Unter Einstellungen → Geräte & Dienste → Sungrow Modbus → Konfigurieren, im Abschnitt „Eine Funktionsdiagnose beisteuern“, beantworte: „Wie dieser Wechselrichter angebunden ist“, „Befindet sich ein Modbus-Proxy im Pfad?“ und „Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?“. Jede davon hat für jedes Haus eine Antwort — „nicht sicher“, „weiß ich nicht“, „nein“ — keine verlangt also zu raten. Eine rein lesende Diagnose läuft auch ohne sie.

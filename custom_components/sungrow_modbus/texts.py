@@ -1,4 +1,4 @@
-"""The flows' sentences, in the language Home Assistant speaks.
+"""The flows' and the notifications' sentences, in the language Home Assistant speaks.
 
 A dialog's description is translated, but a placeholder is inserted as it is:
 a sentence built in code and handed over as a placeholder stays English in a
@@ -15,8 +15,11 @@ not told the language of the browser that opened it.
 
 from __future__ import annotations
 
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.translation import async_get_translations
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.translation import (
+    async_get_cached_translations,
+    async_get_translations,
+)
 
 from .const import DOMAIN
 
@@ -52,3 +55,16 @@ async def async_texts(hass: HomeAssistant) -> Texts:
         return Texts(english, english)
     local = await async_get_translations(hass, language, "selector", [DOMAIN])
     return Texts(local, english)
+
+
+@callback
+def async_cached_texts(hass: HomeAssistant) -> Texts:
+    """Return the sentences without waiting, for a notification.
+
+    From what Home Assistant holds already: `async_setup` loads it, and Home
+    Assistant loads a language again when it changes.
+    """
+    return Texts(
+        async_get_cached_translations(hass, hass.config.language, "selector", DOMAIN),
+        async_get_cached_translations(hass, "en", "selector", DOMAIN),
+    )

@@ -43,6 +43,7 @@ from .const import (
 )
 from .coordinator import SungrowConfigEntry
 from .network_records import async_network_names
+from .texts import async_cached_texts
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -151,11 +152,11 @@ class DeviceDiagnosisRunner:
     @callback
     def async_announce_start(self, _mode: str) -> None:
         """Say a read started, until the result replaces it."""
+        texts = async_cached_texts(self.hass)
         persistent_notification.async_create(
             self.hass,
-            "A read-only diagnosis is running. It only reads; nothing on the "
-            "device changes. A notification tells you when it has finished.",
-            title=f"Diagnosis started: {self.entry.title}",
+            f"{texts('notice_start_read_only')} {texts('notice_start_tells')}",
+            title=texts("notice_title_started", title=self.entry.title),
             notification_id=self._notification_id,
         )
 
@@ -207,18 +208,16 @@ class DeviceDiagnosisRunner:
 
         url = async_download_url(self.hass, self.entry)
         lapses = dt_util.now() + LINK_VALID
+        texts = async_cached_texts(self.hass)
+        # Raw HTML with `target`: `DiagnosisRunner._async_offer_the_document`
+        # says why a markdown link does nothing here.
+        link = f'<a href="{url}" target="_blank">{texts("notice_download")}</a>'
         persistent_notification.async_create(
             self.hass,
             f"{self._summary(document)}\n\n"
-            # Raw HTML with `target`: `DiagnosisRunner._async_offer_the_document`
-            # says why a markdown link does nothing here.
-            f'<a href="{url}" target="_blank">Download the document</a>'
-            f" — this link stops working at {lapses.strftime('%H:%M')}. After "
-            "that, press **Diagnosis: start** again for a fresh one.\n\n"
-            "It carries a stand-in in place of anything that could be a serial "
-            "number, and your address only if you allowed it. Send it to "
-            f"[the diagnosis issue]({DIAGNOSIS_ISSUE_URL}).",
-            title=f"Diagnosis finished: {self.entry.title}",
+            f"{texts('notice_link', link=link, time=lapses.strftime('%H:%M'))}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)}",
+            title=texts("notice_title_finished", title=self.entry.title),
             notification_id=self._notification_id,
         )
         self._lapsed = async_call_later(self.hass, LINK_VALID, self._async_mark_lapsed)
@@ -228,12 +227,13 @@ class DeviceDiagnosisRunner:
         self._lapsed = None
         if self.state.document is None:
             return
+        texts = async_cached_texts(self.hass)
         persistent_notification.async_create(
             self.hass,
-            f"{self._summary(self.state.document)}\n\nThe download link has "
-            "expired. Press **Diagnosis: start** again for a fresh one, and send "
-            f"it to [the diagnosis issue]({DIAGNOSIS_ISSUE_URL}).",
-            title=f"Diagnosis finished: {self.entry.title}",
+            f"{self._summary(self.state.document)}\n\n"
+            f"{texts('notice_expired')}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)}",
+            title=texts("notice_title_finished", title=self.entry.title),
             notification_id=self._notification_id,
         )
 

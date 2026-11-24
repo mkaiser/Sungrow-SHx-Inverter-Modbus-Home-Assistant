@@ -102,6 +102,7 @@ from .migration import (
 )
 from .route import async_direct, connection_text, route_key, web_interface
 from .services import async_setup_services
+from .texts import async_texts
 from .websocket import async_register as async_register_websocket
 
 _LOGGER = logging.getLogger(__name__)
@@ -206,6 +207,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     on every reload would be a way to lose one.
     """
     async_setup_services(hass)
+    # A notification is written from a callback, which cannot load them.
+    await async_texts(hass)
     # The download view too, and for the same reason: one registration per
     # Home Assistant, not one per entry. Doing it here is what lets
     # `download.async_register` keep no state at all.

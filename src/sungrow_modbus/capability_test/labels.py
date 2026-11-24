@@ -366,7 +366,7 @@ NEEDS_DE: dict[str, str] = {
     "three kilowatt-hours of flow": "drei Kilowattstunden",
 }
 
-_COUNT = re.compile(r"(\d+) of (\d+) [a-z ]+")
+_COUNT = re.compile(r"(\d+) of (\d+) [a-z ]+?(?: of ([\d.]+) kWh)?")
 
 
 def need(words: str, detail: str | None = None) -> Label:
@@ -375,7 +375,11 @@ def need(words: str, detail: str | None = None) -> Label:
     if detail:
         en = f"{en} ({detail})"
         counted = _COUNT.fullmatch(detail)
-        de = f"{de} ({f'{counted[1]} von {counted[2]}' if counted else detail})"
+        if counted:
+            detail = f"{counted[1]} von {counted[2]}"
+            if step := counted[3]:
+                detail += f" zu je {step.replace('.', ',')} kWh"
+        de = f"{de} ({detail})"
     return _label(en, de)
 
 

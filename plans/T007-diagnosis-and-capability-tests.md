@@ -99,13 +99,12 @@ be tested with is `doc/capability_tests.md`. Left:
      written (2026-11-09); the 300 W floor after it still skips a battery
      charging a few hundred watts with kilowatts of headroom, unless the
      bracket confirms the start first.
-  3. **The German, on a real dashboard.** The dashboard says the waiting
-     line, verdicts, what a check waits for and the step being measured in
-     German (maintainer, 2026-11-24: the cards, not the sensor states).
-     The states, the log and a run's notes stay English, being the record.
-     Not yet seen in a browser. The notifications are still English.
-     While auto repeat waits, the step and summary states start with *auto
-     repeat*, then say what for, which may be the clock.
+  3. **The German** is on the cards and in the notifications; the sensor
+     states, the log, a run's notes and the summary a finished notice starts
+     with stay English, being the record (maintainer, 2026-11-24, for the
+     states). Seen in a browser on a simulator house, in German. While auto
+     repeat waits, the step and summary states start with *auto repeat*, then
+     say what for, which may be the clock.
   4. **Diagnosis: stop on hardware** -- **done 2026-11-17**, at the
      maintainer's SH10RT. Pressed 60 s into part B, after six settings had
      been written and during the forced charge probe: the restore ran to
@@ -114,18 +113,18 @@ be tested with is `doc/capability_tests.md`. Left:
      the owner's controls were released and **no restart started** (wiki:
      the stop). Nothing is left here; a stop through a WiNet-S is covered
      by T044, not by this item.
-  5. **The *Diagnosis:* names on a real device page**, in English and
-     German, once released: that the *Diagnostic* card keeps them
-     together in the order `doc/entity_names.md` shows (the frontend's
-     collation was not checked in the container), and that the
-     counters read sensibly after a day's runs.
+  5. **The *Diagnosis:* names** are seen on a device page (simulator house),
+     English and German: the *Diagnostic* card keeps all 17 together,
+     alphabetically. That the counters read sensibly after a day's runs is
+     left for the next collection.
 
 ## Status log
 
 | When | Status |
 | --- | --- |
-| 2026-11-24 | **The cards in German**: verdicts, needs and the measured step (`labels.NEEDS_DE`, `VERDICTS_DE`, held to every need and verdict by a test). A free-text reason only the owner's options change stays English. Starting next: the notifications, then the cards in a browser. |
-| 2026-11-24 | **The waiting wording**: *waiting for changed test conditions: waiting for ...* doubled itself and was wrong when only the clock decided; the step and summary sensors now start with *auto repeat*, and the dashboard reads the old start too, for the recorded log. *Diagnosis: next attempt* stays a time or unknown. Left: the names on a real device page, the new spacing on hardware, the forced startup on an SH-T (T063). |
+| 2026-11-24 | **The notifications in German** (`texts.async_cached_texts`; the sentences are `flow_text` keys `notice_*`), and the browser look: cards, notices and device page on a scratch instance with the simulator. The look found a German refusal that quoted a question the page words differently, and a wrong name for *Download diagnostics*; both fixed. The simulated run reported `battery_max_soc` not put back: its seed holds 0.1 %, whose write was refused; it read 0.1 before and after. Starting next: the new spacing on hardware. |
+| 2026-11-24 | **The cards in German**: verdicts, needs and the measured step (`labels.NEEDS_DE`, `VERDICTS_DE`, held to every need and verdict by a test). A free-text reason only the owner's options change stays English. |
+| 2026-11-24 | **The waiting wording**: *waiting for changed test conditions: waiting for ...* doubled itself and was wrong when only the clock decided; the step and summary sensors now start with *auto repeat*, and the dashboard reads the old start too, for the recorded log. *Diagnosis: next attempt* stays a time or unknown. Left: the new spacing on hardware, the forced startup on an SH-T (T063). |
 | 2026-11-23, 22:10 CET | **Ingested** (the maintainer brought it forward): the diagnosis section of a diagnostics download from the production instance, `…-direct-lan-6.json`, with its wiki pages. The local copy in `tmp/mkaiser-t007-2026-11-23/` and the history in Home Assistant may go. |
 | 2026-11-23, 19:37 CET | **The collection at mkaiser's production entry is complete: 56 of 56, 0 failed** (51 passed, 5 bounds not enforced), 26 runs, every setting put back each time; auto repeat switched itself off. Today's runs 22-26 settled 13059 and 13100's readback, the forced discharge (1250 W asked: -3686 W to 1017 W), the export limit (1250 W asked, 6674 W to 1247.5 W), the charge ceiling at 53 % (4499 W to 0 and back), 13059 refusing 51 % with 0x04, and the discharging threshold (229 W to 0, 272 W after); run 21 the forced startup (122 s, 206 s, 16 s). The last two readings' checks settled on the evening's discharge. **Not ingested**, by the maintainer's word for the morning of 2026-11-24: a copy of both stores is in `tmp/mkaiser-t007-2026-11-23/`, local only. |
 | 2026-11-23 | **Auto repeat's spacing changed** (0.1.0a51): no fixed 30-minute slot, but 5 min after a run that settled a check and 30, then 60, after vain ones, a newly possible check shortening it once; the two SoC readbacks wait for 15 %. Not yet watched on hardware: what to look at is *Diagnosis: next attempt* and the Log after the next collection starts, at mkaiser's after the ingest. |

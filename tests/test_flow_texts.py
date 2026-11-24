@@ -12,10 +12,23 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
+from unittest.mock import patch
+
+from modbus_connection.mock import MockModbusUnit
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus import config_flow
+from custom_components.sungrow_modbus.const import (
+    CONF_UNIT_ID,
+    DIAGNOSIS_MODE_AUTO_REPEAT,
+    DOMAIN,
+)
+from custom_components.sungrow_modbus.testimony import async_check
 from custom_components.sungrow_modbus.texts import async_texts
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
+
+from .conftest import SERIAL
 
 COMPONENT = Path(__file__).resolve().parents[1] / "custom_components" / "sungrow_modbus"
 TABLE = json.loads((COMPONENT / "strings.json").read_text(encoding="utf-8"))[
@@ -28,12 +41,12 @@ GERMAN = json.loads(
 SOURCE = "\n".join(path.read_text(encoding="utf-8") for path in COMPONENT.glob("*.py"))
 
 #: Every `texts("key"...)` call in the integration's code.
-CALLED = set(re.findall(r'texts\(\s*"(\w+)"', SOURCE))
+CALLED = set(re.findall(r"""texts\(\s*["'](\w+)["']""", SOURCE))
 
 #: Every table key the code names anywhere, which also counts a key chosen
 #: through a variable (`key = "diagnosis_direct"`) or called on the table
 #: directly (the repair's `(await async_texts(hass))("...")`).
-USED = {key for key in TABLE if f'"{key}"' in SOURCE}
+USED = {key for key in TABLE if f'"{key}"' in SOURCE or f"'{key}'" in SOURCE}
 
 
 def test_every_sentence_the_code_asks_for_exists() -> None:
@@ -111,3 +124,34 @@ async def test_the_picker_s_rows_are_german_on_a_german_system(
     assert "Seriennummer" in cable
     for english in ("own LAN port", "the same inverter", "serial", " at "):
         assert english not in proxy + cable
+
+
+async def test_a_notification_is_german_on_a_german_system(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Written from a callback, so from the texts the setup loaded."""
+    hass.config.language = "de"
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    with patch(
+        "homeassistant.components.persistent_notification.async_create"
+    ) as notify:
+        async_check(hass, entry)
+        asked = notify.call_args
+        entry.runtime_data.diagnosis.async_announce_start(DIAGNOSIS_MODE_AUTO_REPEAT)
+        started = notify.call_args
+
+    assert "Wie dieser Wechselrichter angebunden ist" in asked.args[1]
+    assert asked.kwargs["title"] == "Fragen der Diagnose unbeantwortet: SH10RT"
+    assert started.args[1].startswith(GERMAN["notice_start_auto_repeat"])
+    assert started.kwargs["title"] == "Diagnose gestartet: SH10RT"

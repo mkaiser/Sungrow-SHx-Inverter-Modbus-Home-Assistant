@@ -134,9 +134,12 @@ def test_what_a_check_waits_for_is_said_in_german() -> None:
     )
     assert said is not None
     assert said["de"] == "kein Ladestrom"
-    assert (
-        labels.need("a midnight", "2 of 3 events")["de"] == "eine Mitternacht (2 von 3)"
-    )
+    counted = labels.need("a midnight", "2 of 3 events")
+    assert counted["de"] == "eine Mitternacht (2 von 3)"
+    counted = labels.need("three kilowatt-hours of flow", "0 of 3 trails of 1 kWh")
+    assert counted["de"] == "drei Kilowattstunden (0 von 3 zu je 1 kWh)"
+    kept = labels.need("a day of polls", "0x0000 Running: 2")
+    assert kept["de"] == "ein Tag Messwerte (0x0000 Running: 2)"
 
 
 def test_an_unknown_check_has_none() -> None:

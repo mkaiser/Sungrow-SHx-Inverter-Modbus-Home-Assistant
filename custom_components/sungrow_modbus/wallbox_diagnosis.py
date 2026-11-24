@@ -38,7 +38,6 @@ from sungrow_modbus.wallbox.management import MANAGED
 from .const import (
     CONF_WALLBOX_MANAGED_BY,
     DIAGNOSIS_ISSUE_URL,
-    DIAGNOSIS_MODE_AUTO_REPEAT,
     DIAGNOSIS_MODE_EXTENDED,
     DIAGNOSIS_MODE_READ_ONLY,
     LINK_VALID,
@@ -47,6 +46,7 @@ from .continuous import WALLBOX_ALONE_INTERVAL
 from .coordinator import SungrowConfigEntry
 from .device_diagnosis import _fields, wallbox_builder, wallbox_summary
 from .diagnosis import DiagnosisRunner, polled_load
+from .texts import async_cached_texts
 from .wallbox_capability_test import (
     async_ledger_clear,
     async_ledger_runs,
@@ -60,12 +60,6 @@ from .wallbox_capability_test import (
 from .write_owner import holder
 
 _LOGGER = logging.getLogger(__name__)
-
-#: Said in place of the test when an extended run had no leave to write.
-NO_LEAVE = (
-    "The capability test did not run: it writes to the wallbox only once you "
-    "switch it on in this entry's options (**Configure**)."
-)
 
 
 class WallboxDiagnosisRunner(DiagnosisRunner):
@@ -228,14 +222,15 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
 
     def _summary(self, document: dict[str, Any]) -> str:
         """Say what the document holds: the read, the tests, a missing leave."""
+        texts = async_cached_texts(self.hass)
         lines = [wallbox_summary(document)]
         block = document.get("wallbox_capability_test")
         if isinstance(block, dict):
             runs = block.get("runs")
             count = len(runs) if isinstance(runs, list) else runs
-            lines.append(f"- Capability test: {count or 0} run(s) kept.")
+            lines.append(f"- {texts('notice_wallbox_runs', count=count or 0)}")
         if self._no_leave:
-            lines.append(f"- {NO_LEAVE}")
+            lines.append(f"- {texts('notice_wallbox_no_leave')}")
         return "\n".join(lines)
 
     @callback
@@ -245,22 +240,17 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
 
         url = async_download_url(self.hass, self.entry)
         lapses = dt_util.now() + LINK_VALID
+        texts = async_cached_texts(self.hass)
+        # Raw HTML with `target`: `DiagnosisRunner._async_offer_the_document`
+        # says why a markdown link does nothing here.
+        link = f'<a href="{url}" target="_blank">{texts("notice_download")}</a>'
         persistent_notification.async_create(
             self.hass,
             f"{self._summary(document)}\n\n"
-            # Raw HTML with `target`: `DiagnosisRunner._async_offer_the_document`
-            # says why a markdown link does nothing here.
-            f'<a href="{url}" target="_blank">Download the document</a>'
-            f" — this link stops working at {lapses.strftime('%H:%M')}. After "
-            "that, press **Diagnosis: start** again for a fresh one, or use "
-            "**Download diagnostics** on the device page.\n\n"
-            "It carries a stand-in in place of the serial number, and your "
-            "address only if you allowed it. Send it to "
-            f"[the diagnosis issue]({DIAGNOSIS_ISSUE_URL}).",
-            title=(
-                f"Diagnosis {'stopped' if self.state.stopped else 'finished'}: "
-                f"{self.entry.title}"
-            ),
+            f"{texts('notice_link', link=link, time=lapses.strftime('%H:%M'))} "
+            f"{texts('notice_never_expires')}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)}",
+            title=self._finished_title(texts),
             notification_id=self._notification_id,
         )
         self._lapsed = async_call_later(self.hass, LINK_VALID, self._async_mark_lapsed)
@@ -272,51 +262,39 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
         document = self.state.document
         if document is None:
             return
+        texts = async_cached_texts(self.hass)
         persistent_notification.async_create(
             self.hass,
-            f"{self._summary(document)}\n\nThe download link has expired. Press "
-            "**Diagnosis: start** again for a fresh one, or use **Download "
-            "diagnostics** on the device page. Send it to "
-            f"[the diagnosis issue]({DIAGNOSIS_ISSUE_URL}).",
-            title=f"Diagnosis finished: {self.entry.title}",
+            f"{self._summary(document)}\n\n"
+            f"{texts('notice_expired')} {texts('notice_never_expires')}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)}",
+            title=texts("notice_title_finished", title=self.entry.title),
             notification_id=self._notification_id,
         )
 
     @callback
     def async_announce_start(self, mode: str) -> None:
         """Say what was started, in the wallbox's words."""
-        leave = consented(self.entry)
-        what = {
-            DIAGNOSIS_MODE_READ_ONLY: (
-                "A read-only diagnosis is running. It only reads; nothing on "
-                "the wallbox changes."
-            ),
-            DIAGNOSIS_MODE_EXTENDED: (
-                "An extended test is running: the diagnosis, then the wallbox "
-                "capability test. Most checks need a car charging; one that "
-                "has none to judge is recorded as waiting. Every setting it "
-                "changes is put back and read again."
-                if leave
-                else f"The diagnosis is running. {NO_LEAVE}"
-            ),
-            DIAGNOSIS_MODE_AUTO_REPEAT: (
-                "The wallbox capability test repeats on its own: whenever a "
-                "check still missing can be answered (most need a car "
-                "charging), a run starts, at most every 15 minutes, and leaves "
-                "out what earlier runs established. **A charge in progress is "
-                "interrupted** by some checks. **Diagnosis: current step** "
-                "shows what it waits for; **Diagnosis: stop** ends it, and so "
-                "does a restart."
-                if leave
-                else f"Nothing will run. {NO_LEAVE}"
-            ),
-        }[mode]
+        texts = async_cached_texts(self.hass)
+        refused = texts("notice_wallbox_no_leave")
+        if mode == DIAGNOSIS_MODE_READ_ONLY:
+            what = texts("notice_start_read_only")
+        elif mode == DIAGNOSIS_MODE_EXTENDED:
+            what = (
+                texts("notice_wallbox_extended")
+                if consented(self.entry)
+                else f"{texts('notice_wallbox_running')} {refused}"
+            )
+        else:
+            what = (
+                texts("notice_wallbox_auto_repeat")
+                if consented(self.entry)
+                else f"{texts('notice_wallbox_nothing')} {refused}"
+            )
         persistent_notification.async_create(
             self.hass,
-            f"{what}\n\nIt runs in the background: you can leave this page. "
-            "**Diagnosis: stop** ends a run early; every value it changed is "
-            "still put back.",
-            title=f"Diagnosis started: {self.entry.title}",
+            f"{what}\n\n{texts('notice_wallbox_background')}",
+            title=texts("notice_title_started", title=self.entry.title),
             notification_id=self._notification_id,
         )
 

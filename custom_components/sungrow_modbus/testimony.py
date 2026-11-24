@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING
 from homeassistant.components import persistent_notification
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers.translation import async_get_cached_translations
 
 from .const import (
     CONF_DIAGNOSIS_OTHER_INVERTER,
@@ -45,15 +46,17 @@ from .const import (
     DOMAIN,
     KIND_WALLBOX,
 )
+from .texts import async_cached_texts
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
 
 #: The questions an extended run is refused without, and their wording on the
-#: options page. The labels are English here and English in the notification;
-#: the *refusal* is a translated exception (`testimony_missing`) that names
-#: them in the reader's language, because a sentence built in code and handed
-#: over as a placeholder would stay English in a German dialog (`texts.py`).
+#: options page. The labels are English here; the notification says them in
+#: Home Assistant's language (`_question`), and the *refusal* is a translated
+#: exception (`testimony_missing`) that names them in the reader's, because a
+#: sentence built in code and handed over as a placeholder would stay English
+#: in a German dialog (`texts.py`).
 REQUIRED: tuple[tuple[str, str], ...] = (
     (CONF_DIAGNOSIS_TRANSPORT, "How this inverter is connected"),
     (CONF_DIAGNOSIS_PROXY, "Is a Modbus proxy in the path?"),
@@ -128,6 +131,17 @@ def async_refuse_if_unanswered(hass: HomeAssistant, entry: SungrowConfigEntry) -
 
 
 @callback
+def _question(hass: HomeAssistant, key: str) -> str:
+    """Return a question as the options page words it, in Home Assistant's language."""
+    path = f"component.{DOMAIN}.options.step.init.sections.diagnosis.data.{key}"
+    for language in (hass.config.language, "en"):
+        found = async_get_cached_translations(hass, language, "options", DOMAIN)
+        if path in found:
+            return found[path]
+    return dict((*REQUIRED, *SUGGESTED))[key]
+
+
+@callback
 def async_check(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     """Say which answers are missing, before anything is started.
 
@@ -137,44 +151,34 @@ def async_check(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     then starting it replaces rather than stacks, and answering dismisses it.
     """
     notification_id = f"{DOMAIN}_testimony_{entry.entry_id}"
-    required = unanswered(hass, entry)
-    suggested = unanswered(hass, entry, SUGGESTED)
+    _, required = missing_keys(hass, entry)
+    suggested = [
+        key for key, _ in SUGGESTED if not str(entry.options.get(key) or "").strip()
+    ]
     if not required and not suggested:
         persistent_notification.async_dismiss(hass, notification_id)
         return
 
-    lines = [f"- **{label}**" for label in required]
+    texts = async_cached_texts(hass)
+    asked = [f"- **{_question(hass, key)}**" for key in required]
+    name = [_question(hass, key) for key in suggested]
     if required:
-        message = (
-            "**An extended test is refused until these are answered**, "
-            "because a capability test's findings are read against the house "
-            "they were taken in and no register reports any of this:\n\n"
-            + "\n".join(lines)
-            + "\n\nEach has an answer for every house -- *not sure*, *I do "
-            "not know*, *no* -- so none of them asks you to guess."
-        )
+        parts = [texts("notice_refused"), "\n".join(asked), texts("notice_no_guess")]
+        if name:
+            parts.append(texts("notice_suggested", question="**, **".join(name)))
     else:
-        message = (
-            "The diagnosis will run and write its document. One question is "
-            "unanswered, and it is the one that decides whether anybody can "
-            "come back to you about what it finds:\n\n"
-            + "\n".join(f"- **{label}**" for label in suggested)
-            + "\n\nLeaving it empty contributes anonymously, which is a "
-            "choice this project offers; it is not required."
-        )
-    if required and suggested:
-        message += (
-            "\n\nNot required, and worth having: **"
-            + "**, **".join(suggested)
-            + "** -- an anonymous reading cannot be asked a follow-up question."
-        )
+        parts = [
+            texts("notice_name_missing"),
+            "\n".join(f"- **{label}**" for label in name),
+            texts("notice_anonymous"),
+        ]
+    parts.append(texts("notice_answer_where"))
     persistent_notification.async_create(
         hass,
-        message + "\n\nAnswer them under **Settings → Devices & services → "
-        "Sungrow Modbus → Configure**, in *Contribute a capability "
-        "diagnosis*. Saving the options reloads this entry, so answer them "
-        "before a long run rather than during one.",
-        title="Diagnosis questions unanswered: "
-        f"{(answering_entry(hass, entry) or entry).title}",
+        "\n\n".join(parts),
+        title=texts(
+            "notice_title_unanswered",
+            title=(answering_entry(hass, entry) or entry).title,
+        ),
         notification_id=notification_id,
     )

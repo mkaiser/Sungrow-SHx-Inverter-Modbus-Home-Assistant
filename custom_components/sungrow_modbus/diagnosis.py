@@ -81,6 +81,7 @@ from .const import (
     LINK_VALID,
 )
 from .continuous import INTERVAL, ContinuousCapabilityTest
+from .texts import Texts, async_cached_texts
 from .wallbox_capability_test import (
     PLAUSIBILITY_SAVE_DELAY as WALLBOX_PLAUSIBILITY_SAVE_DELAY,
     WallboxTestRunner,
@@ -1054,39 +1055,28 @@ class DiagnosisRunner:
         url = async_download_url(self.hass, self.entry)
         lapses = dt_util.now() + LINK_VALID
 
+        texts = async_cached_texts(self.hass)
+        # Raw HTML with `target`, not `[text](url)`. A markdown link renders as
+        # a bare same-origin anchor, and the frontend's global click handler
+        # swallows exactly those: it takes any anchor with no `target`, no
+        # `download` and no `rel=external` whose origin matches the page, calls
+        # preventDefault(), and hands the path to the client-side router.
+        # `/api/...` is not a panel, so the router does nothing at all -- the
+        # link looks dead while the endpoint is answering 200. `target` is also
+        # the only one of those three escapes that survives Home Assistant's
+        # markdown sanitiser, whose whitelist for an anchor is exactly
+        # ("target", "href", "title").
+        link = f'<a href="{url}" target="_blank">{texts("notice_download")}</a>'
+        # The summary is rendered from the document rather than from the run,
+        # so it cannot promise something the file does not carry.
         persistent_notification.async_create(
             self.hass,
-            (
-                # Rendered from the document rather than from the run, so a
-                # summary cannot promise something the file does not carry.
-                f"{summarise(document)}\n\n"
-                # Raw HTML with `target`, not `[text](url)`. A markdown link
-                # renders as a bare same-origin anchor, and the frontend's
-                # global click handler swallows exactly those: it takes any
-                # anchor with no `target`, no `download` and no `rel=external`
-                # whose origin matches the page, calls preventDefault(), and
-                # hands the path to the client-side router. `/api/...` is not
-                # a panel, so the router does nothing at all -- the link looks
-                # dead while the endpoint is answering 200. `target` is also
-                # the only one of those three escapes that survives Home
-                # Assistant's markdown sanitiser, whose whitelist for an
-                # anchor is exactly ("target", "href", "title").
-                f'<a href="{url}" target="_blank">Download the document</a>'
-                " — this link stops working at "
-                f"{lapses.strftime('%H:%M')}. After that, press "
-                "**Diagnosis: start** again for a fresh one, or use "
-                "**Download diagnostics** on the device page, which carries "
-                "the same document and never expires.\n\n"
-                "It carries a stand-in serial rather than the real one, and "
-                "your address only if you allowed it. Send it to "
-                f"[the diagnosis issue]({DIAGNOSIS_ISSUE_URL}) — what varies between "
-                "installations is the thing no specification has told this "
-                "project reliably."
-            ),
-            title=(
-                f"Diagnosis {'stopped' if self.state.stopped else 'finished'}: "
-                f"{self.entry.title}"
-            ),
+            f"{summarise(document)}\n\n"
+            f"{texts('notice_link', link=link, time=lapses.strftime('%H:%M'))} "
+            f"{texts('notice_never_expires')}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)} "
+            f"{texts('notice_send_why')}",
+            title=self._finished_title(texts),
             notification_id=self._notification_id,
         )
         self._lapsed = async_call_later(self.hass, LINK_VALID, self._async_mark_lapsed)
@@ -1099,37 +1089,24 @@ class DiagnosisRunner:
         place rather than stacking. A button shows no text of its own, so this
         is where somebody who pressed Start learns that they may leave.
         """
+        texts = async_cached_texts(self.hass)
         what = {
-            DIAGNOSIS_MODE_READ_ONLY: (
-                "A read-only diagnosis is running. It only reads; nothing on "
-                "the inverter changes."
-            ),
-            DIAGNOSIS_MODE_EXTENDED: (
-                "An extended test is running: the diagnosis, then one "
-                "capability test. It writes each setting, reads it back and "
-                "puts your original value back, checked by reading it again."
-            ),
-            DIAGNOSIS_MODE_AUTO_REPEAT: (
-                "The extended test repeats on its own: whenever the house can "
-                "answer a check still missing, a capability test starts, and "
-                "leaves out what earlier runs established. The next one waits "
-                "5 minutes if that settled something, and 30 to 60 if not. Each "
-                "writes its settings and puts your original values back. "
-                "**Diagnosis: current step** shows what it waits "
-                "for; **Diagnosis: stop** ends it, and so does a restart."
-            ),
+            DIAGNOSIS_MODE_READ_ONLY: "notice_start_read_only",
+            DIAGNOSIS_MODE_EXTENDED: "notice_start_extended",
+            DIAGNOSIS_MODE_AUTO_REPEAT: "notice_start_auto_repeat",
         }[mode]
         persistent_notification.async_create(
             self.hass,
-            f"{what}\n\n"
-            "It runs in the background: you can leave this page. A "
-            "notification tells you when it has finished. **Please do not "
-            "restart Home Assistant meanwhile** — the test would still put "
-            "everything back, but the run is lost. **Diagnosis: stop** ends a "
-            "run early; every value it changed is still put back.",
-            title=f"Diagnosis started: {self.entry.title}",
+            f"{texts(what)}\n\n{texts('notice_start_background')}",
+            title=texts("notice_title_started", title=self.entry.title),
             notification_id=self._notification_id,
         )
+
+    def _finished_title(self, texts: Texts) -> str:
+        """Return the title of a run's result: it finished, or was stopped."""
+        if self.state.stopped:
+            return texts("notice_title_stopped", title=self.entry.title)
+        return texts("notice_title_finished", title=self.entry.title)
 
     @property
     def _notification_id(self) -> str:
@@ -1210,19 +1187,13 @@ class DiagnosisRunner:
         # Imported late, as above.
         from .diagnosis_document import summarise
 
+        texts = async_cached_texts(self.hass)
         persistent_notification.async_create(
             self.hass,
-            (
-                f"{summarise(document)}\n\n"
-                "The download link in this notification has expired. Press "
-                "**Diagnosis: start** again for a fresh one, or use "
-                "**Download diagnostics** on the device page — that carries "
-                "the same document and never expires.\n\n"
-                "It carries a stand-in serial rather than the real one, and "
-                "your address only if you allowed it. Send it to "
-                f"[the diagnosis issue]({DIAGNOSIS_ISSUE_URL})."
-            ),
-            title=f"Diagnosis finished: {self.entry.title}",
+            f"{summarise(document)}\n\n"
+            f"{texts('notice_expired')} {texts('notice_never_expires')}\n\n"
+            f"{texts('notice_send', url=DIAGNOSIS_ISSUE_URL)}",
+            title=texts("notice_title_finished", title=self.entry.title),
             notification_id=self._notification_id,
         )
 

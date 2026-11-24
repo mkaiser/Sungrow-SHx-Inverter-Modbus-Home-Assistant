@@ -116,7 +116,7 @@ const TEXT = {
     log: "Protokoll, letzte 24 Stunden", log_empty: "Noch nichts aufgezeichnet.", log_unavailable: "Das Protokoll konnte nicht gelesen werden.",
     runs: "Läufe ({n})", run: "Lauf {n}", put_back: "alle {n} Einstellungen wie vorher", not_put_back: "Nicht zurückgesetzt: {fields}",
     download: "Letzte Diagnose herunterladen",
-    download_failed: "Das Dokument ist nicht mehr da: es bleibt bis zum Neustart von Home Assistant. Diagnose herunterladen auf der Geräteseite enthält die Ergebnisse.",
+    download_failed: "Das Dokument ist nicht mehr da: es bleibt bis zum Neustart von Home Assistant. Diagnosedaten herunterladen auf der Geräteseite enthält die Ergebnisse.",
     test_docs: "Was die Tests tun",
     measuring: "Wird gerade gemessen: {what}", auto_waits: "Die automatische Wiederholung ist an, gerade läuft kein Test.", starting: "Startet",
     run_overall: "Insgesamt", run_overall_value: "{n} von {total} Prüfungen", run_none: "noch kein Test aufbewahrt", run_this: "Dieser Lauf",
