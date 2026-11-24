@@ -62,11 +62,11 @@ a network problem, not a bug.
 **Settings → Devices & services → Add integration →** search for
 **Sungrow Modbus (preview)**.
 
-![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](../device-diagnosis/images/HACS-add-integration-sungrow-modbus.png)
+![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](images/HACS-add-integration-sungrow-modbus.png)
 
 Choose **Perform the device diagnosis**.
 
-![The first screen, offering Perform the device diagnosis](../device-diagnosis/images/HA-settings-configure-integration.png)
+![The first screen, offering Perform the device diagnosis](images/HA-settings-configure-integration.png)
 
 **Search my network** probes the range you confirm and identifies what
 answers; or type the address (behind a WiNet-S, the dongle's). Where more than
@@ -125,7 +125,7 @@ choose the *Mode* and press **Start**. *Results* fills as it runs, and
 Without the dashboard, on the device page (Settings → Devices & services → Sungrow Modbus → the
 device):
 
-![Device page with the diagnosis mode, Start and Stop](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
+![Device page with the diagnosis mode, Start and Stop](images/HA-settings-device-start-diagnosis.png)
 
 Choose what to run in **Diagnosis: mode**, then press **Diagnosis: start**.
 A new entry sits at *Extended test (auto repeat)*, the mode a reading is

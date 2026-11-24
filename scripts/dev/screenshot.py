@@ -13,8 +13,7 @@ flows, and never belongs on an instance whose entry reaches real hardware.
 So, like `ha_onboard.py`, this refuses a non-loopback URL and logs in as the
 public `dev` / `dev`.
 
-Each shot writes its file into `device-diagnosis/images/`, or `doc/images/`
-for the dashboard's; look at it before committing it.
+Each shot writes its file into `doc/images/`; look at it before committing it.
 """
 
 from __future__ import annotations
@@ -28,8 +27,7 @@ from urllib.parse import urlparse
 from playwright.sync_api import Locator, Page, sync_playwright
 
 REPO = Path(__file__).resolve().parents[2]
-IMAGES = REPO / "device-diagnosis" / "images"
-DOC_IMAGES = REPO / "doc" / "images"
+IMAGES = REPO / "doc" / "images"
 #: The strategy dashboard the dashboard shots create if it is missing.
 DASHBOARD = "dashboard-sungrow"
 LOOPBACK = {"127.0.0.1", "localhost", "::1"}
@@ -207,7 +205,7 @@ def dashboard_add(page: Page, url: str) -> Path:
     item = page.get_by_text("Sungrow Modbus").first
     item.wait_for()
     page.wait_for_timeout(1_000)
-    target = DOC_IMAGES / "HA-dashboard-add.png"
+    target = IMAGES / "HA-dashboard-add.png"
     page.screenshot(path=str(target), clip=dialog_surface(item))
     return target
 
@@ -215,7 +213,7 @@ def dashboard_add(page: Page, url: str) -> Path:
 def dashboard_home(page: Page, url: str) -> Path:
     """Shoot the dashboard's Home: power flow, battery and today."""
     open_dashboard(page, url, "home")
-    target = DOC_IMAGES / "HA-dashboard-home.png"
+    target = IMAGES / "HA-dashboard-home.png"
     page.screenshot(path=str(target), clip=sections_box(page, 3))
     return target
 
@@ -223,7 +221,7 @@ def dashboard_home(page: Page, url: str) -> Path:
 def dashboard_controls(page: Page, url: str) -> Path:
     """Shoot the dashboard's Controls, locked: the battery's section."""
     open_dashboard(page, url, "controls")
-    target = DOC_IMAGES / "HA-dashboard-controls.png"
+    target = IMAGES / "HA-dashboard-controls.png"
     page.screenshot(path=str(target), clip=sections_box(page, 1))
     return target
 
@@ -242,7 +240,7 @@ def dashboard_create(page: Page, url: str) -> Path:
     # The scratch instance may hold one already, and would suggest a "-2".
     page.locator("ha-form input").nth(1).fill(DASHBOARD)
     page.wait_for_timeout(1_000)
-    target = DOC_IMAGES / "HA-dashboard-create.png"
+    target = IMAGES / "HA-dashboard-create.png"
     heading = page.get_by_text("Add new dashboard").last
     box = dialog_surface(heading)
     # The climb ends at the body; the buttons are below it.
@@ -322,7 +320,7 @@ def choose_mode(page: Page, option: str) -> None:
 def diagnosis_tab(page: Page, url: str) -> Path:
     """Shoot the dashboard's tabs, with Diagnosis open."""
     open_dashboard(page, url, "diagnosis")
-    target = DOC_IMAGES / "HA-dashboard-diagnosis-tab.png"
+    target = IMAGES / "HA-dashboard-diagnosis-tab.png"
     page.screenshot(
         path=str(target), clip={"x": 0, "y": 0, "width": 1280, "height": 510}
     )
@@ -334,7 +332,7 @@ def diagnosis_questions(page: Page, url: str) -> Path:
     page.set_viewport_size({"width": 1280, "height": 5000})
     open_dashboard(page, url, "diagnosis")
     answer_questions(page)
-    target = DOC_IMAGES / "HA-dashboard-diagnosis-questions.png"
+    target = IMAGES / "HA-dashboard-diagnosis-questions.png"
     page.locator("sungrow-modbus-settings-card").last.screenshot(path=str(target))
     return target
 
@@ -344,7 +342,7 @@ def diagnosis_start(page: Page, url: str) -> Path:
     open_dashboard(page, url, "diagnosis")
     choose_mode(page, "read_only")
     unlock(page)
-    target = DOC_IMAGES / "HA-dashboard-diagnosis-start.png"
+    target = IMAGES / "HA-dashboard-diagnosis-start.png"
     locks = page.locator("sungrow-modbus-lock-card")
     start = run_card(page, "start")
     page.screenshot(path=str(target), clip=union_box([locks.first, start]))
@@ -360,7 +358,7 @@ def diagnosis_running(page: Page, url: str) -> Path:
     unlock(page)
     run_card(page, "start").get_by_role("button", name="Start", exact=True).click()
     page.wait_for_timeout(20_000)
-    target = DOC_IMAGES / "HA-dashboard-diagnosis-running.png"
+    target = IMAGES / "HA-dashboard-diagnosis-running.png"
     stop = page.locator("hui-tile-card").filter(has_text="Stop").first
     page.screenshot(path=str(target), clip=union_box([run_card(page, "now"), stop]))
     return target
@@ -375,7 +373,7 @@ def diagnosis_download(page: Page, url: str) -> Path:
     for group in card.locator("details.group[open] > summary").all()[::-1]:
         group.click()
     page.wait_for_timeout(1_000)
-    target = DOC_IMAGES / "HA-dashboard-diagnosis-download.png"
+    target = IMAGES / "HA-dashboard-diagnosis-download.png"
     card.screenshot(path=str(target))
     return target
 

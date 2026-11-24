@@ -474,8 +474,7 @@ $ make hacs ARGS=--reset          # delete config-hacs/ and start over
 
 ## Screenshots for the docs
 
-The images in `device-diagnosis/images/`, and the dashboard's in
-`doc/images/`, are taken headless, against the simulator, from a **second**
+The images in `doc/images/` are taken headless, against the simulator, from a **second**
 Home Assistant. Never the one on :8123: its entry
 may point at real hardware, and a screenshot session clicks through flows.
 
@@ -496,7 +495,7 @@ may point at real hardware, and a screenshot session clicks through flows.
    port `5020`, in the browser or through the config flow's REST API
    (`POST /api/config/config_entries/flow`, then each step's form).
 4. **The shot.** `scripts/dev/screenshot.py` logs in as `dev` / `dev`, clicks
-   to the page and writes the PNG into `device-diagnosis/images/`:
+   to the page and writes the PNG into `doc/images/`:
 
    ```bash
    ~/.local/share/sungrow-screenshots/bin/python scripts/dev/screenshot.py \

@@ -24,11 +24,11 @@ Three ways to run it:
 2. *Settings → Devices & services → Add integration*, search for
    *Sungrow Modbus (preview)*.
 
-   <img src="images/HACS-add-integration-sungrow-modbus.png" width="400" alt="Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)">
+   <img src="../doc/images/HACS-add-integration-sungrow-modbus.png" width="400" alt="Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)">
 
 3. Choose **Perform the device diagnosis**.
 
-   <img src="images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
+   <img src="../doc/images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
 
 4. Add the Sungrow dashboard (*Settings → Dashboards → Add dashboard →
    Sungrow Modbus*) and open its **Diagnosis** tab
@@ -61,7 +61,7 @@ Three ways to run it:
 **Diagnosis: mode**, press **Diagnosis: start**, and when it has finished
 **Download diagnostics**.
 
-<img src="images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the diagnosis mode, Start and Stop">
+<img src="../doc/images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the diagnosis mode, Start and Stop">
 
 ### 2. From a terminal
 

@@ -73,7 +73,7 @@ back. Pressing Start is your consent; the six switches below are the parts that 
 *before* pressing the button; what you switch off stays off. With all six
 off, the test still forces the battery and checks every setting's scale. A wallbox has its own test, in the options of its own entry (below).
 
-<img src="../device-diagnosis/images/HA-settings-configure-capability-test.png" width="450" alt="The capability test section of the options dialog, with all six switches on">
+<img src="images/HA-settings-configure-capability-test.png" width="450" alt="The capability test section of the options dialog, with all six switches on">
 
 | Option | Default | What it does |
 | --- | --- | --- |
