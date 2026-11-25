@@ -2214,3 +2214,7 @@ The yearly slots against the lifetime counters, over the committed diagnoses: PV
 ## [2026-11-25] ingested | gerd-entity-id-switch-2026-11-25
 
 The switch to device-scoped ids at gerd's ([the source](sources/gerd-entity-id-switch-2026-11-25-summary.md)); `legacy-id-adoption.md` and the migration source have the cause of the `_2` ids corrected.
+
+## [2026-11-25] ingested | gerd-entity-id-switch-followup-2026-11-25
+
+Older restarts in joined sums ([the source](sources/gerd-entity-id-switch-followup-2026-11-25-summary.md)); the switch's open points are answered there.

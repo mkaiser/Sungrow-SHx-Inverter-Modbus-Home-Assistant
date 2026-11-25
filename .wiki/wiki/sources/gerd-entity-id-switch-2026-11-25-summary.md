@@ -23,5 +23,4 @@ Source: `raw/gerd-entity-id-switch-2026-11-25.md`.
 
 ## Not answered
 
-- What the dashboards look like: the ids exist, nothing was drawn.
-- Why that older daily sum is so high.
+Both open points of the raw note are taken up in [the follow-up](gerd-entity-id-switch-followup-2026-11-25-summary.md).
