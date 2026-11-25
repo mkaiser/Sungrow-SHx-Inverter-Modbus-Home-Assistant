@@ -53,7 +53,8 @@ is `doc/integration_migration.md`, and the record of what the YAML produces is
   adopted from `restored` placeholders, and the ids an older YAML package version had taken stayed `_2`, as they were under the YAML
   ([the source](../sources/gerd-ha-migration-2026-11-21-summary.md); the cause is corrected in
   [the switch](../sources/gerd-entity-id-switch-2026-11-25-summary.md)).
-- **The switch to device-scoped ids carried the statistics there** (119 renames), but left out the six adopted `_2` ids, and the
+- **The switch to device-scoped ids carried the statistics there** (119 renames), but left out the six adopted `_2` ids (the switch
+  takes such a number for its own since, `tests/test_entity_id_switch.py`), and the
   Energy dashboard's cost sensors needed a restart after its preferences were saved
   ([the source](../sources/gerd-entity-id-switch-2026-11-25-summary.md)).
 - **A gap of more than ten days in the old series restarts each lifetime counter's sum at 0.** Home

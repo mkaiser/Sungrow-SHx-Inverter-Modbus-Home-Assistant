@@ -2218,3 +2218,7 @@ The switch to device-scoped ids at gerd's ([the source](sources/gerd-entity-id-s
 ## [2026-11-25] ingested | gerd-entity-id-switch-followup-2026-11-25
 
 Older restarts in joined sums ([the source](sources/gerd-entity-id-switch-followup-2026-11-25-summary.md)); the switch's open points are answered there.
+
+## [2026-11-25] changed | legacy-id-adoption
+
+The switch moves an adopted id with a number on it; the page says so.

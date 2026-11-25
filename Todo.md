@@ -419,8 +419,7 @@ keeps the readings.
 
 **T084. A clean migration at gerd's**: his installation grew through every preview, so a fresh one from the YAML package's
 history, the package stopped first, shows what a first-time user gets. It touches his production history.
-His installation is on device-scoped ids since 2026-11-25 ([the source](.wiki/wiki/sources/gerd-entity-id-switch-2026-11-25-summary.md)); from that:
-the switch leaves out adopted `_2` ids (`migration.py`, to fix with a test).
+His installation is on device-scoped ids since 2026-11-25 ([the source](.wiki/wiki/sources/gerd-entity-id-switch-2026-11-25-summary.md)).
 *Needs*: a plan, a full backup and his consent.
 
 **T085. The RAK module's web page** (the dongle before the WiNet-S): how it is reached and with which documented login.

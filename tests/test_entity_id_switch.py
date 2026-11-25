@@ -41,6 +41,7 @@ from custom_components.sungrow_modbus.const import (
     SECTION_PERMISSIONS,
     SECTION_POLLING,
 )
+from custom_components.sungrow_modbus.migration import _numbered
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from homeassistant.components.recorder import Recorder, history
 from homeassistant.components.recorder.db_schema import StatesMeta
@@ -374,6 +375,52 @@ async def test_a_round_trip_returns_everything(
     assert LEGACY_ID in meta
     assert MODERN_ID not in meta
     assert f"{LEGACY_ID}_2" not in meta
+
+
+async def test_an_adopted_id_with_a_number_moves_too(
+    hass: HomeAssistant,
+    recorder: None,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The YAML package's own `_2`, adopted with its history, is not a choice.
+
+    Two versions of the package registered one name, so Home Assistant numbered
+    the newer one's id; the integration continued that one.
+    """
+    numbered = f"{LEGACY_ID}_2"
+    entity_registry.async_get_or_create(
+        "sensor",
+        "template",
+        "an_older_packages_unique_id",
+        suggested_object_id="total_pv_generation",
+    )
+    _yaml_package_was_here(entity_registry)
+    entry = await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+    await async_wait_recording_done(hass)
+    assert _where(entity_registry) == numbered
+
+    await _switch(hass, entry, sungrow_unit, ENTITY_IDS_NEW)
+
+    assert _where(entity_registry) == MODERN_ID
+    meta = _meta(hass)
+    assert MODERN_ID in meta
+    assert numbered not in meta
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "numbered"),
+    [
+        ("sensor.total_pv_generation_2", True),
+        ("sensor.total_pv_generation_12", True),
+        ("sensor.total_pv_generation", False),
+        ("sensor.total_pv_generation_inv_2", False),
+        ("sensor.total_pv_generation_battery_discharge", False),
+        ("sensor.my_total_pv_generation_2", False),
+    ],
+)
+def test_a_number_is_all_that_may_follow(entity_id: str, numbered: bool) -> None:
+    assert _numbered(entity_id, LEGACY_ID) is numbered
 
 
 async def test_an_id_the_owner_chose_is_left_alone(

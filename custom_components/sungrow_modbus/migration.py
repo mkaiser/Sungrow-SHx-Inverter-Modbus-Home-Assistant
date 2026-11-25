@@ -311,7 +311,7 @@ def legacy_unique_id(description: SungrowEntityDescription, suffix: str = "") ->
 def legacy_entity_ids(suffix: str = "") -> frozenset[str]:
     """Return the entity_id each YAML entity had **if it was never renamed**.
 
-    Only the naming tests use this. Identification goes through
+    For telling ids apart only. Identification goes through
     `async_legacy_entities`, which asks the registry rather than assuming.
     """
     return frozenset(
@@ -693,6 +693,7 @@ async def async_plan_id_switch(
         # none.
         suffix = stored_legacy_slot(entry) or ""
     legacy = async_legacy_entities(hass, suffix)
+    every_legacy_id = legacy_entity_ids(suffix)
     reserved: set[str] = set()
     targets: dict[str, str] = {}
 
@@ -709,7 +710,11 @@ async def async_plan_id_switch(
             platform, description, suffix
         )
         claimed = f"{platform}.{registry_entry.suggested_object_id}"
-        on_legacy = entity_id in (legacy_id, claimed)
+        on_legacy = entity_id in (legacy_id, claimed) or (
+            legacy_id is not None
+            and entity_id not in every_legacy_id
+            and _numbered(entity_id, legacy_id)
+        )
 
         if to_legacy:
             if on_legacy or legacy_id is None:
@@ -740,6 +745,17 @@ async def async_plan_id_switch(
             plan.renames[entity_id] = target
             plan.archives[target] = await _async_archive_id(hass, target)
     return plan
+
+
+def _numbered(entity_id: str, legacy_id: str) -> bool:
+    """Whether `entity_id` is `legacy_id` with the number the registry appends.
+
+    Two versions of the YAML package could register one name, so the newer one
+    ran as `sensor.total_consumed_energy_2` and was adopted there. What the claim
+    asked for cannot tell: adding the entity rewrites `suggested_object_id`.
+    """
+    prefix, _, number = entity_id.rpartition("_")
+    return prefix == legacy_id and number.isdecimal()
 
 
 def _automatic_id(
