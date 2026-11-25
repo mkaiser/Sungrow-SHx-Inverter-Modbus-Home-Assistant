@@ -200,3 +200,12 @@ def test_a_module_too_old_for_the_layout_says_so() -> None:
     assert (LAYOUT["module"], digest) == MODULE
     script = (COMPONENT / "frontend" / "sungrow-modbus.js").read_text(encoding="utf-8")
     assert f"const BUILDS = {LAYOUT['module']};" in script
+
+
+def test_the_strategy_is_listed_before_any_card_is_imported() -> None:
+    """A card file that fails to load must not unlist the dashboard (T097)."""
+    script = (COMPONENT / "frontend" / "sungrow-modbus.js").read_text(encoding="utf-8")
+    listed = script.index("window.customStrategies.push")
+    first_card = script.index('await load("')
+    assert listed < first_card
+    assert "await import(new URL(`" not in script[script.index("const load = ") + 200 :]

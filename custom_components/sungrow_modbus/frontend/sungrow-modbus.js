@@ -500,13 +500,37 @@ if (!customElements.get(`ll-strategy-dashboard-${STRATEGY}`)) {
   customElements.define(`ll-strategy-dashboard-${STRATEGY}`, SungrowModbusDashboardStrategy);
 }
 
-const { SungrowModbusLockCard } = await import(new URL(`lock.js${HERE.search}`, HERE));
-const { SungrowModbusFlowCard } = await import(new URL(`flow.js${HERE.search}`, HERE));
-const { SungrowModbusTestsCard } = await import(new URL(`tests.js${HERE.search}`, HERE));
-const { SungrowModbusUpdateCard } = await import(new URL(`update.js${HERE.search}`, HERE));
+// Listed in *Add dashboard* before any card is imported: a card file that fails to
+// load (a cache, a proxy, an old browser) then costs that card, said in the console
+// and by Home Assistant on the dashboard, and not the dashboard's place in the list.
+const lang = language(document.querySelector("home-assistant")?.hass);
+window.customStrategies ??= [];
+if (!window.customStrategies.some((s) => s.type === STRATEGY && s.strategyType === "dashboard")) {
+  window.customStrategies.push({
+    type: STRATEGY,
+    strategyType: "dashboard",
+    name: "Sungrow Modbus",
+    description: say("strategy_description", lang),
+    documentationURL: `${DOCS}/dashboard.md`,
+  });
+}
+
+const load = async (file, name) => {
+  try {
+    return (await import(new URL(`${file}${HERE.search}`, HERE)))[name];
+  } catch (error) {
+    console.error(`Sungrow Modbus: ${file} did not load`, error);
+    return undefined;
+  }
+};
+
+const SungrowModbusLockCard = await load("lock.js", "SungrowModbusLockCard");
+const SungrowModbusFlowCard = await load("flow.js", "SungrowModbusFlowCard");
+const SungrowModbusTestsCard = await load("tests.js", "SungrowModbusTestsCard");
+const SungrowModbusUpdateCard = await load("update.js", "SungrowModbusUpdateCard");
 
 // For the card picker: the flow of the first family that has one.
-SungrowModbusFlowCard.getStubConfig = async (hass) => {
+if (SungrowModbusFlowCard) SungrowModbusFlowCard.getStubConfig = async (hass) => {
   const layout = await loadLayout();
   const house = indexHouse(hass);
   const flow = layout.views.flatMap((view) => view.sections).flatMap((section) => section.cards ?? []).find((card) => card.type === "flow");
@@ -518,10 +542,10 @@ SungrowModbusFlowCard.getStubConfig = async (hass) => {
   return { entities: {} };
 };
 
-const { SungrowModbusRunCard } = await import(new URL(`run.js${HERE.search}`, HERE));
-const { SungrowModbusEnergySetupCard } = await import(new URL(`energy-setup.js${HERE.search}`, HERE));
-const { SungrowModbusHistoryCard } = await import(new URL(`history.js${HERE.search}`, HERE));
-const { SungrowModbusSettingsCard } = await import(new URL(`settings.js${HERE.search}`, HERE));
+const SungrowModbusRunCard = await load("run.js", "SungrowModbusRunCard");
+const SungrowModbusEnergySetupCard = await load("energy-setup.js", "SungrowModbusEnergySetupCard");
+const SungrowModbusHistoryCard = await load("history.js", "SungrowModbusHistoryCard");
+const SungrowModbusSettingsCard = await load("settings.js", "SungrowModbusSettingsCard");
 
 const CARDS = [
   [LOCK_CARD, SungrowModbusLockCard, "Sungrow Modbus lock", "lock_description"],
@@ -533,23 +557,13 @@ for (const [tag, element] of [
   [RUN_CARD, SungrowModbusRunCard], [ENERGY_SETUP_CARD, SungrowModbusEnergySetupCard],
   [HISTORY_CARD, SungrowModbusHistoryCard],
 ]) {
-  if (!customElements.get(tag)) customElements.define(tag, element);
+  if (element && !customElements.get(tag)) customElements.define(tag, element);
 }
-const lang = language(document.querySelector("home-assistant")?.hass);
 window.customCards ??= [];
 for (const [tag, element, name, description] of CARDS) {
+  if (!element) continue;
   if (!customElements.get(tag)) customElements.define(tag, element);
   if (!window.customCards.some((card) => card.type === tag)) {
     window.customCards.push({ type: tag, name, description: say(description, lang) });
   }
-}
-window.customStrategies ??= [];
-if (!window.customStrategies.some((s) => s.type === STRATEGY && s.strategyType === "dashboard")) {
-  window.customStrategies.push({
-    type: STRATEGY,
-    strategyType: "dashboard",
-    name: "Sungrow Modbus",
-    description: say("strategy_description", lang),
-    documentationURL: `${DOCS}/dashboard.md`,
-  });
 }
