@@ -6,6 +6,10 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-25, session close**: committed, not pushed: `92a306d` (number format, History note), `454bcde` (T091's
+  `last_reset`), `6ab10bc` (tile names, layout revision 6). Battery and Inverter were captured on production but not
+  looked at; German tiles not seen. Nothing of it is uncommitted. Next: a release, then T091's midnight.
+
 - **2026-11-24, 23:50 CET**, looked at on the maintainer's production (0.1.0a55, layout revision 5; headless Chromium, read
   only, English, desktop; every view captured, Home, Energy, History, Controls and Diagnosis looked at): no console error.
   *Today*'s energy flow **shows the day's figures** (PV, export, import and charge equal the sensors; the house circle is the

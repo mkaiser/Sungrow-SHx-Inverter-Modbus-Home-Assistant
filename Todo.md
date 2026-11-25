@@ -71,7 +71,8 @@ switched on *before* the battery is low, and at gerd's whether it replaces the t
 *Needs*: 0.1.0a55 at gerd's.
 
 **T091. *Daily consumed energy*'s `last_reset`**: built (`hybrid_inverter/daily_cycle.py`); after its release, see on a real house that the day's
-statistics follow the sensor through a midnight and a restart. *Needs*: a release.
+statistics follow the sensor through a midnight and a restart, and ask at #797. Known limit: with one counter alone above 0.5 kWh, its
+misread as zero looks like a reset and counts that day twice. *Needs*: a release.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
 to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
@@ -441,12 +442,12 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-24T21:45:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-24T21:45:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-25T05:16:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-25T05:16:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-24 21:45 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
+Last checked **2026-11-25 05:16 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
 was offered for Wednesday 2026-11-25, and the maintainer answered to wait.
 Maximo101's
 **AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download
