@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T097.** Numbers are minted in order, never reused and
+**Next free item number: T098.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -192,6 +192,11 @@ The stop/start check most likely restarts the count while the session minutes ru
 stayed at 0 W at 8.8 % battery level, and a charge ceiling of 53.5 % left a 4499 W charge running at 55.5 %. Both count as established, so they
 are not asked again, and the cleared test history hides the contradiction. The cause is unknown.
 *Needs*: both checks run again there, with the ingest of that house and gerd's after the T092 midnight (downloads in `tmp/readings-2026-11-25/`).
+
+**T097. The dashboard strategy registers last**: `frontend/sungrow-modbus.js` imports ten files and only then adds
+"Sungrow Modbus" to `window.customStrategies`, so one failed import (cache, proxy, old browser) leaves it missing from *Add dashboard*
+with no error (Firetribe, #786, 0.1.0a57; a stale page is the likelier cause, not measured).
+*Needs*: the strategy registered first, with a failed import shown on the dashboard, and a test that holds the order.
 
 **T028. A fault seen on hardware.** The fifteen words are decoded from
 V1.1.11's Appendix 4 and one diagnosis confirms the word order (bit 30, a
