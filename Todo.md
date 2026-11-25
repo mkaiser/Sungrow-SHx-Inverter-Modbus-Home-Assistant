@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T095.** Numbers are minted in order, never reused and
+**Next free item number: T097.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -182,6 +182,16 @@ standby.
 5244 W before a 1250 W command, and "nothing measurable happened" was recorded as established
 ([the source](.wiki/wiki/sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 *Needs*: the check to answer "could not tell" there, and its revision raised, so kept rows are asked again.
+
+**T095. A wallbox's session energy falling in the test's own restart reads as a failure**: at gerd's AC22E-01 on 0.1.0a57
+"wallbox energy counters never fall" failed on 1600 to 218 Wh and 1279 to 274 Wh, two falls on 2026-11-25, when the extended test ran twice.
+The stop/start check most likely restarts the count while the session minutes run on; inferred from the timing, not watched.
+*Needs*: the fall and the test's stop matched by time, then the check to ignore that fall.
+
+**T096. Two checks at the maintainer's SH10RT that passed on 2026-11-23 found nothing on 2026-11-25** (P020): a forced discharge
+stayed at 0 W at 8.8 % battery level, and a charge ceiling of 53.5 % left a 4499 W charge running at 55.5 %. Both count as established, so they
+are not asked again, and the cleared test history hides the contradiction. The cause is unknown.
+*Needs*: both checks run again there, with the ingest of that house and gerd's after the T092 midnight (downloads in `tmp/readings-2026-11-25/`).
 
 **T028. A fault seen on hardware.** The fifteen words are decoded from
 V1.1.11's Appendix 4 and one diagnosis confirms the word order (bit 30, a
