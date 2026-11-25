@@ -293,6 +293,9 @@ device-scoped ones although you meant to migrate -- such as
 The YAML package must not be running when you move to its IDs: its live
 entities hold them, and the options page says so rather than handing out
 `_2` IDs. An entity whose ID you changed yourself is left where you put it.
+An ID ending in `_2` that came from the YAML package may be left too: rename it in the entity's settings.
+After choosing the new sensors in the Energy dashboard, restart Home Assistant once, or its
+cost sensors stay unavailable.
 Dashboards, automations and scripts are not rewritten, so check them after a
 move.
 
