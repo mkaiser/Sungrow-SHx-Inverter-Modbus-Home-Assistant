@@ -456,7 +456,7 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 Last checked **2026-11-25 14:24 UTC**: Firetribe's second cable reading (#786) is ingested; benji-beit's SH5.0RT
 was offered for Wednesday 2026-11-25, and the maintainer answered to wait; what it was wanted for (13074 on a `.95.14`
 that is not 10 kW) is settled by Firetribe's.
-Firetribe also asked why 0.1.0a57's dashboard does not show: unanswered.
+Firetribe also asked why 0.1.0a57's dashboard does not show: answered 2026-11-25, waiting for Firetribe.
 Maximo101's
 **AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download
 reads the wallbox on the spot, so **Download diagnostics on a current version is worth asking that house for**.
