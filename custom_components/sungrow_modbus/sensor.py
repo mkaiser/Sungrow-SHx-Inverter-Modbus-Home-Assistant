@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -15,8 +15,11 @@ from homeassistant.const import CONF_HOST, CONF_PORT, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
+from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 from sungrow_modbus.energy_integral import EnergyIntegral
+from sungrow_modbus.hybrid_inverter.daily_cycle import DailyCycle
 from sungrow_modbus.hybrid_inverter.faults import active
 from sungrow_modbus.hybrid_inverter.smoothing import TimeWeightedAverage
 
@@ -292,6 +295,8 @@ def _sensor_class(
         return SungrowHistorySensor
     if description.integrated:
         return SungrowEnergySensor
+    if description.resets_daily:
+        return SungrowDailyTotalSensor
     return SungrowSensor
 
 
@@ -527,6 +532,101 @@ class SungrowSensor(SungrowEntity, SensorEntity):
             self.hass.loop.time(),
             float(value) if isinstance(value, (int, float)) else None,
         )
+
+
+class _DailyCycleData(ExtraStoredData):
+    """What a day's total keeps over a restart of Home Assistant."""
+
+    def __init__(
+        self, last_reset: datetime | None, counters: tuple[float, ...] | None
+    ) -> None:
+        """Initialize with the last reset seen, and the counters after it."""
+        self.last_reset = last_reset
+        self.counters = counters
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return what is stored."""
+        return {
+            "last_reset": self.last_reset.isoformat() if self.last_reset else None,
+            "counters": list(self.counters) if self.counters is not None else None,
+        }
+
+
+class SungrowDailyTotalSensor(SungrowSensor, RestoreEntity):
+    """A day's balance: a `total`, so statistics need to be told it began again.
+
+    Without `last_reset` they book the reset as minus the whole day. There is
+    none until a reset has been **seen**: setting it in the middle of a day
+    would count that day's energy a second time.
+    """
+
+    def __init__(
+        self,
+        runtime_data: SungrowRuntimeData,
+        entity_description: SungrowSensorDescription,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(runtime_data, entity_description)
+        self._cycle = DailyCycle()
+        self._held: float | int | str | None = None
+        self._attr_last_reset: datetime | None = None
+
+    @property
+    def _reading(self) -> float | int | str | None:
+        """Return the balance, or the old day's while its counters are falling."""
+        return self._held if self._cycle.holding else super()._reading
+
+    @property
+    def extra_restore_state_data(self) -> _DailyCycleData:
+        """Return the last reset, and the counters a missed one is seen by."""
+        return _DailyCycleData(self._attr_last_reset, self._cycle.counters)
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; nothing here is keyed on the id."""
+        super().async_entity_id_changed(old_entity_id)
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the cycle before the first sample is taken."""
+        stored = await self.async_get_last_extra_data()
+        if stored is not None:
+            data = stored.as_dict()
+            if isinstance(last_reset := data.get("last_reset"), str):
+                self._attr_last_reset = dt_util.parse_datetime(last_reset)
+            if isinstance(counters := data.get("counters"), list) and all(
+                isinstance(counter, int | float) for counter in counters
+            ):
+                self._cycle = DailyCycle(counters)
+        self._watch_counters()
+        await super().async_added_to_hass()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Look for a reset before this poll is averaged or written."""
+        self._watch_counters()
+        super()._handle_coordinator_update()
+
+    @callback
+    def _watch_counters(self) -> None:
+        """Feed the counters to the cycle, and note a reset."""
+        if not self.available:
+            return
+        device = self.coordinator.device
+        counters: list[float] = []
+        for field in self.entity_description.depends_on:
+            value = device.field(field)
+            if not isinstance(value, int | float):
+                return
+            counters.append(float(value))
+        if self._cycle.update(self.hass.loop.time(), counters):
+            self._attr_last_reset = dt_util.utcnow()
+            if self.entity_description.smoothed_over is not None:
+                # The old day is not averaged into the new one.
+                self._average = TimeWeightedAverage(
+                    self.entity_description.smoothed_over
+                )
+        if not self._cycle.holding:
+            self._held = super()._reading
 
 
 class SungrowFlagsSensor(SungrowEntity, SensorEntity):

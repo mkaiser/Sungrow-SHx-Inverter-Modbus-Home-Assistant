@@ -31,7 +31,7 @@ flowchart TD
         links["links<br/>the wallbox's own address:<br/>Modbus inside TLS, unverified"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived and smoothing, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, capability_test<br/>ihomemanager/, logger/: unit 247, identified and diagnosed,<br/>no entities &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, diagnosis_document, diagnosis,<br/>features, block_test with raw_client"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived, smoothing, daily_cycle, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, capability_test<br/>ihomemanager/, logger/: unit 247, identified and diagnosed,<br/>no entities &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, diagnosis_document, diagnosis,<br/>features, block_test with raw_client"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -344,8 +344,8 @@ coordinators were doing, the progress entity, and the guard on part B. A
 change to what a document *says* therefore belongs in `src/`, where both
 producers pick it up.
 
-Where time enters a polled value, in `hybrid_inverter/smoothing.py` and in
-`energy_integral.py` (each tracker's energy, integrated from its power), it takes the
+Where time enters a polled value, in `hybrid_inverter/smoothing.py`, in
+`daily_cycle.py` beside it (when the inverter's day began) and in `energy_integral.py` (each tracker's energy, integrated from its power), it takes the
 clock as an argument rather than reading one — which is what lets a
 sixty-second delay be tested without waiting sixty seconds.
 

@@ -224,13 +224,19 @@ only with the YAML package's IDs, for the dashboards that read them. With
 device-scoped IDs the decoded value stands in their place — a binary sensor
 for an on/off mode, a ratio with its unit.
 
+**The day's consumed energy has a `last_reset`.** `sensor.daily_consumed_energy`
+and its filtered twin still are a `total`, but now say when the inverter's day
+began, so a statistics card shows the day's consumption, where the YAML package
+booked the reset as minus the whole day. It starts with the first reset after
+the update; what was recorded before stays as it is.
+
 **Consumed energy never reads below zero.** `sensor.daily_consumed_energy` and
 `sensor.total_consumed_energy` are the same sum of the same five registers, held at zero as a
 floor. A house cannot consume a negative amount, and the one moment the sum goes negative is the
 inverter's midnight reset, when a poll can catch some of the five counters zeroed and some still
 holding yesterday's. On the YAML package that put a drop of about a day's export into the
-history every night; here the reading at that moment is zero, which is also what the house had
-actually used by then.
+history every night; here the day's figure keeps yesterday's value until all five have begun
+again (ten minutes at most), and then starts near zero.
 
 ## Three entities that do not come across
 

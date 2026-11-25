@@ -414,6 +414,11 @@ def _requires(field: str) -> str | None:
     return None
 
 
+def _resets_daily(key: str, entry: dict[str, Any]) -> bool:
+    """Whether a value is a day's `total`, which needs a `last_reset`."""
+    return key.startswith("daily_") and entry.get("state_class") == "total"
+
+
 def _derived_description(
     field: str, key: str, depends: tuple[str, ...], legacy: dict[str, Any]
 ) -> list[str]:
@@ -431,6 +436,8 @@ def _derived_description(
         lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
         lines.append('        legacy_platform="template",')
     lines.append(f"        depends_on={depends!r},")
+    if _resets_daily(key, entry):
+        lines.append("        resets_daily=True,")
     capability = _requires(field)
     if capability:
         lines.append(f"        requires=Capability.{capability},")
@@ -476,6 +483,8 @@ def _smoothed_description(
         # migration finds the entity by (platform, unique_id).
         lines.append('        legacy_platform="filter",')
     lines.append(f"        depends_on={depends!r},")
+    if _resets_daily(source_key, source):
+        lines.append("        resets_daily=True,")
     lines.append(f"        smoothed_over={window},")
     # From the source: see SMOOTHED.
     if source.get("device_class"):

@@ -172,6 +172,13 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     (`EnergyIntegral`, `signed`). Only with `integrated`.
     """
 
+    resets_daily: bool = False
+    """Report `last_reset`: a `total` that starts again with the inverter's day.
+
+    The moment is read off the daily counters in `depends_on` -- see
+    `sungrow_modbus.hybrid_inverter.daily_cycle`.
+    """
+
     smoothed_over: float | None = None
     """Report a moving average over this many seconds, not the raw reading.
 
