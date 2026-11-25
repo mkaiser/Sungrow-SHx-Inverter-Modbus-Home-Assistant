@@ -6,6 +6,9 @@ Nothing to install from HACS.
 
 ## Status log
 
+- **2026-11-25**, gerd's house on 0.1.0a55 and device-scoped ids: the Home view of his copy (`Sungrow_neu`) was seen in Chromium, German,
+  desktop, after the rename: values everywhere, no error card. The other views were not opened.
+
 - **2026-11-25, session close**: committed, not pushed: `92a306d` (number format, History note), `454bcde` (T091's
   `last_reset`), `6ab10bc` (tile names, layout revision 6). Battery and Inverter were captured on production but not
   looked at; German tiles not seen. Nothing of it is uncommitted. Next: a release, then T091's midnight.

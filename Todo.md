@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T092.** Numbers are minted in order, never reused and
+**Next free item number: T093.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -68,11 +68,9 @@ diagnosis (T005, T006, T042).
 **T055. The integration's own dashboard**: after the maintainer's review of the Diagnosis view (0.1.0a54) and the wallbox's
 controls, left are the maintainer's look and a release of the History fixes, 13017
 switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
-*Needs*: 0.1.0a55 at gerd's.
 
-**T091. *Daily consumed energy*'s `last_reset`**: built (`hybrid_inverter/daily_cycle.py`); after its release, see on a real house that the day's
-statistics follow the sensor through a midnight and a restart, and ask at #797. Known limit: with one counter alone above 0.5 kWh, its
-misread as zero looks like a reset and counts that day twice. *Needs*: a release.
+**T091. *Daily consumed energy*'s `last_reset`**: built (`hybrid_inverter/daily_cycle.py`); once T092 has passed and it is released, ask at #797. Known limit: with one counter alone above 0.5 kWh, its
+misread as zero looks like a reset and counts that day twice. *Needs*: T092, then a release.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
 to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
@@ -139,6 +137,9 @@ enabled, or its history stops (`AGENTS.md`).
 # Planned tests
 
 Hardware runs with a date. Removed once run and ingested.
+
+**T092. The daily counter's `last_reset` through a midnight**, before the release that carries it (0.1.0a57), on the maintainer's house
+or gerd's -- [plan](plans/T092-daily-reset-midnight-test.md). *Needs*: the maintainer's word on the house, an evening, and, at their house, a new SSH key.
 
 **At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
