@@ -53,6 +53,9 @@ did as told on P022, and a watched restart showed one start is enough -- the boo
 Standby at night, which the engine had answered with re-sends
 ([the night](../sources/gerd-forced-startup-and-restart-2026-11-22-summary.md)).
 
+**2026-11-25**: his Home Assistant went to device-scoped ids, the Energy dashboard with it
+([the switch](../sources/gerd-entity-id-switch-2026-11-25-summary.md)).
+
 ## Diagnoses
 
 - [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30

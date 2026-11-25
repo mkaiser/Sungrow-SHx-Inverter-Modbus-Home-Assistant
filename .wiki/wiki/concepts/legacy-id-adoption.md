@@ -50,8 +50,12 @@ is `doc/integration_migration.md`, and the record of what the YAML produces is
   `sensor_descriptions.py` has no test holding it there.
 
 - **Adoption on a production instance** held at [gerd](../entities/installation-gerd.md)'s: 150 ids
-  adopted from `restored` placeholders, and an id the owner's own template sensors held stayed `_2`
-  ([the source](../sources/gerd-ha-migration-2026-11-21-summary.md)).
+  adopted from `restored` placeholders, and the ids an older YAML package version had taken stayed `_2`, as they were under the YAML
+  ([the source](../sources/gerd-ha-migration-2026-11-21-summary.md); the cause is corrected in
+  [the switch](../sources/gerd-entity-id-switch-2026-11-25-summary.md)).
+- **The switch to device-scoped ids carried the statistics there** (119 renames), but left out the six adopted `_2` ids, and the
+  Energy dashboard's cost sensors needed a restart after its preferences were saved
+  ([the source](../sources/gerd-entity-id-switch-2026-11-25-summary.md)).
 - **A gap of more than ten days in the old series restarts each lifetime counter's sum at 0.** Home
   Assistant continues a sum from the short-term table, which keeps ten days; with no row there it
   starts again, and the Energy dashboard shows the first hour as minus everything the series had built

@@ -23,7 +23,7 @@ front of both paths. Source: `raw/gerd-ha-migration-2026-11-21.md`.
 | Fact | Evidence |
 | --- | --- |
 | **Legacy ids are adopted from `restored` placeholders**: 150 ids known, all adopted, the old Energy sensors now belong to `sungrow_modbus` under their old ids | the setup dialog, then the registry |
-| An id the owner's own template sensors already hold keeps `_2` (seven here); `_1`/`_2` that name slots are not collisions | the registry, after two minutes |
+| Ids already held by other rows keep `_2` (seven here; the raw note says the owner's own templates, which [the registry contradicts](gerd-entity-id-switch-2026-11-25-summary.md): an older YAML package's); `_1`/`_2` that name slots are not collisions | the registry, after two minutes |
 | **After a gap of more than ten days in an adopted counter's statistics, its running sum restarts at 0**, and the Energy dashboard shows the hour of the first start as minus the whole sum the series had built up. All five counters it uses showed it; `validate_statistics` named none | the hourly rows; the old series ended 12.6 days before |
 | `recorder/adjust_sum_statistics` (old final sum minus the new first sum, from the first new hour) makes the series continuous and the day after plausible; the gap's energy is in no hour | the daily change after the adjustment |
 | A modbus-proxy add-on's top-level `upstreamhost` is ignored once its `devices:` list is set: the cable's proxy never started and its port refused | the add-on's log and the refused port |

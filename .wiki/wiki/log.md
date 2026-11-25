@@ -2210,3 +2210,7 @@ ulfben's plant, the third import-limit failure, is a cluster by the owner's post
 ## [2026-11-24] changed | energy-history
 
 The yearly slots against the lifetime counters, over the committed diagnoses: PV and export carry the same excess at six inverters, direct consumption none; the page says so.
+
+## [2026-11-25] ingested | gerd-entity-id-switch-2026-11-25
+
+The switch to device-scoped ids at gerd's ([the source](sources/gerd-entity-id-switch-2026-11-25-summary.md)); `legacy-id-adoption.md` and the migration source have the cause of the `_2` ids corrected.
