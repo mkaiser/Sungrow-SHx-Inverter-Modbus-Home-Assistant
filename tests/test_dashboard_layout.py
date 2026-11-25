@@ -38,7 +38,7 @@ VIEW_IDS = [
 #: The layout's revision and the digest of its views. **A change to the views
 #: raises `revision` and adds a line to `changes`**: that is how the owner of a
 #: dashboard taken over learns of it. Then this pair follows.
-REVISION = (5, "153f658f5e93")
+REVISION = (6, "e10e8cf92af9")
 #: What building the layout takes (`BUILDS` in the module) and the digest of the
 #: keys and card types it uses. **A new word the module has to understand raises
 #: `module` and `BUILDS`**, so that an older module says "reload" rather than fail.

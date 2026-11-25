@@ -1,8 +1,11 @@
 {
   "_comment": "The dashboard strategy's layout (plans/T055-generated-dashboard.md). An entity is named '<domain>.<translation_key>' and resolved in the device family of one inverter, never by entity id; 'a|b' takes the first that exists; a leading '~' resolves anywhere in the integration if unique, and never on its own keeps a card. '{n}' is expanded over a card's 'repeat'. In 'entities' an item is a reference, or an object with 'entity', 'name' and 'color'. 'view' makes a tap open that view. A section has 'cards', or 'groups' of them side by side, each with a heading. A section's 'control' is for administrators, locked, and kept by what '~' finds. 'below' puts a tile's input under its name. A card, section or view that resolves nothing is left out. tests/test_dashboard_layout.py holds every key to the integration's translations.",
   "module": 3,
-  "revision": 5,
+  "revision": 6,
   "changes": [
+    {"revision": 6, "text": {
+      "en": "Shorter names on the month and year tiles, so that none is cut off.",
+      "de": "Kürzere Namen auf den Kacheln für Monat und Jahr, damit keiner abgeschnitten wird."}},
     {"revision": 5, "text": {
       "en": "The Wallbox view starts the charge and picks its mode, behind the lock, and Home's energy flow of the day and its 24 hours show the car; and where the inverter's own energy history is read, a History view has its months and years.",
       "de": "Die Wallbox-Ansicht startet das Laden und wählt den Modus, hinter der Sperre, und der Energiefluss des Tages und die 24 Stunden auf Start zeigen das Auto; wo der eigene Energieverlauf des Wechselrichters gelesen wird, zeigt ihn die Ansicht Verlauf nach Monaten und Jahren."}},
@@ -155,7 +158,7 @@
           "cards": [
             {"type": "tile", "entity": "sensor.total_pv_generation|sensor.sg_total_pv_generation", "name": {"en": "PV", "de": "PV"}, "icon": "mdi:solar-power", "color": "amber"},
             {"type": "tile", "entity": "sensor.total_consumed_energy", "name": {"en": "House", "de": "Haus"}, "icon": "mdi:home", "color": "blue"},
-            {"type": "tile", "entity": "sensor.sg_monthly_pv_generation", "name": {"en": "PV, month", "de": "PV, Monat"}, "icon": "mdi:calendar-month", "color": "amber"},
+            {"type": "tile", "entity": "sensor.sg_monthly_pv_generation", "name": {"en": "PV month", "de": "PV Monat"}, "icon": "mdi:calendar-month", "color": "amber"},
             {"type": "tile", "entity": "sensor.total_imported_energy|sensor.sg_total_imported_energy", "name": {"en": "From the grid", "de": "Vom Netz"}, "icon": "mdi:transmission-tower-import", "color": "red"},
             {"type": "tile", "entity": "sensor.total_exported_energy|sensor.sg_total_exported_energy", "name": {"en": "To the grid", "de": "Ins Netz"}, "icon": "mdi:transmission-tower-export", "color": "green"},
             {"type": "tile", "entity": "sensor.total_battery_charge", "name": {"en": "Charged", "de": "Geladen"}, "icon": "mdi:battery-plus", "color": "teal"},
@@ -173,12 +176,12 @@
           "heading": {"en": "This month and year", "de": "Dieser Monat und dieses Jahr"},
           "icon": "mdi:calendar-month",
           "cards": [
-            {"type": "tile", "entity": "sensor.pv_generation_this_month", "name": {"en": "PV, month", "de": "PV, Monat"}, "icon": "mdi:solar-power", "color": "amber"},
-            {"type": "tile", "entity": "sensor.pv_generation_this_year", "name": {"en": "PV, year", "de": "PV, Jahr"}, "icon": "mdi:solar-power", "color": "amber"},
-            {"type": "tile", "entity": "sensor.direct_consumption_this_month", "name": {"en": "Used directly, month", "de": "Direkt verbraucht, Monat"}, "icon": "mdi:home-lightning-bolt", "color": "blue"},
-            {"type": "tile", "entity": "sensor.direct_consumption_this_year", "name": {"en": "Used directly, year", "de": "Direkt verbraucht, Jahr"}, "icon": "mdi:home-lightning-bolt", "color": "blue"},
-            {"type": "tile", "entity": "sensor.export_from_pv_this_month", "name": {"en": "PV export, month", "de": "PV-Einspeisung, Monat"}, "icon": "mdi:transmission-tower-export", "color": "green"},
-            {"type": "tile", "entity": "sensor.export_from_pv_this_year", "name": {"en": "PV export, year", "de": "PV-Einspeisung, Jahr"}, "icon": "mdi:transmission-tower-export", "color": "green"}
+            {"type": "tile", "entity": "sensor.pv_generation_this_month", "name": {"en": "PV month", "de": "PV Monat"}, "icon": "mdi:solar-power", "color": "amber"},
+            {"type": "tile", "entity": "sensor.pv_generation_this_year", "name": {"en": "PV year", "de": "PV Jahr"}, "icon": "mdi:solar-power", "color": "amber"},
+            {"type": "tile", "entity": "sensor.direct_consumption_this_month", "name": {"en": "Direct month", "de": "Direkt Monat"}, "icon": "mdi:home-lightning-bolt", "color": "blue"},
+            {"type": "tile", "entity": "sensor.direct_consumption_this_year", "name": {"en": "Direct year", "de": "Direkt Jahr"}, "icon": "mdi:home-lightning-bolt", "color": "blue"},
+            {"type": "tile", "entity": "sensor.export_from_pv_this_month", "name": {"en": "Export month", "de": "Export Monat"}, "icon": "mdi:transmission-tower-export", "color": "green"},
+            {"type": "tile", "entity": "sensor.export_from_pv_this_year", "name": {"en": "Export year", "de": "Export Jahr"}, "icon": "mdi:transmission-tower-export", "color": "green"}
           ]
         },
         {

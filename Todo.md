@@ -66,7 +66,7 @@ diagnosis (T005, T006, T042).
 ## Integration and tooling
 
 **T055. The integration's own dashboard**: after the maintainer's review of the Diagnosis view (0.1.0a54) and the wallbox's
-controls, left are the maintainer's look and their word on *Daily consumed energy*'s `last_reset` and two tile names (in the plan), a release of the History fixes, 13017
+controls, left are the maintainer's look and a release of the History fixes, 13017
 switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
 *Needs*: 0.1.0a55 at gerd's.
 
