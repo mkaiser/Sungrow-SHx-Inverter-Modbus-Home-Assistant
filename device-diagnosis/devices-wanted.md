@@ -18,7 +18,7 @@ details are under [Why each one](#why-each-one).
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the diagnosis also reads the Logger itself |
 | 5 | **A third wallbox model** (AC007-00), or a second AC011E-01 | One AC011E-01 and two AC22E-01s have been read. A second of either model tells a unit's values from a model's constants; an AC007-00 is unread entirely |
 | 6 | **A Sungrow wallbox that no inverter manages** (not set up as an inverter's EV charger in iSolarCloud), with a car charging, set up as an entry of its own with its extended test allowed | Whether its current, start/stop and phases can be set at the wallbox itself. Every wallbox tested so far was an inverter's, which overwrites those settings |
-| 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
+| 7 | **Version 1 between `.95.03` and `.95.12`**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
 | 8 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065, P066 and P067 only |
 | 9 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 10 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
@@ -66,7 +66,7 @@ Generated from [`results/`](results/) by `scripts/generate/generate_devices_want
 | Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P030, P031, P032, P033 | any other |
 | Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
 | Third-party battery | 4 inverters | other packs |
-| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 9 inverters through a Modbus proxy | any route not listed |
+| Transport | Logger, WiNet-S, WiNet-S or Logger, WiNet-S over WiFi, WiNet-S wired, direct LAN; 10 inverters through a Modbus proxy | any route not listed |
 | Capability test | 17 of 34 hybrid inverters | every other model and firmware |
 | Wallbox | AC011E-01, AC22E-01 | AC007-00 |
 | iHomeManager | read | a second unit |
@@ -140,17 +140,15 @@ start and stop, the phase switch, and what it falls back to when nobody reads it
 wallbox's own entry in Home Assistant, interrupts the charge for a few minutes and puts everything
 back. If evcc drives yours, stop evcc first.
 
-### 7. Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW
+### 7. Version 1 between `.95.03` and `.95.12`
 
 13074 stores a written word 1:1 only on `.95.03` and multiplies it by ten on
 every later firmware measured ([register 13074](../.wiki/wiki/entities/register-13074.md),
 [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)).
 A machine in between places the change (one on `.95.11` has been read, but
 without the scale): `diagnosis.sh tests <host>
---export-scale` asks with one write that changes nothing. A `.95.14` that is
-not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
-10 kW. A 5 kW SH5.0RT-V112 on `.95.14` has answered the probe with a refusal, which both
-readings give: a capability test on one, with limitation on, settles it.
+--export-scale` asks with one write that changes nothing. That the factor is ten
+watts, and not a share of the rated power, was settled on a 6 kW inverter.
 
 ### 8. An SH-RS on P057, P059 or P068
 

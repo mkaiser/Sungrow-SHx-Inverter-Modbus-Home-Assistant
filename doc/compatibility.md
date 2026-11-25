@@ -103,6 +103,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-2` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | direct LAN port (reported), **via a Modbus proxy** | Sungrow SB096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | direct LAN port (reported) | SB096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | WiNet-S, wired (reported) | SBR096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | — |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2` | gerd | SH8.0RT-V112 (`0x0E0E`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
@@ -258,7 +259,7 @@ that has only one would make the next pair.
 | SH6.0RS | winet_lan | B000.V001.P066 (1 reading) |
 | SH6.0RT-20 | direct_lan | B001.V000.P023 (2 readings) |
 | SH6.0RT-20 | unstated | B001.V000.P022 (1 reading) |
-| SH6.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
+| SH6.0RT-V112 | direct_lan | B001.V000.P023 (2 readings) |
 | SH6.0RT-V112 | winet_lan | B001.V000.P023 (1 reading) |
 | SH8.0RT-V112 | direct_lan | B001.V000.P022 (4 readings) |
 | SH8.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |

@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T093.** Numbers are minted in order, never reused and
+**Next free item number: T095.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -178,10 +178,10 @@ every SH-T reads `0x55` and gets no switch until a watched wake.
 *Unblocked by*: a watched run after dark at an SH-T house (P071), in low-SoC
 standby.
 
-**T027. firetribe, once more** (#784): a cable capability test with the
-inverter *running* gives the first SH6.0RT-V112 readbacks and its 13074 write
-scale. Their WiNet-S 0x04s are contention, reproduced at gerd's.
-*Unblocked by*: firetribe rerunning it.
+**T094. A forced charge check against a battery already charging is not a verdict.** At firetribe the battery charged at
+5244 W before a 1250 W command, and "nothing measurable happened" was recorded as established
+([the source](.wiki/wiki/sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
+*Needs*: the check to answer "could not tell" there, and its revision raised, so kept rows are asked again.
 
 **T028. A fault seen on hardware.** The fifteen words are decoded from
 V1.1.11's Appendix 4 and one diagnosis confirms the word order (bit 30, a
@@ -226,12 +226,6 @@ measure the restart first.
 875 then 961 on ra1k_0's SH20T in EMS mode 3. Nothing reads or writes it until
 then.
 *Unblocked by*: two reads of it a minute apart at that house.
-
-**T037. The discharge window on P023** (#785). It has run on P022 and P020,
-which is what makes the windows writable there (T036); no P023 or SBR house
-has run it, so P023 keeps the sensors and no controls.
-*Unblocked by*: fwitten's master in the evening, with their Home Assistant
-stopped.
 
 ## Battery
 
@@ -444,13 +438,15 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-25T05:16:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-25T05:16:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-25T14:24:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-25T14:24:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked **2026-11-25 05:16 UTC**: swo14's four readings (#786) are ingested; benji-beit's SH5.0RT
-was offered for Wednesday 2026-11-25, and the maintainer answered to wait.
+Last checked **2026-11-25 14:24 UTC**: Firetribe's second cable reading (#786) is ingested; benji-beit's SH5.0RT
+was offered for Wednesday 2026-11-25, and the maintainer answered to wait; what it was wanted for (13074 on a `.95.14`
+that is not 10 kW) is settled by Firetribe's.
+Firetribe also asked why 0.1.0a57's dashboard does not show: unanswered.
 Maximo101's
 **AC22E-01** was not ingested: the 0.1.0a44 download carried `"diagnosis": null`. Since 0.1.0a45 a wallbox entry's download
 reads the wallbox on the spot, so **Download diagnostics on a current version is worth asking that house for**.

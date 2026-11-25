@@ -73,6 +73,8 @@ in kW. The diagnosis's register dump reads it too.
   [the twenty-first](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-19-summary.md)
   and [twenty-second readings](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-20-summary.md)).
   That is the model of the one report against it.
+- **On an SH6.0RT-V112 on P023 it holds**, at [firetribe](installation-firetribe.md)'s lone inverter **with backup mode
+  on**: a 1600 W cap took import 2217.5 → 1677 → 2223.5 W ([the diagnosis](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 - **At [fwitten](installation-fwitten.md)'s master SH10RT-V112 on P023 it did not hold**, which
   contradicts peter-sm on the same model and firmware: over the cable, after dark, a 1090 W cap
   under the engine's 1250 W forced charge left import at 1718 W (1724 W before, 1710 W after),
@@ -88,8 +90,9 @@ in kW. The diagnosis's register dump reads it too.
   of every SH-RT where the cap had held, so it fitted the failures as well as a cluster does; at mkaiser with it
   switched on the cap held, 4656 / 3437 / 4698 W against 3460 W, as with it off
   ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). On the SH-RS it held at [icefest](installation-icefest.md) with backup mode on
-  (`device-diagnosis/results/inverter/`, `backup_mode_raw`). A cluster is the likelier cause, by two houses; not
-  proven, as backup mode was tried on P020 only and no cluster has been tried with it off.
+  (`device-diagnosis/results/inverter/`, `backup_mode_raw`), and on P023 at [firetribe](installation-firetribe.md) ([the diagnosis](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
+  So backup mode is not the cause on fwitten's own firmware either. A cluster is the likelier one; not
+  proven, as no cluster has been tried with backup mode off.
 - **On an [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) it holds**, the
   first SH-RS watched: at [icefest](installation-icefest.md)'s, over RS485, a 520 W cap took import from
   1040 W to 528 W, 1029 W after; the house's own setting is 10.0 kW (word 1000)

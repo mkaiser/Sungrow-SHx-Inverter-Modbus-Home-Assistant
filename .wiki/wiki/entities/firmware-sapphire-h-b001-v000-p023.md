@@ -36,23 +36,24 @@ The most-measured firmware in the corpus.
   master**: a 1090 W cap left a 1250 W forced charge's 1718 W of import as it was
   ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.md)), and four more, on either unit and both, changed
   nothing ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)).
+- **The discharge windows obey**: 958.5 W, 0 W, 993.5 W at [firetribe](installation-firetribe.md), with an SBR096
+  ([second reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 - [Register 13017](register-13017.md) is a **switch**: `0xAA` wakes a low-SoC standby inverter and
   keeps it running, `0x55` returns it to Standby, any other word is refused
   ([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)). A forced charge, EMS or
   scheduled, wakes it by itself in ~2 min.
 
-- On an SH6.0RT-V112 ([firetribe](installation-firetribe.md)) the 13074 write scale is not
-  measured: through a busy WiNet-S its read was refused, and on the cable the inverter
-  was starting.
+- On an SH6.0RT-V112 ([firetribe](installation-firetribe.md)) 13074 writes **10 W per count**, read back: word 60
+  gave 600 W, where 0.1 % of 6000 W would give 360 ([second reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 - On a 5 kW SH5.0RT-V112 with version 1 `.95.14` ([mahagon](installation-mahagon.md)) the probe of
-  13074 was refused three times: it multiplies. The factor is not separated from 0.1 % of the
-  rating, which a refusal cannot show.
+  13074 was refused three times: it multiplies. A refusal cannot show the factor.
 
 ## Diagnoses
 
 - [SH5.0RT-V112, B001.V000.P023, mahagon, the inverter's own LAN port](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan-summary.md)
 - [SH5.0RT-V112, B001.V000.P023, mahagon, a WiNet-S2 on WiFi](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md)
+- [SH6.0RT-V112, B001.V000.P023, firetribe, through a Modbus proxy, second cable reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md)
 - [SH10RT-20, B001.V000.P023, bar12, the inverter's own LAN port](../sources/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-summary.md)
 - [SH10RT-20, B001.V000.P023, bar12, a WiNet-S on WiFi](../sources/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan-summary.md)

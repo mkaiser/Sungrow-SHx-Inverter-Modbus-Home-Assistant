@@ -4,13 +4,13 @@ title: "Does a Modbus proxy carry register 6100?"
 tags: [proxy, transport, register-6100, mkaiser, open]
 created: '2026-11-16'
 query: "Through a modbus-proxy, does input 6100 answer for every session, or only for a short one of the reader's own?"
-results_count: 6
+results_count: 7
 ---
 
 # Does a Modbus proxy carry register 6100?
 
-**Open, and narrowed: it is the address, not proxies.** Two houses' proxies carry 6100 for every
-reader; one address at a third carries it for a short probe and not for a config entry.
+**Open, and narrowed: it is the address, not proxies.** Three houses' proxies carry 6100 for every
+reader; one address at a fourth carries it for a short probe and not for a config entry.
 
 **For it.** An anonymous SH10RT-V112 read through a modbus-proxy add-on
 answered [register 6100](../entities/register-6100.md), so transport
@@ -23,6 +23,7 @@ than a probe of its own -- which is the case mkaiser's entry could not get an an
 [the slave](../sources/sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan-summary.md)).
 Both answered again a week later, with evcc and the YAML package polling beside
 ([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md), [slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)).
+[firetribe](../entities/installation-firetribe.md)'s proxy carries it to the entry too ([the reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 At [mkaiser](../entities/installation-mkaiser.md) the config flow's own probe
 of the proxy's address answered too, which is why the search labelled the
 proxy "the inverter's own LAN port"

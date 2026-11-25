@@ -9,19 +9,22 @@ created: '2026-10-29'
 
 An [SH6.0RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md) with an
 [SBR096](device-sbr-battery.md), read from Home Assistant on the cable and through the
-[WiNet-S](device-winet-s.md) on Ethernet, issue #784. Both paths are in use at once: a
+[WiNet-S](device-winet-s.md) on Ethernet, issues #784 and #786. Both paths are in use at once: a
 WARP3 wallbox and a second Home Assistant poll the WiNet-S, and this Home Assistant the
-inverter's own port. Each path was diagnosed twice; the second reading, with a capability
-test, is the committed one.
+inverter's own port, a month later through a Modbus proxy.
 
 ## Diagnoses
 
 - [SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md)
+- [SH6.0RT-V112, B001.V000.P023, firetribe, through a Modbus proxy, second cable reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)
 
 ## What it shows
 
 - The first SH6.0RT-V112 in the corpus: every block answers on the cable.
+- The first SH6.0RT-V112 capability test ([second reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)): [13074](register-13074.md) writes in
+  10 W counts on a 6 kW inverter, and the discharge windows obey on P023. A charge of about 5.3 kW that the run
+  did not command spoiled its forced charge check.
 - Through the busy WiNet-S, holding reads and control writes were refused with
   **0x04** in some attempts, while the forced charge was obeyed: a busy
   dongle's 0x04, reproduced at gerd. See

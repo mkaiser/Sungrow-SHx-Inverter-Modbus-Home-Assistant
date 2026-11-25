@@ -56,7 +56,7 @@ its floor ([the run](../sources/fwitten-import-limit-engine-2026-11-22-summary.m
 more caps there, on the master, the slave and both, under charges of 1250 W and 3601 W, did nothing
 either, every word read back ([the cluster run](../sources/fwitten-import-limit-cluster-2026-11-24-summary.md)). The other failure on record,
 swo14's on 01011.95.03, is a cluster master too. Backup mode, on at both, does not stop
-it at a lone SH10RT on P020 ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)). **ulfben's plant is a master/slave
+it at a lone SH10RT on P020 ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)), nor at [firetribe](../entities/installation-firetribe.md)'s lone SH6.0RT-V112 on P023 ([the diagnosis](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)). **ulfben's plant is a master/slave
 pair as well**, by their own posts ([the source](../sources/github-ulfben-cluster-2026-11-24-summary.md)), so every failure on record is a cluster
 and every lone inverter has obeyed.
 

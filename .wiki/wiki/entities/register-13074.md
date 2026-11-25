@@ -16,7 +16,7 @@ entry.
 
 | Firmware | A written word is | Measured at |
 | --- | --- | --- |
-| every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023 |
+| every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023; [firetribe](installation-firetribe.md)'s **6 kW** SH6.0RT-V112 ([readback](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)) |
 | [P023](firmware-sapphire-h-b001-v000-p023.md), a 5 kW SH5.0RT-V112 on `.95.14` | **multiplied** by an unknown factor: the probe's write was refused, which ten and 0.1 % of the 5000 W rating both give | [mahagon](installation-mahagon.md), cable |
 | [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) (SH-T) | stored as handed, by the watched limit alone: word 125 held 106.5 W | [GalKar](installation-galkar.md), through a WiNet-S |
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
@@ -32,6 +32,10 @@ and dongle alike. So it is the firmware, not the model -- and swo14's two
 a different model, through a Modbus proxy. On the SH-RS, P065 stores as handed;
 [P068](firmware-sunstone-h-b000-v001-p068.md) is unmeasured, so the integration's per-device
 probe, not a family rule, is what keeps an RS right.
+
+**Ten watts, not 0.1 % of the rating**: at firetribe, 6000 W rated, word 60 read back 600 W, where 0.1 % would read 360
+([second reading](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)). gerd's 8 kW
+on P022 reads 600 for the same word too ([readback](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-4-summary.md)). At 10 kW the two coincide.
 
 **swo14 answered 1:1 again on 2026-11-24**, both inverters ([host](../sources/sh10rt-20-3p-swo14-anon-00541024454-battery-thirdparty-meter-direct-lan-3-summary.md),
 [slave](../sources/sh10rt-20-3p-swo14-anon-25617150722-battery-none-direct-lan-summary.md)). A later run there skipped the established readback, so it did not lift the

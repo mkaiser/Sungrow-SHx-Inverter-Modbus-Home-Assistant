@@ -2222,3 +2222,8 @@ Older restarts in joined sums ([the source](sources/gerd-entity-id-switch-follow
 ## [2026-11-25] changed | legacy-id-adoption
 
 The switch moves an adopted id with a number on it; the page says so.
+
+## [2026-11-25] ingested | firetribe's SH6.0RT-V112 on P023, second cable reading (#786)
+
+The first capability test on this model ([the source](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)). 13074 is 10 W per count, not 0.1 % of the rating; the discharge windows obey on P023,
+so it joins `CONFIRMED_ON_FIRMWARE`; the import limit holds there with backup mode on. The forced charge verdict is spoiled by a charge the run did not command.

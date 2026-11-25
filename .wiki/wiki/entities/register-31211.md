@@ -46,6 +46,7 @@ decides is 13250, not 2582.
 over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
 1199 W), P022 on [gerd's](installation-gerd.md) SH8.0RT-V112 (2938 W, 0 W,
 1913 W; [the diagnosis](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)).
+P023 again on [firetribe](installation-firetribe.md)'s SH6.0RT-V112 (1121 W, 0 W, 1119 W; [the diagnosis](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)).
 It also holds the SH-RS's P065, confirmed through a WiNet-S at
 [Jam3s97](installation-jam3s97.md)'s (3465 W, 0 W, 3092 W): the dongle forwards the write, and
 the behaviour is the evidence a dongle cannot spoil. **And the SH-RS's P067**, confirmed the same

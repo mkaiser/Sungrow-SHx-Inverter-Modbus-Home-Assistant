@@ -620,9 +620,16 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # the maintainer's SH10RT on P020 over the cable, 2026-11-04: 722.5 W,
     # 0 W, 719 W, on a third-party battery at night; every schedule word read
     # back original afterwards.
-    # Both restored whole. No P023 or SBR house has run it (T037).
+    # firetribe's SH6.0RT-V112 on P023 over the cable, with an SBR096,
+    # 2026-11-25: 958.5 W, 0 W, 993.5 W.
+    #   sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2.json  # noqa: E501
+    # All restored whole.
     Capability.DISCHARGE_SCHEDULE_CONTROL: frozenset(
-        {"SAPPHIRE-H_B001.V000.P020", "SAPPHIRE-H_B001.V000.P022"}
+        {
+            "SAPPHIRE-H_B001.V000.P020",
+            "SAPPHIRE-H_B001.V000.P022",
+            "SAPPHIRE-H_B001.V000.P023",
+        }
     ),
 }
 

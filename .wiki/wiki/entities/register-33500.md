@@ -18,6 +18,7 @@ project's map, with 33501 the role and 33502 the slave count
 | [mkaiser](installation-mkaiser.md)'s lone SH10RT, P020 | 0x55 | 160 | 2 |
 | [gerd](installation-gerd.md)'s lone SH8.0RT-V112, P022 | 0x55 | 160 | 2 |
 | [bar12](installation-bar12.md)'s lone SH10RT-20, P023 ([the reads](../sources/cluster-mode-33500-bar12-2026-11-24-summary.md)) | 0x55 | 160 | 2 |
+| [firetribe](installation-firetribe.md)'s lone SH6.0RT-V112, P023 ([the diagnosis](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)) | 0x55 | 160 | 2 |
 
 From [fwitten and mkaiser](../sources/fwitten-cluster-mirror-2026-11-24-summary.md) over the cable and
 [a second round](../sources/cluster-mode-33500-reads-2026-11-24-summary.md): **the WiNet-S reads the same** at fwitten (both) and gerd.
