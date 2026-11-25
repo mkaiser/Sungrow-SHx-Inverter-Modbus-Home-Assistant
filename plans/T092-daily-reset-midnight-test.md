@@ -1,11 +1,11 @@
-# T092 - The daily counter's `last_reset` through a midnight, before 0.1.0a57
+# T092 - The daily counter's `last_reset` through a midnight
 
 *Daily consumed energy*'s `last_reset` (T091, `src/sungrow_modbus/hybrid_inverter/daily_cycle.py`) has run in tests
-only. One midnight on a real house comes before the release that carries it. Deferred by the maintainer, 2026-11-25.
+only. One midnight on a real house. It was to come before the release; the maintainer released 0.1.0a57 without it and deferred it, 2026-11-25.
 
 ## Status log
 
-- **2026-11-25**: written, nothing run. The branch head for it is `762427a` (full gate green: 9756 passed) or later; it is
+- **2026-11-25**: 0.1.0a57 is released (PyPI, GitHub, the preview mirror pinned), without this test. Written, nothing run. The branch head for it is `762427a` (full gate green: 9756 passed) or later; it is
   not released, and `762427a` is not pushed. What 0.1.0a57 carries so far: T091, the switch to device-scoped ids moving an adopted id
   with a number on it (T084), the diagnosis texts in German (T007), the History fixes (T055).
 
@@ -21,7 +21,7 @@ install and for which house.
 
 ## Steps
 
-1. `make wheel`; the wheel into the house's `/config/sungrow_build/`, required by file URL in the manifest; keep the old
+1. The wheel of the release under test (`make wheel`, or the Marketplace if the house takes the preview) into the house's `/config/sungrow_build/`, required by file URL in the manifest; keep the old
    `custom_components` folder as a backup; restart Home Assistant; both entries load, no error in `system_log/list`.
 2. Before midnight: save the states of the daily consumed energy and its smoothed twin, their attributes, and the hourly statistics of both.
 3. From 23:45 to 00:30 CET: read the state, `last_reset` and the five input counters every minute. The reset of the inverter's day may not be
@@ -38,6 +38,5 @@ install and for which house.
 
 ## After
 
-Passed: release 0.1.0a57 (the `release` skill; the push is asked for), its notes naming the known limit (one counter
-alone above 0.5 kWh, misread as zero, looks like a reset and counts that day twice). Then T091's question at #797. Failed: the readings go into
+Passed: T091's question at #797. Failed: the readings go into
 the wiki and the code is fixed first. Put the house back on a release from the Marketplace afterwards.
