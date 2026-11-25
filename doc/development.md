@@ -236,6 +236,10 @@ tree.
 
 ## Pitfalls
 
+- **A button press on an entity that does not exist reports success.** `button.press` through the API returns `success: true`
+  and only logs a warning, so a script that guessed the entity id (it differs by house: *Diagnosis: tests, clear history* is
+  `..._clear_capability_test_history` at an entry made before the rename) did nothing and said so nowhere. Resolve ids from
+  the entity registry by `unique_id`, and read a counter afterwards.
 - **CI does not install every Home Assistant component's libraries.** A test that imports
   `homeassistant.components.dhcp` passes here and fails in CI (0.1.0a52). Fake such a module
   in `sys.modules`, as `tests/test_network_records.py` does, and import it in the code only

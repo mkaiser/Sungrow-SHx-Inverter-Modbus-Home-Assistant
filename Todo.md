@@ -138,8 +138,8 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
-**T092. The daily counter's `last_reset` through a midnight**, released untested in 0.1.0a57 (the maintainer's word, 2026-11-25), on the maintainer's house
-or gerd's -- [plan](plans/T092-daily-reset-midnight-test.md). *Needs*: the maintainer's word on the house, an evening, and, at their house, a new SSH key.
+**T092. The daily counter's `last_reset` through a midnight**, released untested in 0.1.0a57 (the maintainer's word, 2026-11-25), running at the maintainer's house
+and gerd's -- [plan](plans/T092-daily-reset-midnight-test.md). *Needs*: a midnight watched, from 23:45 CET (nothing to install: both houses run it).
 
 **At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
