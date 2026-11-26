@@ -383,10 +383,6 @@ store.
 
 Wanted, not scheduled.
 
-**T054. How far the MPPT energy drifts** -- [plan](plans/T054-mppt-energy-drift.md)
-(cable, two houses, 0.992 and 0.985 of *Daily PV generation* over five and six days; 13002 counts DC).
-*Needs*: a house with an inverter entry through a WiNet-S.
-
 **T056. Helping users set up the Energy dashboard**: built and released in 0.1.0a54 (the Energy view lists the sensors and can
 add them); left is what a house without a meter reads -- [plan](plans/T056-energy-dashboard-help.md). *Needs*: one such house.
 
