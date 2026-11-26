@@ -2234,3 +2234,9 @@ Two runs at mkaiser's SH10RT with the established checks included ([the source](
 discharge (1252 W for 1250 W) and the charge ceiling (69 % stopped 4499 W) act on P020. The 2026-11-25 discharge miss ran at 8.8 % with the
 minimum at 0 %, where the pack keeps a floor of its own; the capability test now asks for a discharge only above 15 %. Updated P020,
 installation-mkaiser, capability-test.
+
+## [2026-11-26] ingested | daily-reset-midnight-2026-11-26
+
+The daily consumed energy's `last_reset` through a midnight at mkaiser's and gerd's, and one restart at gerd's
+([the source](sources/daily-reset-midnight-2026-11-26-summary.md)): set once, in the poll where the five counters fell together; the
+statistics' change over the new day equals the state, with no negative hour; a restart kept it. Updated device-sh-rt.

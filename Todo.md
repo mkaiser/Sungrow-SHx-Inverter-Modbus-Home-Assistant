@@ -69,8 +69,8 @@ diagnosis (T005, T006, T042).
 controls, left are the maintainer's look and a release of the History fixes, 13017
 switched on *before* the battery is low, and at gerd's whether it replaces the two hand-made dashboards -- [plan](plans/T055-generated-dashboard.md).
 
-**T091. *Daily consumed energy*'s `last_reset`**: built (`hybrid_inverter/daily_cycle.py`); released in 0.1.0a57; once T092 has passed, ask at #797. Known limit: with one counter alone above 0.5 kWh, its
-misread as zero looks like a reset and counts that day twice. *Needs*: T092.
+**T091. *Daily consumed energy*'s `last_reset`**: built (`hybrid_inverter/daily_cycle.py`); released in 0.1.0a57, and it passed a midnight and a restart at two houses (`.wiki/wiki/sources/daily-reset-midnight-2026-11-26-summary.md`); ask at #797. Known limit: with one counter alone above 0.5 kWh, its
+misread as zero looks like a reset and counts that day twice. *Needs*: the maintainer's go to post there.
 
 **T081. The included cards**: keep Power and Energy Flow Card Plus current with a weekly workflow that opens a pull request
 to bump the pin (never a bot that merges), and credit their author in the README, a dashboard link and every release note -- [plan](plans/T081-included-cards-updates-and-credit.md).
@@ -137,10 +137,6 @@ enabled, or its history stops (`AGENTS.md`).
 # Planned tests
 
 Hardware runs with a date. Removed once run and ingested.
-
-**T092. The daily counter's `last_reset` through a midnight**, released untested in 0.1.0a57 (the maintainer's word, 2026-11-25), running at the maintainer's house
-and gerd's -- [plan](plans/T092-daily-reset-midnight-test.md). *Needs*: a midnight watched, from 23:45 CET (nothing to install: both houses run it).
-Then ingest both houses' readings from after it (earlier downloads in `tmp/readings-2026-11-25/`).
 
 **At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what

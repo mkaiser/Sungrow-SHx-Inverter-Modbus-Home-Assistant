@@ -50,6 +50,10 @@ the integration knows was measured on these.
   device, one reset, so a staggered reset elsewhere is not ruled out -- which is why
   `daily_consumed_energy` keeps its floor at zero
   (`src/sungrow_modbus/hybrid_inverter/derived.py`).
+- **`daily_consumed_energy` gets its `last_reset` from that fall**, in the poll where the counters
+  begin again, and the long-term statistics book the new day as the state, with no negative hour
+  and nothing set again by a restart of Home Assistant, at an SH10RT and an SH8.0RT-V112
+  ([the midnight](../sources/daily-reset-midnight-2026-11-26-summary.md)).
 
 ## Diagnoses
 
