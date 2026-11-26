@@ -2253,3 +2253,11 @@ Auto repeat's spacing at mkaiser's SH10RT, five runs from 15:49 to 17:32 CET ([t
 5 min after a run that settled something, 30 after a vain one (shortened once by a newly possible check), 60 after the
 second, and the house deciding after sunset. *Next attempt* kept the later time through the shortening; it now names the
 earlier start. Not seen: an unshortened 30 min wait, the SoC readbacks' 15 % rule. Updated capability-test, installation-mkaiser.
+
+## [2026-11-26] ingested | cross-reference-evcc-2026-11-26
+
+evcc's Sungrow wallbox driver read again at `49b5a8d10`, after a maintainer's colleague reported evcc switching their
+standalone AC22E-01 between one and three phases ([the source](sources/cross-reference-evcc-2026-11-26-summary.md)):
+holding 21204 written with the charge stopped, input 21270 read back, nothing new in the map; evcc has no TLS, so it
+reaches unit 248 over RS485 or plain Modbus TCP, not port 516. Consistent with 21204 not taking on gerd's managed wallbox. Updated
+managed-wallbox-phases, device-wallbox, cross-reference-evcc.

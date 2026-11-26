@@ -20,6 +20,8 @@ evcc issues in which users read registers off real devices.
 | [iHomeManager](../entities/device-ihomemanager.md) | 8145, 8155-8163, 8176, 8178, 8559-8564, 8031 | **8028 reads 0x55/0xAA**, not V1.0.2's 0/1; phase voltages at input **4358, 4360, 4362**, undocumented |
 | [Wallbox](../entities/device-wallbox.md) | all 16 driver registers, codes 1-9, 21203 at 0.1 A in its code | 21263 read as a work mode; a 60 s idle timeout |
 
+- **Read again on 2026-11-26** for the phase switch: unchanged, and evcc has no TLS
+  ([the re-read](cross-reference-evcc-2026-11-26-summary.md)).
 - **Licences.** The templates are MIT, as evcc is. The wallbox driver,
   `charger/sungrow.go`, reserves all rights in its own header: a cross-check,
   never a source.

@@ -243,12 +243,13 @@ the behaviour `scripts/generate/tables/writes.py` already predicts.
 **T003. Controlling the wallbox**: the managed half is done (the test passed from Home Assistant at gerd's on 2026-11-24);
 left are the user-defined window and scheduled charging (162) in the controls, which the maintainer decides, and a
 standalone wallbox -- [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), sections 10 and 11.
-*Unblocked by*: a standalone wallbox, which nobody has offered (T040).
+*Unblocked by*: a standalone wallbox's capability test (T040); a maintainer's colleague runs a standalone AC22E-01
+under evcc, phases switching, if it is on the LAN and evcc is stopped for the run (2026-11-26).
 
 **T020. Whether the standalone inference is right**: it is built, shown and
 asked for, so what is left is measuring it where it matters --
 [plan](plans/T003-T004-T020-T039-T040-T059-wallbox.md), section 1.
-*Unblocked by*: a standalone wallbox, which nobody has offered (T003, T040).
+*Unblocked by*: a standalone wallbox, the colleague's of T003 the first candidate (T040).
 
 **T039. A wallbox charging negative, or past 32.7 kW**, which settles whether
 21308/21310 are signed. Input 21313 and input 21365 are still unnamed, and a

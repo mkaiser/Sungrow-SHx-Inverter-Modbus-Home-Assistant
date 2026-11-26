@@ -36,6 +36,9 @@ lets an owner, an installer or a Modbus client choose it.
   wallbox's current within seconds
   ([gerd, 2026-11-14](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md)). 21204 is
   a control only on a wallbox nobody else manages, where evcc writes it with the charge stopped.
+  **On such a wallbox, evcc switches the phases**: a maintainer's colleague's standalone AC22E-01,
+  driven by evcc's own charger alone, switches 1p/3p from evcc, reported and not watched here
+  ([evcc, 2026-11-26](../sources/cross-reference-evcc-2026-11-26-summary.md)).
 - **The inverter's charger block (33540-33550) has no phase word.** The two words below it,
   33538 and 33539, refused writes with charging off in fast charge and in PV surplus alike, and
   **did not move in a one-phase session** ([2026-11-24](../sources/gerd-wallbox-2026-11-24-summary.md)).

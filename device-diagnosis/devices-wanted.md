@@ -139,7 +139,9 @@ A managed wallbox is controlled at its inverter, which is tested with a car char
 registers are the control, and none of them has been watched with a car: the current and its scale,
 start and stop, the phase switch, and what it falls back to when nobody reads it. The test runs from the
 wallbox's own entry in Home Assistant, interrupts the charge for a few minutes and puts everything
-back. If evcc drives yours, stop evcc first.
+back. If evcc drives yours, stop evcc first. A standalone wallbox has been reported switching between
+one and three phases under evcc's own Sungrow charger, and nobody here has watched one: say in the issue
+how evcc reaches it (RS485, a gateway onto it, or plain Modbus TCP), and allow the phase steps.
 
 ### 7. Version 1 between `.95.03` and `.95.12`
 

@@ -109,6 +109,9 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
 - **The phases are the inverter's too**: it switches a managed wallbox to one phase by itself,
   by owners' reports in PV surplus with grid purchase off, and nothing documented chooses them;
   the wallbox's own 21204 did not ([a managed wallbox's phases](../concepts/managed-wallbox-phases.md)).
+  On a wallbox nobody else manages, evcc switches them with 21204, by a report from a standalone
+  AC22E-01; evcc talks to unit 248 over RS485 or plain Modbus TCP, having no TLS for port 516
+  ([evcc, 2026-11-26](../sources/cross-reference-evcc-2026-11-26-summary.md)).
 
 The app's enable (*Ladegerät aktivieren*) is holding 21211 and its Start/Stop holding 21212 (0
 starts). The app's system parameters are the wallbox's own holding registers, not the inverter's:
