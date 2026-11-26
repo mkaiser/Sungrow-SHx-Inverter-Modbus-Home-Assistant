@@ -4,8 +4,8 @@
 # From github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (MIT).
 # Please keep these lines with any copy -- see doc/attribution.md.
 #
-# The YAML package is on the 2026-legacy branch:
-#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/modbus_sungrow.yaml
+# The YAML package is on the archive/2026-legacy branch:
+#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/archive/2026-legacy/modbus_sungrow.yaml
 # Its installation and migration guides moved with it, under doc/ there.
 #
 # What replaces it is the Sungrow Modbus integration, which this branch

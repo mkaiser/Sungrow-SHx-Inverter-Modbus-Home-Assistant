@@ -2,7 +2,7 @@
 
 This is about the **new custom integration** (`custom_components/sungrow_modbus`)
 and its device library (`src/sungrow_modbus`), not the YAML package, which lives on
-`main` (`2026-legacy` after the release) and is unaffected by anything here.
+`main` (`archive/2026-legacy` after the release) and is unaffected by anything here.
 
 ## Getting a dev environment
 

@@ -1,7 +1,7 @@
 # The Sungrow dashboard
 
 > **Still a preview**, like the integration. For the YAML package's
-> dashboards, see [its guide](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/doc/dashboard.md).
+> dashboards, see [its guide](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/archive/2026-legacy/doc/dashboard.md).
 
 The integration brings a dashboard of its own: home, energy, history, battery, inverter,
 wallbox, controls and diagnosis. It is built in your browser from what your house has,

@@ -39,7 +39,7 @@ lean on them.
   Never hand-edit (`make gen-check` fails).
 - **Raw sources**, which are immutable: `device-diagnosis/results/`,
   `.wiki/raw/`.
-- **The YAML package's documents** live on `main` (`2026-legacy` after the
+- **The YAML package's documents** live on `main` (`archive/2026-legacy` after the
   release), not on this branch.
 - **Device facts** in the wiki (what a register does, what a WiNet-S
   refuses): their source is hardware, not code.

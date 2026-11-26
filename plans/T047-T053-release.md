@@ -29,9 +29,9 @@ the *old* name, only while no branch of that name exists, and a real
 `main` shadows it at once; raw links never follow it. The only way to
 control what a `main` link finds is a file at that path.
 
-Decided (the maintainer, 2026-11-20): today's `main` becomes
-`2026-legacy`, pairing with `2025-legacy`, which keeps its name and holds
-the pre-2026 line; **one** path gets a file on the new `main`,
+Decided (the maintainer, 2026-11-20 and 2026-11-26): today's `main` becomes
+`archive/2026-legacy`, pairing with the pre-2026 line at `archive/2025-legacy`
+(renamed on GitHub, so `2025-legacy` links redirect); **one** path gets a file on the new `main`,
 `modbus_sungrow.yaml`, and everything else 404s. A re-download then stops
 a working install until its owner reads the file -- accepted, as the
 price of retiring the package. Tag the final state
@@ -40,11 +40,11 @@ bytes stay addressable if the branch is ever deleted.
 
 Three steps, all at the merge and none before it. The rename is safe to
 do early -- no workflow on `main` names a branch, and until the new `main`
-exists GitHub's redirect sends every `main` link to `2026-legacy` -- but
+exists GitHub's redirect sends every `main` link to `archive/2026-legacy` -- but
 early costs the default branch of the repository thousands of people
 install from changing weeks before anything arrives there, so it waits.
 
-1. Rename `main` to `2026-legacy`. **Left to do.**
+1. Rename `main` to `archive/2026-legacy`. **Left to do.**
 2. The file below, at `modbus_sungrow.yaml`. **Done early**, on
    `proper-ha-integration`, which is what becomes the new `main` -- so the
    merge needs no file work. With it went the three generated
@@ -55,13 +55,13 @@ install from changing weeks before anything arrives there, so it waits.
    prove the `_inv_<n>` slot, where it used to read the committed output.
 3. The two deep links in the YAML's own header --
    `blob/main/doc/installation.md` and `blob/main/doc/migration_guide.md`
-   -- to `blob/2026-legacy/...`. **Done early** in
+   -- to `blob/archive/2026-legacy/...`. **Done early** in
    `legacy/modbus_sungrow.yaml`; **left to do** is the same edit in
-   `2026-legacy`'s own copy at the rename, which makes the two identical
+   `archive/2026-legacy`'s own copy at the rename, which makes the two identical
    again. Everyone who downloads after that has live links, and only copies
    already installed carry the dead ones.
 
-Until the rename, every `2026-legacy` link written for steps 2 and 3 is
+Until the rename, every `archive/2026-legacy` link written for steps 2 and 3 is
 dead. That is the accepted cost of doing them early, and it costs nothing
 today: nobody installs the YAML package from this branch.
 
@@ -77,8 +77,8 @@ the only path still answering:
 ```yaml
 # modbus_sungrow.yaml has moved, and is superseded.
 #
-# The YAML package is on the 2026-legacy branch:
-#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/2026-legacy/modbus_sungrow.yaml
+# The YAML package is on the archive/2026-legacy branch:
+#   https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/archive/2026-legacy/modbus_sungrow.yaml
 # Its installation and migration guides moved with it, under doc/ there.
 #
 # What replaces it is the Sungrow Modbus integration, on this branch:

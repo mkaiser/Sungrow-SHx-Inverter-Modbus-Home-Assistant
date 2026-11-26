@@ -353,10 +353,11 @@ After it: `main` takes pull requests only, with CI as the gate.
 
 **T068. What a `main` link finds after the merge** --
 [plan](plans/T047-T053-release.md), which has the decision and the file to
-commit. Today's `main` becomes `2026-legacy`, `2025-legacy` keeps its name, and
+commit. Today's `main` becomes `archive/2026-legacy`, beside
+`archive/2025-legacy`, and
 of the 38 paths on today's `main` exactly one gets a file on the new `main`:
 `modbus_sungrow.yaml`, comments only, saying the package moved and is
-superseded; the header's two deep links move to `2026-legacy` in the same
+superseded; the header's two deep links move to `archive/2026-legacy` in the same
 motion. Everything else 404s, GitHub's rename redirect cannot change that,
 and a re-download stops a working install until its owner reads the file.
 *Needs*: T047's merge.
@@ -404,12 +405,6 @@ answer is documented helpers.
 Prometheus, MQTT statestream, Node-RED) --
 [plan](plans/T058-renames-outside-home-assistant.md). *Needs*: nothing; the script
 and the guide exist.
-
-**T069. Retire the stale remote branches** (deferred by the maintainer, 2026-11-24): `experimental-archived`, `inverter_self_consumption`,
-`wrap-string-registers` and `dev` go (maintainer), each tagged `archive/<name>` first so the commits stay reachable.
-*Needs*: `inverter_self_consumption` read against the integration's *Inverter self consumption (estimated)* first; and whether
-`2025-legacy` and today's `main` are to be named under `archive/`, as the maintainer wrote, or keep the names
-`2025-legacy` and `2026-legacy` that T068 and every published link rely on.
 
 **T014. Decide the wording a fresh entry shows** now that watching the
 readings is decoupled from auto repeat: "0/23 established - waiting for: ..."
