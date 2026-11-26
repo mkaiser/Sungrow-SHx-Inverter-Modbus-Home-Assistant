@@ -96,6 +96,8 @@ from .const import (
     AUDIENCE_USERS,
     CAPABILITY_TEST_PERMISSION_DEFAULT,
     CONF_ADD_DEVICES,
+    CONF_BATTERY_CAPACITY,
+    CONF_BATTERY_CAPACITY_REPORTED,
     CONF_BATTERY_MAX_POWER,
     CONF_CAPABILITY_TEST_CHARGE_WINDOW,
     CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
@@ -303,6 +305,16 @@ def _kind_data(device_type_code: int | None) -> dict[str, str]:
     if inverter_kind(device_type_code) == STRING_INVERTER:
         return {CONF_KIND: KIND_STRING_INVERTER}
     return {}
+
+
+def _battery_options(answers: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the Battery section's answers as options, without the reading.
+
+    The reported capacity is a read-only field, and the form sends it back
+    with the rest. Stored, it would be a frozen copy of a register that moves
+    when a pack gains a module.
+    """
+    return {k: v for k, v in answers.items() if k != CONF_BATTERY_CAPACITY_REPORTED}
 
 
 async def _async_has_battery(unit: Any) -> bool | None:
@@ -2008,8 +2020,12 @@ class SungrowOptionsFlow(OptionsFlow):
                     CONF_EXTERNAL_PLACEMENT: external[CONF_EXTERNAL_PLACEMENT],
                     **user_input[SECTION_DIAGNOSIS],
                     **user_input[SECTION_CAPABILITY_TEST],
-                    **user_input[SECTION_ADVANCED],
+                    **_battery_options(user_input[SECTION_ADVANCED]),
                 }
+                if CONF_BATTERY_CAPACITY not in user_input[SECTION_ADVANCED]:
+                    # Emptied: the stored override goes, and the register is
+                    # used again.
+                    options.pop(CONF_BATTERY_CAPACITY, None)
                 if (
                     user_input.get(CONF_ENTITY_IDS) == ENTITY_IDS_MIGRATE
                     and user_input[CONF_ENTITY_IDS] != self._entity_id_style()
@@ -2192,7 +2208,11 @@ class SungrowOptionsFlow(OptionsFlow):
         )
 
     def _advanced_section(self) -> Any:
-        """Return the battery ceiling, the one setting that changes what a number *is*.
+        """Return what the integration cannot learn from the pack: ceiling, capacity.
+
+        The ceiling is the one setting that changes what a number *is*. The
+        capacity is shown twice, as register 5639 reads it (read-only) and as
+        the owner's override, which feeds the battery charge sensors only.
 
         The raw register dump used to sit here, which put a switch about
         *Download diagnostics* under a heading about the battery. It is a
@@ -2220,10 +2240,59 @@ class SungrowOptionsFlow(OptionsFlow):
                         ),
                         probatio.Coerce(int),
                     ),
+                    # What register 5639 says, shown and never stored: the
+                    # form sends it back, so `async_step_init` drops it.
+                    # Empty where the inverter reports no capacity.
+                    probatio.Optional(
+                        CONF_BATTERY_CAPACITY_REPORTED,
+                        description={"suggested_value": self._reported_capacity()},
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            mode=NumberSelectorMode.BOX,
+                            unit_of_measurement="kWh",
+                            read_only=True,
+                        )
+                    ),
+                    # Empty is no override, so no 0 has to mean "not set".
+                    probatio.Optional(
+                        CONF_BATTERY_CAPACITY,
+                        description={
+                            "suggested_value": options.get(CONF_BATTERY_CAPACITY)
+                        },
+                    ): probatio.All(
+                        NumberSelector(
+                            NumberSelectorConfig(
+                                mode=NumberSelectorMode.BOX,
+                                min=0.1,
+                                max=1000,
+                                step=0.01,
+                                unit_of_measurement="kWh",
+                            )
+                        ),
+                        probatio.Coerce(float),
+                    ),
                 }
             ),
             {"collapsed": True},
         )
+
+    @callback
+    def _reported_capacity(self) -> float | None:
+        """Return register 5639's capacity in kWh, or None where it reports none.
+
+        None where the entry is not loaded or the register has not been read
+        too: the field is then empty, as it is for a pack that reports nothing.
+        """
+        runtime = getattr(self.config_entry, "runtime_data", None)
+        if runtime is None:
+            return None
+        try:
+            value = runtime.inverter_coordinator.device.field(
+                "battery_capacity_high_precision"
+            )
+        except (AttributeError, KeyError):
+            return None
+        return None if value is None else float(value)
 
     # The testimony a diagnosis needs and no register can answer, plus the
     # one switch that changes what it reads. Saved here; *run* from the

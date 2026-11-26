@@ -2011,12 +2011,16 @@
           },
           "advanced": {
             "name": "Battery",
-            "description": "Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down.",
+            "description": "Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down. Battery capacity: the first box shows what your inverter reports and cannot be changed; it is empty where the inverter reports none, as it does for some third-party packs. Fill in the second to use your own value instead.",
             "data": {
-              "battery_max_power": "Maximum battery charge power (W)"
+              "battery_max_power": "Maximum battery charge power (W)",
+              "battery_capacity_reported": "Capacity the inverter reports (kWh)",
+              "battery_capacity": "Battery capacity override (kWh)"
             },
             "data_description": {
-              "battery_max_power": "0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either."
+              "battery_max_power": "0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.",
+              "battery_capacity_reported": "Read from the inverter when this page opened. Shown for comparison, never saved.",
+              "battery_capacity": "Leave empty to use the capacity the inverter reports. Fill it in if the inverter reports none, or to use your battery's usable capacity from its datasheet. Used for the three battery charge sensors only; it never changes how a Sungrow pack is recognised or how much power the integration lets you set."
             }
           },
           "diagnosis": {

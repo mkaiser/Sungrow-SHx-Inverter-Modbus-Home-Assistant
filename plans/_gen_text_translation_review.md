@@ -1,6 +1,6 @@
 # The texts, for review
 
-**393 texts**: everything in `strings.json` that is not an entity name, by its
+**397 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1665,7 +1665,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (108)
+## Options flow (112)
 
 ### `options.step.init.title`
 
@@ -1847,9 +1847,9 @@ and bold are kept.
 
 ### `options.step.init.sections.advanced.description`
 
-> **EN** Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down.
+> **EN** Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down. Battery capacity: the first box shows what your inverter reports and cannot be changed; it is empty where the inverter reports none, as it does for some third-party packs. Fill in the second to use your own value instead.
 
-> **DE** Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab.
+> **DE** Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab. Batteriekapazität: Das erste Feld zeigt, was dein Wechselrichter meldet, und lässt sich nicht ändern; es ist leer, wo der Wechselrichter keine meldet, wie bei manchen Fremdakkus. Fülle das zweite aus, um stattdessen deinen eigenen Wert zu verwenden.
 
 ### `options.step.init.sections.advanced.data.battery_max_power`
 
@@ -1857,11 +1857,35 @@ and bold are kept.
 
 > **DE** Maximale Batterie-Ladeleistung (W)
 
+### `options.step.init.sections.advanced.data.battery_capacity_reported`
+
+> **EN** Capacity the inverter reports (kWh)
+
+> **DE** Vom Wechselrichter gemeldete Kapazität (kWh)
+
+### `options.step.init.sections.advanced.data.battery_capacity`
+
+> **EN** Battery capacity override (kWh)
+
+> **DE** Batteriekapazität überschreiben (kWh)
+
 ### `options.step.init.sections.advanced.data_description.battery_max_power`
 
 > **EN** 0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.
 
 > **DE** 0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben.
+
+### `options.step.init.sections.advanced.data_description.battery_capacity_reported`
+
+> **EN** Read from the inverter when this page opened. Shown for comparison, never saved.
+
+> **DE** Beim Öffnen dieser Seite vom Wechselrichter gelesen. Nur zum Vergleich, wird nie gespeichert.
+
+### `options.step.init.sections.advanced.data_description.battery_capacity`
+
+> **EN** Leave empty to use the capacity the inverter reports. Fill it in if the inverter reports none, or to use your battery's usable capacity from its datasheet. Used for the three battery charge sensors only; it never changes how a Sungrow pack is recognised or how much power the integration lets you set.
+
+> **DE** Leer lassen, um die vom Wechselrichter gemeldete Kapazität zu verwenden. Ausfüllen, wenn der Wechselrichter keine meldet, oder um die nutzbare Kapazität aus dem Datenblatt deines Akkus zu verwenden. Wirkt nur auf die drei Sensoren für die Batterieladung; es ändert nie, wie ein Sungrow-Pack erkannt wird oder wie viel Leistung die Integration dich einstellen lässt.
 
 ### `options.step.init.sections.diagnosis.name`
 

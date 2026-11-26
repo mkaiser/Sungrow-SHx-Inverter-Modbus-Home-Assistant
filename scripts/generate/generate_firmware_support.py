@@ -425,8 +425,20 @@ def _answer(reading: Reading, description: object) -> str:
         answer = _capability_answer(reading, required)
     else:
         answer = YES
-    if answer == YES and any(value is None for value in values):
-        answer = NO
+    missing = [
+        name for name, value in zip(fields, values, strict=True) if value is None
+    ]
+    if answer == YES and missing:
+        # A field whose `nan` holds 0 (5639's capacity) answered with zeros:
+        # the device has nothing to report there, which says nothing about
+        # the firmware -- a Pylontech beside an SBR on one firmware is not a
+        # split. Anything else unknown did not answer.
+        zeros = all(
+            0 in (getattr(FIELDS[name][1], "nan", None) or ())
+            and all(word == 0 for word in _words(reading.dump, name))
+            for name in missing
+        )
+        answer = ZERO if zeros else NO
     if answer == NO and any(
         name in PART_FIELDS[part] and part not in reading.parts
         for name in fields

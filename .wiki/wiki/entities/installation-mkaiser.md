@@ -52,6 +52,9 @@ limit seven times, sat out five hours of low-SoC Standby without writing, and in
 established the forced discharge and the charge ceiling; restarts took 367 s after dark and 186 s
 in daylight ([fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)). The development instance's run
 repeated the ceiling ([fifth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4-summary.md)).
+Its Pylontech Force H1 is the one installed pack in the diagnoses that **reports no capacity**: 5639 reads 0
+([zero means absent](../concepts/zero-means-absent.md)), and battery firmware is all NUL; everything else the inverter
+says of it -- level, power, voltage, health, temperature, the BMS limits -- reads.
 **Its Pylontech Force H1 keeps a floor of its own**: with `battery_min_soc` at 0 % it sat at 0 W under a 2 kW
 load at 8.0-10.0 %, so a forced discharge there measured nothing; at 59 % and 71 % it held the commanded 1250 W,
 and the ceiling stopped a 4499 W charge ([the recheck](../sources/mkaiser-t096-recheck-2026-11-26-summary.md)).

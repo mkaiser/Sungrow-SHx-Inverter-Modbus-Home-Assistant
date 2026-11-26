@@ -2011,12 +2011,16 @@
           },
           "advanced": {
             "name": "Batterie",
-            "description": "Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab.",
+            "description": "Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab. Batteriekapazität: Das erste Feld zeigt, was dein Wechselrichter meldet, und lässt sich nicht ändern; es ist leer, wo der Wechselrichter keine meldet, wie bei manchen Fremdakkus. Fülle das zweite aus, um stattdessen deinen eigenen Wert zu verwenden.",
             "data": {
-              "battery_max_power": "Maximale Batterie-Ladeleistung (W)"
+              "battery_max_power": "Maximale Batterie-Ladeleistung (W)",
+              "battery_capacity_reported": "Vom Wechselrichter gemeldete Kapazität (kWh)",
+              "battery_capacity": "Batteriekapazität überschreiben (kWh)"
             },
             "data_description": {
-              "battery_max_power": "0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben."
+              "battery_max_power": "0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben.",
+              "battery_capacity_reported": "Beim Öffnen dieser Seite vom Wechselrichter gelesen. Nur zum Vergleich, wird nie gespeichert.",
+              "battery_capacity": "Leer lassen, um die vom Wechselrichter gemeldete Kapazität zu verwenden. Ausfüllen, wenn der Wechselrichter keine meldet, oder um die nutzbare Kapazität aus dem Datenblatt deines Akkus zu verwenden. Wirkt nur auf die drei Sensoren für die Batterieladung; es ändert nie, wie ein Sungrow-Pack erkannt wird oder wie viel Leistung die Integration dich einstellen lässt."
             }
           },
           "diagnosis": {

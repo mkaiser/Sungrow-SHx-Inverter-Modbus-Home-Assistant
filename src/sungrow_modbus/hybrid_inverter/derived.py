@@ -96,6 +96,15 @@ class Derived:
     def __init__(self, inverter: SungrowInverter) -> None:
         """Bind to the inverter whose registers these are computed from."""
         self._inverter = inverter
+        self.capacity_override_kwh: float | None = None
+        """A capacity the owner entered, in kWh, for the battery charge values.
+
+        For a pack whose capacity the inverter does not report (register 5639
+        reads 0 beside a Pylontech Force H1), or to use a usable capacity in
+        place of the rated one. It feeds the three battery charge values and
+        nothing else: identifying a Sungrow pack, and the ceiling that follows
+        from it, read the register alone, so a typo never moves a write bound.
+        """
 
     # -- plumbing ---------------------------------------------------------
 
@@ -577,24 +586,30 @@ class Derived:
         soc_min, soc_max, soc_now = values
         return round(soc_min + (soc_max - soc_min) * (soc_now / 100), 1)
 
+    def _capacity_kwh(self) -> float | None:
+        """Return the owner's capacity where they entered one, else register 5639's."""
+        if self.capacity_override_kwh:
+            return float(self.capacity_override_kwh)
+        capacity = self._value("battery_capacity_high_precision")
+        return None if capacity is None else float(capacity)
+
     @property
     def battery_charge_nominal(self) -> float | None:
         """Energy in the pack, against its nominal capacity."""
         level = self.battery_level_nominal
-        capacity = self._value("battery_capacity_high_precision")
+        capacity = self._capacity_kwh()
         if level is None or capacity is None:
             return None
-        return round(float(capacity) * level / 100, 1)
+        return round(capacity * level / 100, 1)
 
     @property
     def battery_charge(self) -> float | None:
         """Energy the usable range between the SoC limits can hold."""
-        values = self._floats(
-            "battery_capacity_high_precision", "battery_max_soc", "battery_min_soc"
-        )
-        if values is None:
+        capacity = self._capacity_kwh()
+        values = self._floats("battery_max_soc", "battery_min_soc")
+        if capacity is None or values is None:
             return None
-        capacity, soc_max, soc_min = values
+        soc_max, soc_min = values
         return round(capacity * (soc_max - soc_min) / 100, 1)
 
     @property

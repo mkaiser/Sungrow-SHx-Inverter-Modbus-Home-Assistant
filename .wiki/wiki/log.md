@@ -2241,6 +2241,12 @@ The daily consumed energy's `last_reset` through a midnight at mkaiser's and ger
 ([the source](sources/daily-reset-midnight-2026-11-26-summary.md)): set once, in the poll where the five counters fell together; the
 statistics' change over the new day equals the state, with no negative hour; a restart kept it. Updated device-sh-rt.
 
+## [2026-11-26] queried | what register 5639 reads across the diagnoses
+
+Every house with a pack reads a non-zero capacity at 5639, both BYD packs included; only the maintainer's Pylontech Force H1 and
+battery-less inverters read 0. So 0 is no reading there, and the owner can enter a capacity in the options instead (T098).
+Updated zero-means-absent, installation-mkaiser.
+
 ## [2026-11-26] ingested | mkaiser-t007-spacing-2026-11-26
 
 Auto repeat's spacing at mkaiser's SH10RT, five runs from 15:49 to 17:32 CET ([the source](sources/mkaiser-t007-spacing-2026-11-26-summary.md)):

@@ -21,6 +21,14 @@ created: '2026-10-29'
   session, so `_async_update_components` retries a lost connection once per
   component. Through the dongle, the same inputs answer with every character
   0x00.
+- **A capacity of 0.** Register 5639 is the inverter's report of its pack's
+  size. Every house with a pack reads non-zero there, every SBR and SBH and
+  two BYD packs (1110 and 1020); 0 comes only from inverters without one and
+  from the [maintainer's](../entities/installation-mkaiser.md) Pylontech
+  Force H1, whose capacity the inverter does not report
+  ([seventh reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)).
+  So 5639 declares 0 as no reading (`NAN_BEYOND_YAML`). Nothing on Modbus can
+  set it, being an input register, so the owner can enter one in the options.
 - **Sentinels.** An SH10RT returns 0xFFFF for MPPT3/4, and battery blocks are
   absent without storage. A poll losing one block is normal; that is what
   `UpdateReport` is for.

@@ -54,6 +54,7 @@ from sungrow_modbus.wallbox.device import SungrowWallbox
 from . import wifi_module
 from .battery_descriptions import MODULE_DESCRIPTIONS
 from .const import (
+    CONF_BATTERY_CAPACITY,
     CONF_ENTITY_IDS,
     CONF_EXPORT_WRITE_SCALE,
     CONF_EXPORT_WRITE_SCALE_FIRMWARE,
@@ -259,6 +260,9 @@ async def _async_connect(
         entry.data[CONF_UNIT_ID],
     )
     inverter = SungrowInverter(unit)
+    # The owner's capacity, for the battery charge sensors alone. Changing it
+    # reloads the entry, which is what brings a new value here.
+    inverter.derived.capacity_override_kwh = entry.options.get(CONF_BATTERY_CAPACITY)
     serial = await _async_read_identity(entry, inverter)
     return unit, inverter, serial
 

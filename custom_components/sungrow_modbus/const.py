@@ -82,6 +82,16 @@ WALLBOX_TLS_UNIT = 248
 #: current gets a suggestion from it; anything else has to be told.
 CONF_BATTERY_MAX_POWER = "battery_max_power"
 
+#: The owner's battery capacity in kWh, for a pack whose capacity the inverter
+#: does not report, or to use its usable capacity. Absent means no override.
+#: It feeds the three battery charge sensors only (`Derived.capacity_override_kwh`).
+CONF_BATTERY_CAPACITY = "battery_capacity"
+
+#: Register 5639's capacity, shown read-only beside the override. A form field
+#: and **never an option**: the form sends it back, and a stored copy would
+#: freeze a reading that changes when a pack gains a module.
+CONF_BATTERY_CAPACITY_REPORTED = "battery_capacity_reported"
+
 #: Who may perform the operations that are not entities, as
 #: `{operation: audience}`. An option rather than entry data, and per entry
 #: because one entry is one endpoint and one household may run more than one.

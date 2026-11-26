@@ -56,7 +56,12 @@ from . import ev_charger
 #:
 #: `battery_capacity_high_precision`: the same slave answers 0xFFFF at 5639,
 #: which decoded to 655.35 kWh and fed `battery_charge`. The largest pack in
-#: the diagnoses reads 4055 (40.55 kWh).
+#: the diagnoses reads 4055 (40.55 kWh). **0 is no reading either**: every
+#: house with a pack reads non-zero (every SBR and SBH, and two BYD packs at
+#: 1110 and 1020), and 0 comes only from inverters without one and from a
+#: Pylontech Force H1 whose capacity the inverter does not report (mkaiser's
+#: SH10RT on P020, every one of its seven diagnoses).
+#: Read as 0 it showed a 0.0 kWh pack and three charge sensors at 0.0.
 #:
 #: `battery_power`: a second cluster slave, swo14's on SAPPHIRE-H
 #: 01011.95.03, answers 0x7FFFFFFF at 5214 -- the specification's unavailable
@@ -66,9 +71,9 @@ from . import ev_charger
 #: registers agree about absence and only this one said so.
 #:   sh10rt-20-3p-sw14-anon-25617150722-battery-none-direct-lan.json
 #: No real reading reaches it: the largest in the corpus is five figures.
-NAN_BEYOND_YAML: dict[str, int] = {
+NAN_BEYOND_YAML: dict[str, int | tuple[int, ...]] = {
     "battery_level": 65535,
-    "battery_capacity_high_precision": 65535,
+    "battery_capacity_high_precision": (0, 65535),
     "battery_power": 2147483647,
 }
 

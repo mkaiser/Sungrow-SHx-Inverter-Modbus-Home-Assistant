@@ -145,6 +145,35 @@ async def test_battery_energy_follows_the_soc_limits(
     assert inverter.derived.battery_charge_nominal == 50.0
 
 
+async def test_a_capacity_of_zero_is_no_reading() -> None:
+    # A Pylontech Force H1 leaves 5639 at 0: no 0.0 kWh pack, no 0.0 charge.
+    device = await _inverter({5638: 0})
+    assert device.field("battery_capacity_high_precision") is None
+    assert device.derived.battery_charge is None
+    assert device.derived.battery_charge_nominal is None
+    assert device.derived.battery_charge_health_rated is None
+
+
+async def test_the_owners_capacity_fills_the_gap() -> None:
+    device = await _inverter({5638: 0})
+    device.derived.capacity_override_kwh = 14.4
+    # 14.4 kWh between 10 % and 90 %, half full, at 95 % health.
+    assert device.derived.battery_charge == pytest.approx(11.5)
+    assert device.derived.battery_charge_health_rated == pytest.approx(10.93)
+    assert device.derived.battery_charge_nominal == pytest.approx(7.2)
+    # The register keeps saying what it said.
+    assert device.field("battery_capacity_high_precision") is None
+
+
+async def test_the_owners_capacity_outranks_a_reported_one(
+    inverter: SungrowInverter,
+) -> None:
+    # A usable capacity in place of the rated one, for the charge values only.
+    inverter.derived.capacity_override_kwh = 50.0
+    assert inverter.derived.battery_charge == 40.0
+    assert inverter.field("battery_capacity_high_precision") == 100.0
+
+
 async def test_the_power_flow_flags_are_bits(inverter: SungrowInverter) -> None:
     assert inverter.derived.pv_generating is True
     assert inverter.derived.exporting_power is True
