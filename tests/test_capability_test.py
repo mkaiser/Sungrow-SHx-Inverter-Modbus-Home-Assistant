@@ -2586,6 +2586,43 @@ async def test_capped_houses_get_no_forced_check_that_could_only_say_nothing(
     assert run.code == 3
 
 
+async def test_no_forced_discharge_under_the_packs_own_floor(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A minimum of 0 % does not make 8.8 % something to discharge.
+
+    The maintainer's SH10RT: 13058 at 0 %, the pack idle under a 2 kW load at
+    8.8 %, and a forced discharge bracketed there read "nothing measurable
+    happened" and was kept as the answer.
+    """
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_min_soc"] = 0.0
+    run.conditions["soc_percent"] = 8.8
+    bracketed: list[str] = []
+
+    async def bracket(check, *_args, **_kwargs):
+        bracketed.append(check)
+
+    async def nothing():
+        return []
+
+    run._bracket = bracket  # type: ignore[method-assign]
+    run._soc_ceiling_effect = nothing  # type: ignore[method-assign]
+    run._export_effect = nothing  # type: ignore[method-assign]
+    run._pv_cut_effect = nothing  # type: ignore[method-assign]
+
+    await run._effects()
+
+    assert "forced discharge" not in bracketed
+    assert any("nothing to discharge" in note for note in run.unestablished)
+
+    run.conditions["soc_percent"] = 59.0
+    bracketed.clear()
+    await run._effects()
+
+    assert "forced discharge" in bracketed
+
+
 async def test_a_zero_cap_is_not_a_cap(full_unit: MockModbusUnit) -> None:
     """A dongle answers 0 for what it does not forward; that limits nothing."""
     run = await _preflighted(full_unit)

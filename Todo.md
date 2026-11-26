@@ -140,6 +140,7 @@ Hardware runs with a date. Removed once run and ingested.
 
 **T092. The daily counter's `last_reset` through a midnight**, released untested in 0.1.0a57 (the maintainer's word, 2026-11-25), running at the maintainer's house
 and gerd's -- [plan](plans/T092-daily-reset-midnight-test.md). *Needs*: a midnight watched, from 23:45 CET (nothing to install: both houses run it).
+Then ingest both houses' readings from after it (earlier downloads in `tmp/readings-2026-11-25/`).
 
 **At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
@@ -187,11 +188,6 @@ standby.
 "wallbox energy counters never fall" failed on 1600 to 218 Wh and 1279 to 274 Wh, two falls on 2026-11-25, when the extended test ran twice.
 The stop/start check most likely restarts the count while the session minutes run on; inferred from the timing, not watched.
 *Needs*: the fall and the test's stop matched by time, then the check to ignore that fall.
-
-**T096. Two checks at the maintainer's SH10RT that passed on 2026-11-23 found nothing on 2026-11-25** (P020): a forced discharge
-stayed at 0 W at 8.8 % battery level, and a charge ceiling of 53.5 % left a 4499 W charge running at 55.5 %. Both count as established, so they
-are not asked again, and the cleared test history hides the contradiction. The cause is unknown.
-*Needs*: both checks run again there, with the ingest of that house and gerd's after the T092 midnight (downloads in `tmp/readings-2026-11-25/`).
 
 **T028. A fault seen on hardware.** The fifteen words are decoded from
 V1.1.11's Appendix 4 and one diagnosis confirms the word order (bit 30, a

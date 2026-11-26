@@ -81,6 +81,12 @@ dongle says so above its readback table.
   [gerd](../entities/installation-gerd.md) the drift gate called two cuts to
   0 W inconclusive (2066 -> 0 -> 2516 W, 3063 -> 0 -> 2201 W); a cloud dims
   PV, it does not take it to 0 W and give it back.
+- **A pack keeps a floor under its owner's.** A check asks for a discharge
+  only above `DISCHARGE_SOC_FLOOR` (15 %) as well as `battery_min_soc` + 5 %:
+  at [mkaiser](../entities/installation-mkaiser.md), with the minimum at 0 %, a
+  forced discharge at 8.8 % read "nothing measurable happened" from a pack idle
+  under load, and held 1250 W at 59 %
+  ([the recheck](../sources/mkaiser-t096-recheck-2026-11-26-summary.md)).
 - **The charge-ceiling check is the only safe behavioural test of a
   state-of-charge limit.** Lowering `max_soc` under a charging battery
   **stops** a charge. Raising `min_soc` above the battery would buy

@@ -26,6 +26,10 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
   mkaiser over 26 runs ([seventh reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)). New on P020: **13059 refuses 51 %**
   with 0x04, above its 50 % maximum; **the export limit holds**, 6674 W to 1247.5 W for 1250 W, with 13088 at
   12.5 %; the forced discharge acts, -3686 W to 1017 W for 1250 W; the charge ceiling at 53 %.
+- **The forced discharge and the charge ceiling still act** (2026-11-26, after both read "nothing measurable
+  happened" on 2026-11-25): 1252 W for 1250 W at 71 %, and 69 % under 71 % stopped a 4499 W charge. The
+  discharge miss was the pack's own floor at 8.8 %; the ceiling miss, 53.5 % under 55.5 %, is unexplained
+  ([the recheck](../sources/mkaiser-t096-recheck-2026-11-26-summary.md)).
 - **Five battery-power upper bounds are not enforced**: a short auto-repeat collection stored
   7204 W above the 7104 W maximum (33047/33048/13052) and 1010 W above 1000 W (33149/33150), each
   read back ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).

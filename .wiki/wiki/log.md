@@ -2227,3 +2227,10 @@ The switch moves an adopted id with a number on it; the page says so.
 
 The first capability test on this model ([the source](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-2-summary.md)). 13074 is 10 W per count, not 0.1 % of the rating; the discharge windows obey on P023,
 so it joins `CONFIRMED_ON_FIRMWARE`; the import limit holds there with backup mode on. The forced charge verdict is spoiled by a charge the run did not command.
+
+## [2026-11-26] ingested | mkaiser-t096-recheck-2026-11-26
+
+Two runs at mkaiser's SH10RT with the established checks included ([the source](sources/mkaiser-t096-recheck-2026-11-26-summary.md)): the forced
+discharge (1252 W for 1250 W) and the charge ceiling (69 % stopped 4499 W) act on P020. The 2026-11-25 discharge miss ran at 8.8 % with the
+minimum at 0 %, where the pack keeps a floor of its own; the capability test now asks for a discharge only above 15 %. Updated P020,
+installation-mkaiser, capability-test.

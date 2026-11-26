@@ -20,6 +20,7 @@ from .procedure import (
     CLAMP_TOLERANCE,
     CONFIRMED,
     DECADES,
+    DISCHARGE_SOC_FLOOR,
     DISCHARGE_WINDOW,
     DRIFT_ABS_W,
     DRIFT_FRACTION,
@@ -617,7 +618,9 @@ class EffectSteps(ReadbackSteps):
             )
             if discharge is None:
                 pass
-            elif soc is not None and float(soc) > floor + SOC_MARGIN:
+            elif soc is not None and float(soc) > max(
+                floor + SOC_MARGIN, DISCHARGE_SOC_FLOOR
+            ):
                 if not self._expired("effect"):
                     self._step(f"forced discharge at {discharge:g} W")
                     results.append(
@@ -634,7 +637,9 @@ class EffectSteps(ReadbackSteps):
             else:
                 self._note(
                     "no forced discharge check: the battery is at or near its "
-                    "minimum state of charge, so there is nothing to discharge"
+                    "minimum state of charge, or under "
+                    f"{DISCHARGE_SOC_FLOOR:g} % where a pack keeps its own, so "
+                    "there is nothing to discharge"
                 )
 
         results.extend(await self._soc_ceiling_effect())
@@ -1344,7 +1349,7 @@ class EffectSteps(ReadbackSteps):
 
         soc = self.conditions.get("soc_percent")
         floor = float(self.snapshot.values.get("battery_min_soc") or 0.0)
-        if soc is None or float(soc) <= floor + SOC_MARGIN:
+        if soc is None or float(soc) <= max(floor + SOC_MARGIN, DISCHARGE_SOC_FLOOR):
             self._note(
                 "could not make the house export: the battery is at "
                 f"{soc}% against a floor of {floor:g}%, so there is nothing to "

@@ -1562,6 +1562,17 @@ SOC_MARGIN = 5.0
 #: nothing to discharge.
 SOC_CHARGE_CEILING = 90.0
 
+#: The lowest state of charge at which a check asks the pack to discharge,
+#: whatever `battery_min_soc` says.
+#:
+#: A pack keeps a floor of its own under the owner's. A Pylontech Force H1
+#: behind an SH10RT with 13058 at 0 % sat at 0 W under a 2 kW load at 8.0 %,
+#: 8.8 % and 10.0 %, and a forced discharge there read "nothing measurable
+#: happened": the pack's floor, not the command, which held 1250 W at 59 %.
+#: The ledger waits for more than this before starting a run for the check
+#: (`ledger._CHARGE`), so a run it starts does not refuse at once.
+DISCHARGE_SOC_FLOOR = 15.0
+
 #: How far below the current state of charge the ceiling check puts `max_soc`.
 #:
 #: Small on purpose. The register is a *charge* ceiling, so the inverter stops
