@@ -1300,9 +1300,21 @@ async def test_the_wait_is_what_the_last_run_was_worth(
 
         # Another check becoming possible does not wait for that, but does
         # let the house settle first.
+        # *Next attempt* names the earlier start while that check is due,
+        # and the end of the wait again once it no longer is.
         due.return_value = ["one", "two"]
-        assert tick(now + timedelta(minutes=1)) == 2
+        assert tick(soon := now + timedelta(minutes=1)) == 2
+        assert continuous.next_start(soon) == now + GAP_USEFUL
+        assert continuous.waiting == (
+            f"the next run at {dt_util.as_local(now + GAP_USEFUL):%H:%M}"
+        )
+        due.return_value = ["one"]
+        assert tick(soon) == 2
+        assert continuous.next_start(soon) == now + GAP_VAIN
+        due.return_value = ["one", "two"]
         assert tick(now := now + GAP_USEFUL) == 3
+        # Ended but not yet judged, it names no time rather than the old one.
+        assert continuous.next_start(now + timedelta(seconds=30)) is None
         # It shortens the wait once: tried in vain, it waits like the first.
         assert tick(now := now + timedelta(minutes=1)) == 3
         assert tick(now + GAP_USEFUL) == 3

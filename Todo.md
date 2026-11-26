@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T098.** Numbers are minted in order, never reused and
+**Next free item number: T100.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -138,17 +138,13 @@ enabled, or its history stops (`AGENTS.md`).
 
 Hardware runs with a date. Removed once run and ingested.
 
-**At the maintainer's SH10RT** (T007) one instance serves: `make dev-real`, on :8125 against `config-real/`
+**At the maintainer's SH10RT** one instance serves: `make dev-real`, on :8125 against `config-real/`
 ([`doc/development.md`](doc/development.md) for its login, its clock, and what
 a restart costs an armed auto repeat). Its entities are prefixed
 `hwr_sh10rt_`, and *Diagnosis: test summary* reports only when a run or a
 restart makes it -- `config-real/.storage/` is what the ledger actually
 holds. Two owner settings are deliberate and stay as they are:
 `battery_max_soc` 90 % and the entry option `battery_max_power` 5000 W.
-
-**T007. The diagnosis's new spacing on hardware**: an auto repeat collection there, watching *Diagnosis: next attempt*
-and the log -- [plan](plans/T007-diagnosis-and-capability-tests.md). The forced startup on an SH-T is T063.
-*Needs*: a date.
 
 # Blockers
 
@@ -416,6 +412,11 @@ His installation is on device-scoped ids since 2026-11-25 ([the source](.wiki/wi
 
 **T085. The RAK module's web page** (the dongle before the WiNet-S): how it is reached and with which documented login.
 *Needs*: a house with one, and the maintainer's word before any login is tried.
+
+**T099. The forced-charge window's 300 W floor skips a battery charging slowly with headroom**: a pack taking a few hundred
+watts with kilowatts under `snapshot.battery_ceiling` is not tested unless the bracket confirms the start first
+(`src/sungrow_modbus/capability_test/effects.py`); decide whether the floor should follow the headroom.
+*Needs*: nothing.
 
 **T060. Hand inverter and wallbox readings to evcc**, so it need not open a
 Modbus session of its own -- [plan](plans/T060-evcc-integration.md), which has the

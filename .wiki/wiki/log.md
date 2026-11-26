@@ -2240,3 +2240,10 @@ installation-mkaiser, capability-test.
 The daily consumed energy's `last_reset` through a midnight at mkaiser's and gerd's, and one restart at gerd's
 ([the source](sources/daily-reset-midnight-2026-11-26-summary.md)): set once, in the poll where the five counters fell together; the
 statistics' change over the new day equals the state, with no negative hour; a restart kept it. Updated device-sh-rt.
+
+## [2026-11-26] ingested | mkaiser-t007-spacing-2026-11-26
+
+Auto repeat's spacing at mkaiser's SH10RT, five runs from 15:49 to 17:32 CET ([the source](sources/mkaiser-t007-spacing-2026-11-26-summary.md)):
+5 min after a run that settled something, 30 after a vain one (shortened once by a newly possible check), 60 after the
+second, and the house deciding after sunset. *Next attempt* kept the later time through the shortening; it now names the
+earlier start. Not seen: an unshortened 30 min wait, the SoC readbacks' 15 % rule. Updated capability-test, installation-mkaiser.

@@ -117,6 +117,8 @@ class ContinuousCapabilityTest:
         self._last_end: datetime | None = None
         #: When the next run may start, unless a check becomes possible before.
         self._ready_at: datetime | None = None
+        #: The earlier start a check that became possible allows, while it is due.
+        self._early_at: datetime | None = None
         #: The wallbox's own slots, counted from the press: its runs and the
         #: inverter's are counted apart, so neither uses up the other's time.
         self._last_wallbox_slot: int | None = None
@@ -145,6 +147,7 @@ class ContinuousCapabilityTest:
         now = dt_util.utcnow()
         self.started_at, self.last_start = now, None
         self._missing_before, self._ready_at, self._last_end = None, None, None
+        self._early_at = None
         self._attempted = self._tried = frozenset()
         self._vain = 0
         self._last_wallbox_slot = None
@@ -249,7 +252,7 @@ class ContinuousCapabilityTest:
             return
         settled = self._missing_before - self._missing(folded)
         self._missing_before = None
-        self._last_end = now
+        self._last_end, self._early_at = now, None
         if settled:
             self._vain, self._tried = 0, frozenset()
             self._ready_at = now + GAP_USEFUL
@@ -259,12 +262,18 @@ class ContinuousCapabilityTest:
         self._ready_at = now + (INTERVAL if self._vain == 1 else GAP_VAIN)
 
     def _may_start(self, now: datetime, due: list[str]) -> bool:
-        """Whether the wait is over, or a check not tried in vain is due."""
+        """Whether the wait is over, or a check not tried in vain is due.
+
+        Remembers the earlier start such a check allows (`_early_at`), so that
+        *Diagnosis: next attempt* names it rather than the end of the wait.
+        """
+        self._early_at = None
         if self._ready_at is None or now >= self._ready_at:
             return True
-        if self._vain == 0 or self._last_end is None:
+        if self._vain == 0 or self._last_end is None or not set(due) - self._tried:
             return False
-        return now >= self._last_end + GAP_USEFUL and bool(set(due) - self._tried)
+        self._early_at = self._last_end + GAP_USEFUL
+        return now >= self._early_at
 
     def _note_start(
         self, now: datetime, folded: dict[str, Any] | None, due: list[str]
@@ -373,7 +382,8 @@ class ContinuousCapabilityTest:
             due = []
         if not self._may_start(now, due):
             assert self._ready_at is not None
-            self._say(f"the next run at {dt_util.as_local(self._ready_at):%H:%M}")
+            at = self._early_at or self._ready_at
+            self._say(f"the next run at {dt_util.as_local(at):%H:%M}")
             return False
         if self._quiet(now):
             self._say("a moment of quiet after the last run")
@@ -488,10 +498,16 @@ class ContinuousCapabilityTest:
         """Return the earliest a run may start on its own, when time decides it.
 
         The end of the wait the last run left, which a check that becomes
-        possible may shorten; None when it is off, a run is in flight, or what
-        decides is the house rather than the clock.
+        possible shortens to the earlier start it allows while it is due; None
+        when it is off, a run is in flight or not yet judged, or what decides
+        is the house rather than the clock.
         """
-        if not self.active or self.runner.state.running or self.started_at is None:
+        if (
+            not self.active
+            or self.runner.state.running
+            or self.started_at is None
+            or self._missing_before is not None
+        ):
             return None
         if not self.runner.inverter_tests:
             if (
@@ -501,6 +517,8 @@ class ContinuousCapabilityTest:
                 return self._next_wallbox_start()
             return None
         if self._ready_at is not None and now < self._ready_at:
+            if self._early_at is not None and now < self._early_at:
+                return self._early_at
             return self._ready_at
         return None
 

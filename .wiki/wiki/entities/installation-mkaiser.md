@@ -131,6 +131,9 @@ that a one-minute cadence catches a transient state by luck. Together they take 
 daily counters reset together at two more midnights.
 Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
+Auto repeat's spacing was watched there over an afternoon into dusk: 5, 30 and 60 minutes, one
+shortening by a newly possible check, and the house deciding after sunset ([the spacing](../sources/mkaiser-t007-spacing-2026-11-26-summary.md)).
+
 The import limit holds there with **backup mode on** too ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)).
 
 ## Diagnoses

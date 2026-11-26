@@ -212,7 +212,9 @@ the battery, the PV cut needs PV above 700 W) and starts the ordinary run when
 one is due: its own snapshot, its own restore, the entry's options as for the
 button. The next run waits by what the last was worth: 5 minutes after one that settled a
 check, 30 after one that settled none, 60 after the second such in a row; a check that became possible and
-was not yet tried in vain shortens that to 5, once. None while the inverter is not running, two minutes of
+was not yet tried in vain shortens that to 5, once. Each of these was seen on hardware in one afternoon at
+mkaiser's ([the spacing](../sources/mkaiser-t007-spacing-2026-11-26-summary.md)); *Diagnosis: next attempt*
+names the time, the earlier one while such a check is due, and is unknown while the house decides. None while the inverter is not running, two minutes of
 quiet after a run, no daily cap, and it switches itself off when nothing a
 moment can answer is left (`custom_components/sungrow_modbus/continuous.py`).
 A night of runs at [mkaiser](../entities/installation-mkaiser.md) showed why it
