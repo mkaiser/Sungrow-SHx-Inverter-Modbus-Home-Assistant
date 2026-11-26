@@ -2261,3 +2261,11 @@ standalone AC22E-01 between one and three phases ([the source](sources/cross-ref
 holding 21204 written with the charge stopped, input 21270 read back, nothing new in the map; evcc has no TLS, so it
 reaches unit 248 over RS485 or plain Modbus TCP, not port 516. Consistent with 21204 not taking on gerd's managed wallbox. Updated
 managed-wallbox-phases, device-wallbox, cross-reference-evcc.
+
+## [2026-11-26] ingested | mppt-energy-days-2026-11-26
+
+*MPPTn energy* against *Daily PV generation* over 2026-11-21 to 11-26 at mkaiser's SH10RT (P020) and gerd's SH8.0RT-V112
+(P022), both on the cable ([the source](sources/mppt-energy-days-2026-11-26-summary.md)): 0.992 over five days and 0.985 over
+six. 13002 follows the integral of 5017 within 0.4 % at mkaiser's, so it counts DC, and it equals the sum of its three PV
+splits; the shortfall is in V x I against 5017, not in the polling. Updated device-sh-rt, installation-mkaiser,
+installation-gerd and the 2026-11-21 source, whose DC-or-AC question this settles.

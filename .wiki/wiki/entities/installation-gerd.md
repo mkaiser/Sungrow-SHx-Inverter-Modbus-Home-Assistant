@@ -78,3 +78,4 @@ Standby at night, which the engine had answered with re-sends
 - [The wallbox controlled through the inverter](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md), 2026-11-14, a car charging, on site
 - [The EV charger controls from Home Assistant, and the managed test again](../sources/gerd-wallbox-2026-11-17-afternoon-summary.md), 2026-11-17, a car charging, over VPN
 - [The wallbox entry paired with the inverter entry](../sources/gerd-wallbox-2026-11-20-pairing-summary.md), 2026-11-20 evening, no car, over VPN
+- [MPPT energy against Daily PV generation, six days](../sources/mppt-energy-days-2026-11-26-summary.md), 2026-11-21 to 11-26, over the cable: 0.985

@@ -47,7 +47,8 @@ The optional power sensors, which only draw the *Now* tab:
 Leave out the *Daily …* and *… this month / this year* sensors (they reset on
 their own, and the dashboard keeps its own history), the *(smoothed)* ones
 (made for a card) and the *MPPTn energy* sensors (an estimate from voltage
-times current, useful for comparing strings, not for the totals).
+times current, 1-2 % under the inverter's own count on the cable, useful for
+comparing strings, not for the totals).
 
 ## A string inverter (SG)
 

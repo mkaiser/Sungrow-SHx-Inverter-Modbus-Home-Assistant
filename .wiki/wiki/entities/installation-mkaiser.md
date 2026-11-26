@@ -139,6 +139,9 @@ shortening by a newly possible check, and the house deciding after sunset ([the 
 
 The import limit holds there with **backup mode on** too ([the run](../sources/mkaiser-import-limit-backup-mode-2026-11-24-summary.md)).
 
+*MPPTn energy* came to 0.992 of *Daily PV generation* over five days on the cable, and 13002 follows the integral of 5017
+(DC) within 0.4 % ([the days](../sources/mppt-energy-days-2026-11-26-summary.md)).
+
 ## Diagnoses
 
 - [SH10RT, B001.V000.P020, mkaiser, seventh reading: every check established](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-6-summary.md)

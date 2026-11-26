@@ -26,6 +26,9 @@ the integration knows was measured on these.
   [firmware gating](../concepts/firmware-gating.md).
 - **MPPT3/4 answer 0xFFFF** on an SH10RT. Through a WiNet-S the same
   registers answer 0; see [zero means absent](../concepts/zero-means-absent.md).
+- **Daily PV generation (13002) counts DC**, and is exactly direct consumption + battery charge from PV +
+  export from PV; the integration's *MPPTn energy* (V x I over the polls) runs 1-2 % under it on the cable, on
+  P020 and P022 ([six days at two houses](../sources/mppt-energy-days-2026-11-26-summary.md)).
 - **Register 13074 writes in tens of watts** on every B001 firmware measured;
   see [register 13074](register-13074.md).
 - **Inputs 2612 and 2628 come back in a padded frame**; see

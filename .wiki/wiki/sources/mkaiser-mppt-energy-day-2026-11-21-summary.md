@@ -28,6 +28,6 @@ modbus proxy) by the production Home Assistant's integration entry. Source:
 - On a cable at the default polling, the integral is within a couple of percent of the inverter's own
   counter over a day: good enough for comparing trackers, not a substitute for 13002 in the Energy
   dashboard.
-- One day, one house, one transport. Whether 13002 is DC or AC is open, so the sign of the conversion
-  loss in the comparison is too. A WiNet-S house, whose stale reads turn trapezoids into rectangles,
-  is still wanted.
+- One day, one house, one transport. [Six days at two houses](mppt-energy-days-2026-11-26-summary.md)
+  settle that 13002 counts DC, so there is no conversion loss in the comparison; a WiNet-S house, whose
+  stale reads turn trapezoids into rectangles, is still wanted.
