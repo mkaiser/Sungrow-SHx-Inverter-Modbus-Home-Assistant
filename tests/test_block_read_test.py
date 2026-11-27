@@ -497,6 +497,30 @@ async def test_the_raw_client_drops_an_answer_to_another_request(
         await _read_through(reply, 2)
 
 
+async def test_a_connect_that_times_out_stays_a_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A host that never accepts is silence, not a hang-up.
+
+    `TimedOut` is an `OSError`, so a handler for the operating system's own
+    errors that rewraps it as a plain `Dropped` makes the block read test
+    report a host behind a dead tunnel as a device dropping the link.
+    """
+
+    async def never(*args: object, **kwargs: object) -> None:
+        await asyncio.sleep(10)
+
+    monkeypatch.setattr(asyncio, "open_connection", never)
+    monkeypatch.setattr(raw_client.RawClient, "BACKOFF", (0.0, 0.0))
+    client = raw_client.RawClient("127.0.0.1", 502, 1, timeout=0.01)
+    with pytest.raises(raw_client.TimedOut):
+        await client.read("input", 2612, 2)
+    assert await block_test.attempt(client.read, "input", 2612, 2, 1) == (
+        block_test.TIMED_OUT,
+        "1/1, no connection within 0s",
+    )
+
+
 def _finding(kind: str, detail: str, component="fast_input", through=False):
     outcome = Outcome(
         culprits=[(Block(component, "input", 2612, 15), kind, detail)],

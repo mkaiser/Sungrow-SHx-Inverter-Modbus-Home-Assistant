@@ -39,11 +39,6 @@ class DelayOn:
         self.seconds = seconds
         self._true_since: float | None = None
 
-    @property
-    def true_since(self) -> float | None:
-        """When the input last became true, or None if it is not true."""
-        return self._true_since
-
     def remaining(self, now: float) -> float | None:
         """Seconds until this starts reporting true, or None if never/already.
 
@@ -120,14 +115,24 @@ class TimeWeightedAverage:
         return self.value(now)
 
     def value(self, now: float) -> float | None:
-        """Return the average as of `now`, without feeding a reading."""
+        """Return the average as of `now`, without feeding a reading.
+
+        `now` may lie past the last feed by more than a window, so a sample
+        that has aged out by then is left out here as `_leak` would drop it,
+        without dropping it: the value is asked, not fed.
+        """
         if not self._samples:
             return None
 
         total = 0.0
         start = now - self.window
-        previous = self._last_leak or self._samples[0]
+        previous = self._last_leak
         for timestamp, sample in self._samples:
+            if timestamp <= start:
+                previous = (timestamp, sample)
+                continue
+            if previous is None:
+                previous = (timestamp, sample)
             total += (timestamp - start) * previous[1]
             start = timestamp
             previous = (timestamp, sample)
@@ -138,6 +143,7 @@ class TimeWeightedAverage:
         # value whenever Home Assistant feels like it -- and without it a
         # single reading of 10 averages to 8 sixty seconds later, drifting
         # towards zero while the source sits perfectly still.
+        assert previous is not None  # every sample either aged out or counted
         total += (now - start) * previous[1]
         return total / self.window
 

@@ -45,10 +45,18 @@ class UpdateReport:
     failed: dict[str, ModbusError] = field(default_factory=dict)
 
     def __or__(self, other: UpdateReport) -> UpdateReport:
-        """Merge two reports, so a device can poll in several passes."""
+        """Merge two reports, so a device can poll in several passes.
+
+        The later pass wins for a component both name, whichever way it went:
+        a component that failed and then read is updated, and one that read
+        and then failed is failed, never both.
+        """
         return UpdateReport(
             updated=(self.updated | other.updated) - other.failed.keys(),
-            failed={**self.failed, **other.failed},
+            failed={
+                **{k: v for k, v in self.failed.items() if k not in other.updated},
+                **other.failed,
+            },
         )
 
 

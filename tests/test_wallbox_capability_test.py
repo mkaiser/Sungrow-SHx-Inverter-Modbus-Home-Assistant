@@ -21,7 +21,7 @@ import contextlib
 import math
 from typing import Any
 
-from modbus_connection import ModbusExceptionError
+from modbus_connection import ModbusExceptionError, ModbusTimeoutError
 import pytest
 
 from sungrow_modbus.wallbox import capability_test as wct
@@ -431,6 +431,26 @@ async def test_a_refused_write_is_recorded_with_its_exception_and_nothing_is_lef
     assert outcome.steps[0].verdict == wct.REFUSED
     assert "ModbusExceptionError" in outcome.conditions["refusals"][wct.OUTPUT_CURRENT]
     assert outcome.code == 3
+    assert box.holding == box.original
+
+
+async def test_a_write_that_times_out_is_dropped_not_refused() -> None:
+    """`ModbusTimeoutError` is a `ModbusError`, and still no answer.
+
+    A refusal is established for good in the ledger; a timeout is tried again.
+    """
+
+    class TimesOut(FakeWallbox):
+        async def write(self, address: int, word: int) -> None:
+            if address == wct.OUTPUT_CURRENT and word != self.original[address]:
+                raise ModbusTimeoutError("no answer")
+            await super().write(address, word)
+
+    box = TimesOut()
+    outcome, _ = await _run(box)
+
+    assert outcome.steps[0].verdict == wct.DROPPED
+    assert "ModbusTimeoutError" in outcome.conditions["refusals"][wct.OUTPUT_CURRENT]
     assert box.holding == box.original
 
 
@@ -1203,6 +1223,18 @@ def test_the_plausibility_state_survives_a_restart() -> None:
     assert again.summary() == state.summary()
     assert again.log == state.log
     assert again.document()["register_21313"] == state.document()["register_21313"]
+
+
+def test_a_restart_logs_no_21313_change_that_did_not_happen() -> None:
+    """The log is of changes: the same word after a restart is not one."""
+    start = datetime(2026, 11, 9, 12, tzinfo=UTC)
+    state = plausibility.WallboxPlausibility()
+    state.observe(plausibility.values(_reading()), start)
+
+    again = plausibility.WallboxPlausibility.from_dict(state.as_dict())
+    again.observe(plausibility.values(_reading()), start + timedelta(seconds=10))
+
+    assert [entry["value"] for entry in again.log] == [527]
 
 
 def test_the_load_must_move_with_the_wallbox() -> None:

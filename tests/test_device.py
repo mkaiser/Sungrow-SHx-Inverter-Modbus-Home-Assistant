@@ -248,3 +248,17 @@ async def test_other_firmware_is_still_asked(unit: MockModbusUnit) -> None:
     await inverter.async_update_tier("slowest")
 
     assert inverter.skipped_components() == frozenset()
+
+
+def test_a_later_pass_settles_a_component_either_way() -> None:
+    """Merged reports never name one component both updated and failed."""
+    from modbus_connection import ModbusTimeoutError
+
+    from sungrow_modbus import UpdateReport
+
+    lost = ModbusTimeoutError("no answer")
+    first = UpdateReport(updated=frozenset({"a"}), failed={"b": lost})
+    second = UpdateReport(updated=frozenset({"b"}), failed={"a": lost})
+    merged = first | second
+    assert merged.updated == {"b"}
+    assert merged.failed == {"a": lost}

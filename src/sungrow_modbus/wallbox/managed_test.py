@@ -49,7 +49,7 @@ from modbus_connection import ModbusError, ModbusExceptionError
 from ..capability_test.procedure import Clock, RealClock
 from ..hybrid_inverter import ev_charger as ev
 from . import capability_test as wct
-from .discovery import MODEL_NAME, model_name
+from .discovery import MODEL_NAME, NAME_PREFIX, model_name
 from .registers import CHARGING_STATUS
 
 _LOGGER = logging.getLogger(__name__)
@@ -339,7 +339,7 @@ class ManagedWallboxTest:
             sample = await self._sample()
         except (ModbusError, *_LOST) as err:
             raise Guard(1, f"could not read: {type(err).__name__}: {err}") from err
-        if not name or not name.upper().startswith("AC"):
+        if not name or not name.upper().startswith(NAME_PREFIX):
             raise Guard(2, f"{name!r} is not a Sungrow wallbox")
         rating = round(rated * wct.SCALE_THIS_PROJECT, 1)
         self.conditions.update(

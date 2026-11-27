@@ -124,6 +124,21 @@ def test_samples_older_than_the_window_stop_counting() -> None:
     assert average.update(600.0, 0.0) == pytest.approx(0.0)
 
 
+def test_the_average_asked_without_a_reading_leaves_aged_samples_out() -> None:
+    """The entity asks for the value as of now, which may be past the window.
+
+    Nothing has aged out since the last feed, so the value has to leave out
+    what has: 20 has held for the whole window, and the average is 20.
+    """
+    average = TimeWeightedAverage(300)
+    average.update(0.0, 10.0)
+    average.update(100.0, 20.0)
+
+    assert average.value(1000.0) == pytest.approx(20.0)
+    # And part-way: 10 from 50 to 100, then 20 to 350.
+    assert average.value(350.0) == pytest.approx((50 * 10 + 250 * 20) / 300)
+
+
 def test_a_window_must_be_positive() -> None:
     with pytest.raises(ValueError, match="positive"):
         TimeWeightedAverage(0)

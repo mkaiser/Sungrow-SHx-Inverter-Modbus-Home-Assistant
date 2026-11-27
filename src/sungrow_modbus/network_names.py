@@ -286,8 +286,9 @@ async def _async_browse(
         if state_change is not ServiceStateChange.Removed:
             names.add(name)
 
-    browser = AsyncServiceBrowser(zc, [SERVICE_TYPE], handlers=[on_change])
+    browser: Any = None
     try:
+        browser = AsyncServiceBrowser(zc, [SERVICE_TYPE], handlers=[on_change])
         await asyncio.sleep(seconds)
         adverts: list[Advert] = []
         for name in sorted(names):
@@ -305,7 +306,8 @@ async def _async_browse(
                 adverts.append(advert)
         return adverts, len(names)
     finally:
-        await browser.async_cancel()
+        if browser is not None:
+            await browser.async_cancel()
         if azc is not None:
             await azc.async_close()
 

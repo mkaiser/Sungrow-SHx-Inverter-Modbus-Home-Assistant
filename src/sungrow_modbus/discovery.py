@@ -15,8 +15,9 @@ entry and a SYN. A /24 finishes in about a second; a /16 takes minutes and
 floods the segment. So the size is capped and the caller has to raise the cap
 deliberately rather than discover it by waiting.
 
-Nothing here imports Home Assistant, and nothing here opens a Modbus
-connection — the point is that both sides can use it.
+Nothing here imports Home Assistant, so both sides can use it. The one
+Modbus connection it opens is `async_identify`'s own, for a caller with none
+to share; a caller that holds the link asks `async_identify_unit_247_on`.
 """
 
 from __future__ import annotations
@@ -83,10 +84,6 @@ async def async_mdns_services(seconds: float = 2.0) -> dict[str, dict[str, objec
         if state_change is ServiceStateChange.Added:
             discovered_types.add(name)
 
-    meta = ServiceBrowser(zc, "_services._dns-sd._udp.local.", handlers=[on_type])
-    await asyncio.sleep(seconds)
-    meta.cancel()
-
     def on_change(
         zeroconf: Any,
         service_type: str,
@@ -112,18 +109,29 @@ async def async_mdns_services(seconds: float = 2.0) -> dict[str, dict[str, objec
             "properties": properties,
         }
 
-    types = sorted(discovered_types) or (
-        "_http._tcp.local.",
-        "_workstation._tcp.local.",
-        "_device-info._tcp.local.",
-    )
-    browsers = [
-        ServiceBrowser(zc, service_type, handlers=[on_change]) for service_type in types
-    ]
-    await asyncio.sleep(seconds)
-    for browser in browsers:
-        browser.cancel()
-    await azc.async_close()
+    # Closed however the browse ends: a cancelled or failing caller would
+    # otherwise leave the browsers' threads running and port 5353 bound.
+    browsers: list[Any] = []
+    try:
+        browsers.append(
+            ServiceBrowser(zc, "_services._dns-sd._udp.local.", handlers=[on_type])
+        )
+        await asyncio.sleep(seconds)
+        browsers.pop().cancel()
+        types = sorted(discovered_types) or (
+            "_http._tcp.local.",
+            "_workstation._tcp.local.",
+            "_device-info._tcp.local.",
+        )
+        browsers = [
+            ServiceBrowser(zc, service_type, handlers=[on_change])
+            for service_type in types
+        ]
+        await asyncio.sleep(seconds)
+    finally:
+        for browser in browsers:
+            browser.cancel()
+        await azc.async_close()
     return found
 
 
@@ -268,7 +276,7 @@ async def async_hostname(host: str, timeout: float = TIMEOUT) -> str | None:
         name, _ = await asyncio.wait_for(
             loop.getnameinfo((host, 0), socket.NI_NAMEREQD), timeout
         )
-    except (TimeoutError, OSError, socket.gaierror):
+    except (TimeoutError, OSError):
         return None
     return None if name == host else name
 

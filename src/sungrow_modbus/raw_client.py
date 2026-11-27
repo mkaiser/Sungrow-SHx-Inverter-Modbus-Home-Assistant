@@ -135,6 +135,11 @@ class RawClient:
                     await asyncio.sleep(pause)
                 try:
                     await self._connect()
+                except Dropped as err:
+                    # Kept as raised: a connect that timed out is `TimedOut`,
+                    # which the block read test reports apart from a hang-up.
+                    last = err
+                    continue
                 except OSError as err:
                     last = Dropped(str(err))
                     continue

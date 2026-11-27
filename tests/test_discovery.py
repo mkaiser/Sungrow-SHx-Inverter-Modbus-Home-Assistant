@@ -124,3 +124,46 @@ def _returns(value):
         return value
 
     return _call
+
+
+async def test_an_mdns_browse_cancelled_midway_closes_what_it_opened() -> None:
+    """A cancelled browse cancels its browsers and closes zeroconf.
+
+    Left open, the browsers' threads keep running and port 5353 stays bound
+    for the rest of the process, which in Home Assistant is days.
+    """
+    import types
+
+    from sungrow_modbus.discovery import async_mdns_services
+
+    browsers: list[object] = []
+    closed: list[bool] = []
+
+    class Browser:
+        def __init__(self, zc: object, service_type: str, handlers: object) -> None:
+            self.cancelled = False
+            browsers.append(self)
+
+        def cancel(self) -> None:
+            self.cancelled = True
+
+    class AsyncZeroconf:
+        zeroconf = object()
+
+        async def async_close(self) -> None:
+            closed.append(True)
+
+    zeroconf = types.ModuleType("zeroconf")
+    zeroconf.ServiceBrowser = Browser  # type: ignore[attr-defined]
+    zeroconf.ServiceStateChange = types.SimpleNamespace(Added=object())  # type: ignore[attr-defined]
+    zeroconf_asyncio = types.ModuleType("zeroconf.asyncio")
+    zeroconf_asyncio.AsyncZeroconf = AsyncZeroconf  # type: ignore[attr-defined]
+    modules = {"zeroconf": zeroconf, "zeroconf.asyncio": zeroconf_asyncio}
+    with patch.dict("sys.modules", modules):
+        task = asyncio.create_task(async_mdns_services(10))
+        await asyncio.sleep(0)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert closed == [True]
+    assert browsers and all(browser.cancelled for browser in browsers)  # type: ignore[attr-defined]

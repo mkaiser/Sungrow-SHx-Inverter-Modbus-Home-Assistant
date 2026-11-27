@@ -21,7 +21,7 @@ run like this has settled its scale.
   A setting that moves between two reads with nothing written is refused too.
 * *Never a disable, never under 6 A, never 0.* At gerd's on 2026-11-13 a
   disable ended a charge the enable written back did not resume, and 5 A and
-  0 left the wallbox suspended. `enable` and `below_minimum` now only record
+  0 left the wallbox suspended. `enable` and `below_minimum` only record
   that they were not run.
 * *The word written is safe under every candidate scale.* A count of 60 is
   6.0 A or 0.6 A; 80 is 8.0 A or 0.8 A; 100 is 10.0 A or 1.0 A. The wrong
@@ -62,16 +62,18 @@ import logging
 import statistics
 from typing import Any, NamedTuple, Protocol
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusError, ModbusExceptionError
 
 from ..capability_test.procedure import Clock, RealClock
-from .discovery import MODEL_NAME, model_name
+from .discovery import MODEL_NAME, NAME_PREFIX, model_name
 from .registers import CHARGING_STATUS, WallboxLive, WallboxRatings, WallboxSettings
 
 _LOGGER = logging.getLogger(__name__)
 
-#: What a lost link looks like. A refusal is `ModbusError`; the rest says nothing
-#: about the register, only about the afternoon.
+#: Whatever a read or a write can raise. Only a `ModbusExceptionError` is the
+#: wallbox answering; a timeout or a lost session says nothing about the
+#: register, only about the afternoon, so a write tells the two apart
+#: (`_write`).
 _LOST = (ModbusError, TimeoutError, OSError)
 
 # -- what is written, and what it is compared with ----------------------------
@@ -131,10 +133,6 @@ FOLLOW_STEP_A = 2.0
 
 #: How long a car has to follow a step, and how long a pause or a resume may take.
 FOLLOW_TIMEOUT = 60.0
-
-#: An offer under the pilot minimum, for the below-minimum check. Under the
-#: second reading of the scale it is 0.05 A: nothing a car could mistake.
-BELOW_MINIMUM_A = 5.0
 
 #: Why the run writes nothing to a wallbox not declared standalone.
 MANAGED_REASON = (
@@ -261,8 +259,8 @@ class Options:
     an interruption to a car."""
 
     enable: bool = False
-    """Also disable the charge point and enable it again. Off by default; it
-    stops a charge in progress, and is harmless on an idle wallbox."""
+    """Record that the charge point is never disabled (`ENABLE_NEVER`).
+    Nothing is written for it."""
 
     phase: bool = False
     """Also switch the phase setting and back. Off by default, and refused
@@ -273,8 +271,8 @@ class Options:
     how fast the car follows each. Needs a car charging."""
 
     below_minimum: bool = False
-    """Offer 5 A, then 0, and see whether the wallbox refuses or the car
-    pauses. Needs a car charging and `cap_explicit`."""
+    """Record that nothing under the pilot minimum is offered
+    (`BELOW_MINIMUM_NEVER`). Nothing is written for it."""
 
     above_rating: bool = False
     """Offer the rating plus 1 A, and see whether it is refused or clamped.
@@ -448,12 +446,14 @@ class WallboxCapabilityTest:
         await self._touch(address)
         try:
             await self.port.write(address, word)
-        except ModbusError as err:
+        except ModbusExceptionError as err:
             self.conditions.setdefault("refusals", {})[address] = (
                 f"{type(err).__name__}: {err}"
             )
             return REFUSED
-        except (TimeoutError, OSError) as err:
+        except _LOST as err:
+            # A timeout or a lost session is no answer, `ModbusTimeoutError`
+            # and `ModbusConnectionError` included: the check is tried again.
             self.conditions.setdefault("refusals", {})[address] = (
                 f"{type(err).__name__}: {err}"
             )
@@ -541,7 +541,7 @@ class WallboxCapabilityTest:
             raise Guard(1, f"could not read the model name: {err}") from err
         name = model_name(words)
         self.conditions["model"] = name
-        if not name or not name.upper().startswith("AC"):
+        if not name or not name.upper().startswith(NAME_PREFIX):
             raise Guard(2, f"{name!r} is not a Sungrow wallbox")
 
         self._step("snapshot")

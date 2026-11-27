@@ -222,3 +222,36 @@ def test_the_mac_prefix_comes_from_the_line_naming_the_address() -> None:
     assert mac_prefix_in(windows, "192.0.2.10") == "A4:CF:12"
     macos = "? (192.0.2.10) at a4:cf:12:1:2:3 on en0 ifscope [ethernet]\n"
     assert mac_prefix_in(macos, "192.0.2.10") == "A4:CF:12"
+
+
+async def test_a_browse_that_fails_to_start_closes_its_own_zeroconf() -> None:
+    """A private zeroconf instance binds port 5353 until it is closed."""
+    import types
+    from unittest.mock import patch
+
+    from sungrow_modbus.network_names import async_browse
+
+    closed: list[bool] = []
+
+    class AsyncZeroconf:
+        zeroconf = object()
+
+        async def async_close(self) -> None:
+            closed.append(True)
+
+    def browser(*args: object, **kwargs: object) -> None:
+        raise OSError("no multicast here")
+
+    zeroconf = types.ModuleType("zeroconf")
+    zeroconf.ServiceStateChange = types.SimpleNamespace(Removed=object())  # type: ignore[attr-defined]
+    zeroconf_asyncio = types.ModuleType("zeroconf.asyncio")
+    zeroconf_asyncio.AsyncZeroconf = AsyncZeroconf  # type: ignore[attr-defined]
+    zeroconf_asyncio.AsyncServiceBrowser = browser  # type: ignore[attr-defined]
+    zeroconf_asyncio.AsyncServiceInfo = object  # type: ignore[attr-defined]
+    modules = {"zeroconf": zeroconf, "zeroconf.asyncio": zeroconf_asyncio}
+    with (
+        patch.dict("sys.modules", modules),
+        pytest.raises(OSError, match="no multicast"),
+    ):
+        await async_browse(0)
+    assert closed == [True]

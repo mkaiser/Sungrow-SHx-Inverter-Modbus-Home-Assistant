@@ -314,4 +314,7 @@ class WallboxPlausibility(Plausibility):
             if check.name in kept:
                 check.load(kept[check.name])
         out.log = [dict(row) for row in state.get("log") or []][-MAX_LOG:]
+        # The log is of changes: the word it last logged is what the first
+        # poll after a restart is compared with.
+        out._last_21313 = out.log[-1].get("value") if out.log else None
         return out
