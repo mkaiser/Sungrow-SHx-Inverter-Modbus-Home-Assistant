@@ -89,7 +89,7 @@ def _entity_ids(hass: HomeAssistant, entry_id: str) -> list[str]:
     ]
 
 
-# -- the door that is no longer there ------------------------------------------
+# -- one door in ---------------------------------------------------------------
 
 
 async def test_setup_opens_on_the_wiring_not_on_a_question(
@@ -121,11 +121,10 @@ async def test_the_entry_it_makes_has_entities(
 async def test_the_success_dialog_asks_for_a_reading(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """The ask used to live on the diagnostics path's own last screen.
+    """The one screen every new owner lands on asks for a reading.
 
-    That path is gone, and with it the only place a new owner was ever told
-    that this project measures rather than looks up. So it moved here, where
-    everybody now lands, rather than being dropped with the dialog it was on.
+    It is where a new owner is told that this project measures rather than
+    looks up.
     """
     result = await _set_up(hass, sungrow_unit)
 

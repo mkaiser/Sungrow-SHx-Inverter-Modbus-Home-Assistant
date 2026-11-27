@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import itertools
 import math
 from typing import Any
 
@@ -27,25 +28,9 @@ import pytest
 from sungrow_modbus.wallbox import capability_test as wct
 from sungrow_modbus.wallbox.discovery import MODEL_NAME
 
-from .conftest import encode_string
+from .conftest import FakeClock, encode_string
 
 STALE_JUNK = 4242
-
-
-class FakeClock:
-    """Time that only passes when somebody sleeps, so a run takes no time."""
-
-    def __init__(self) -> None:
-        """Start at zero."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the pretend time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Pass time without waiting."""
-        self.now += seconds
 
 
 class FakeWallbox:
@@ -1024,16 +1009,39 @@ async def test_a_restore_after_a_dead_run_stops_before_it_moves_the_phase() -> N
 async def test_the_fallback_waits_in_silence_and_reports_what_the_car_is_given() -> (
     None
 ):
-    box = FakeWallbox(setting=160)
-    clock_times: list[float] = []
+    """Nothing reaches the wallbox for `SILENCE_SECONDS`, so its fallback applies."""
+    clock = FakeClock()
+    traffic: list[float] = []
 
-    class Timing(FakeWallbox):
+    class Timed(FakeWallbox):
         async def read(self, space: str, address: int, count: int) -> list[int]:
-            clock_times.append(0.0)
+            traffic.append(clock.now)
             return await super().read(space, address, count)
 
-    outcome, _ = await _run(box, fallback=True, max_amps=10.0, cap_explicit=True)
+        async def read_fresh(self, space: str, address: int, count: int) -> list[int]:
+            traffic.append(clock.now)
+            return await super().read_fresh(space, address, count)
 
+        async def write(self, address: int, word: int) -> None:
+            traffic.append(clock.now)
+            await super().write(address, word)
+
+    async def kept(_snapshot: dict[str, Any]) -> None:
+        return None
+
+    box = Timed(setting=160)
+    run = wct.WallboxCapabilityTest(
+        box,
+        wct.Options(
+            leave=True, standalone=True, fallback=True, max_amps=10.0, cap_explicit=True
+        ),
+        clock=clock,
+        on_snapshot=kept,
+    )
+    outcome = await run.async_run()
+
+    gaps = [later - earlier for earlier, later in itertools.pairwise(traffic)]
+    assert max(gaps) >= wct.SILENCE_SECONDS
     step = next(s for s in outcome.steps if s.name == "fallback")
     assert step.verdict == wct.CONFIRMED
     assert outcome.conditions["fallback"]["silence_s"] == wct.SILENCE_SECONDS

@@ -64,9 +64,9 @@ async def test_a_diagnosis_dumps_when_the_option_was_never_saved(
 ) -> None:
     """The default is what the options form shows: on.
 
-    An entry whose options were never opened used to run without the dump
-    while the form showed the box ticked, so a contributor who checked it and
-    pressed the button got less than they were shown.
+    An entry whose options were never opened runs with the dump, as the form
+    shows the box ticked; otherwise a contributor who checked it and pressed
+    the button would get less than they were shown.
     """
     entry = await _setup(hass, sungrow_unit)
 

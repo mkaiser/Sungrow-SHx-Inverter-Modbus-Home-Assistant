@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import sys
 
-from modbus_connection import ModbusError
+from modbus_connection import IllegalDataAddressError
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
@@ -103,12 +103,12 @@ def test_a_component_that_never_answers_is_reported_not_hidden() -> None:
     async def run() -> dict:
         unit = _seeded_unit()
         # A component that is not fitted refuses. The library's own
-        # `ModbusError` and not a stand-in, because it derives from plain
+        # exception type and not a stand-in, because it derives from plain
         # `Exception` -- a handler written for `OSError` lets it escape.
         for address in range(13199, 13215):
             unit.fail_read(
                 address,
-                ModbusError("illegal data address"),
+                IllegalDataAddressError(2),
                 register_type="input",
             )
         return await _async_decoded_readings(unit, 1)
@@ -289,11 +289,11 @@ def test_a_cell_block_a_dongle_refuses_leaves_the_pack_summary_intact() -> None:
 
         async def read_input_registers(self, address, count):
             if address >= 10756:
-                raise ModbusError("Modbus Exception 0x02 for function code 0x04")
+                raise IllegalDataAddressError(2)
             return await self._inner.read_input_registers(address, count)
 
         async def read_holding_registers(self, address, count):
-            raise ModbusError("Modbus Exception 0x02 for function code 0x04")
+            raise IllegalDataAddressError(2)
 
     class _Connection:
         def for_unit(self, unit_id):

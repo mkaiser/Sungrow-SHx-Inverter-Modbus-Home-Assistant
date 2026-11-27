@@ -16,7 +16,7 @@ import pytest
 
 from sungrow_modbus.hybrid_inverter import ev_charger as ev
 
-from .test_wallbox_capability_test import FakeClock
+from .conftest import FakeClock
 from .test_wallbox_managed_test import FakeHouse, WallboxSide
 
 SCRIPT = (

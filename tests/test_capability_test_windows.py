@@ -28,6 +28,8 @@ from sungrow_modbus.capability_test.procedure import (
     window_away,
 )
 
+from .conftest import FakeClock
+
 #: Protocol addresses, one below the registers.
 CLOCK = 4999  # holding 5000-5005
 BATTERY_POWER = 5213  # input 5214-5215, int32 low word first
@@ -38,22 +40,6 @@ CHARGE_BLOCK = range(33207, 33219)  # holding 33208-33219
 WEEKDAY = range(33150, 33158)  # holding 33151-33158
 WEEKEND_ENABLE = 33178  # holding 33179
 WEEKEND = range(33179, 33187)  # holding 33180-33187
-
-
-class FakeClock:
-    """A clock that agrees to anything, so a budget costs no time."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the current fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting."""
-        self.now += seconds
 
 
 def _battery(unit: MockModbusUnit, watts: int) -> None:

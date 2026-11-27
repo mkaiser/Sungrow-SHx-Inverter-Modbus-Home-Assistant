@@ -58,14 +58,10 @@ import probe
 from sungrow_modbus import block_test, raw_client
 from sungrow_modbus.addresses import device_components
 from sungrow_modbus.block_test import (
-    DROPPED,  # noqa: F401
-    INCONSISTENT,  # noqa: F401
     NARROW_BUDGET,
     OK,
     PADDED,
-    REFUSED,  # noqa: F401
     REJECTED,
-    TIMED_OUT,  # noqa: F401
     UNNARROWED,
     WRONG_LENGTH,
     Block,

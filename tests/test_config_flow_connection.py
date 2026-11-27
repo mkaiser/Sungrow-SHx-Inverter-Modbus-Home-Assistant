@@ -10,7 +10,6 @@ a *different* inverter.
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -31,19 +30,15 @@ from homeassistant.data_entry_flow import FlowResultType
 
 from .test_config_flow_topology import SERIAL_A, SERIAL_B, _house
 
-DONGLE = "192.168.176.28"
-CABLE = "192.168.176.34"
-OTHER = "192.168.176.32"
+DONGLE = "192.168.60.20"
+CABLE = "192.168.60.26"
+OTHER = "192.168.60.24"
 
 #: Serial A at both of its addresses, serial B at a third.
 TOPOLOGY = {DONGLE: {1: SERIAL_A}, CABLE: {1: SERIAL_A}, OTHER: {1: SERIAL_B}}
 
 
-@pytest.fixture(autouse=True)
-def _no_network_on_reload():
-    """Keep a reloaded entry off the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
+pytestmark = pytest.mark.usefixtures("no_setup")
 
 
 def _entry(hass: HomeAssistant) -> MockConfigEntry:
@@ -113,7 +108,7 @@ async def test_reconfigure_to_nothing_keeps_the_form_and_the_entry(
     result = await entry.start_reconfigure_flow(hass)
     with _house(TOPOLOGY):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], _address("192.168.176.99")
+            result["flow_id"], _address("192.168.60.99")
         )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
@@ -149,7 +144,7 @@ async def _add_by_address(hass: HomeAssistant, host: str) -> dict:
 async def test_adding_a_configured_inverter_elsewhere_offers_to_move_it(
     hass: HomeAssistant,
 ) -> None:
-    """It used to abort `already_configured`, leaving remove-and-re-add."""
+    """Not an `already_configured` abort, which would leave remove-and-re-add."""
     entry = _entry(hass)
     result = await _add_by_address(hass, CABLE)
     assert result["step_id"] == "move", result

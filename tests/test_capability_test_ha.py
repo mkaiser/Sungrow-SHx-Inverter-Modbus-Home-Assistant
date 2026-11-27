@@ -61,7 +61,7 @@ from homeassistant.helpers import (
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 
-from .conftest import SERIAL
+from .conftest import SERIAL, InstantClock
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -73,23 +73,6 @@ MODE = "select.sh10rt_diagnosis_mode"
 START = "button.sh10rt_diagnosis_start"
 STOP = "button.sh10rt_diagnosis_stop"
 STEP = "sensor.sh10rt_diagnosis_current_step"
-
-
-class InstantClock:
-    """A clock whose every wait passes at once, still yielding to the loop."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting, and let Home Assistant run meanwhile."""
-        self.now += seconds
-        await asyncio.sleep(0)
 
 
 @pytest.fixture(autouse=True)
@@ -108,16 +91,6 @@ def no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
     from sungrow_modbus.capability_test import base
 
     monkeypatch.setattr(base, "RealClock", InstantClock)
-
-
-@pytest.fixture
-def ready_unit(sungrow_unit: MockModbusUnit) -> MockModbusUnit:
-    """Return an inverter that is running, generating, and states its limits."""
-    sungrow_unit.input[12999] = 0x0000  # running -- and note that zero means running
-    sungrow_unit.input[5621] = 0
-    sungrow_unit.input[5622] = 1000
-    sungrow_unit.input[5627] = 50
-    return sungrow_unit
 
 
 #: The capability test's permissions, each switched off.
@@ -728,10 +701,10 @@ async def test_the_summary_says_how_long_an_extended_run_is_running(
 
     A read-only run is not a test run: the summary does not time it.
 
-    The summary now carries the readings' checks from setup rather than "no
-    runs kept", because observing no longer waits on auto repeat: there is
-    something being collected from the first minute, and saying so is the
-    point of the change. Only the timing is asserted here.
+    The summary carries the readings' checks from setup rather than "no runs
+    kept", because observing does not wait on auto repeat: something is
+    being collected from the first minute, and the summary says so. Only the
+    timing is asserted here.
     """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
@@ -827,12 +800,12 @@ async def test_the_readings_are_observed_whether_or_not_auto_repeat_is_on(
 ) -> None:
     """Observing writes nothing, so it is not auto repeat's leave to give.
 
-    It used to be fed only from auto repeat's tick. A house whose owner never
-    switched auto repeat on therefore never accumulated a single observation,
-    though the checks write nothing and need only readings the coordinator
-    already has -- and parking auto repeat for another test silently lost
-    whatever the house did meanwhile. Measured on 2026-11-17, where a 4.5 kW
-    forced charge, an expensive condition to arrange, produced none at all.
+    Fed only from auto repeat's tick, a house whose owner never switched auto
+    repeat on would never accumulate a single observation, though the checks
+    write nothing and need only readings the coordinator already has -- and
+    parking auto repeat for another test would silently lose whatever the
+    house did meanwhile. Measured on 2026-11-17, where a 4.5 kW forced
+    charge, an expensive condition to arrange, produced none at all.
     """
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis

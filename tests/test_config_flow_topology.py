@@ -1,6 +1,6 @@
 """What the flow can work out about a house, and what it must not guess.
 
-A user cannot answer *"which inverter is at 192.168.176.29?"*. They have never
+A user cannot answer *"which inverter is at 192.168.60.21?"*. They have never
 thought about it, the addresses came from DHCP, and on a roof the two units
 look the same. So the flow determines the shape itself -- and every rule here
 was measured at a house with two inverters and four endpoints between them, on
@@ -15,9 +15,8 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from modbus_connection import IllegalDataAddressError, ModbusError
+from modbus_connection import IllegalDataAddressError, ModbusTimeoutError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
-import pytest
 
 from custom_components.sungrow_modbus.const import (
     CONF_NETWORK,
@@ -33,14 +32,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
 
 # No port: the search form stopped asking. `SCAN_PORTS` is swept instead.
-SEARCH_INPUT = {CONF_NETWORK: "192.168.176.0/24"}
-
-
-@pytest.fixture
-def no_setup():
-    """Stop the created entry from reaching for the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
+SEARCH_INPUT = {CONF_NETWORK: "192.168.60.0/24"}
 
 
 #: The house this is all measured from. Two inverters, four endpoints: serial
@@ -51,10 +43,10 @@ def no_setup():
 SERIAL_A = "A123456789"
 SERIAL_B = "A987654321"
 TOPOLOGY: dict[str, dict[int, str]] = {
-    "192.168.176.34": {1: SERIAL_A},  # A, its own LAN port
-    "192.168.176.28": {1: SERIAL_A},  # A, through its WiNet-S
-    "192.168.176.29": {2: SERIAL_B},  # B, its own LAN port -- unit 1 is silent
-    "192.168.176.32": {1: SERIAL_B},  # B, through its WiNet-S
+    "192.168.60.26": {1: SERIAL_A},  # A, its own LAN port
+    "192.168.60.20": {1: SERIAL_A},  # A, through its WiNet-S
+    "192.168.60.21": {2: SERIAL_B},  # B, its own LAN port -- unit 1 is silent
+    "192.168.60.24": {1: SERIAL_B},  # B, through its WiNet-S
 }
 
 
@@ -91,7 +83,7 @@ def _house(topology: dict[str, dict[int, str]]):
         serial = topology.get(params.host, {}).get(unit_id)
         if serial is None:
             # Silent, which is what unit 1 does at a slave's own LAN port.
-            raise ModbusError("no answer")
+            raise ModbusTimeoutError("no answer")
         return _Unit(_unit_for(serial))
 
     return patch(
@@ -149,12 +141,12 @@ async def test_a_slave_on_its_own_lan_port_is_found_at_all(
     options = await _pick_options(hass, TOPOLOGY)
     labels = {option["value"]: option["label"] for option in options}
 
-    assert "192.168.176.29" in labels, "the slave's own LAN port was not found"
-    assert SERIAL_B in labels["192.168.176.29"]
+    assert "192.168.60.21" in labels, "the slave's own LAN port was not found"
+    assert SERIAL_B in labels["192.168.60.21"]
     # And it says why the address is not the usual one, because a reader
     # seeing unit 2 needs to know that is the inverter and not a mistake.
-    assert "device address 2" in labels["192.168.176.29"]
-    assert "cluster" in labels["192.168.176.29"]
+    assert "device address 2" in labels["192.168.60.21"]
+    assert "cluster" in labels["192.168.60.21"]
 
 
 async def test_two_addresses_with_one_serial_are_said_to_be_one_inverter(
@@ -171,11 +163,11 @@ async def test_two_addresses_with_one_serial_are_said_to_be_one_inverter(
     options = await _pick_options(hass, TOPOLOGY)
     labels = {option["value"]: option["label"] for option in options}
 
-    assert "192.168.176.28" in labels["192.168.176.34"]
-    assert "192.168.176.34" in labels["192.168.176.28"]
-    assert "same inverter" in labels["192.168.176.34"]
+    assert "192.168.60.20" in labels["192.168.60.26"]
+    assert "192.168.60.26" in labels["192.168.60.20"]
+    assert "same inverter" in labels["192.168.60.26"]
     # Both are still offered: a house may only have the dongle path.
-    assert {"192.168.176.34", "192.168.176.28"} <= set(labels)
+    assert {"192.168.60.26", "192.168.60.20"} <= set(labels)
 
 
 async def test_a_direct_path_is_offered_before_a_dongle(
@@ -195,7 +187,7 @@ async def test_a_direct_path_is_offered_before_a_dongle(
     # The escape hatch is last; every real address comes before it.
     assert values[-1].startswith("__"), values
     # Unit 1 addresses first, in address order, then anything else.
-    assert values[0] == "192.168.176.28"
+    assert values[0] == "192.168.60.20"
 
 
 async def test_a_dongle_only_house_gets_no_role_guessed_for_it(
@@ -215,8 +207,8 @@ async def test_a_dongle_only_house_gets_no_role_guessed_for_it(
     not turn that into "standalone".
     """
     dongles = {
-        "192.168.176.28": {1: SERIAL_A},
-        "192.168.176.32": {1: SERIAL_B},
+        "192.168.60.20": {1: SERIAL_A},
+        "192.168.60.24": {1: SERIAL_B},
     }
     result = await _pick_with_routes(hass, dongles, direct=set())
     labels = _labels(result)
@@ -250,8 +242,8 @@ async def test_a_cabled_cluster_names_both_roles_and_says_how_each_is_known(
     options = await _pick_options(hass, TOPOLOGY)
     labels = {option["value"]: option["label"] for option in options}
 
-    assert "cluster slave, measured: device address 2" in labels["192.168.176.29"]
-    for host in ("192.168.176.34", "192.168.176.28"):
+    assert "cluster slave, measured: device address 2" in labels["192.168.60.21"]
+    for host in ("192.168.60.26", "192.168.60.20"):
         assert "cluster master, inferred" in labels[host], host
 
 
@@ -265,20 +257,20 @@ async def test_through_dongles_the_battery_suggests_the_roles(
     what it is, so neither label states a role.
     """
     dongles = {
-        "192.168.176.28": {1: SERIAL_A},
-        "192.168.176.32": {1: SERIAL_B},
+        "192.168.60.20": {1: SERIAL_A},
+        "192.168.60.24": {1: SERIAL_B},
     }
     result = await _pick_with_routes(
         hass, dongles, direct=set(), capacity={SERIAL_A: 960, SERIAL_B: 0}
     )
     labels = _labels(result)
 
-    assert "probably the cluster master, inferred" in labels["192.168.176.28"]
-    assert "probably a cluster slave, inferred" in labels["192.168.176.32"]
+    assert "probably the cluster master, inferred" in labels["192.168.60.20"]
+    assert "probably a cluster slave, inferred" in labels["192.168.60.24"]
 
     # And the name offered for the slave says so, for the owner to correct.
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_HOST: "192.168.176.32"}
+        result["flow_id"], {CONF_HOST: "192.168.60.24"}
     )
     assert result["step_id"] == "name"
     assert result["description_placeholders"]["suggestion"] == "SH10RT slave"
@@ -315,7 +307,7 @@ async def test_a_device_that_answers_without_naming_itself_stops_the_sweep(
     with (
         patch(
             "custom_components.sungrow_modbus.config_flow.async_sweep",
-            return_value=["192.168.176.40"],
+            return_value=["192.168.60.40"],
         ),
         patch(
             "custom_components.sungrow_modbus.config_flow.async_hostname",
@@ -392,10 +384,10 @@ async def test_one_inverter_is_never_asked_what_to_call_it(
     must not be asked to tell them apart.
     """
     one_machine = {
-        "192.168.176.34": {1: SERIAL_A},
-        "192.168.176.28": {1: SERIAL_A},
+        "192.168.60.26": {1: SERIAL_A},
+        "192.168.60.20": {1: SERIAL_A},
     }
-    result = await _to_name_step(hass, one_machine, "192.168.176.34")
+    result = await _to_name_step(hass, one_machine, "192.168.60.26")
 
     # Straight past it. There is no YAML package in this instance either, so
     # the entry is created without a single further question -- which is the
@@ -418,7 +410,7 @@ async def test_two_inverters_are_asked_and_the_suggestion_says_the_role(
     connection made it readable -- and the dialog shows the entity id it
     would produce, because that is the part which outlives the label.
     """
-    result = await _to_name_step(hass, TOPOLOGY, "192.168.176.29")
+    result = await _to_name_step(hass, TOPOLOGY, "192.168.60.21")
 
     assert result["step_id"] == "name"
     placeholders = result["description_placeholders"]
@@ -439,7 +431,7 @@ async def test_the_name_becomes_the_entry_title_and_the_device_name(
     `test_entity_naming.py` -- which is fine for one install and a support
     problem across two.
     """
-    result = await _to_name_step(hass, TOPOLOGY, "192.168.176.29")
+    result = await _to_name_step(hass, TOPOLOGY, "192.168.60.21")
     assert result["step_id"] == "name"
 
     result = await hass.config_entries.flow.async_configure(
@@ -462,7 +454,7 @@ async def test_an_untouched_suggestion_still_names_the_device(
     fall back to the model and the `_2` this step exists to prevent would
     come back.
     """
-    result = await _to_name_step(hass, TOPOLOGY, "192.168.176.29")
+    result = await _to_name_step(hass, TOPOLOGY, "192.168.60.21")
     suggestion = result["description_placeholders"]["suggestion"]
 
     result = await hass.config_entries.flow.async_configure(
@@ -483,10 +475,10 @@ async def test_a_dongle_only_pair_is_asked_but_offered_no_role(
     -- more than ever, since nothing else distinguishes them.
     """
     dongles = {
-        "192.168.176.28": {1: SERIAL_A},
-        "192.168.176.32": {1: SERIAL_B},
+        "192.168.60.20": {1: SERIAL_A},
+        "192.168.60.24": {1: SERIAL_B},
     }
-    result = await _to_name_step(hass, dongles, "192.168.176.32")
+    result = await _to_name_step(hass, dongles, "192.168.60.24")
 
     assert result["step_id"] == "name"
     assert result["description_placeholders"]["count"] == "2"
@@ -502,9 +494,9 @@ def _house_with_routes(topology, direct: set[str], capacity: dict | None = None)
 
     The refusal is an `IllegalDataAddressError`, and the type is the whole
     signal: a dongle **answers**, with exception 0x02. A bare `ModbusError`
-    stood for this until 2026-09-20, which made this fixture unable to tell a
-    refusal from a link that dropped the question -- the same conflation that
-    told a house with no communication module fitted that it had a dongle.
+    here could not tell a refusal from a link that dropped the question --
+    the conflation that told a house with no communication module fitted
+    that it had a dongle.
     """
 
     class _Unit:
@@ -532,7 +524,7 @@ def _house_with_routes(topology, direct: set[str], capacity: dict | None = None)
     def temporary_unit(hass, params, unit_id):
         serial = topology.get(params.host, {}).get(unit_id)
         if serial is None:
-            raise ModbusError("no answer")
+            raise ModbusTimeoutError("no answer")
         unit = _unit_for(serial)
         if capacity is not None:
             # Input 5639, battery capacity: the master's pack, the slave's 0.
@@ -586,23 +578,23 @@ async def test_each_address_says_how_it_reaches_the_inverter(
     Picking the dongle when a cable is available costs real entities.
     """
     topology = {
-        "192.168.176.34": {1: SERIAL_A},  # its own LAN port
-        "192.168.176.28": {1: SERIAL_A},  # its WiNet-S
+        "192.168.60.26": {1: SERIAL_A},  # its own LAN port
+        "192.168.60.20": {1: SERIAL_A},  # its WiNet-S
     }
-    result = await _pick_with_routes(hass, topology, direct={"192.168.176.34"})
+    result = await _pick_with_routes(hass, topology, direct={"192.168.60.26"})
     labels = {
         option["value"]: option["label"]
         for option in result["data_schema"].schema[CONF_HOST].config["options"]
     }
 
-    assert "own LAN port" in labels["192.168.176.34"]
-    assert "WiNet-S" in labels["192.168.176.28"]
+    assert "own LAN port" in labels["192.168.60.26"]
+    assert "WiNet-S" in labels["192.168.60.20"]
     # And the direct path is offered first, so the default is the better one.
     values = [
         option["value"]
         for option in result["data_schema"].schema[CONF_HOST].config["options"]
     ]
-    assert values[0] == "192.168.176.34"
+    assert values[0] == "192.168.60.26"
 
 
 async def test_one_dongle_on_two_addresses_says_wifi_cannot_be_told_apart(
@@ -622,8 +614,8 @@ async def test_one_dongle_on_two_addresses_says_wifi_cannot_be_told_apart(
     returned identical documents, every probe and every field.
     """
     topology = {
-        "192.168.178.23": {1: "A123456789"},
-        "192.168.178.41": {1: "A123456789"},
+        "192.168.178.123": {1: "A123456789"},
+        "192.168.178.141": {1: "A123456789"},
     }
     result = await _pick_with_routes(hass, topology, direct=set())
     note = result["description_placeholders"]["note"]
@@ -653,10 +645,10 @@ async def test_no_wifi_note_where_one_path_is_a_cable(hass: HomeAssistant) -> No
     somebody it makes no difference would be wrong.
     """
     topology = {
-        "192.168.176.34": {1: SERIAL_A},
-        "192.168.176.28": {1: SERIAL_A},
+        "192.168.60.26": {1: SERIAL_A},
+        "192.168.60.20": {1: SERIAL_A},
     }
-    result = await _pick_with_routes(hass, topology, direct={"192.168.176.34"})
+    result = await _pick_with_routes(hass, topology, direct={"192.168.60.26"})
     assert result["description_placeholders"]["note"] == ""
 
 
@@ -664,9 +656,9 @@ def test_an_unmeasured_route_is_not_reported_as_a_dongle() -> None:
     """A read that never arrived is not a refusal, and must not read as one.
 
     `_described` decides what the picker says about each address and whether
-    two addresses are called one dongle. Both used to turn on the truthiness
-    of `direct`, so `None` -- the link dropped the question -- was
-    indistinguishable from `False` -- the device answered, refusing.
+    two addresses are called one dongle. Turned on the truthiness of
+    `direct`, either would take `None` -- the link dropped the question --
+    for `False` -- the device answered, refusing.
 
     That conflation is not hypothetical. Measured 2026-09-20 at a house with
     no communication module fitted at all: a run made while Home Assistant was
@@ -677,8 +669,8 @@ def test_an_unmeasured_route_is_not_reported_as_a_dongle() -> None:
     from custom_components.sungrow_modbus.config_flow_schemas import _described
 
     found = {
-        "192.168.176.28": {
-            CONF_HOST: "192.168.176.28",
+        "192.168.60.20": {
+            CONF_HOST: "192.168.60.20",
             "port": 502,
             CONF_UNIT_ID: 1,
             "serial": SERIAL_A,
@@ -686,8 +678,8 @@ def test_an_unmeasured_route_is_not_reported_as_a_dongle() -> None:
             "direct": None,
             "label": "",
         },
-        "192.168.176.34": {
-            CONF_HOST: "192.168.176.34",
+        "192.168.60.26": {
+            CONF_HOST: "192.168.60.26",
             "port": 502,
             CONF_UNIT_ID: 1,
             "serial": SERIAL_A,

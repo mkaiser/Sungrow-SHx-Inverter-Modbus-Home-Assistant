@@ -552,7 +552,7 @@ firmware that did not read leaves the word out rather than writing
 **The identity word is the document's own `serial_anonymized_hashed`**, so
 anybody holding only the published file can check that the name belongs to
 it. The cost is that the filename depends on how the stand-in is written;
-`test_the_filename_now_follows_the_stand_in_deliberately` is what fails if
+`test_the_filename_follows_the_stand_in_deliberately` is what fails if
 that changes. It comes before everything attached, so every document from
 one *machine* shares a prefix and sorts together:
 

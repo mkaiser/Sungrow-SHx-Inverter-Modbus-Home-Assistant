@@ -23,25 +23,11 @@ from sungrow_modbus.capability_test import (
 )
 from sungrow_modbus.capability_test.procedure import Sample
 
+from .conftest import FakeClock
+
 CHARGE_START = 33148  # holding 33149, 10 W
 DISCHARGE_START = 33149  # holding 33150, 10 W
 SOC = 13022
-
-
-class FakeClock:
-    """A clock that agrees to anything, so a budget costs no time."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the current fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting."""
-        self.now += seconds
 
 
 @pytest.fixture

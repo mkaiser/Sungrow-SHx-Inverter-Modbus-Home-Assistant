@@ -17,7 +17,8 @@ import pytest
 
 from sungrow_modbus.wallbox import capability_test as wct
 
-from .test_wallbox_capability_test import FakeClock, FakeWallbox
+from .conftest import FakeClock
+from .test_wallbox_capability_test import FakeWallbox
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
@@ -29,7 +30,7 @@ SCRIPT = (
 sys.path.insert(0, str(SCRIPT.parent))
 
 #: An address that must never reach a file.
-HOST = "192.168.178.23"
+HOST = "192.168.178.123"
 
 
 @pytest.fixture

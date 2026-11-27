@@ -1,16 +1,14 @@
 """The diagnosis lives on the device page, and these are the things that buys.
 
-It used to run inside the options flow behind an indeterminate spinner. Three
-of its problems were structural rather than cosmetic, and each has a test
-here: a modal cannot be left while it works, a spinner cannot say how far
-along a quarter-hour read is, and a config flow has nowhere to put a download
-button.
+An options flow is the wrong home for it, for three structural reasons, and
+each has a test here: a modal cannot be left while it works, a spinner cannot
+say how far along a quarter-hour read is, and a config flow has nowhere to put
+a download button.
 
-The fourth is the one that reshaped the integration. A device reaches the
-registry only when an entity carrying its `device_info` is added -- so a
-diagnostics-only entry, which deliberately had no entities at all, had no
-device page to put any of this on. It has eight entities now, and nothing
-else: that set is what these tests pin.
+The fourth shapes the integration. A device reaches the registry only when an
+entity carrying its `device_info` is added -- so an entry with no entities has
+no device page to put any of this on. A diagnostics entry has eight entities,
+and nothing else: that set is what these tests pin.
 """
 
 from __future__ import annotations
@@ -21,6 +19,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
@@ -174,7 +173,7 @@ async def test_the_entities_give_the_entry_a_device_page(
 async def test_an_ordinary_entry_gets_them_too(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """They used to be a diagnostics entry's alone, and that was the bug.
+    """They are on every inverter entry, not a diagnostics entry's alone.
 
     An owner who installed this for solar readings is also the owner of a
     model whose register support this project can only measure. Leaving the
@@ -398,7 +397,7 @@ async def test_a_failed_diagnosis_is_reported_rather_than_swallowed(
 
     with patch(
         "custom_components.sungrow_modbus.diagnosis_document.async_build",
-        side_effect=RuntimeError("Response timeout after 10.0 seconds"),
+        side_effect=ModbusTimeoutError("Response timeout after 10.0 seconds"),
     ):
         entry.runtime_data.diagnosis.async_start()
         await hass.async_block_till_done()
@@ -415,7 +414,7 @@ async def test_the_finished_diagnosis_offers_the_document(
     """A notification, because a sensor's attributes are not clickable.
 
     This is the one moment the integration has something to hand somebody,
-    and the dialog it used to happen in was gone the moment it was dismissed.
+    and a dialog is gone the moment it is dismissed.
     """
     entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
 
@@ -578,9 +577,8 @@ async def test_setup_points_at_the_questions_it_no_longer_asks(
 
     A contributor pressed the button, got a document in under ten seconds
     with nothing in it, and asked, reasonably, why they had not been asked.
-    The diagnostics path answered that by putting the questions in the
-    wizard; that path is gone, and what answers it now is the last screen of
-    the one wizard there is, which names the section that holds them.
+    What answers it is the last screen of the one wizard there is, which
+    names the section that holds them.
 
     So: the options page asks them, and the success dialog says where.
     """

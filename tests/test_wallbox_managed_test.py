@@ -26,8 +26,7 @@ from sungrow_modbus.hybrid_inverter import ev_charger as ev
 from sungrow_modbus.wallbox import capability_test as wct, managed_test as mt
 from sungrow_modbus.wallbox.discovery import MODEL_NAME
 
-from .conftest import encode_string
-from .test_wallbox_capability_test import FakeClock
+from .conftest import FakeClock, encode_string
 
 
 class FakeHouse:

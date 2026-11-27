@@ -233,9 +233,7 @@ async def test_the_last_screen_says_where_the_file_will_be(
     The diagnosis is a button somebody has to find, and its document arrives
     in a notification they have no reason to be watching. Both were reported
     by a contributor who ran the diagnosis and then asked where the file had
-    gone. This used to be answered on the diagnostics path's own success
-    dialog; that path is gone, so it is on the only one left, which everybody
-    now sees.
+    gone. So the one success dialog, which everybody sees, answers it.
     """
     strings = json.loads((Path(component.__file__).parent / "strings.json").read_text())
     said = strings["config"]["create_entry"]["default"]

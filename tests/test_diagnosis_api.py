@@ -632,7 +632,7 @@ async def test_a_bug_in_a_step_is_not_mistaken_for_the_link() -> None:
 async def test_salvage_waits_on_a_quiet_field_once_and_tells_the_next_narrowing() -> (
     None
 ):
-    """Three sweeps used to ask a quiet firmware string three times, 10 s each."""
+    """Three sweeps ask a quiet firmware string once, not three times at 10 s each."""
     from modbus_connection.model import Component, integer, string
 
     from sungrow_modbus.diagnosis import async_read_field_by_field

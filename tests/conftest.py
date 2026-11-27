@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Generator
 from typing import Any
+from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
@@ -91,6 +93,38 @@ SH10RT_HOLDING_REGISTERS: dict[int, int | list[int]] = {
 }
 
 
+class FakeClock:
+    """A clock that agrees to anything, so a ten-minute budget costs no time.
+
+    The capability tests' `clock`: time passes only when somebody sleeps.
+    """
+
+    def __init__(self) -> None:
+        """Start at an arbitrary origin."""
+        self.now = 0.0
+
+    def monotonic(self) -> float:
+        """Return the current fake time."""
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        """Advance instead of waiting."""
+        self.now += seconds
+
+
+class InstantClock(FakeClock):
+    """A `FakeClock` that still yields to the loop, for runs inside Home Assistant.
+
+    Patched in as a driver's `RealClock`, so the integration builds its
+    runner as it does in a house and every wait passes at once.
+    """
+
+    async def sleep(self, seconds: float) -> None:
+        """Advance instead of waiting, and let Home Assistant run meanwhile."""
+        self.now += seconds
+        await asyncio.sleep(0)
+
+
 #: Protocol address of the export power limit (register 13074).
 EXPORT_LIMIT_ADDRESS = 13073
 
@@ -124,6 +158,27 @@ def sungrow_unit() -> MockModbusUnit:
 
     unit.on_write(decuple_the_export_limit)
     return unit
+
+
+@pytest.fixture
+def no_setup() -> Generator[None]:
+    """Stop a created or reloaded entry from reaching for the network."""
+    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
+        yield
+
+
+@pytest.fixture
+def ready_unit(sungrow_unit: MockModbusUnit) -> MockModbusUnit:
+    """Return an inverter that is running, generating, and states its limits.
+
+    What a capability test needs before it writes; `tests/
+    test_capability_test_repairs.py` overrides it with a leftover instead.
+    """
+    sungrow_unit.input[12999] = 0x0000  # running -- and note that zero means running
+    sungrow_unit.input[5621] = 0
+    sungrow_unit.input[5622] = 1000
+    sungrow_unit.input[5627] = 50
+    return sungrow_unit
 
 
 @pytest.fixture(autouse=True)

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -36,7 +36,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from sungrow_modbus.wallbox import capability_test as wct
 
-from .test_capability_test_ha import InstantClock
+from .conftest import InstantClock
 from .test_config_flow_search import _finish_sweep
 from .test_wallbox_entities import WORDS, _wallbox_unit
 
@@ -80,7 +80,7 @@ async def _scan(hass: HomeAssistant, wallbox_hosts: list[str]) -> dict:
 
     def temporary(hass, params, unit_id):
         if params.port != WALLBOX_TLS_PORT:
-            raise ModbusError("not here")
+            raise ModbusConnectionError("not here")
         return _Unit(_wallbox())
 
     with (
@@ -157,7 +157,7 @@ async def test_an_address_that_is_not_a_wallbox_is_not_offered(
     """Port 516 open is not a wallbox: only a name over TLS makes one."""
 
     def temporary(hass, params, unit_id):
-        raise ModbusError("a TLS service that is not a wallbox")
+        raise ModbusConnectionError("a TLS service that is not a wallbox")
 
     async def sweep(network: str, *, port: int, **kwargs: object) -> list[str]:
         return [HOST] if port == WALLBOX_TLS_PORT else []

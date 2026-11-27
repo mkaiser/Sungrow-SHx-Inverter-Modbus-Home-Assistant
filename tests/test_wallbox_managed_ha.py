@@ -27,7 +27,7 @@ from homeassistant.core import HomeAssistant
 from sungrow_modbus.hybrid_inverter import ev_charger as ev
 from sungrow_modbus.wallbox import capability_test as wct, managed_test as mt
 
-from .test_capability_test_ha import InstantClock
+from .conftest import InstantClock
 from .test_wallbox_entry import DATA, WALLBOX_SERIAL
 from .test_wallbox_one_device import _inverter_entry, _set_up, _Units
 

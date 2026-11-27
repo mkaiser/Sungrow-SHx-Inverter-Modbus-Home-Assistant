@@ -89,6 +89,8 @@ sys.path.insert(
 
 import writes
 
+from .conftest import FakeClock
+
 #: Protocol address of register 13087, the feed-in limitation switch.
 EXPORT_MODE_ADDRESS = 13086
 
@@ -433,22 +435,6 @@ def test_the_soc_pair_never_crosses(
 
 
 # -- does the detector detect ------------------------------------------------
-
-
-class FakeClock:
-    """A clock that agrees to anything, so a ten-minute budget costs no time."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the current fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting."""
-        self.now += seconds
 
 
 CHARGE_POWER = "battery_max_charge_power"
@@ -876,17 +862,17 @@ async def test_an_out_of_bounds_value_the_device_takes_back_is_tested(
 async def test_the_forced_power_is_the_stated_constant(
     full_unit: MockModbusUnit,
 ) -> None:
-    """What the behavioural checks command is now legible from one place.
+    """What the behavioural checks command is legible from one place.
 
-    It used to be derived from the battery's own ceiling so that ten times the
-    commanded power stayed inside the pack's rating. That property is given up
+    Deriving it from the battery's own ceiling would keep ten times the
+    commanded power inside the pack's rating. That property is given up
     deliberately -- 10 x 1250 W is more than a small pack is rated for, and the
     inverter refuses such a value rather than attempting it -- in exchange for a
     number that can be read here instead of reconstructed from three functions.
 
-    The derivation is what produced a 5800 W forced charge against a 5883 W pack
-    at a real house, because it borrowed `choose_probe`, which escapes the
-    decade window once earlier probes have spent it.
+    A derivation produced a 5800 W forced charge against a 5883 W pack at a
+    real house, because it borrowed `choose_probe`, which escapes the decade
+    window once earlier probes have spent it.
     """
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
@@ -1105,7 +1091,7 @@ async def test_one_register_that_will_not_go_back_does_not_take_the_rest_with_it
     not stop the others going back, and that the run must end in the code that
     means the house is still carrying something.
     """
-    from modbus_connection import ModbusError
+    from modbus_connection import ModbusConnectionError
 
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
@@ -1116,7 +1102,7 @@ async def test_one_register_that_will_not_go_back_does_not_take_the_rest_with_it
     # original value already in place is finished without writing, so a test that
     # only failed the write would pass without exercising anything.
     full_unit.holding[13099] = 7
-    full_unit.fail_write(13099, ModbusError("the link went away"))
+    full_unit.fail_write(13099, ModbusConnectionError("the link went away"))
 
     restores = await run.async_restore()
 
@@ -1133,10 +1119,10 @@ async def test_one_register_that_will_not_go_back_does_not_take_the_rest_with_it
 async def test_the_restore_puts_back_the_word_where_writes_are_not_multiplied() -> None:
     """At fwitten's SH10RT-V112 on 2026-09-25, 13074 stored the word it was handed.
 
-    The restore used to write the *value* back through the write scale, so
-    11880 W went out as 1188, read back 1180, and left the slave capped at
-    1.2 kW. The snapshot already held the word, which is correct whatever the
-    firmware's scale is.
+    A restore that wrote the *value* back through the write scale would send
+    11880 W as 1188, read back 1180, and leave the slave capped at 1.2 kW.
+    The snapshot holds the word, which is correct whatever the firmware's
+    scale is.
     """
     from modbus_connection.mock import MockModbusConnection
 
@@ -2379,10 +2365,10 @@ async def test_a_lost_read_is_undetermined_rather_than_a_dongle(
 ) -> None:
     """A link that drops the question has not answered it.
 
-    The regression this pins: `_detect_transport` used to read 6100 once and
-    treat *any* failure as a dongle. Measured 2026-09-20 on the reference
-    SH10RT -- a cable, no communication module fitted at all --
-    where a run made while Home Assistant was polling produced one document
+    A `_detect_transport` that read 6100 once and took *any* failure for a
+    dongle was measured wrong on 2026-09-20 on the reference SH10RT -- a
+    cable, no communication module fitted at all -- where a run made while
+    Home Assistant was polling produced one document
     whose diagnosis half said "direct to the inverter's LAN port" and whose
     capability test said dongle, and which therefore stamped its own readback
     table "not evidence". That table carried the 13074 result the whole

@@ -41,16 +41,12 @@ def _described(found, local=()):
 
 
 #: Home Assistant's own address, where a proxy add-on listens.
-PROXY = "192.168.176.125"
-CABLE = "192.168.176.34"
-DONGLE = "192.168.176.28"
+PROXY = "192.168.60.125"
+CABLE = "192.168.60.26"
+DONGLE = "192.168.60.20"
 
 
-@pytest.fixture(autouse=True)
-def _no_network_on_reload():
-    """Keep a reloaded entry off the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
+pytestmark = pytest.mark.usefixtures("no_setup")
 
 
 def _adapters(*addresses: str):

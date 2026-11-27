@@ -174,7 +174,7 @@ def test_a_run_writes_beside_the_script_from_any_directory(
 
 #: A document shaped like a real one, with the two values that must never
 #: reach a summary: the address it was read from and the real serial.
-HOST = "192.168.178.114"
+HOST = "192.168.178.214"
 SERIAL = "A123456789"
 DOCUMENT = {
     "schema": SCHEMA,
@@ -184,7 +184,7 @@ DOCUMENT = {
         "modbus_proxy": "no",
         "comment": "",
     },
-    "ip_address_last_two_octets": "178.114",
+    "ip_address_last_two_octets": "178.214",
     "device": {
         "device_type_code": "0x0E0E",
         "output_type": "three phase 3P4L",
@@ -231,7 +231,7 @@ def test_the_summary_carries_the_control_address_but_no_real_serial() -> None:
     assert SERIAL not in text
     assert HOST in text
     # And the redacted forms it should carry instead.
-    assert "178.114" in text
+    assert "178.214" in text
     assert "anon-00267885816" in text
 
 

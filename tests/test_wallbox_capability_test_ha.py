@@ -37,8 +37,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from sungrow_modbus.wallbox import capability_test as wct, ledger
 
-from .conftest import SERIAL
-from .test_capability_test_ha import InstantClock
+from .conftest import SERIAL, InstantClock
 from .test_wallbox_entities import WORDS
 from .test_wallbox_entry import DATA, WALLBOX_SERIAL, _serial_words
 

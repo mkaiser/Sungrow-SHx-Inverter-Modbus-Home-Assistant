@@ -25,7 +25,7 @@ from sungrow_modbus.capability_test.procedure import (
     SKIPPED,
 )
 
-from .test_capability_test import FakeClock
+from .conftest import FakeClock
 
 STANDBY = 0x0008
 RUNNING = 0x0040

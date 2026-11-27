@@ -34,17 +34,20 @@ sys.path.insert(
     ),
 )
 
-from probe import NEVER_PUBLISH, SCRIPT, host_from_tail, transport_verdict
+from probe import SCRIPT, host_from_tail
 
 from sungrow_modbus import diagnosis_document
 from sungrow_modbus.diagnosis_document import (
     COLLECTED_BY_INTEGRATION,
+    NEVER_PUBLISH,
+    WIFI_OR_ETHERNET,
     _battery_word,
     _slug,
     firmware_word,
     label_for,
     last_two_octets,
     publish_document,
+    transport_verdict,
 )
 
 from .corpus import INVERTER_DOCUMENTS
@@ -297,8 +300,8 @@ def test_the_host_octets_are_zero_filled_strings_of_three_digits() -> None:
     # Strings because JSON cannot write a leading zero on a number, and three
     # digits because that is the widest an octet gets -- so every value is the
     # same width and sorts as text in the order an address sorts.
-    assert last_two_octets("192.168.176.34") == "176.034"
-    assert last_two_octets("192.168.176.28") == "176.028"
+    assert last_two_octets("192.168.60.26") == "060.026"
+    assert last_two_octets("192.168.60.20") == "060.020"
     assert last_two_octets("10.0.0.4") == "000.004"
     assert last_two_octets("10.0.0.128") == "000.128"
 
@@ -315,12 +318,12 @@ def test_something_that_is_not_an_ipv4_address_has_no_octets() -> None:
 def test_the_octets_are_only_the_octets() -> None:
     # The document exists not to carry the host. Two octets of a subnet nobody
     # has named is not an address, and the front half must not come with it.
-    assert "192.168" not in (last_two_octets("192.168.176.34") or "")
+    assert "192.168" not in (last_two_octets("192.168.60.26") or "")
 
 
 def test_a_previous_tail_uses_the_local_route_prefix(monkeypatch) -> None:
     monkeypatch.setattr("probe.local_ipv4_for", lambda _host: "192.168.178.20")
-    assert host_from_tail("176.034") == "192.168.176.34"
+    assert host_from_tail("060.026") == "192.168.60.26"
 
 
 @pytest.mark.parametrize("tail", ["178", "178.1.2", "abc.def", "256.1"])
@@ -338,8 +341,8 @@ def test_the_address_tail_is_withheld_unless_its_owner_allowed_it() -> None:
     `xxx.xxx` is a truthful answer where a real value would be a guess about
     what somebody is willing to publish.
     """
-    assert diagnosis_document.address_tail("192.168.178.105", False) == "xxx.xxx"
-    assert diagnosis_document.address_tail("192.168.178.105", True) == "178.105"
+    assert diagnosis_document.address_tail("192.168.178.205", False) == "xxx.xxx"
+    assert diagnosis_document.address_tail("192.168.178.205", True) == "178.205"
     # Permission cannot conjure octets a hostname does not have.
     assert diagnosis_document.address_tail("winet.local", True) == "xxx.xxx"
 
@@ -633,18 +636,14 @@ def test_a_module_named_on_a_direct_reading_is_reported_as_fitted() -> None:
 
 
 def test_no_document_carries_a_round_trip_time() -> None:
-    """Removed on 2026-10-09, because every reading of it misled.
+    """A round-trip time is not evidence of a transport, so none is published.
 
-    Published as `connection.latency_ms`, it timed the path from whoever read
-    the inverter -- a VPN for most documents -- and the same dongle varied more
-    between two nights than a cable and a dongle did within one. First it was
-    "about 2 ms" for a direct link; then ranges per transport, which two
-    WiNet-S2 houses at 6.5 and 9.1 ms broke. Nothing ever acted on it, so it
-    went rather than gaining a third caveat. The sentence that says WiFi and
-    Ethernet cannot be told apart stays, without the figures.
+    It times the path from whoever read the inverter -- a VPN for most
+    documents -- and the same dongle varies more between two nights than a
+    cable and a dongle do within one; two WiNet-S2 houses at 6.5 and 9.1 ms
+    sit inside any range a direct link could be given. The sentence that says
+    WiFi and Ethernet cannot be told apart carries no figures either.
     """
-    from probe import WIFI_OR_ETHERNET
-
     assert "not determinable" in WIFI_OR_ETHERNET
     assert " ms" not in WIFI_OR_ETHERNET
     for path in INVERTER_DOCUMENTS:
@@ -665,8 +664,8 @@ DIAGNOSIS_SCRIPT = "device-diagnosis/scripts/python/sungrow_diagnosis.py"
 STAND_IN = "anon-5155200572"
 
 #: A key anywhere outside `user_inputs` that reads as somebody's claim. The
-#: point of the section is that these names are no longer needed; a new one
-#: appearing means a claim was filed with the measurements.
+#: point of the section is that these names are not needed; one appearing
+#: means a claim was filed with the measurements.
 CLAIM_MARKERS = ("reported_by_hand", "reported_disagrees", "by_hand")
 
 
@@ -1012,13 +1011,13 @@ def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> Non
 
 
 def test_the_stand_in_serial_cannot_be_mistaken_for_a_serial() -> None:
-    """It used to keep the real serial's leading letters, and that was wrong.
+    """A stand-in that kept the real serial's leading letters would read as one.
 
-    `A123456789` became `A5155200572` -- not a serial, and indistinguishable
-    from one. Somebody quoting it into an issue, searching for it, or holding
-    it against a label on a wall gets a plausible wrong answer, and the field
-    being named `serial_anonymized_hashed` stops helping the moment the value
-    is copied out of it. So the value says what it is.
+    `A5155200572` is not a serial, and indistinguishable from one. Somebody
+    quoting it into an issue, searching for it, or holding it against a label
+    on a wall gets a plausible wrong answer, and the field being named
+    `serial_anonymized_hashed` stops helping the moment the value is copied
+    out of it. So the value says what it is.
     """
     from sungrow_modbus.diagnosis_document import stand_in as _stand_in
 
@@ -1030,28 +1029,22 @@ def test_the_stand_in_serial_cannot_be_mistaken_for_a_serial() -> None:
     assert stand_in == _stand_in("A123456789")
     assert stand_in != _stand_in("A987654321")
     # And nothing of the real serial survives in it.
-    assert "2311227462" not in stand_in
+    assert "123456789" not in stand_in
     assert _stand_in("") == ""
 
 
-def test_the_filename_now_follows_the_stand_in_deliberately() -> None:
-    """The property this file used to assert, traded away on purpose.
+def test_the_filename_follows_the_stand_in_deliberately() -> None:
+    """The filename carries the stand-in, so a new stand-in format moves it.
 
-    The old rule hashed the **real** serial, so a filename could not move
-    when the stand-in's format changed -- which mattered, because adding the
-    `anon-` prefix had once renamed nine contributors' files for a reason
-    with nothing to do with their hardware.
-
-    The maintainer chose the other side of that trade, and the reason is
-    better: a document and its name carried two different derivations of one
+    A name hashed from the **real** serial would not move with the stand-in's
+    format, but a document and its name would carry two derivations of one
     serial, only one of which a reader holding the published file could
-    recompute. On the first machine to have both they shared four characters
-    by chance -- `anon-00267885816` against `aa2678` -- and were read as one
-    value gone wrong.
+    recompute. On one machine they shared four characters by chance --
+    `anon-00267885816` against `aa2678` -- and read as one value gone wrong.
 
-    So the exposure is back and is stated rather than forgotten: **change
-    how the stand-in is written and every filename moves.** Schema 10 settled
-    that format; this test is what will fail if it is unsettled.
+    So the cost is stated rather than forgotten: **change how the stand-in
+    is written and every filename moves.** Schema 10 settled that format;
+    this test is what will fail if it is unsettled.
     """
     probed, raw = _sbr_probed()
     raw = {**raw, "serial": "A123456789"}
@@ -1095,14 +1088,13 @@ def test_the_recorded_command_names_the_path_that_works_where_it_ran(
 def test_a_published_filename_can_be_checked_against_its_own_document(path) -> None:
     """The file must account for the name it is filed under.
 
-    This test exists because a reader could not do it. The name used to carry
-    `sha256(real serial)[:6]`, which a published document cannot derive -- it
-    has no real serial, by design -- so the only way to tell whether a
-    document and its filename belonged together was to trust them. Worse, the
-    stand-in serial in the file and the hash in the name were two derivations
-    of one serial, and on the first machine to have both they shared four
-    characters by pure chance: `anon-00267885816` and `aa2678`. That reads as
-    one value corrupted rather than two values unrelated.
+    A name carrying `sha256(real serial)[:6]` cannot be derived from a
+    published document -- it has no real serial, by design -- so the only way
+    to tell whether a document and its filename belong together would be to
+    trust them. Worse, the stand-in serial in the file and the hash in the
+    name would be two derivations of one serial, and on one machine they
+    shared four characters by pure chance: `anon-00267885816` and `aa2678`.
+    That reads as one value corrupted rather than two values unrelated.
 
     So the name carries the stand-in itself, and the firmware it claims must
     be the firmware the document recorded.
@@ -1190,7 +1182,7 @@ def test_the_filename_carries_the_stand_in_and_not_the_real_serial() -> None:
     raw["serial"] = "A123456789"
     label = _derive_label(probed, DIRECT, "anon-00267885816", raw)
     assert "anon-00267885816" in label
-    assert "A123456789" not in label and "2311227462" not in label
+    assert "123456789" not in label
 
 
 def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
@@ -1258,27 +1250,27 @@ def test_a_second_device_never_overwrites_the_first(tmp_path) -> None:
         }
         return raw, probed
 
-    first = _save(tmp_path, "one-machine", *reading("192.168.178.41"))
-    second = _save(tmp_path, "one-machine", *reading("192.168.178.23"))
+    first = _save(tmp_path, "one-machine", *reading("192.168.178.141"))
+    second = _save(tmp_path, "one-machine", *reading("192.168.178.123"))
 
     assert first[0].name == "one-machine.json"
     assert second[0].name != first[0].name, "the second reading overwrote the first"
     assert first[0].exists() and second[0].exists()
     # And the name says which address it came from, since that is the only
     # thing distinguishing them.
-    assert "178-023" in second[0].name
+    assert "178-123" in second[0].name
 
     import json
 
-    assert json.loads(first[0].read_text())["ip_address_last_two_octets"] == "178.041"
-    assert json.loads(second[0].read_text())["ip_address_last_two_octets"] == "178.023"
+    assert json.loads(first[0].read_text())["ip_address_last_two_octets"] == "178.141"
+    assert json.loads(second[0].read_text())["ip_address_last_two_octets"] == "178.123"
 
 
 def test_re_reading_the_same_device_does_overwrite(tmp_path) -> None:
     """One machine, one path, read twice: the newer reading replaces it.
 
     The guard is about *different* devices colliding. A re-read of the same
-    address is a correction, and accumulating `-178-041` copies of it would
+    address is a correction, and accumulating `-178-141` copies of it would
     turn a directory into a pile.
     """
     from probe import _save
@@ -1288,7 +1280,7 @@ def test_re_reading_the_same_device_does_overwrite(tmp_path) -> None:
         raw = {
             **raw,
             "serial": "A123456789",
-            "host": "192.168.178.41",
+            "host": "192.168.178.141",
             "address_detail": "two_octets",
             "read_at": "2026-09-08T18:00:00+00:00",
             "firmware": {"inverter": "SAPPHIRE-H_B001.V000.P022"},
@@ -1314,7 +1306,7 @@ def test_a_reading_writes_one_document_and_no_private_copy(tmp_path) -> None:
     raw = {
         **raw,
         "serial": "A123456789",
-        "host": "192.168.178.41",
+        "host": "192.168.178.141",
         "read_at": "2026-09-08T18:00:00+00:00",
     }
     written = _save(tmp_path, "one-machine", raw, probed)
@@ -1323,7 +1315,7 @@ def test_a_reading_writes_one_document_and_no_private_copy(tmp_path) -> None:
     assert sorted(path.name for path in tmp_path.rglob("*")) == ["one-machine.json"]
     text = written[0].read_text()
     assert "A123456789" not in text
-    assert "192.168.178.41" not in text
+    assert "192.168.178.141" not in text
 
 
 def test_a_withheld_address_never_overwrites_a_reading(tmp_path) -> None:
@@ -1336,7 +1328,7 @@ def test_a_withheld_address_never_overwrites_a_reading(tmp_path) -> None:
     from probe import _save
 
     probed, raw = _sbr_probed()
-    raw = {**raw, "serial": "A123456789", "host": "192.168.178.41"}
+    raw = {**raw, "serial": "A123456789", "host": "192.168.178.141"}
     first = _save(
         tmp_path,
         "one-machine",

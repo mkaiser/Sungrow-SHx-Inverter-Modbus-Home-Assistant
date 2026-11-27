@@ -31,6 +31,8 @@ from sungrow_modbus.capability_test.procedure import (
 )
 from sungrow_modbus.capability_test.writepath import EMS_CHECK, WINDOW_2_CHECK
 
+from .conftest import FakeClock
+
 #: Protocol addresses, one below the registers.
 SOC = 13022  # input 13023, 0.1 %
 MIN_SOC = 13058  # holding 13059, 0.1 %
@@ -43,22 +45,6 @@ CHARGE_ENABLE = 33207  # holding 33208
 CHARGE_BLOCK = range(33207, 33219)  # holding 33208-33219
 WINDOW_2 = range(33208, 33219)  # days, window 1, window 2, targets
 WEEKEND_ENABLE = 33178  # holding 33179
-
-
-class FakeClock:
-    """A clock that agrees to anything, so a budget costs no time."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the current fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting."""
-        self.now += seconds
 
 
 @pytest.fixture

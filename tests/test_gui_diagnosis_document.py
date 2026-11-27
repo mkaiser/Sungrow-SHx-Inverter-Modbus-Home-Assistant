@@ -20,7 +20,11 @@ import re
 from typing import Any
 from unittest.mock import patch
 
-from modbus_connection import IllegalDataAddressError, ModbusTimeoutError
+from modbus_connection import (
+    IllegalDataAddressError,
+    ModbusConnectionError,
+    ModbusTimeoutError,
+)
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -352,8 +356,8 @@ async def test_the_transport_verdict_follows_the_6100_probe(
 ) -> None:
     """Register 6100 is the only reliable transport signal there is.
 
-    And no round-trip time beside it: that described the path from whoever
-    read, not how the inverter is attached, and was removed on 2026-10-09.
+    And no round-trip time beside it: that describes the path from whoever
+    read, not how the inverter is attached.
     """
     entry = await _setup(hass, sungrow_unit)
     document = await async_build(hass, entry)
@@ -506,7 +510,7 @@ async def test_diagnostics_survives_a_diagnosis_that_raises(
 
     with patch(
         "custom_components.sungrow_modbus.diagnostics.async_build",
-        side_effect=RuntimeError("the link went away"),
+        side_effect=ModbusConnectionError("the link went away"),
     ):
         report = await async_get_config_entry_diagnostics(hass, entry)
 
@@ -546,10 +550,10 @@ async def test_the_sections_a_reader_needs_are_all_present(
 async def test_the_flow_opens_on_the_wiring(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """It used to ask what the entry was for; there is only one answer now.
+    """It does not ask what the entry is for: there is only one answer.
 
     Kept here, where the diagnostics entry is tested, because this is the
-    file that would notice if the old question came back -- `tests/
+    file that would notice that question coming back -- `tests/
     test_one_setup_path.py` owns the rest of that story.
     """
     result = await hass.config_entries.flow.async_init(
@@ -597,13 +601,11 @@ async def test_a_diagnostics_entry_still_produces_a_document(
     assert report["diagnosis"]["capability_probes"]
 
 
-# --- the options page, which now only collects testimony -------------------
+# --- the options page, which only collects testimony -----------------------
 #
-# The diagnosis used to run inside this flow, behind a spinner, and these tests
-# used to drive that. It runs from the device page now, so what is left to
-# assert here is narrower and more honest: the page saves what a person
-# typed, and it says what has already been measured so nobody answers a
-# question the integration answered itself.
+# The diagnosis runs from the device page, so what is asserted here is narrow:
+# the page saves what a person typed, and it says what has already been
+# measured so nobody answers a question the integration answered itself.
 
 
 def _options(**sections: dict) -> dict:
@@ -648,9 +650,9 @@ async def test_saving_the_page_does_not_read_the_inverter(
 ) -> None:
     """Submitting testimony is not the same act as producing a document.
 
-    It used to be, and conflating them cost the contributor the choice: a
-    slow link made saving three text fields take a quarter of an hour behind
-    a modal that could not be left. The page saves; the button reads.
+    Conflating them costs the contributor the choice: on a slow link, saving
+    three text fields would take a quarter of an hour behind a modal that
+    cannot be left. The page saves; the button reads.
     """
     entry = await _setup(hass, sungrow_unit)
 

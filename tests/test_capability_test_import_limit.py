@@ -18,6 +18,8 @@ from sungrow_modbus import SungrowInverter
 from sungrow_modbus.capability_test import CONFIRMED, NO_EFFECT, CapabilityTest, Options
 from sungrow_modbus.capability_test.procedure import IMPORT_LIMIT
 
+from .conftest import FakeClock
+
 #: Protocol addresses, one below the registers.
 BATTERY_POWER = 5213  # input 5214-5215, int32 low word first
 SOC = 13022  # input 13023, 0.1 %
@@ -29,22 +31,6 @@ LIMIT = 32997  # holding 32998, 0.01 kW
 
 LOAD_W = 600
 SNAPSHOT_WORD = 2000
-
-
-class FakeClock:
-    """A clock that agrees to anything, so a budget costs no time."""
-
-    def __init__(self) -> None:
-        """Start at an arbitrary origin."""
-        self.now = 0.0
-
-    def monotonic(self) -> float:
-        """Return the current fake time."""
-        return self.now
-
-    async def sleep(self, seconds: float) -> None:
-        """Advance instead of waiting."""
-        self.now += seconds
 
 
 def _int32(unit: MockModbusUnit, address: int, value: int) -> None:

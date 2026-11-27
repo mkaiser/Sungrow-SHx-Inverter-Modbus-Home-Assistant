@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -135,7 +135,7 @@ async def test_the_form_names_every_register_before_anything_is_written(
     assert ready_unit.holding[13058] == 30  # nothing written by showing the form
 
 
-async def test_a_refused_write_leaves_the_repair_standing(
+async def test_a_write_that_does_not_land_leaves_the_repair_standing(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
     """The commonest cause is the one that caused the leftovers in the first place.
@@ -145,7 +145,7 @@ async def test_a_refused_write_leaves_the_repair_standing(
     hide a register that is still wrong.
     """
     entry = await _with_leftover(hass, ready_unit)
-    ready_unit.fail_write(13058, ModbusError("the link went away"))
+    ready_unit.fail_write(13058, ModbusConnectionError("the link went away"))
     flow = await async_create_fix_flow(
         hass, issue_id(entry), {"entry_id": entry.entry_id}
     )

@@ -16,6 +16,7 @@ from pathlib import Path
 import shlex
 import sys
 
+from modbus_connection import ModbusExceptionError
 import pytest
 
 DIAGNOSIS = (
@@ -255,7 +256,7 @@ def test_a_transport_given_as_a_flag_is_kept_against_the_measurement(
     monkeypatch.setattr(probe, "ModbusConnection", lambda *_a, **_k: _Refusing())
 
     async def refused(*_args, **_kwargs):
-        raise probe.ModbusExceptionError(2)
+        raise ModbusExceptionError(2)
 
     async def refused_6100(*_args, **_kwargs):
         return "refused"
@@ -301,3 +302,37 @@ def test_the_question_defaults_to_no(monkeypatch) -> None:
     args = sungrow_diagnosis._parser().parse_args(["192.0.2.10"])
 
     assert sungrow_diagnosis._ask_capability_test(args) == "no"
+
+
+def test_a_device_read_by_its_own_map_is_asked_only_what_no_flag_answers(
+    monkeypatch,
+) -> None:
+    """`--address`, `--reporter` and `--comment` skip their questions, and only those.
+
+    A wallbox, an iHomeManager, a Logger and an SG share these three; an
+    empty `--comment ''` is an answer, not a reason to ask.
+    """
+    asked: list[str] = []
+    monkeypatch.setattr(
+        probe, "_ask_address", lambda _host: asked.append("address") or "hidden"
+    )
+    monkeypatch.setattr(
+        probe, "_ask", lambda question, default="": asked.append(question) or default
+    )
+
+    given = argparse.Namespace(address="two_octets", reporter="somebody", comment="")
+    assert sungrow_diagnosis._ask_consent("wallbox.invalid", given) == (
+        "two_octets",
+        "somebody",
+        "",
+    )
+    assert asked == []
+
+    none = argparse.Namespace(address=None, reporter=None, comment=None)
+    assert sungrow_diagnosis._ask_consent("wallbox.invalid", none) == (
+        "hidden",
+        "anonymous",
+        "",
+    )
+    assert asked[0] == "address"
+    assert len(asked) == 3

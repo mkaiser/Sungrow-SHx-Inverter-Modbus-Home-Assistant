@@ -185,8 +185,8 @@ def test_a_cluster_slave_reporting_all_zeros_has_no_battery() -> None:
     # Measured on a real master/slave pair of SH10RT-V112: the battery is
     # wired to the master, and the slave answers 0 for voltage, level,
     # temperature and capacity alike rather than the specification's 0xFFFF.
-    # Zero decodes to a value, so this used to grant BATTERY and create the
-    # whole 13xxx block as entities reporting zero forever.
+    # Zero decodes to a value, so taken as one it would grant BATTERY and
+    # create the whole 13xxx block as entities reporting zero forever.
     probed = probe(_reads({"battery_voltage": 0.0, "battery_level": 0.0}))
     assert Capability.BATTERY not in probed
 

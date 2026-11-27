@@ -445,9 +445,9 @@ async def test_a_document_that_cannot_be_written_is_not_a_failed_link(
 ) -> None:
     """After a complete run, a failed merge says so and keeps the run's code.
 
-    It used to escape to the handler built for a link that never came up,
-    which printed "exit 1: nothing ran -- could not connect" beneath a whole
-    report. The measured result must survive it, beside the script.
+    Let out to the handler built for a link that never came up, it would
+    print "exit 1: nothing ran -- could not connect" beneath a whole report.
+    The measured result must survive it, beside the script.
     """
     gone = tmp_path / "removed-since-the-run-started.json"
 

@@ -83,13 +83,6 @@ UNIT_247 = {
 
 
 @pytest.fixture
-def no_setup():
-    """Stop the created entries from reaching for the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
-
-
-@pytest.fixture
 def house():
     """Have the search find `FOUND`, `WALLBOXES` and `UNIT_247`."""
 

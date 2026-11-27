@@ -76,19 +76,16 @@ from sungrow_modbus.diagnosis import (
     async_capability_diagnosis,
 )
 from sungrow_modbus.diagnosis_document import (
-    NEVER_PUBLISH,  # noqa: F401
     OTHER_INVERTER_CLAIMS,
     OUTPUT_TYPES,
     REPORTED_TRANSPORTS as DOCUMENT_TRANSPORTS,
     TRANSPORT_CLAIMS,
     UNAVAILABLE,
-    WIFI_OR_ETHERNET,  # noqa: F401
     effective_verdict,
     last_two_octets,
     slave_inverter_at,
     stand_in,
     transport_contradiction,
-    transport_verdict,  # noqa: F401
 )
 from sungrow_modbus.discovery import Identity, async_identify, async_mdns_services
 from sungrow_modbus.dump import DUMP_BANDS, WALLBOX_BANDS

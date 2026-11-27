@@ -1,8 +1,7 @@
 """Searching the network instead of asking the user for an IP address.
 
-The first question this flow used to open with — what is the inverter's IP
-address — is one many users cannot answer without going to look at their
-router. So it offers to look instead.
+What is the inverter's IP address? Many users cannot answer that without
+going to look at their router, so the flow offers to look instead.
 
 The property worth defending is the negative one: **an open Modbus port is not
 an inverter.** A sweep of the maintainer's own LAN found a RAKwireless gateway
@@ -15,7 +14,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
@@ -44,13 +43,6 @@ from .conftest import SERIAL
 SEARCH_INPUT = {CONF_NETWORK: "192.168.1.0/24"}
 
 
-@pytest.fixture
-def no_setup():
-    """Stop the created entry from reaching for the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
-
-
 def _probe(sungrow_unit: MockModbusUnit, only: set[str] | None = None):
     """Answer the identity probe for `only` hosts, and fail for the rest."""
 
@@ -63,7 +55,7 @@ def _probe(sungrow_unit: MockModbusUnit, only: set[str] | None = None):
 
     def temporary_unit(hass, params, unit_id):
         if only is not None and params.host not in only:
-            raise ModbusError("not a Sungrow inverter")
+            raise ModbusConnectionError("nothing listening")
         return _Unit()
 
     return patch(
@@ -330,11 +322,10 @@ async def test_the_search_form_can_be_retried_with_another_range(
 ) -> None:
     """And the retry offers a **different** range, not the one that just failed.
 
-    It used to prefill what was tried, on the reasoning that a user is
-    usually correcting a typo. After a sweep that completed and found
-    nothing, that reasoning does not hold: the one range certainly not worth
-    trying again is the one just swept. So it is dropped from the picker and
-    listed as already searched instead.
+    Prefilling what was tried would suit a user correcting a typo. After a
+    sweep that completed and found nothing, that reasoning does not hold:
+    the one range certainly not worth trying again is the one just swept. So
+    it is dropped from the picker and listed as already searched instead.
     """
     with (
         patch(
@@ -658,10 +649,11 @@ async def test_the_sweep_reports_progress_while_it_runs(
 ) -> None:
     """A quiet network spends its whole sweep proving absences.
 
-    Every address with nothing listening costs the full connect timeout, so
-    the form used to sit greyed out for as long as that took with nothing to
-    say. The bar counts addresses settled, because how long it takes depends
-    on how many are quiet -- which is the thing nobody knows in advance.
+    Every address with nothing listening costs the full connect timeout, and
+    without progress the form would sit greyed out for as long as that takes
+    with nothing to say. The bar counts addresses settled, because how long
+    it takes depends on how many are quiet -- which is the thing nobody
+    knows in advance.
     """
     updates: list[float] = []
 
@@ -708,8 +700,8 @@ async def test_a_stage_shown_after_the_dialog_closed_raises_nothing(
 ) -> None:
     """The refresh runs in a task, and the flow may be gone when it does.
 
-    Caught around creating the task, `UnknownFlow` escaped from inside it as
-    a task exception nobody retrieved.
+    So `UnknownFlow` is caught inside the task; caught only around creating
+    it, it would end the task with an exception nobody retrieves.
     """
     flow = SungrowConfigFlow()
     flow.hass = hass

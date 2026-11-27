@@ -14,9 +14,9 @@ from sungrow_modbus.const import DEVICE_TYPES, model_for
 #: Appendix 1, "Adaptive Inverter Models", V1.1.17 (2026-09-30). All 54.
 #:
 #: Note the ordering of the 0x0D2x block: the MG codes are **interrupted** by
-#: SH5RL to SH10RL and resume above them. That is what falsified the
-#: code-range family classifier this table's consumer used to have, so the
-#: transcription keeps the specification's own order rather than sorting it.
+#: SH5RL to SH10RL and resume above them, so no code range names a family,
+#: and the transcription keeps the specification's own order rather than
+#: sorting it.
 SPECIFICATION = {
     0x0D0D: "SH3.6RS",
     0x0D0F: "SH5.0RS",

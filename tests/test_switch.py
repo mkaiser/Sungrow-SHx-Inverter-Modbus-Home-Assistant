@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import IllegalDataValueError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -130,7 +130,7 @@ async def test_a_failed_write_is_reported_rather_than_swallowed(
         patch.object(
             type(sungrow_unit),
             "write_register",
-            side_effect=ModbusError("device rejected the write"),
+            side_effect=IllegalDataValueError(),
         ),
         pytest.raises(HomeAssistantError, match="Could not write"),
     ):

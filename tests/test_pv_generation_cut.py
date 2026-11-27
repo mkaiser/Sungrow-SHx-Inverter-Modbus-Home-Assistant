@@ -338,9 +338,9 @@ async def test_the_first_poll_already_skips_what_the_firmware_hangs_up_on(
 ) -> None:
     """95.03 closes the link on the second meter channel, a fast-tier block.
 
-    The fast tier is refreshed before the slowest, which used to carry the
-    firmware string -- so the very first poll asked for it. Firmware is read
-    before any tier now.
+    The fast tier is refreshed before the slowest, so with the firmware
+    string read in the slowest tier the very first poll would ask for that
+    block before the firmware is known. Firmware is read before any tier.
     """
     sungrow_unit.input[VERSION_ADDRESS] = encode_string("SAPPHIRE-H_01011.95.03", 11)
     asked: list[int] = []

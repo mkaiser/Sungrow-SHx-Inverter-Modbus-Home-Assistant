@@ -228,12 +228,12 @@ def test_legacy_names_are_untouched() -> None:
     and years of history pointing at nothing.
 
     Looked up by `legacy_unique_id`, which is what actually identifies the
-    YAML entity being replaced. Looking it up by the *modern* entity_id --
-    which this test used to do -- silently checked nothing for any entity
-    whose key was renamed on the way over, and five were: the three switches
-    and both mode selects. `switch.export_power_limit` became
-    `switch.export_power_limit_mode`, so the lookup missed and the assertion
-    never ran on the name that carries the migration.
+    YAML entity being replaced. Looking it up by the *modern* entity_id
+    would silently check nothing for any entity whose key was renamed on the
+    way over, and five are: the three switches and both mode selects.
+    `switch.export_power_limit` is `switch.export_power_limit_mode` here, so
+    such a lookup misses and the assertion never runs on the name that
+    carries the migration.
     """
     legacy = {
         (entity["domain"], entity["unique_id"]): entity["name"]

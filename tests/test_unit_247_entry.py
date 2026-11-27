@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -88,7 +88,7 @@ async def _scan(hass: HomeAssistant, answers: dict[int, str]) -> dict:
     def temporary(hass, params, unit_id):
         kind = answers.get(params.port)
         if unit_id != 247 or kind is None:
-            raise ModbusError("nothing here")
+            raise ModbusConnectionError("nothing here")
         return _Unit(_unit(kind))
 
     with (

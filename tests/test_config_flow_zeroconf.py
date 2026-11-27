@@ -15,7 +15,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from modbus_connection.mock import MockModbusUnit
-import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
@@ -68,13 +67,6 @@ def _wallbox() -> ZeroconfServiceInfo:
             "info": "16256;516;1;",
         },
     )
-
-
-@pytest.fixture
-def no_setup():
-    """Stop the created entry from reaching for the network."""
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        yield
 
 
 def test_the_manifest_matches_both_announcements() -> None:

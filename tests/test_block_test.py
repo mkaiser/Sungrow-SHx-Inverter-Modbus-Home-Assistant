@@ -17,6 +17,7 @@ to keep.
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Callable
 from pathlib import Path
 import sys
@@ -82,16 +83,44 @@ def refuses(register: int) -> Callable[[str, int, int], BaseException | None]:
 # -- agreement with the terminal tool ----------------------------------------
 
 
-def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
-    """`hybrid_inverter.layout` quotes these words, so they are part of the result."""
-    for name in ("OK", "DROPPED", "REFUSED", "REJECTED", "INCONSISTENT"):
-        assert getattr(block_test, name) == getattr(terminal, name), name
-    assert block_test.UNNARROWED == terminal.UNNARROWED
-    assert block_test.NARROW_BUDGET == terminal.NARROW_BUDGET
-    assert (block_test.ROUNDS, block_test.ATTEMPTS) == (
-        sungrow_diagnosis.ROUNDS,
-        sungrow_diagnosis.ATTEMPTS,
-    )
+#: What the terminal tools take from `block_test` rather than spell themselves.
+SHARED_WORDS = frozenset(
+    {
+        "OK",
+        "DROPPED",
+        "REFUSED",
+        "REJECTED",
+        "INCONSISTENT",
+        "TIMED_OUT",
+        "UNNARROWED",
+        "NARROW_BUDGET",
+        "ROUNDS",
+        "ATTEMPTS",
+    }
+)
+
+
+@pytest.mark.parametrize(
+    "module", [terminal, sungrow_diagnosis], ids=lambda m: m.__name__
+)
+def test_the_outcome_words_and_the_budget_are_the_terminal_tools(module) -> None:
+    """`hybrid_inverter.layout` quotes these words, so they are part of the result.
+
+    The terminal tools import them from the library; a script that assigned
+    one of its own would drift from the device page without a test noticing,
+    since comparing an import with its source holds by construction.
+    """
+    tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
+    assigned = {
+        target.id
+        for node in tree.body
+        if isinstance(node, ast.Assign | ast.AnnAssign)
+        for target in (node.targets if isinstance(node, ast.Assign) else [node.target])
+        if isinstance(target, ast.Name)
+    }
+    assert not assigned & SHARED_WORDS
+    for name in SHARED_WORDS & set(vars(module)):
+        assert getattr(module, name) is getattr(block_test, name), name
 
 
 async def test_the_terminal_tool_measures_through_the_library() -> None:

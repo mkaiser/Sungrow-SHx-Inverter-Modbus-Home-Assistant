@@ -32,7 +32,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.hybrid_inverter.capabilities import Capability
 
-from .test_capability_test_ha import _setup, ready_unit  # noqa: F401
+from .test_capability_test_ha import _setup
 
 CLUSTER_MODE_ADDRESS = 33499
 MEMBER = frozenset({Capability.CLUSTER_MEMBER})
@@ -53,7 +53,7 @@ def _other(
 
 
 @pytest.fixture
-def member_unit(ready_unit: MockModbusUnit) -> MockModbusUnit:  # noqa: F811
+def member_unit(ready_unit: MockModbusUnit) -> MockModbusUnit:
     """Return an inverter that is in a cluster."""
     ready_unit.holding[CLUSTER_MODE_ADDRESS] = 0xAA
     return ready_unit
@@ -128,7 +128,7 @@ async def test_the_button_refuses_too(
 )
 async def test_only_two_members_of_a_cluster_exclude_each_other(
     hass: HomeAssistant,
-    ready_unit: MockModbusUnit,  # noqa: F811
+    ready_unit: MockModbusUnit,
     *,
     ours: int,
     theirs: bool,
