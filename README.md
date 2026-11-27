@@ -86,6 +86,7 @@ with the controls behind a hold-to-unlock lock,
 diagnosis from it, step by step with screenshots,
 [doc/energy_dashboard.md](doc/energy_dashboard.md) says which sensors to pick
 for Home Assistant's Energy dashboard,
+[doc/evcc.md](doc/evcc.md) connects evcc through Home Assistant,
 [doc/architecture.md](doc/architecture.md) is how it is built and why,
 [Todo.md](Todo.md) what is open, and
 [doc/compatibility.md](doc/compatibility.md) which setups have been diagnosed.

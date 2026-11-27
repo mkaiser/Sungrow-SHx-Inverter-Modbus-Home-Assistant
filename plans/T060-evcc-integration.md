@@ -25,8 +25,10 @@ Sources: docs.evcc.io/en/sponsorship, /en/chargers/home-assistant-charger,
 HA entities over HA's REST API, never Modbus. Each write lands in our
 integration, so it takes the shared serialized connection, `PARALLEL_UPDATES = 1`
 and the `write_owner.py` interlock. This meets the requirement: no proxy, one
-Modbus client, no races. While a capability test runs, our controls refuse and
-evcc just logs an error.
+Modbus client, no races. While a capability test runs, our controls refuse: for the charger
+evcc gets the error. For the **battery scripts it does not** (see *Battery*).
+HA answers success for a call to a missing or `unavailable` entity
+and only logs it, so an entity id has to be checked when configuring.
 - Auth: in the evcc UI, *Home Assistant* integration → the HA login tab
   issues a token, and evcc renews it itself. If evcc runs as the HA app
   (`evcc-io/hassio-addon`, a community add-on), pick `http://supervisor/core` and
@@ -34,9 +36,9 @@ evcc just logs an error.
 - The HACS integration `marq24/ha-evcc` brings evcc's state back into HA. This is optional.
 
 **Meters → our entities (signs already match evcc: import +, battery discharge +).**
-- grid: `power: sensor.meter_active_power` (5600: >0 buy). Energy:
+- grid: `power: sensor.meter_active_power` (>0 buy). Energy:
   `total_imported_energy` / `total_exported_energy` (`returnEnergy`).
-- pv: `power: sensor.total_dc_power`, energy: the total PV generation sensor.
+- pv: `power: sensor.total_dc_power` (device-scoped: `total_pv_input_power`), energy: the total PV generation sensor.
 - battery: `power: sensor.battery_power` (5214: + discharging, − charging,
   legacy YAML l.370), `soc: sensor.battery_level`, `capacity`, and
   `minSocEntity`/`maxSocEntity` → `number.battery_min_soc` / `number.battery_max_soc`.
@@ -50,9 +52,8 @@ evcc just logs an error.
   - `enable`: `switch.…ev_charger_charging` (33540)
   - `setMaxCurrent`: `number.…ev_charger_user_current` (33545, 6 A up)
   - `enabled`: the same switch
-  - `status`: `sensor.…wallbox_charging_status`, with `statusA: idle`,
-    `statusB`: standby / suspended by the charge point / suspended by the
-    vehicle / completed, and `statusC: charging`
+  - `status`: a template sensor over *Car connected* and *Charging*, because the status
+    code can read *idle* with a car plugged in
   - `power`, `energy`, `currentL1-3`, `voltageL1-3`: the wallbox sensors
   - Precondition: `select.…ev_charger_mode` is set **once** to user-defined and
     `switch.…ev_charger_grid_purchase` is set as wanted. evcc must never
@@ -62,26 +63,32 @@ evcc just logs an error.
     choose. evcc is configured `phases: 3`, with 6 A × 3 = 4.14 kW the minimum charge.
 - For a standalone wallbox (its own entry, TLS 516), the entities are read-only.
   There is no control path today, so the doc says so and points at Todo § Wallbox 3.3.
-- Caveat: the HA controls with a car charging are still open (Todo § Wallbox 3.1).
-  The doc marks the wallbox part **experimental** until that is watched.
+- The HA controls passed with a car charging (wiki `gerd-wallbox-2026-11-24-summary.md`); evcc driving
+  them is unwatched, so the doc is marked **experimental**. Plug&Play (21298) must be off.
 
 **Battery → HA scripts.** The `homeassistant` meter has `modeNormal`,
 `modeHold`, `modeCharge` (`modeNormal` is required once any other is set). The guide
 ships three scripts over our entities:
 - normal: `select.ems_mode` → `self_consumption`, and
   `select.battery_forced_charge_discharge` → `stop`
-- hold: `ems_mode` → `forced`, forced charge/discharge → `stop` (the battery
-  idles, the PV still serves the house; verify on hardware what *stop* does to
-  PV-to-battery)
+- hold: `ems_mode` → `self_consumption`, `stop`, and the maximum discharging power →
+  10 W, as evcc's own template does: the battery may still charge from PV. Normal and
+  charge put the limit back
 - charge: `ems_mode` → `forced`, forced → `charge`,
   `number.battery_forced_charge_discharge_power` → a set value
+- **A failed script is invisible to evcc.** evcc calls `script.turn_on`, which HA
+  starts without waiting for it (`wait=False`), so a refused write inside it still
+  answers 200. evcc then records the mode as applied and does not re-apply it until
+  the mode changes. So each script has to check its result (wait for the select to
+  read the wanted state, retry, then notify). The charge script sets the power **before** it
+  starts the forced charge.
 - Optional `modeDischarge` is left out: evcc does not need it, and it exports
   the battery.
 - Verify with `evcc meter verifybatterymodes` (it cycles the modes and checks the
   battery power).
 - Warning in the doc: a forced mode stays set if evcc dies. Add an HA automation
-  that returns to normal when evcc goes unavailable (through the ha-evcc
-  integration's state).
+  that returns to normal when evcc goes unavailable: triggered by a REST
+  sensor on evcc's `/api/state` (evcc has no health endpoint).
 
 **Solar forecast and car SoC: both live in HA; evcc reads them (same principle as Modbus).**
 - *Forecast.* evcc's `tariffs: solar: template: homeassistant` (token-free) reads
@@ -105,70 +112,36 @@ ships three scripts over our entities:
   had no Internet on 2026-11-17), evcc plans by **kWh** for the current session
   only; percent targets and repeating plans need SoC + capacity (docs.evcc.io/en/features/plans).
 
-## EMHASS instead of, or beside, evcc?
+## Left to do
 
-EMHASS (Energy Management for Home Assistant, MIT, HA app or docker, v0.18.9 on
-2026-11-14, actively maintained) is a **planner**, not a charge controller.
-- It solves an LP/MILP over PV forecast, load forecast and tariffs, day-ahead or
-  as MPC every ~5 min. It publishes HA sensors (`sensor.p_batt_forecast`,
-  `sensor.soc_batt_forecast`, `sensor.p_deferrableX`, `sensor.p_grid_forecast`, …).
-  **It never writes to a device**: HA automations apply its plan
-  (emhass.readthedocs.io/en/latest/publish_data.html, /automations.html). Like
-  evcc via HA, it opens no Modbus session.
-- It treats an EV as a *deferrable load*: a fixed amount of energy before a deadline, on/off at
-  nominal power **per timestep** (30 min, or 5 min in MPC). There is no seconds-level
-  PV-surplus current regulation and no SoC target, which you convert to kWh
-  yourself. Its own EV recipe hands real-time charging to evcc
-  (emhass.readthedocs.io/en/latest/cookbook/ev_evcc_executor.html).
-- Its strength is **cost-optimal battery dispatch** under dynamic tariffs
-  (Tibber, Nordpool, …) and scheduling other loads (heat pump, water heater). It has its
-  own PV (Open-Meteo/PVLib, Solcast, Forecast.Solar) and ML load forecasts.
-- Cost: more setup (a model of the system, tuning, automations that turn
-  `p_batt_forecast` into `ems_mode`/forced-power writes), and no EV UI or vehicle integration.
+1. The meters are watched (the maintainer's); watch the charger's 33540/33545 with a car, at gerd's.
+2. `evcc meter verifybatterymodes` on the maintainer's SH10RT.
+3. Load the charger, vehicle and battery-mode YAML in evcc: only the meters and the forecast have been.
+4. Then drop the *Experimental* box in `doc/evcc.md`.
 
-**Verdict: not a better option for the car; a possible later addition for the
-battery.** evcc stays the plan's core: real-time surplus charging, vehicle and SoC
-handling, plans, a UI. Add EMHASS only if the site has a **dynamic tariff** where
-arbitrage pays. Then follow EMHASS's documented split:
-- **EMHASS owns the battery**: drop evcc's `modeNormal/Hold/Charge` scripts and keep
-  evcc's battery meter read-only.
-- **evcc owns the car**: EMHASS sets the loadpoint mode (`now`/`off`/`pv`) through
-  evcc's API or the ha-evcc entities.
-- **Never let both control the battery.** This is the same single-writer rule the integration enforces.
-- One HA forecast feeds both (EMHASS can take `pv_power_forecast` at runtime from HA).
-- Also note: a managed wallbox's inverter already does PV-surplus charging itself (EV
-  charger mode *PV surplus*). evcc's added value there is SoC targets, plans and the
-  UI, not the surplus regulation.
+## Status log
 
-## Changes
+- 2026-11-26, 19:00 CET: `doc/evcc.md` has a section *A wallbox no inverter manages*: evcc's own `sungrow` charger
+  over RS485 or a gateway (evcc has no TLS, so not port 516), phases set to automatic, the wallbox entry kept for
+  reading with its capability test off while evcc drives. From a colleague's report of a standalone AC22E-01 switching
+  1p/3p and evcc's source at `49b5a8d10` ([the source](../.wiki/wiki/sources/cross-reference-evcc-2026-11-26-summary.md),
+  committed). Not watched here. Uncommitted with the rest of `doc/evcc.md`.
 
-1. **New `doc/evcc.md`** (for owners). It covers why to go through HA (sessions,
-   the write interlock), cost, connecting evcc to HA, a full `evcc.yaml` (meters
-   grid/pv/battery, charger, vehicle via HA, the solar forecast via HA, a loadpoint with
-   `phases: 3`, `mincurrent: 6`, and site), the
-   three battery scripts plus the fail-safe automation, the precondition on the wallbox
-   mode, the limits (no phase switching, standalone wallbox read-only, wallbox control
-   experimental), how to verify, and a short "with EMHASS" section (who owns
-   the battery, who owns the car). Link it from `README.md` / `doc/integration_migration.md`
-   wherever the docs list user guides.
-2. **`Todo.md` § EVCC connection**: replace the question with the answer and what
-   is left (watch evcc driving 33540/33545 with a car at gerd's; test the battery
-   scripts with `verifybatterymodes` on the maintainer's SH10RT; what *stop* in
-   forced mode does). Follow the multi-writer rule: `git status`/`git diff
-   Todo.md` first, re-read, make a targeted edit.
-3. **Wiki**: a source page for the evcc docs read today (save a raw note in
-   `.wiki/raw/evcc-homeassistant-templates-2026-11-17.md`), a query page
-   `queries/can-evcc-drive-a-managed-wallbox-through-ha.md` for the unwatched claims,
-   and updates to `index.md` and `log.md`, following `.wiki/AGENTS.md`. No real serials or addresses.
-
-## Verification
-
-- `make dev` + `make sim`: confirm every entity id in the example exists and
-  the selects accept the scripted options. Run the scripts in HA against the
-  simulator.
-- Optional: start evcc (docker) against the dev HA. `evcc --demo` is not enough;
-  use the YAML with the `homeassistant` templates and check that evcc's UI shows grid/PV/battery
-  and the loadpoint. Then run `evcc meter verifybatterymodes` (against the
-  simulator it checks only the wiring; the evidence comes from hardware).
-- `make check` (wiki lint, the no-serials test, gen-check).
-- Commit only the files named above, and only when asked. No push without asking.
+- 2026-11-25, 21:00 CET: normal and hold (no charge mode) with their watchdog are installed at the maintainer's; normal ran
+  as a no-op, hold has not run, and evcc's discharge control is off. evcc switched hot water and heating to Komfort.
+  Found: no `mode:` in a loadpoint's YAML (it resets the owner's choice at a restart); hold triggers for any loadpoint
+  running in now, a heat pump included. The capacity is a fixed number in evcc (T098). `doc/evcc.md` has not got these yet.
+- 2026-11-25, 16:00 CET: at the maintainer's, evcc also has the WARP2 and the heat pump (hot water and heating as
+  Komfort/Eco switches), all in mode off. Hot water switched to Komfort and back from Home Assistant; evcc itself
+  has not switched anything on yet. Battery scripts not installed.
+- 2026-11-25, 15:30 CET: evcc 0.319.1 runs as the Home Assistant app at the maintainer's, meter-only
+  (the integration's own ids through `http://supervisor/core`, no login step): grid, PV, battery, SoC
+  and its limits read, with signs as documented, and the solar forecast loads. Nothing is written to the inverter.
+  Scripts, watchdog and wallbox (a WARP2) are later. Uncommitted: `doc/evcc.md`, T060, T093, README,
+  and this work's parts of `Todo.md`, the wiki index and `log.md`, which another session also edits.
+- 2026-11-25: `doc/evcc.md` written. MQTT dropped (maintainer); EMHASS moved to
+  [T093](T093-emhass.md) (maintainer). The device-scoped inverter ids were read off the
+  simulator; the wallbox ids come from the entity names, as the simulator serves no
+  wallbox. The scripts passed a throwaway harness test (a failed write, a stuck inverter,
+  return to normal). evcc itself was not run, and the battery scripts were not run
+  against the simulator.

@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T100.** Numbers are minted in order, never reused and
+**Next free item number: T101.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -21,6 +21,8 @@ Battery, Wallbox, Logger, iHomeManager, and Integration and tooling.
 
 A holding area, not a queue: taken in only when the maintainer asks
 ([`workflow.md`](workflow.md)). An entry is numbered **I1**, **I2** ... to be addressed by; next: **I4**.
+
+I1: Display the INtegrations Version number somewhere in the Diagnostics Tab (Dashboard)
 
 # Next steps
 
@@ -106,6 +108,10 @@ aggregate only. `gh` can rank who replied most; it cannot tell who replied
 well, and the wrong name added or a right one left out is worse than the
 aggregate.
 *Needs*: the maintainer's call on who belongs there.
+
+**T100. Review and clean up the code, one area a session, then bring the documents into line with it**:
+[the review prompt](plans/_code-review.md), then [the documents prompt](plans/_improve-doc.md).
+*Needs*: nothing; the maintainer decides each finding listed under *Reported*.
 
 # Open decisions
 
@@ -410,16 +416,18 @@ His installation is on device-scoped ids since 2026-11-25 ([the source](.wiki/wi
 **T085. The RAK module's web page** (the dongle before the WiNet-S): how it is reached and with which documented login.
 *Needs*: a house with one, and the maintainer's word before any login is tried.
 
+**T060. Watch evcc drive a Sungrow through Home Assistant**, following [the guide](doc/evcc.md)
+-- [plan](plans/T060-evcc-integration.md).
+*Needs*: evcc at gerd's with a car, and `verifybatterymodes` on the maintainer's SH10RT.
+
 **T099. The forced-charge window's 300 W floor skips a battery charging slowly with headroom**: a pack taking a few hundred
 watts with kilowatts under `snapshot.battery_ceiling` is not tested unless the bracket confirms the start first
 (`src/sungrow_modbus/capability_test/effects.py`); decide whether the floor should follow the headroom.
 *Needs*: nothing.
 
-**T060. Hand inverter and wallbox readings to evcc**, so it need not open a
-Modbus session of its own -- [plan](plans/T060-evcc-integration.md), which has the
-route (evcc's `homeassistant` templates) and what is left to write
-(`doc/evcc.md`).
-*Needs*: nothing; no integration code changes.
+**T093. EMHASS beside evcc, planning the battery under a dynamic tariff** --
+[plan](plans/T093-emhass.md).
+*Needs*: a house with a dynamic tariff whose owner wants it; T060.
 
 ## T061. Recurrent: new diagnoses to ingest (daily, after noon)
 

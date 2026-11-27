@@ -299,6 +299,7 @@ page is worth less than nothing. Name the project and link the page:
 
 - [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open, narrowed: no document names a way; 21204 did not, and nothing in 33538-33550 moves with the phases #wallbox #phases #ems #open
 - [Why does a managed wallbox stop charging?](queries/why-does-a-managed-wallbox-stop-charging.md) — Open, narrowed: the inverter ends a session on a mode change, the car suspended one for hours; why the car did, and the 03:50 off, are not known #wallbox #ems #open
+- [Can evcc drive a managed wallbox through Home Assistant?](queries/can-evcc-drive-a-managed-wallbox-through-ha.md) — Open: the controls passed from Home Assistant; evcc driving them and the battery is unwatched #wallbox #evcc #battery #open
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Which unit does a WiNet-S give a wallbox?](queries/which-unit-does-a-winet-s-give-a-wallbox.md) — Answered: not always 3 — an AC22E-01 at 3, an AC011E-01 at 4; 2 is still only reported #wallbox #winet-s
 - [Does a WiNet-S advertise over mDNS, and can discovery start there?](queries/does-a-winet-s-advertise-over-mdns.md) — Partly answered: at gerd the dongle and the wallbox do, by unicast; peter-sm's dongle by multicast on its LAN; what a firewall drops is settled, other firmware and ethinfo open #winet-s #mdns #discovery #open
