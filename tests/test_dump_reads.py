@@ -13,7 +13,8 @@ from unittest.mock import patch
 from modbus_connection import IllegalDataAddressError
 import pytest
 
-from sungrow_modbus.dump import async_dump, block_count, masked
+from sungrow_modbus.dump import async_dump, block_count, decoded_fields, masked
+from sungrow_modbus.wallbox.registers import COMPONENTS as WALLBOX_COMPONENTS
 
 #: One band of 40 addresses, two blocks of 32 and 8. Small enough to read in
 #: the head, which the real twelve are not.
@@ -160,3 +161,27 @@ async def test_a_quiet_address_is_waited_on_once_in_a_run() -> None:
     assert second["input"]["118"] == 118
     assert asked.count(quiet) == 1
     assert asked.count(refused) == 2
+
+
+def test_a_field_with_a_masked_word_is_not_decoded() -> None:
+    """A masked word is a missing one, so no reading comes from it."""
+    component = next(iter(WALLBOX_COMPONENTS.values()))
+    name, field = next(
+        (name, field)
+        for name, field in component.declared_fields.items()
+        if field.count > 1
+    )
+    words = {str(field.address + i): 0x4142 for i in range(field.count)}
+    dump = {component.register_space: words}
+    names = {
+        published
+        for published, _field, _value in decoded_fields(dump, WALLBOX_COMPONENTS)
+    }
+    assert name.removesuffix("_raw") in names
+
+    words[str(field.address + 1)] = None  # type: ignore[assignment]
+    names = {
+        published
+        for published, _field, _value in decoded_fields(dump, WALLBOX_COMPONENTS)
+    }
+    assert name.removesuffix("_raw") not in names

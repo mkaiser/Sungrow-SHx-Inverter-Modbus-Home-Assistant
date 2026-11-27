@@ -59,20 +59,10 @@ from typing import Any
 
 from modbus_connection import ModbusError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
-
-try:
-    from sungrow_modbus.wallbox import managed_test as mt
-except ImportError:  # pragma: no cover -- the pinned wheel predates the module
-    print(
-        "This needs a sungrow-modbus that has wallbox.managed_test; the pinned "
-        "one does not. It ships in the release after 0.1.0a38; until then run it "
-        "on this repository's library (doc/development.md, make scan-local).",
-        file=sys.stderr,
-    )
-    raise SystemExit(2) from None
-
 import probe
 import wallbox_direct
+
+from sungrow_modbus.wallbox import managed_test as mt
 
 #: Left in the way a person at a terminal is asked a last time.
 CANCELLED = -2

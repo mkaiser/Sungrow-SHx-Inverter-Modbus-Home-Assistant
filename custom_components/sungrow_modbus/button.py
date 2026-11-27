@@ -1,10 +1,9 @@
 """Buttons: the diagnosis on every entry, and the inverter's commands besides.
 
 **The diagnosis's buttons** -- start, stop, and clear the capability test's
-history -- are on every inverter entry. They used to be a diagnostics-only
-entry's alone, which meant the one way this project measures what a model
-answers was reachable only by somebody who had given up their readings to get
-it, or who went looking in Developer tools for an action. They are
+history -- are on every inverter entry, so the one way this project measures
+what a model answers is on the device page of whoever has the model, not
+behind a diagnostics-only entry or an action in Developer tools. They are
 diagnostic-category entities, so Home Assistant files them under their own
 heading on the device page.
 
@@ -42,10 +41,10 @@ from .diagnosis_entities import (
 )
 from .entity import SungrowButtonDescription, SungrowEntity
 
-# One at a time, as on every platform that writes: everything on this endpoint
-# shares one serialized connection. The diagnosis buttons schedule their run and
-# return, and the runner refuses a second run itself, so the limit costs them
-# nothing.
+# One at a time, as on every platform that writes (see `number.py`):
+# everything on this endpoint shares one serialized connection. The diagnosis
+# buttons schedule their run and return, and the runner refuses a second run
+# itself, so the limit costs them nothing.
 PARALLEL_UPDATES = 1
 
 
@@ -77,11 +76,9 @@ async def async_setup_entry(
             [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
         )
         return
-    # The diagnosis's own buttons, on every inverter entry whatever its mode.
-    # An ordinary entry had none of them and the `run_diagnosis` /
-    # `run_capability_test` actions instead, which meant the one thing this
-    # project needs from a device -- a measurement of what it answers -- was
-    # behind Developer tools.
+    # The diagnosis's own buttons, on every inverter entry whatever its mode:
+    # the one thing this project needs from a device -- a measurement of what
+    # it answers -- belongs on its device page, not behind Developer tools.
     async_add_entities(
         [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
     )

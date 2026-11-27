@@ -129,11 +129,8 @@ PLATFORMS: list[Platform] = [
 #: the diagnosis's and returns.
 #:
 #: An ordinary entry forwards these platforms too and gets the same entities
-#: on top of its readings. It did not use to, on the reasoning that somebody
-#: who installed this for solar readings should not carry diagnostic tooling
-#: they never asked for -- but that left the only way of measuring what a
-#: model answers reachable only from an entry with no readings, so the owners
-#: best placed to contribute were the ones who could not. They are
+#: on top of its readings, so the owners best placed to measure what a model
+#: answers can do it from the entry they already have. They are
 #: diagnostic-category entities, which Home Assistant files under their own
 #: heading and keeps out of the automatic dashboard.
 DIAGNOSTIC_PLATFORMS: list[Platform] = [

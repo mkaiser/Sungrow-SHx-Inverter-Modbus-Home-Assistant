@@ -24,7 +24,7 @@ import ipaddress
 import json
 from typing import Any, NamedTuple, Protocol, cast
 
-from .addresses import WALLBOX_SERIAL, field_address
+from .addresses import WALLBOX_SERIAL, field_address, reg
 from .battery import PACK_UNITS, PACK_VOLTAGE, model_for_capacity
 from .const import model_for
 
@@ -207,33 +207,34 @@ DIRECT_ONLY_LABEL = "PV power of today (6100, direct-only)"
 
 #: What to read to establish each capability axis.
 #:
-#: Addresses are **protocol addresses**, one below the register number in
-#: Sungrow's document -- so `("device type code (5000)", …, 4999, …)` reads
-#: what the document calls register 5000. The label is what a published
-#: document and `doc/compatibility.md` are keyed on, so it is part of the
-#: format: renaming one silently unrelates a new reading from every old one.
+#: Addresses are **protocol addresses**, written as `reg()` of the register
+#: number in Sungrow's document -- so `("device type code (5000)", …,
+#: reg(5000), …)` reads what the document calls register 5000. The label is
+#: what a published document and `doc/compatibility.md` are keyed on, so it
+#: is part of the format: renaming one silently unrelates a new reading from
+#: every old one.
 #:
 #: (label, space, address, count, axis)
 PROBES: tuple[tuple[str, str, int, int, str], ...] = (
-    ("device type code (5000)", "input", 4999, 1, "model"),
-    ("nominal output power (5001)", "input", 5000, 1, "model"),
-    ("output type (5002)", "input", 5001, 1, "phase"),
-    ("MPPT1 voltage", "input", 5010, 1, "mppt"),
-    ("MPPT2 voltage", "input", 5012, 1, "mppt"),
-    ("MPPT3 voltage", "input", 5014, 1, "mppt"),
-    ("MPPT4 voltage", "input", 5114, 1, "mppt"),
-    ("phase A voltage", "input", 5018, 1, "phase"),
-    ("phase B voltage", "input", 5019, 1, "phase"),
-    ("phase C voltage", "input", 5020, 1, "phase"),
-    ("meter phase A voltage (5741)", "input", 5740, 1, "meter"),
-    ("meter phase A current (5744)", "input", 5743, 1, "meter"),
-    ("battery voltage", "input", 13019, 1, "battery"),
-    ("battery level", "input", 13022, 1, "battery"),
-    ("battery temperature", "input", 13024, 1, "battery"),
-    ("battery capacity (5639)", "input", 5638, 1, "battery"),
-    ("firmware block (13250, spec V1.1.7+)", "input", 13249, 1, "firmware"),
-    (DIRECT_ONLY_LABEL, "input", 6099, 2, "transport"),
-    ("PV power limitation (13018, V1.1.10+)", "holding", 13017, 1, "firmware"),
+    ("device type code (5000)", "input", reg(5000), 1, "model"),
+    ("nominal output power (5001)", "input", reg(5001), 1, "model"),
+    ("output type (5002)", "input", reg(5002), 1, "phase"),
+    ("MPPT1 voltage", "input", reg(5011), 1, "mppt"),
+    ("MPPT2 voltage", "input", reg(5013), 1, "mppt"),
+    ("MPPT3 voltage", "input", reg(5015), 1, "mppt"),
+    ("MPPT4 voltage", "input", reg(5115), 1, "mppt"),
+    ("phase A voltage", "input", reg(5019), 1, "phase"),
+    ("phase B voltage", "input", reg(5020), 1, "phase"),
+    ("phase C voltage", "input", reg(5021), 1, "phase"),
+    ("meter phase A voltage (5741)", "input", reg(5741), 1, "meter"),
+    ("meter phase A current (5744)", "input", reg(5744), 1, "meter"),
+    ("battery voltage", "input", reg(13020), 1, "battery"),
+    ("battery level", "input", reg(13023), 1, "battery"),
+    ("battery temperature", "input", reg(13025), 1, "battery"),
+    ("battery capacity (5639)", "input", reg(5639), 1, "battery"),
+    ("firmware block (13250, spec V1.1.7+)", "input", reg(13250), 1, "firmware"),
+    (DIRECT_ONLY_LABEL, "input", reg(6100), 2, "transport"),
+    ("PV power limitation (13018, V1.1.10+)", "holding", reg(13018), 1, "firmware"),
 )
 
 #: The firmware strings, which decide more than the model does.
@@ -951,10 +952,10 @@ def last_two_octets(host: str) -> str | None:
     would not.
 
     Two octets rather than one because the third is what separates one
-    contributor's network from another's -- three of the installations on
-    record sit on 192.168.178 and two on 192.168.176, which one octet cannot
-    show. It is also the more revealing half, which is why it is asked for
-    rather than taken.
+    contributor's network from another's -- several installations on record
+    share a router's default network, which one octet cannot tell apart. It
+    is also the more revealing half, which is why it is asked for rather
+    than taken.
 
     A hostname has no octets, and neither does an IPv6 address; both are
     perfectly ordinary things to point this script at, so both give None

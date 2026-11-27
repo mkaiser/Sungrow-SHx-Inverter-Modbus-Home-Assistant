@@ -20,6 +20,7 @@ from modbus_connection.model import Component
 from . import diagnosis_document
 from .addresses import DIRECT_ONLY_PROBE, declared_field, field_address, read
 from .diagnosis_document import OTHER_INVERTER_YES, State, classify
+from .dump import async_read_retrying as async_read_retrying
 from .hybrid_inverter.device import SungrowInverter
 from .hybrid_inverter.registers import COMPONENTS
 from .identity import STRING_INVERTER
@@ -33,34 +34,6 @@ class NextStep:
     key: str
     title: str
     detail: str
-
-
-async def async_read_retrying(
-    read: Callable[[int, int], Awaitable[list[int]]],
-    address: int,
-    count: int,
-    attempts: int = 3,
-    *,
-    delay: float = 1.5,
-) -> list[int]:
-    """Read one block, retrying what the link failed to carry.
-
-    An exception *response* is the device answering, so it is raised at once:
-    retried, a refusal followed by a timeout would end as "no answer" in a
-    published probe state. Except what `SETTLES_NOTHING` names.
-    """
-    for attempt in range(1, max(1, attempts) + 1):
-        try:
-            return list(await read(address, count))
-        except ModbusExceptionError as err:
-            if not isinstance(err, SETTLES_NOTHING) or attempt >= attempts:
-                raise
-            await asyncio.sleep(delay)
-        except (ModbusError, TimeoutError, OSError):
-            if attempt >= attempts:
-                raise
-            await asyncio.sleep(delay)
-    raise AssertionError("unreachable")
 
 
 def failure_state(error: BaseException) -> str:

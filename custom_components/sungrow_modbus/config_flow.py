@@ -95,17 +95,12 @@ from .config_flow_schemas import (
 from .const import (
     AUDIENCE_ADMINS,
     AUDIENCE_USERS,
+    CAPABILITY_TEST_OPTIONS,
     CAPABILITY_TEST_PERMISSION_DEFAULT,
     CONF_ADD_DEVICES,
     CONF_BATTERY_CAPACITY,
     CONF_BATTERY_CAPACITY_REPORTED,
     CONF_BATTERY_MAX_POWER,
-    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_EXPORT,
-    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-    CONF_CAPABILITY_TEST_PV_CUT,
-    CONF_CAPABILITY_TEST_RESTART,
     CONF_CAPABILITY_TEST_WALLBOX,
     CONF_DIAGNOSIS_COMMENT,
     CONF_DIAGNOSIS_OTHER_INVERTER,
@@ -677,12 +672,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Start the only setup there is: find the inverter, then set it up.
 
-        The preview opened with a question -- is this entry for your inverter,
-        or for a reading to send in? -- and it is gone, because the answer
-        stopped mattering. A devices entry carries the diagnosis and the
-        capability test on its own device page, so the lighter entry did
-        nothing the ordinary one cannot, while costing everybody a dialog and
-        costing a contributor their entities.
+        No question about what the entry is for: every entry carries the
+        diagnosis and the capability test on its own device page, so somebody
+        who came to send a reading gets the same entry as everybody else.
 
         What follows is the wiring (search or type an address), the device,
         and then the one question that is genuinely a decision: whether to
@@ -963,13 +955,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_search(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Sweep a subnet and identify whatever answers.
+        """Ask for the range to sweep, and start the sweep once it parses.
 
-        Two passes, and the second is the one that matters: an open port 502
-        is not a Modbus device. A sweep of the maintainer's own LAN turned up
-        a gateway that accepts the connection and echoes bytes back, so
-        nothing is called an inverter until it has answered a read of its
-        device type register.
+        The sweep itself, and why an open port is not an inverter, is
+        `_async_sweep_and_identify`.
         """
         errors: dict[str, str] = {}
         placeholders: dict[str, str] = {}
@@ -1917,11 +1906,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             title=self._title,
             data=data,
             # The last screen of the wizard, and the only place left to say
-            # what happens next -- including the ask for a reading, which
-            # used to live on the diagnostics path's own success dialog and
-            # would otherwise have gone with it. The diagnosis is a button
-            # somebody has to find and press, and the document arrives in a
-            # notification they have no reason to be watching.
+            # what happens next -- including the ask for a reading. The
+            # diagnosis is a button somebody has to find and press, and the
+            # document arrives in a notification they have no reason to be
+            # watching.
             # `async_create_entry` renders this as markdown on the success
             # dialog; the key is `config.create_entry.<description>`.
             description="default",
@@ -2175,10 +2163,6 @@ class SungrowOptionsFlow(OptionsFlow):
                             options=[AUDIENCE_ADMINS, AUDIENCE_USERS],
                         )
                     )
-                    # Built from the table rather than written out, so adding a
-                    # permission is one line in `const.py` and a string, and
-                    # cannot be half-done: a permission the page never showed
-                    # would silently keep its default forever.
                     for permission in DEFAULT_PERMISSIONS
                 }
             ),
@@ -2230,13 +2214,6 @@ class SungrowOptionsFlow(OptionsFlow):
         The ceiling is the one setting that changes what a number *is*. The
         capacity is shown twice, as register 5639 reads it (read-only) and as
         the owner's override, which feeds the battery charge sensors only.
-
-        The raw register dump used to sit here, which put a switch about
-        *Download diagnostics* under a heading about the battery. It is a
-        diagnosis setting, so it is asked beside the diagnosis's own dump
-        (`_testimony_schema`); the option key is unchanged, and a section is
-        flattened into the options on save, so an entry that stored it keeps
-        its value.
         """
         options = self.config_entry.options
         return section(
@@ -2312,11 +2289,9 @@ class SungrowOptionsFlow(OptionsFlow):
         return None if value is None else float(value)
 
     # The testimony a diagnosis needs and no register can answer, plus the
-    # one switch that changes what it reads. Saved here; *run* from the
-    # button on the device page, or the `run_diagnosis` action, which is
-    # where a progress bar and a download link can exist and a modal
-    # dialog cannot. Same questions as the diagnostics setup step asks,
-    # from one schema, so the two cannot drift.
+    # switches that change what it reads. Saved here; *run* from the button
+    # on the device page, or the `run_diagnosis` action, which is where a
+    # progress bar and a download link can exist and a modal dialog cannot.
 
     def _diagnosis_section(self) -> Any:
         """Return the diagnosis's questions, which are an offer rather than a setting.
@@ -2328,8 +2303,8 @@ class SungrowOptionsFlow(OptionsFlow):
         return section(_testimony_schema(options), {"collapsed": True})
 
     # What the capability test is allowed to do, which is a different question
-    # from whether to run it. Running it is a button; these three decide how
-    # far it may go when somebody presses that button. Each is granted until
+    # from whether to run it. Running it is a button; these decide how far it
+    # may go when somebody presses that button. Each is granted until
     # switched off (`CAPABILITY_TEST_PERMISSION_DEFAULT`). Their descriptions
     # carry the consequences, because a checkbox label has no room for them
     # and this is the only place any is explained.
@@ -2346,47 +2321,10 @@ class SungrowOptionsFlow(OptionsFlow):
             probatio.Schema(
                 {
                     probatio.Required(
-                        CONF_CAPABILITY_TEST_RESTART,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_RESTART,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_EXPORT,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_EXPORT,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_PV_CUT,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_PV_CUT,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-                            CAPABILITY_TEST_PERMISSION_DEFAULT,
-                        ),
-                    ): BooleanSelector(),
+                        key,
+                        default=options.get(key, CAPABILITY_TEST_PERMISSION_DEFAULT),
+                    ): BooleanSelector()
+                    for key in CAPABILITY_TEST_OPTIONS
                 }
             ),
             {"collapsed": True},

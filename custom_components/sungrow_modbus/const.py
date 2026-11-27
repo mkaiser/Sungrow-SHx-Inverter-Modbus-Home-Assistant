@@ -183,10 +183,21 @@ CONF_CAPABILITY_TEST_DISCHARGE_WINDOW = "capability_test_discharge_window"
 #: watched write the integration needs before it offers it as a control.
 CONF_CAPABILITY_TEST_IMPORT_LIMIT = "capability_test_import_limit"
 
-#: Let the capability test write to the wallbox (21203, 21204, 21211, 21212,
-#: 21232) and put each setting back. **Off until switched on**, unlike every
-#: permission above: a wallbox is the one device whose test interrupts a car
-#: mid-charge, and only a measured owner has agreed to that.
+#: The capability test's permissions above, in the order the options page
+#: shows them.
+CAPABILITY_TEST_OPTIONS = (
+    CONF_CAPABILITY_TEST_RESTART,
+    CONF_CAPABILITY_TEST_EXPORT,
+    CONF_CAPABILITY_TEST_PV_CUT,
+    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
+    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
+    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
+)
+
+#: Let the capability test write to the wallbox (21203, 21204 and 21212, never
+#: the enable at 21211) and put each setting back. **Off until switched on**,
+#: unlike every permission above: a wallbox is the one device whose test
+#: interrupts a car mid-charge, and only a measured owner has agreed to that.
 CONF_CAPABILITY_TEST_WALLBOX = "capability_test_wallbox"
 DEFAULT_CAPABILITY_TEST_WALLBOX = False
 
@@ -337,15 +348,15 @@ CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL = "diagnosis_other_inverter_detail"
 #: cleared it reads `xxx.xxx` and is complete rather than damaged.
 CONF_PUBLISH_ADDRESS = "publish_address"
 
-#: Whether a diagnosis also sweeps the sixteen raw address bands.
+#: Whether a diagnosis also sweeps the raw address bands (`dump.DUMP_BANDS`).
 #:
 #: On by default, and the only answer in this section that is not testimony:
 #: it changes what the diagnosis *does* rather than describing what the owner
 #: knows. So the diagnostics setup step does not ask it -- nobody has chosen a
 #: run at that point -- and only the options page's diagnosis section does.
 #:
-#: Not free, which is why it stays a question. The dump reads
-#: 2181 addresses, most of which nothing maps, and on a Sungrow an address with no
+#: Not free, which is why it stays a question. The dump reads every address
+#: in those bands, most of which nothing maps, and on a Sungrow an address with no
 #: register behind it goes quiet rather than refusing -- so every empty one
 #: costs a whole timeout. A measured SH10RT takes about five minutes.
 #:

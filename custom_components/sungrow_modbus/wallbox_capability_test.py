@@ -338,8 +338,6 @@ async def async_restore_leftover(
     The entry's own polling is held off, and a managed run's inverter entry's
     too, as during a run. The issue comes down only on success.
     """
-    from .repairs import async_clear_wallbox
-
     leftover = await async_leftover(hass, entry)
     if leftover is None:
         async_clear_wallbox(hass, entry)

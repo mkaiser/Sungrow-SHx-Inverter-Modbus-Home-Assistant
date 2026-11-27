@@ -64,13 +64,6 @@ from sungrow_modbus.wallbox.capability_test import CHARGING as WALLBOX_CHARGING
 from sungrow_modbus.wallbox.plausibility import LOAD_INCLUDES
 
 from .const import (
-    CAPABILITY_TEST_PERMISSION_DEFAULT,
-    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_EXPORT,
-    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-    CONF_CAPABILITY_TEST_PV_CUT,
-    CONF_CAPABILITY_TEST_RESTART,
     CONF_DIAGNOSIS_DUMP,
     DEFAULT_DIAGNOSIS_DUMP,
     DIAGNOSIS_ISSUE_URL,
@@ -81,6 +74,7 @@ from .const import (
     LINK_VALID,
 )
 from .continuous import INTERVAL, ContinuousCapabilityTest
+from .diagnosis_settings import permissions
 from .texts import Texts, async_cached_texts
 from .wallbox_capability_test import (
     PLAUSIBILITY_SAVE_DELAY as WALLBOX_PLAUSIBILITY_SAVE_DELAY,
@@ -268,11 +262,10 @@ class DiagnosisRunner:
         self._wallbox_firmware: str | None = None
         #: The readings' own checks are fed on their own timer, not auto
         #: repeat's, because **they write nothing**. Auto repeat is a leave to
-        #: write, and gating a read-only accumulation behind it meant a house
-        #: whose owner never switched it on could never settle a plausibility
-        #: check, and that parking auto repeat for another test silently lost
-        #: whatever the house did meanwhile -- a 4.5 kW charge, measured on
-        #: 2026-11-17, produced no observations at all. One minute, because
+        #: write: behind it, a house whose owner never switched it on would
+        #: never settle a plausibility check, and whatever the house did while
+        #: auto repeat waited for another test would be lost -- a 4.5 kW
+        #: charge, measured on 2026-11-17, left no observations. One minute, because
         #: the checks that want "a day of polls" count ticks and a day is
         #: 1440 of them; the coordinator's own interval would reach that in
         #: two hours and mean something else. Bounded by `MAX_RATIOS`.
@@ -737,39 +730,7 @@ class DiagnosisRunner:
         """Return what part B has leave to do, from this entry's options."""
         return ControlOptions(
             forced_startup=self._forced_startup,
-            restart=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            enable_export_limit=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_EXPORT, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            cut_pv=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_PV_CUT, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            charge_window=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
-            discharge_window=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
-            import_limit=bool(
-                self.entry.options.get(
-                    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
+            **permissions(self.entry.options),
         )
 
     async def _async_run_stoppable(self, capability_test: bool) -> None:
@@ -978,7 +939,7 @@ class DiagnosisRunner:
         that can be asked for again this evening, where the readings' checks
         are fed every minute for days and a house that loses them waits days
         for them back. An owner starting the runs afresh -- after a wrong
-        verdict, or a changed installation -- was discarding both
+        verdict, or a changed installation -- keeps the readings
         (`async_clear_readings` is the other half).
         """
         from .capability_test import async_ledger_clear
@@ -1174,10 +1135,9 @@ class DiagnosisRunner:
         self.async_observe(now)
         # Tell the entities. The counters and the test summary are computed
         # from the collection, so without this they show whatever they showed
-        # when something else last changed -- which, now that observing no
-        # longer rides on auto repeat's tick, can be hours. Measured at the
-        # maintainer's on 2026-11-17: the store held 811 observations while
-        # the summary still said 745.
+        # when something else last changed, which can be hours: observing
+        # has its own timer. Measured at the maintainer's on 2026-11-17: the
+        # store held 811 observations while the summary still said 745.
         self.async_notify()
 
     @callback
@@ -1217,13 +1177,6 @@ class DiagnosisRunner:
     def _on_progress(self, fraction: float, step: str) -> None:
         """Record one step. Called from the reading loop, on the event loop."""
         self._set(fraction=fraction, step=step)
-
-
-@callback
-def async_runner(entry: SungrowConfigEntry) -> DiagnosisRunner:
-    """Return the runner for one entry, from its runtime data."""
-    runner: DiagnosisRunner = entry.runtime_data.diagnosis
-    return runner
 
 
 Progress = Callable[[float, str], None]

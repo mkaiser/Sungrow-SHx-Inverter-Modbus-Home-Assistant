@@ -9,7 +9,7 @@ a run starts, and a reload would end a collection (`_built_from` leaves
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypedDict
 
 from homeassistant.core import HomeAssistant
 from sungrow_modbus.diagnosis_document import (
@@ -20,6 +20,7 @@ from sungrow_modbus.diagnosis_document import (
 
 from . import testimony
 from .const import (
+    CAPABILITY_TEST_OPTIONS,
     CAPABILITY_TEST_PERMISSION_DEFAULT,
     CONF_CAPABILITY_TEST_CHARGE_WINDOW,
     CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
@@ -76,21 +77,41 @@ _WALLBOX_SAID: dict[str, Field] = {
     for key in (CONF_REPORTER, CONF_DIAGNOSIS_COMMENT, CONF_PUBLISH_ADDRESS)
 }
 _ALLOWED: dict[str, Field] = dict.fromkeys(
-    (
-        CONF_CAPABILITY_TEST_RESTART,
-        CONF_CAPABILITY_TEST_EXPORT,
-        CONF_CAPABILITY_TEST_PV_CUT,
-        CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-        CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-        CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-    ),
-    ("boolean", CAPABILITY_TEST_PERMISSION_DEFAULT),
+    CAPABILITY_TEST_OPTIONS, ("boolean", CAPABILITY_TEST_PERMISSION_DEFAULT)
 )
 _WALLBOX_ALLOWED: dict[str, Field] = {
     CONF_CAPABILITY_TEST_WALLBOX: ("boolean", DEFAULT_CAPABILITY_TEST_WALLBOX),
     CONF_WALLBOX_STANDALONE: ("boolean", DEFAULT_WALLBOX_STANDALONE),
     CONF_WALLBOX_MAX_AMPS: ("number", (6, 32)),
 }
+
+
+class Permissions(TypedDict):
+    """The capability test's permissions, as the library's `Options` fields."""
+
+    restart: bool
+    enable_export_limit: bool
+    cut_pv: bool
+    charge_window: bool
+    discharge_window: bool
+    import_limit: bool
+
+
+def permissions(options: Mapping[str, Any]) -> Permissions:
+    """Return what part B has leave to do, from an entry's options."""
+
+    def allowed(key: str) -> bool:
+        return bool(options.get(key, CAPABILITY_TEST_PERMISSION_DEFAULT))
+
+    return Permissions(
+        restart=allowed(CONF_CAPABILITY_TEST_RESTART),
+        enable_export_limit=allowed(CONF_CAPABILITY_TEST_EXPORT),
+        cut_pv=allowed(CONF_CAPABILITY_TEST_PV_CUT),
+        charge_window=allowed(CONF_CAPABILITY_TEST_CHARGE_WINDOW),
+        discharge_window=allowed(CONF_CAPABILITY_TEST_DISCHARGE_WINDOW),
+        import_limit=allowed(CONF_CAPABILITY_TEST_IMPORT_LIMIT),
+    )
+
 
 #: Read when a run starts and by nothing at setup.
 RUN_OPTIONS = frozenset({*_SAID, *_ALLOWED})

@@ -49,9 +49,9 @@ INTEGRATION = REPO / "custom_components" / "sungrow_modbus"
 MANIFEST = INTEGRATION / "manifest.json"
 
 #: The scripts that run on the published library rather than on a checkout:
-#: the diagnosis, fetched by its launchers through `uv`, and the capability test.
-#: Both pin the same version the manifest does, so the same wheel has to serve
-#: their imports too.
+#: the diagnosis, the capability test and the two wallbox tests, fetched by
+#: their launchers through `uv`. Each pins the version the manifest does
+#: (`sync_version.SCRIPTS`), so the same wheel has to serve their imports too.
 SCRIPT_DIRECTORIES = (REPO / "device-diagnosis" / "scripts" / "python",)
 
 

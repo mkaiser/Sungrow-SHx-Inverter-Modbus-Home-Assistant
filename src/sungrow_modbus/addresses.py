@@ -34,7 +34,7 @@ def reg(number: int) -> int:
     Every register map here is written in the **document's** numbers, the ones
     in Sungrow's protocol tables and in the YAML package's comments, and this
     is the single place the two are one apart. Written as protocol addresses,
-    the map said `power_flow_status = integer(13000)` -- and 13000 is what the
+    a map reads `power_flow_status = integer(13000)` -- and 13000 is what the
     specification calls the *running state*, the field one line above it.
     """
     if number < 1:

@@ -11,7 +11,7 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Any
 
-from ..dump import WALLBOX_MASKED
+from ..dump import WALLBOX_MASKED, decoded_fields
 from .discovery import _printable
 from .registers import CODES, COMPONENTS, CONFIDENCE, LOCAL_CLOCK, MODELS
 
@@ -79,41 +79,31 @@ def readings(dump: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     because the next person to see one may recognise it.
     """
     out: dict[str, dict[str, Any]] = {}
-    for component in COMPONENTS.values():
-        values = dump.get(component.register_space)
-        if not isinstance(values, Mapping):
-            continue
-        for name, field in component.declared_fields.items():
-            words = [values.get(str(field.address + i)) for i in range(field.count)]
-            present = [int(word) for word in words if word is not None]
-            if len(present) < field.count:
+    for published, field, value in decoded_fields(dump, COMPONENTS):
+        entry: dict[str, Any] = {
+            "register": field.address + 1,
+            "held": CONFIDENCE[published],
+        }
+        if isinstance(value, str):
+            if not value.strip():
                 continue
-            published = name.removesuffix("_raw")
-            value = field.decode(present)
-            entry: dict[str, Any] = {
-                "register": field.address + 1,
-                "held": CONFIDENCE[published],
-            }
-            if isinstance(value, str):
-                if not value.strip():
-                    continue
-                entry["value"] = value.strip()
-            elif published == "device_type_code":
-                entry["value"] = f"0x{value:04X}"
-                if (model := MODELS.get(value)) is not None:
-                    entry["model"] = model
-            elif published in LOCAL_CLOCK:
-                entry["value"] = value
-                entry["local_time"] = _local_time(value)
-                entry["note"] = "epoch, but the value is the wallbox's local clock"
-            elif published in CODES:
-                entry["value"] = value
-                entry["means"] = CODES[published].get(value, "unknown code")
-            else:
-                entry["value"] = value
-            if unit := getattr(field, "unit", None):
-                entry["unit"] = unit
-            out[published] = entry
+            entry["value"] = value.strip()
+        elif published == "device_type_code":
+            entry["value"] = f"0x{value:04X}"
+            if (model := MODELS.get(value)) is not None:
+                entry["model"] = model
+        elif published in LOCAL_CLOCK:
+            entry["value"] = value
+            entry["local_time"] = _local_time(value)
+            entry["note"] = "epoch, but the value is the wallbox's local clock"
+        elif published in CODES:
+            entry["value"] = value
+            entry["means"] = CODES[published].get(value, "unknown code")
+        else:
+            entry["value"] = value
+        if unit := getattr(field, "unit", None):
+            entry["unit"] = unit
+        out[published] = entry
     return out
 
 

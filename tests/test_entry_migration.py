@@ -28,6 +28,7 @@ from custom_components.sungrow_modbus.entry_migration import (
     migrated_options,
     new_unique_id,
 )
+from custom_components.sungrow_modbus.repairs import ISSUE_PREFIX
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er, issue_registry as ir
 
@@ -161,3 +162,23 @@ async def test_a_snapshot_already_at_the_new_key_is_kept(
     snapshot = await async_leftover(hass, entry)
     assert snapshot is not None
     assert snapshot.values == {"battery_min_soc": 20.0}
+
+
+def test_the_repair_takes_an_id_of_its_own() -> None:
+    """Deleting the old repair must not delete the one the moved snapshot raises."""
+    assert ISSUE_PREFIX != OLD_ISSUE_PREFIX
+
+
+async def test_an_entry_already_current_is_left_and_a_newer_one_refused(
+    hass: HomeAssistant,
+) -> None:
+    current = MockConfigEntry(
+        domain=DOMAIN, version=1, minor_version=MINOR_VERSION, options={"x": 1}
+    )
+    newer = MockConfigEntry(domain=DOMAIN, version=2, minor_version=1)
+    current.add_to_hass(hass)
+    newer.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, current) is True
+    assert current.options == {"x": 1}
+    assert await async_migrate_entry(hass, newer) is False

@@ -40,8 +40,7 @@ back and times how the car follows; `--above-rating` and
 `--fallback` need `--max-amps` given on purpose (the last also needs it no
 higher than the setting the wallbox had); `--phase-charging` switches the phase
 with the charge stopped first. `--merge-into DIAGNOSIS.json` keeps the run in a
-diagnosis document under `wallbox_capability_test`. They came with
-`sungrow-modbus` 0.1.0a34, so the pin above has them.
+diagnosis document under `wallbox_capability_test`.
 
 **At the wallbox's own address only**: Modbus inside TLS on port 516, unit 248.
 Through a WiNet-S the wallbox reads back stale and the readback is not
@@ -54,9 +53,9 @@ Before you start:
   succession, and drops a session after sixty seconds of silence.
 * **For the behavioural leg, a car must be plugged in and charging.** Without
   one only the raw word is checked, and the run says the scale is not settled.
-* **`--enable` and `--below-minimum` write nothing any more**: a disable
-  ended a charge that the enable written back did not resume, and an offer
-  under 6 A can leave the wallbox suspended (both 2026-11-13). **`--phase`
+* **`--enable` and `--below-minimum` write nothing**: a disable ended a
+  charge that the enable written back did not resume, and an offer under
+  6 A can leave the wallbox suspended (both measured 2026-11-13). **`--phase`
   switches the phase setting and back**, and only when nothing is flowing.
   **`--start-stop`** stops and starts the charge once, and only if the
   register reads 0 while a car charges.
@@ -79,19 +78,10 @@ from typing import Any
 
 from modbus_connection import ModbusError
 from modbus_connection.tmodbus import ModbusConnection
-
-try:
-    from sungrow_modbus.wallbox import capability_test as wct
-except ImportError:  # pragma: no cover -- the pinned wheel predates the module
-    print(
-        "This needs a sungrow-modbus that has wallbox.capability_test; the pinned "
-        "one does not. It ships in the release after 0.1.0a27.",
-        file=sys.stderr,
-    )
-    raise SystemExit(2) from None
-
 import probe
 import wallbox_direct
+
+from sungrow_modbus.wallbox import capability_test as wct, ledger
 
 #: Why `--leave` alone writes nothing. Measured at gerd's on 2026-11-14.
 MANAGED = """
@@ -105,8 +95,8 @@ Give --standalone only for a wallbox that no inverter manages.
 #: The exit code for a run this script refuses before it connects.
 REFUSED_HERE = 2
 
-#: The options only a library newer than the pinned one has.
-NEW_FLAGS = (
+#: The options passed to `wct.Options` as given, and recorded in the document.
+FLAGS = (
     "follow",
     "below_minimum",
     "above_rating",
@@ -269,7 +259,7 @@ def document(outcome: wct.Outcome, args: argparse.Namespace) -> dict[str, Any]:
             "enable": args.enable,
             "phase": args.phase,
             "start_stop": args.start_stop,
-            **{name: getattr(args, name, False) for name in NEW_FLAGS},
+            **{name: getattr(args, name, False) for name in FLAGS},
         },
         "code": outcome.code,
         "conditions": {k: v for k, v in outcome.conditions.items() if k != "refusals"},
@@ -317,7 +307,8 @@ async def _run(
         if args.restore:
             return await _restore_mode(port, Path(args.restore))
         if args.leave and not args.standalone:
-            # Here, not only in the library: the pinned wheel predates the guard.
+            # Before the last question: a run that would write nothing is
+            # refused before anybody is asked to permit it.
             print(MANAGED, file=sys.stderr)
             return REFUSED_HERE
         if args.leave and not _ready(args):
@@ -327,24 +318,15 @@ async def _run(
         async def keep(snapshot: dict[str, Any]) -> None:
             _save(snapshot_path, json.dumps(snapshot, indent=2))
 
-        extra = {name: True for name in NEW_FLAGS if getattr(args, name, False)}
-        if args.cap_explicit:
-            extra["cap_explicit"] = True
-        if args.standalone:
-            extra["standalone"] = True
-        if any(name not in wct.Options.__dataclass_fields__ for name in extra):
-            print(
-                "These options need a sungrow-modbus newer than the pinned one.",
-                file=sys.stderr,
-            )
-            return 2
         options = wct.Options(
             leave=args.leave,
             max_amps=args.max_amps,
             start_stop=args.start_stop,
             enable=args.enable,
             phase=args.phase,
-            **extra,
+            cap_explicit=args.cap_explicit,
+            standalone=args.standalone,
+            **{name: bool(getattr(args, name, False)) for name in FLAGS},
         )
         runner = wct.WallboxCapabilityTest(
             port,
@@ -390,8 +372,6 @@ def _merge(target: Path, block: dict[str, Any], host: str) -> Path:
     Refuses to write if the block holds the address: a refusal costs a minute,
     and an address in a public document is out for good.
     """
-    from sungrow_modbus.wallbox import ledger  # newer than the pinned wheel
-
     if host in json.dumps(block):
         raise SystemExit(
             f"refusing to merge: the block contains the address ({target})"

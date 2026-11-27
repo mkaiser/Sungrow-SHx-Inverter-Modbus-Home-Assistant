@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
@@ -112,6 +113,40 @@ async def test_the_measured_unit_decodes(field: str, expected: object) -> None:
 async def test_its_software_version_is_read() -> None:
     device = await _polled()
     assert device.software_version == "iHomeManager-SV930.001.00.P020"
+
+
+async def test_a_lost_link_is_retried_once_then_fails_the_poll() -> None:
+    """As on an SG: a refused block costs its component, a lost link the poll."""
+    unit = _measured()
+    device = SungrowIHomeManager(unit)
+    asked: list[int] = []
+
+    async def lose(address: int, count: int) -> list[int]:
+        asked.append(address)
+        raise ModbusConnectionError("Connection lost before response was received")
+
+    unit.read_input_registers = lose  # type: ignore[method-assign]
+    with pytest.raises(ModbusConnectionError):
+        await device.async_update_tier("slowest")
+    assert len(asked) == 2, "one read, one retry"
+
+
+async def test_a_lost_link_once_is_retried_and_the_poll_goes_on() -> None:
+    unit = _measured()
+    device = SungrowIHomeManager(unit)
+    real = unit.read_input_registers
+    lost: list[int] = []
+
+    async def lose_once(address: int, count: int) -> list[int]:
+        if not lost:
+            lost.append(address)
+            raise ModbusConnectionError("Connection lost before response was received")
+        return await real(address, count)
+
+    unit.read_input_registers = lose_once  # type: ignore[method-assign]
+    report = await device.async_update_tier("slowest")
+    assert lost
+    assert report.updated == {"identity", "software"}
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:

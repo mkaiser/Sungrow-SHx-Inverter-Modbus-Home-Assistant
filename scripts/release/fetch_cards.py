@@ -7,8 +7,8 @@
 `power-flow-card-plus` and `energy-flow-card-plus` are flixlix's, under MIT, and
 are not committed here. Each is pinned by version and SHA-256, so a changed
 upstream file fails the build rather than shipping. The element is renamed on
-the way, so it cannot clash with a copy the user has from HACS, and it no longer
-lists itself in the card picker. A patch whose text is not there exactly once
+the way, so it cannot clash with a copy the user has from HACS, and it does
+not list itself in the card picker. A patch whose text is not there exactly once
 fails too: upstream moved, and somebody has to look.
 """
 

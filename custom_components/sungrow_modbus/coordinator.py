@@ -48,8 +48,8 @@ FIELD_COMPONENTS: dict[str, str] = {
     if not name.startswith("_") and name not in {"register_space", "declared_fields"}
 }
 
-#: Component to the tier it belongs to. The interval is a setting now, so
-#: what is fixed is which tier a component is in, not how often that is read.
+#: Component to the tier it belongs to. The interval is a setting, so what
+#: is fixed is which tier a component is in, not how often that is read.
 COMPONENT_TIERS: dict[str, str] = {
     component: tier
     for tier, components in TIER_COMPONENTS.items()
@@ -754,11 +754,6 @@ class SungrowRuntimeData:
         """
         polled: dict[str, Any] = self.coordinators or self.string_inverter
         return next(iter(polled.values()))
-
-    @property
-    def served_components(self) -> frozenset[str]:
-        """Component names this entry polls, answered or not."""
-        return frozenset(self.coordinators)
 
     def coordinator_for(self, component: str) -> SungrowDataUpdateCoordinator:
         """Return the coordinator that owns a component's data."""

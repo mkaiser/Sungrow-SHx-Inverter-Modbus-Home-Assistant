@@ -83,7 +83,7 @@ GAP_VAIN = timedelta(minutes=60)
 #: The slot of a wallbox at its own address, with no inverter beside it. Its
 #: runs need a car charging, and a session lasts an hour or two: half-hour slots
 #: would leave most of it unused. Not shorter, because every run interrupts the
-#: charge (stop and start, a pause under 6 A, a phase switch, 75 s unread), and
+#: charge (stop and start, a phase switch, 75 s unread), and
 #: a car stopped every few minutes may stop resuming. Only checks still missing
 #: run, each at most `ledger.MAX_ATTEMPTS` times, so it cannot run for ever.
 WALLBOX_ALONE_INTERVAL = timedelta(minutes=15)
@@ -177,31 +177,27 @@ class ContinuousCapabilityTest:
         """
         self._async_tick(dt_util.utcnow())
 
+    def _value(self, name: str) -> float | None:
+        """Return one polled reading of the inverter, or None where it has none."""
+        device = self.entry.runtime_data.inverter_coordinator.device
+        try:
+            found = device.field(name)
+        except AttributeError:
+            return None
+        return None if found is None else float(found)
+
     def live(self) -> ledger.Live:
         """Return the house now, from what the coordinators last polled."""
-        device = self.entry.runtime_data.inverter_coordinator.device
-
-        def value(name: str) -> float | None:
-            try:
-                found = device.field(name)
-            except AttributeError:
-                return None
-            return None if found is None else float(found)
-
         return ledger.Live(
-            pv=value("total_dc_power"),
-            battery=value("battery_power"),
-            export=value("export_power_raw"),
-            soc=value("battery_level"),
+            pv=self._value("total_dc_power"),
+            battery=self._value("battery_power"),
+            export=self._value("export_power_raw"),
+            soc=self._value("battery_level"),
         )
 
     def _inverter_running(self) -> bool | None:
         """Whether the last poll saw the inverter running; None if not polled."""
-        device = self.entry.runtime_data.inverter_coordinator.device
-        try:
-            word = device.field("running_state_raw")
-        except AttributeError:
-            return None
+        word = self._value("running_state_raw")
         return None if word is None else is_running(int(word))
 
     def _forced_startup_wanted(self, folded: dict[str, Any] | None) -> bool:
@@ -222,21 +218,12 @@ class ContinuousCapabilityTest:
 
     def _forced_startup_due(self) -> bool:
         """Whether the last poll saw the low-SoC standby the check needs."""
-        device = self.entry.runtime_data.inverter_coordinator.device
-
-        def value(name: str) -> float | None:
-            try:
-                found = device.field(name)
-            except AttributeError:
-                return None
-            return None if found is None else float(found)
-
-        word = value("running_state_raw")
+        word = self._value("running_state_raw")
         return low_soc_standby(
             None if word is None else int(word),
-            value("battery_level"),
-            value("battery_min_soc"),
-            value("total_dc_power"),
+            self._value("battery_level"),
+            self._value("battery_min_soc"),
+            self._value("total_dc_power"),
         )
 
     def _missing(self, folded: dict[str, Any] | None) -> frozenset[str]:

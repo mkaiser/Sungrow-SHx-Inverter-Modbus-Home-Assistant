@@ -17,10 +17,9 @@ rather than the inverter, and they belong under the diagnostic heading of
 the device page rather than among the readings. Every name starts
 *Diagnosis:* (`naming.py`), because that card sorts by name.
 
-They exist in a diagnostics-only entry, and only there: it has no other
-entities at all, and these are the reason it was set up. An ordinary entry
-reaches the same runs through the `run_diagnosis` and `run_capability_test`
-actions, which leave no entities behind.
+Every inverter entry has the start and stop buttons, and an entry set up
+for the diagnosis alone has the rest, which are its only entities. The
+`run_diagnosis` and `run_capability_test` actions start the same runs.
 
 What runs is chosen in *Diagnosis: mode* and started by *Diagnosis: start*;
 *Diagnosis: stop* ends a run, and auto repeat, early -- everything a run
@@ -216,11 +215,10 @@ class DiagnosisModeSelect(DiagnosisEntity, SelectEntity, RestoreEntity):
         It is still a choice and not a leave: this entity starts nothing.
         What starts a run is a press of *Diagnosis: start*, which on anything
         but read-only is held to the `capability_test` permission
-        (administrators by default) -- and that press now grants leave to
-        write without the mode having been touched, where before it took a
-        deliberate pick. Everything else that guards a run is unchanged: the
-        per-check consents in the options, the engine's own refusals, and the
-        restore.
+        (administrators by default), so that press grants leave to write
+        without the mode having been touched. The rest still guards the run:
+        the per-check consents in the options, the engine's own refusals, and
+        the restore.
         """
         super().__init__(runtime_data, "diagnosis_mode")
         self._attr_options = (
@@ -729,9 +727,8 @@ class SkipEstablishedCapabilityTestsSwitch(
     runs. A check two runs disagree on is never left
     out.
 
-    Restored, unlike the continuous switch: it gives no leave to write, it
-    only narrows what a run that has leave writes. No permission either way,
-    for the same reason.
+    Restored, because it gives no leave to write: it only narrows what a run
+    that has leave writes. No permission either way, for the same reason.
     """
 
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:
@@ -782,8 +779,8 @@ class SkipEstablishedCapabilityTestsSwitch(
 class ControlsHeldByTestBinarySensor(DiagnosisEntity, BinarySensorEntity):
     """On while a capability test holds this entry's controls (`write_owner`).
 
-    The one diagnosis entity an ordinary entry has, because it is the one
-    with controls. They stay available while held, and refuse: an automation
+    On every entry with controls, which stay available while held and
+    refuse: an automation
     that writes then gets an error it can see, and a dashboard can hide them
     behind this. A wallbox test writing this inverter's EV charger block
     turns it on too, and names that entry.

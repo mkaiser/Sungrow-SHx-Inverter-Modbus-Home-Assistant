@@ -1,8 +1,10 @@
-"""Talk to Sungrow hybrid inverters over Modbus.
+"""Talk to Sungrow inverters, batteries and wallboxes over Modbus.
 
 A backend-neutral device library built on ``modbus-connection``: it is given a
 ``ModbusUnit`` and knows nothing about Home Assistant, so it can be used from
-any Python program and tested without a network.
+any Python program and tested without a network. The hybrid and string
+inverters, the SBR battery and the wallbox each have a package of their own,
+because no address means the same thing on two of them.
 """
 
 from .battery import (

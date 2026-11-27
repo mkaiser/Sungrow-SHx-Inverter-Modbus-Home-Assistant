@@ -1,11 +1,5 @@
 """Which registers the integration will write, and within what bounds.
 
-Milestone 3 in slices, safest first. The write path has never run against real
-hardware, and `EMS mode selection` is not where anybody wants to find out
-about that — so this table starts with the settings whose worst case is a
-battery that charges to the wrong percentage, and grows once the mechanism is
-proven.
-
 **Writability is declared here and nowhere else.** `registers.py` marks
 exactly these fields `writable=True` -- `tests/test_write_safety.py` fails if the two
 disagree -- so the library refuses a write to anything this table does not
@@ -17,14 +11,8 @@ Every bound was read from two sources that agree: the YAML package's own
 `number:` templates, which are field-proven, and *Communication Protocol of
 Residential Hybrid Inverter* V1.1.11.
 
-Not here yet, deliberately:
-
-* the **power** limits — `battery_max_charge_power` and friends. Their upper
-  bound is `!secret sungrow_modbus_battery_max_power` in the YAML, a value the
-  user supplies, and deciding where the integration gets it instead is a
-  design question rather than a transcription;
-* everything the YAML guards behind its **danger-mode** toggle: EMS mode,
-  forced charge/discharge, backup mode, the inverter start/stop buttons.
+Not here, deliberately: starting and stopping the inverter, which is two
+admin service actions rather than an entity (step 5 below).
 """
 
 from __future__ import annotations
@@ -637,8 +625,8 @@ class Button(TypedDict):
 
 #: Commands, which hold no state to show: a press writes `press` and that is
 #: all. Each needs a capability only a watched write grants, because a
-#: command's readback proves nothing. None yet: register 13017, once a button
-#: here, turned out to be a switch (`SWITCHES`).
+#: command's readback proves nothing. None yet: register 13017 holds a state,
+#: so it is a switch (`SWITCHES`).
 BUTTONS: tuple[Button, ...] = ()
 
 #: Step 5: starting and stopping the inverter. **Not an entity.**
@@ -659,20 +647,16 @@ BUTTONS: tuple[Button, ...] = ()
 #: Hiding and showing it stays a dashboard concern, which is what the YAML's
 #: own danger-mode toggle already does well -- see
 #: its `dashboards/DefaultDashboard`.
+#:
 #: Note the space. Register 13000 is in **both** of Sungrow's tables: Table 3
 #: is read-only over function code 0x04, where reading it gives the running
 #: state, and Table 4 is read/write over 0x03/0x06/0x10, where it is
 #: Start/Stop. They are different address spaces, so the writable field is not
 #: `running_state_raw` -- that one is in the input space and the library
-#: rightly refuses to write it, which is how this was noticed. The holding-side
-#: field is hand-written in `sungrow_modbus.hybrid_inverter.components.InverterControl`,
-#: because nothing reads it and it therefore has no entity and no tier.
-START_STOP = {
-    "component": "control",
-    "field": "start_stop",
-    "start": 0xCF,
-    "stop": 0xCE,
-}
+#: rightly refuses to write it. The holding-side field is hand-written in
+#: `sungrow_modbus.hybrid_inverter.components.InverterControl`, because nothing
+#: reads it and it therefore has no entity and no tier; the actions and their
+#: two words are in the integration's `services.py`.
 
 #: Field names the library is allowed to write. Derived, so it cannot disagree
 #: with the entities built from the same table.

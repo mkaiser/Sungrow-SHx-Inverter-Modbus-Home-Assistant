@@ -719,11 +719,10 @@ def render_numbers() -> str:
             lines.append(f'        legacy_name="{legacy_numbers[unique_id]["name"]}",')
             lines.append(f'        legacy_unique_id="{unique_id}",')
             lines.append('        legacy_platform="template",')
-        # Read from the table rather than decided here. The conditional this
-        # replaces said "BATTERY unless it is the export limit", which was
-        # right about the export limit and wrong about the two start-power
-        # thresholds: their own comment in `writes.py` says
-        # `Capability.BATTERY_START_POWER` gates them, and it did not.
+        # Read from the row rather than decided here: a rule such as
+        # "BATTERY unless it is the export limit" would miss the two
+        # start-power thresholds, which `Capability.BATTERY_START_POWER`
+        # gates (their comment in `writes.py`).
         if capability := row.get("requires"):
             lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        native_min_value={row['minimum']},")

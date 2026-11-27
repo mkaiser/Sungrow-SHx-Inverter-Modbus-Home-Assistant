@@ -3,13 +3,14 @@
 Two switches in this integration are called a register dump and they are not
 the same thing. `register_dump` in the options' Advanced section re-reads the
 addresses this library already maps and lands in the diagnostics file;
-`diagnosis_register_dump` here sweeps sixteen bands of 2181 addresses, most of
-which nothing maps, and lands in the diagnosis document. The second is the one
-that can discover a register, and the one that costs five minutes.
+`diagnosis_register_dump` here sweeps every address in
+`sungrow_modbus.dump.DUMP_BANDS`, most of which nothing maps, and lands in the
+diagnosis document. The second is the one that can discover a register, and
+the one that costs five minutes.
 
-These tests pin the three things that make it safe to ship: it is off unless
-somebody asks, it never runs behind a button somebody is waiting on, and the
-serial number does not come out in it.
+These tests pin the three things that make it safe to ship: it holds the
+owner's answer (on until they turn it off), it never runs behind a button
+somebody is waiting on, and the serial number does not come out in it.
 """
 
 from unittest.mock import patch
@@ -120,7 +121,7 @@ async def test_the_diagnostics_download_never_dumps_however_the_option_is_set(
 async def test_an_asked_for_dump_covers_every_band(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """2181 addresses, in the shape the published documents already use.
+    """Every band of `DUMP_BANDS`, in the shape the published documents use.
 
     Keyed by address as a string and split by register space, because that is
     what `device-diagnosis/scripts/python/sungrow_diagnosis.py` writes and one

@@ -12,15 +12,14 @@ three move with it but cost a read each, so they go on `fast` and `medium`;
 the precise totals and the power limitation as set change rarely
 (`slowest`).
 
-**A lost connection is the hybrid's case too**: one retry per component,
+**A lost connection is the hybrid's case too** (`lost_link_fails_the_poll`):
+one retry per component,
 then the poll fails as a whole, because as an entry's own inverter "the
 link is gone" is the one thing worth telling apart from a refused block.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-import logging
 import re
 from typing import TYPE_CHECKING
 
@@ -43,8 +42,6 @@ from .registers import (
 if TYPE_CHECKING:
     from modbus_connection import ModbusUnit
 
-_LOGGER = logging.getLogger(__name__)
-
 #: Which components each tier polls, keyed as `hybrid_inverter`'s are.
 TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
     "realtime": ("sg_realtime",),
@@ -63,6 +60,8 @@ class SungrowStringInverter(MappedDevice):
     sg_trackers: SgTrackers
     sg_precision: SgPrecision
     sg_power_limit: SgPowerLimit
+
+    lost_link_fails_the_poll = True
 
     def __init__(self, unit: ModbusUnit, unit_id: int = 1) -> None:
         """Bind the identity and every component to a unit handle."""
@@ -131,29 +130,3 @@ class SungrowStringInverter(MappedDevice):
             else:
                 report = UpdateReport(updated=frozenset({"identity"}))
         return report | await self._async_update_components(only)
-
-    async def _async_update_components(
-        self, attributes: Iterable[str] | None = None
-    ) -> UpdateReport:
-        """Refresh each component; a refusal costs it, a lost link the poll.
-
-        One retry on a lost connection first, as on the hybrid: a session a
-        Sungrow closed is not always a dead link, and the retry reconnects.
-        """
-        updated: set[str] = set()
-        failed: dict[str, ModbusError] = {}
-        for attribute in self._components if attributes is None else attributes:
-            component = self.component(attribute)
-            try:
-                try:
-                    await component.async_update()
-                except ModbusConnectionError as err:
-                    _LOGGER.debug("%s lost the link, retrying: %s", attribute, err)
-                    await component.async_update()
-            except ModbusConnectionError:
-                raise
-            except ModbusError as err:
-                failed[attribute] = err
-            else:
-                updated.add(attribute)
-        return UpdateReport(updated=frozenset(updated), failed=failed)

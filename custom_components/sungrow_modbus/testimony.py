@@ -98,20 +98,10 @@ def missing_keys(
     ]
 
 
-def unanswered(
-    hass: HomeAssistant,
-    entry: SungrowConfigEntry,
-    questions: tuple[tuple[str, str], ...] = REQUIRED,
-) -> list[str]:
-    """Return the labels of `questions` this entry has no answer for."""
-    answering = answering_entry(hass, entry) if questions is REQUIRED else entry
-    if answering is None:
-        return []
-    return [
-        label
-        for key, label in questions
-        if not str(answering.options.get(key) or "").strip()
-    ]
+def unanswered(hass: HomeAssistant, entry: SungrowConfigEntry) -> list[str]:
+    """Return the labels of the `REQUIRED` questions this entry has no answer for."""
+    labels = dict(REQUIRED)
+    return [labels[key] for key in missing_keys(hass, entry)[1]]
 
 
 @callback
@@ -121,8 +111,8 @@ def async_refuse_if_unanswered(hass: HomeAssistant, entry: SungrowConfigEntry) -
     `ServiceValidationError`, so the dialog a button press raises and an
     automation's error log say the same thing, and neither is a traceback.
     """
-    if unanswered(hass, entry):
-        answering = answering_entry(hass, entry) or entry
+    answering, missing = missing_keys(hass, entry)
+    if missing:
         raise ServiceValidationError(
             translation_domain=DOMAIN,
             translation_key="testimony_missing",

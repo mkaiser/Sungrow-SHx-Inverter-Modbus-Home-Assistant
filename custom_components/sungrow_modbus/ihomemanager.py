@@ -1,16 +1,16 @@
 """An iHomeManager's readings: its coordinators, and the sensors they feed.
 
-An iHomeManager entry was its diagnosis and nothing else; it now shows what
-the device reports too, read only (`ihomemanager_descriptions.py` says what,
-and why some fields are left out). The library's `SungrowIHomeManager` polls,
+An iHomeManager entry has its diagnosis and shows what the device reports,
+read only (`ihomemanager_descriptions.py` says what, and why some fields are
+left out). The library's `SungrowIHomeManager` polls,
 one coordinator per tier, as on an SG.
 
 **The device has no serial** (`sungrow_modbus.ihomemanager.registers`), so
 its entities' unique ids are the entry's unique id (kind, host and port), as
 its device's identifier already is.
 
-**Each of its ports takes one connection** (V1.0.2, table 2). A diagnosis
-held its port for a minute; polling holds it while the entry is loaded. Any
+**Each of its ports takes one connection** (V1.0.2, table 2). Polling holds
+it while the entry is loaded. Any
 other client of the iHomeManager -- evcc, a second Home Assistant -- needs
 one of the other two ports.
 """

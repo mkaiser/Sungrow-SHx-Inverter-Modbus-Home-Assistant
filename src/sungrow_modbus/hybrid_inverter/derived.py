@@ -67,13 +67,13 @@ RUNNING_STATES: dict[int, str] = {
     0x9100: "Warn Running",
 }
 
-#: What Sungrow's writable mode registers mean. One pair, used by every one of
-#: them, and `scripts/generate/tables/writes.py` sends exactly these two values.
 #: Firmware whose 13022 is two's complement, not a magnitude: 62365 beside
 #: 5214's -3171 at swo14's (wiki: is-battery-power-firmware-dependent). The
 #: map keeps it unsigned: every other firmware measured reads a magnitude.
 SIGNED_13022_FIRMWARE: frozenset[str] = frozenset({"SAPPHIRE-H_01011.95.03"})
 
+#: What Sungrow's writable mode registers mean. One pair, used by every one of
+#: them, and `scripts/generate/tables/writes.py` sends exactly these two values.
 MODE_ENABLED = 0xAA
 MODE_DISABLED = 0x55
 

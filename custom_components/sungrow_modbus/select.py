@@ -31,16 +31,7 @@ from .select_descriptions import SELECT_DESCRIPTIONS
 EV_CHARGER_MODE = "ev_charger_mode"
 CHARGING = "ev_charger_charging_raw"
 
-# One at a time, and not for the usual reason. A Sungrow accepts very few
-# simultaneous Modbus sessions, and everything on this endpoint is already
-# serialized behind one connection -- so two writes issued at once do not go
-# faster, they queue, and the second one's timeout starts while it is still
-# waiting. Worse, these registers interlock: `battery_min_soc` and
-# `battery_max_soc` are rejected if they cross, so an automation that sets both
-# in one call has an ordering that matters and must not be raced.
-#
-# `sensor` and `binary_sensor` set 0 instead because the coordinator does their
-# polling and the entities never talk to the inverter at all.
+# One write at a time, as on every platform that writes: see `number.py`.
 PARALLEL_UPDATES = 1
 
 
@@ -52,9 +43,7 @@ async def async_setup_entry(
     """Set up the modes this device actually has."""
     runtime_data = entry.runtime_data
     # What *Diagnosis: start* runs, on every entry that has a diagnosis: the
-    # read-only pass, one extended test, or extended on auto repeat. An
-    # ordinary entry used to have no way to choose, which left the capability
-    # test reachable only through the `run_capability_test` action.
+    # read-only pass, one extended test, or extended on auto repeat.
     async_add_entities([DiagnosisModeSelect(runtime_data)])
     if (
         runtime_data.is_wallbox_only

@@ -29,14 +29,13 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
+from sungrow_modbus.diagnosis_document import REPORTED_TRANSPORTS, battery_pack_unit
+from sungrow_modbus.string_inverter import MODELS as SG_MODELS
+from sungrow_modbus.string_inverter.registers import COMPONENTS as SG_COMPONENTS
 
 REPO = Path(__file__).resolve().parents[2]
 DOCUMENTS = REPO / "device-diagnosis" / "results" / "inverter"
 SG_DOCUMENTS = REPO / "device-diagnosis" / "results" / "string_inverter"
-
-from sungrow_modbus.diagnosis_document import REPORTED_TRANSPORTS, battery_pack_unit  # noqa: E402
-from sungrow_modbus.string_inverter import MODELS as SG_MODELS  # noqa: E402
-from sungrow_modbus.string_inverter.registers import COMPONENTS as SG_COMPONENTS  # noqa: E402
 
 
 def _connection_cell(connection: dict, user_inputs: dict) -> str:
@@ -173,12 +172,10 @@ def _short_firmware(version: str) -> str:
     already implied by the model in the same row, and repeating it makes the
     cell wide enough to wrap.
 
-    **Any platform, not a named one.** This matched one platform literally
-    until the first non-RT diagnosis arrived: the SH20T of
+    **Any platform, not a named one**: the SH20T of
     [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
-    is a `PEARL-H` machine, and its version sailed through unshortened while
-    every other row was trimmed -- which reads as a difference in the data
-    rather than in this function.
+    is a `PEARL-H` machine, and a version left unshortened beside trimmed
+    ones reads as a difference in the data rather than in this function.
     """
     prefix, separator, rest = version.partition("_")
     return rest if separator and prefix.isupper() else version

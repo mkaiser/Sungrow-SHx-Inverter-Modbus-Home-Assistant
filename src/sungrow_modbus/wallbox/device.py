@@ -2,7 +2,8 @@
 
 Same arrangement as `battery.device` and for the same reasons: separate
 hardware on a different Modbus unit id, reached through the connection that is
-already open, and its own device in the registry hung off the inverter.
+already open, and its own device in the registry hung off the inverter -- or,
+at its own address over TLS, an entry of its own.
 
 **Two tiers, not one.** The pack has none because seventeen registers all move
 slowly; a wallbox has one block that changes second to second -- power,
@@ -53,8 +54,9 @@ SLOW = tuple(name for name in COMPONENTS if name not in FAST)
 class SungrowWallbox(MappedDevice):
     """An AC011E/AC22E wallbox on its own Modbus unit.
 
-    Which unit is not a setting: **3** through a WiNet-S, and **248** at the
-    wallbox's own LAN address, over TLS on port 516. Both are measured. A
+    Which unit is not a setting: **3** through a WiNet-S (2 and 4 are tried
+    after it, `discovery.UNITS`), and **248** at the wallbox's own LAN
+    address, over TLS on port 516. 3, 4 and 248 are measured. A
     sweep for port 502 never finds a wallbox, so it is asked for behind an
     endpoint that already answered, or at the address its owner gives. See
     `sungrow_modbus.wallbox.probe_units`.
@@ -87,18 +89,11 @@ class SungrowWallbox(MappedDevice):
         """
         return self.wallbox_identity.model
 
-    @property
-    def serial_hint(self) -> None:
-        """Nothing: discovery identifies a wallbox by its model name.
-
-        The serial sits at input registers 21201-21206, just below the name
-        the identity probe reads at 21216. `async_read_serial` reads it for
-        the device registry; a diagnosis publishes only its stand-in.
-        """
-        return None
-
     async def async_read_serial(self) -> str | None:
         """Read the wallbox's own serial, or None where it does not read as text.
+
+        At input 21201-21206, just below the model name discovery reads at
+        21216, which identifies a wallbox without touching the serial.
 
         For the device registry, which shows it to the owner. Never for a
         document: a diagnosis masks these words and carries

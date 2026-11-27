@@ -216,23 +216,3 @@ def mode_writes(mode: int, *, charge: bool) -> list[tuple[int, int]]:
     if not charge and mode == USER_DEFINED:
         writes.append((CHARGING, OFF))
     return writes
-
-
-def current_writes(
-    amps: float, *, mode_raw: int, rating_a: float
-) -> list[tuple[int, int]]:
-    """Return the writes that set the user-defined current, or raise ValueError.
-
-    Only in user-defined mode: in any other the inverter refuses the write.
-    """
-    if mode_raw != USER_DEFINED:
-        raise ValueError(
-            "the user-defined current is written only in user-defined mode; "
-            "the inverter refuses it in any other"
-        )
-    return [(USER_CURRENT, user_current_word(amps, rating_a))]
-
-
-def charging_writes(on: bool) -> list[tuple[int, int]]:
-    """Return the write that starts or stops a charge."""
-    return [(CHARGING, ON if on else OFF)]

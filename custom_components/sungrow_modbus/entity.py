@@ -453,10 +453,11 @@ class SungrowDeviceEntity(
     becomes a word.
 
     The unique id is `{inverter serial}_{key}`, the shape the inverter's own
-    entities use. Neither device's serial is used: an SBR reports none at all
-    -- the whole 10740-10789 band was read and there is none in it -- and a
-    wallbox reports one this project deliberately never reads, at input
-    registers 21201-21206, below the model name it probes instead.
+    entities use (`SungrowSubDeviceCoordinator.inverter_serial`). An SBR
+    reports no serial at all -- the whole 10740-10789 band was read and there
+    is none in it -- and a wallbox's own (input registers 21201-21206) is shown
+    on its device page but keys nothing, except on a wallbox entry of its own,
+    which has no inverter serial to use.
 
     No extra prefix on top of the key: every key already begins with
     `battery_` or `wallbox_`, so a prefix would only double it. What keeps

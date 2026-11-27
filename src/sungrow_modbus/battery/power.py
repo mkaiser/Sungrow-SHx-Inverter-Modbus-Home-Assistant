@@ -67,29 +67,19 @@ FALLBACK_W = 5000
 #: How far a reported capacity may sit from a model's rated capacity and still
 #: be that model, as a fraction of that model's rating.
 #:
-#: **Proportional since the first SBH was measured, and it had to become so.**
-#: This was a flat 0.4 kWh, written on the assumption that a pack reads a
-#: little *under* its rating as it degrades. The SH20T in
+#: A pack can read **over** its rating: the SH20T in
 #: [issue #772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
-#: falsified both halves at once: its SBH400 reports **40.55 kWh**, which is
-#: 0.55 *over* the 40.0 rating and therefore outside the old window. The pack
-#: is an SBH400 on two other signals -- its owner names it, and register 33047
-#: reads 23760 W, which is this table's `conservative_w` for that model to the
-#: watt -- so a rule that declined to name it was simply wrong.
+#: reports 40.55 kWh for an SBH400 rated 40.0. It is an SBH400 on two other
+#: signals -- its owner names it, and register 33047 reads 23760 W, this
+#: table's `conservative_w` for that model to the watt. Unnamed, it would fall
+#: through to its BMS, which reported a maximum charge current of 0 on a full
+#: battery, and be offered `FALLBACK_W`, a fifth of what its datasheet allows.
 #:
-#: The consequence was not cosmetic. An unnamed Sungrow pack falls through to
-#: what the BMS reports, and that machine's BMS reported a maximum charge
-#: current of **0** because the battery was full, so a 40 kWh SBH400 was
-#: offered `FALLBACK_W` -- 5000 W, a fifth of what its datasheet allows.
-#:
-#: A fraction rather than a wider flat figure, because the error a pack can
-#: report plainly scales with its size: 0.55 kWh on 40 is 1.4 %, and the same
-#: 0.55 on an SBR064 would be 8.6 % and ought not to match. Widening the flat
-#: window to cover this one reading would have had to reach 0.6 kWh, which is
-#: more than the gap between the two closest models in the table -- SBR096 at
-#: 9.6 and SBH100 at 10.0, **0.4 apart**, a pair the old comment had wrong.
-#: 2 % keeps those two separable (+-0.19 and +-0.20 respectively) while
-#: admitting the measured SBH400.
+#: A fraction rather than a flat window, because the error a pack reports
+#: scales with its size: 0.55 kWh on 40 is 1.4 %, the same 0.55 on an SBR064
+#: would be 8.6 %. A flat window wide enough for the SBH400 would reach past
+#: the gap between the two closest models, SBR096 at 9.6 and SBH100 at 10.0,
+#: 0.4 apart; 2 % keeps those separable (+-0.19 and +-0.20) and admits it.
 CAPACITY_TOLERANCE_FRACTION = 0.02
 
 
@@ -100,12 +90,10 @@ def model_for_capacity(capacity_kwh: float | None) -> BatteryModel | None:
     battery of the same size is not an SBR, and would be given an SBR's power
     limit by a match here.
 
-    **Exactly one model, or none.** This took the nearest model inside the
-    tolerance, which meant a capacity sitting between two of them was resolved
-    by whichever was a hair closer -- and between SBH250 at 25.0 and SBR256 at
-    25.6 a reading of 25.3 was decided by floating-point noise. Naming no pack
-    is the honest answer there: the caller falls back to what the BMS reports,
-    which is a measurement rather than a coin toss.
+    **Exactly one model, or none.** A capacity inside the tolerance of two
+    models -- 25.3 kWh, between SBH250 at 25.0 and SBR256 at 25.6 -- names
+    neither rather than whichever is a hair closer: the caller falls back to
+    what the BMS reports, which is a measurement rather than a coin toss.
     """
     if capacity_kwh is None:
         return None

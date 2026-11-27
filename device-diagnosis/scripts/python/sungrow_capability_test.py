@@ -45,7 +45,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 from collections.abc import Awaitable, Callable
-import dataclasses
 from datetime import UTC, datetime
 import json
 import logging
@@ -61,6 +60,7 @@ import probe
 from sungrow_modbus import SungrowInverter, battery
 from sungrow_modbus.capability_test import (
     CODES,
+    DRY_RUN_MEANS,
     CapabilityTest,
     Options,
     Outcome,
@@ -77,14 +77,14 @@ from sungrow_modbus.hybrid_inverter import export_scale
 
 _LOGGER = logging.getLogger("capability_test")
 
-#: What `--restore` returns internally on success, mapped to 0 before it reaches
-#: a shell. Not 0 here: a *run* also succeeds with 0, and sharing the number
-#: made an ordinary run sign off with "everything in the snapshot is back" --
-#: a sentence about something it had not done.
 #: Exit 1 from `CODES`, named so the handler that returns it reads as what it
 #: means rather than as a bare integer.
 COULD_NOT_RUN = 1
 
+#: What `--restore` returns internally on success, mapped to 0 before it reaches
+#: a shell. Not 0 here: a *run* also succeeds with 0, and sharing the number
+#: would sign an ordinary run off with "everything in the snapshot is back" --
+#: a sentence about something it had not done.
 RESTORED = -1
 
 #: Cancelled at the last prompt, before anything was written.
@@ -562,10 +562,8 @@ async def _export_scale_mode(
 async def _start_only_mode(inverter: SungrowInverter) -> int:
     """Start the inverter and wait for it, and nothing else.
 
-    The command every failure path names. It was referenced in three places
-    before it existed -- including as the recovery to type when an inverter
-    has not come back, which is the worst possible moment to be handed a
-    command that is not there.
+    The command every failure path names, including as the recovery to type
+    when an inverter has not come back.
     """
     # Writing 0xCF to an inverter that is already running is a no-op, so this
     # doubles as a way to prove the write path to register 13000 works before
@@ -606,6 +604,8 @@ async def _run(args: argparse.Namespace) -> int:
             return await _export_scale_mode(inverter, args, serial)
 
         # The forced startup mode starts from standby and restarts nothing.
+        # `getattr` here and for the timed windows below: a caller that builds
+        # its own Namespace need not name the newer flags.
         forced_startup = getattr(args, "forced_startup", False)
         restart = False if forced_startup else _ask_restart(args.restart)
         # A simulator has no house to protect, and `make controltest-sim` is
@@ -622,7 +622,9 @@ async def _run(args: argparse.Namespace) -> int:
             allow_dark=args.allow_dark,
             enable_export_limit=args.enable_export_limit,
             cut_pv=args.cut_pv,
-            **_window_leave(args),
+            charge_window=getattr(args, "charge_window", False),
+            discharge_window=getattr(args, "discharge_window", False),
+            import_limit=getattr(args, "import_limit", False),
             # `--restart-only` is a request to restart, so it implies it rather
             # than quietly measuring nothing when the question is declined.
             restart=restart or args.restart_only,
@@ -824,12 +826,6 @@ def _say_drops(drops: probe.LinkDrops) -> None:
         print("\n" + sentence, file=sys.stderr)
 
 
-#: The library's `capability_test.DRY_RUN_MEANS`, kept here because this script
-#: runs on the published library, which may predate it.
-#: `test_capability_test_cli.py` holds the two equal.
-DRY_RUN_MEANS = "dry run: the plan resolved, and nothing was written"
-
-
 def _means(code: int, dry_run: bool | None) -> str:
     """Return the sentence for an exit code; a dry run's 0 says what it did."""
     return DRY_RUN_MEANS if dry_run and code == 0 else CODES[code]
@@ -977,12 +973,12 @@ async def async_main(args: argparse.Namespace, drops: probe.LinkDrops) -> int:
     try:
         code = await _run(args)
     except (ModbusError, TimeoutError, OSError) as err:
-        # Exit 1 exists for exactly this and was unreachable: `_retrying`
-        # re-raises once it has spent 5, 20, 45 and 90 seconds of backoff, and
-        # nothing caught it, so the most common failure this project documents
-        # ended in a traceback through somebody else's library. The exit codes
-        # are printed as the last line precisely because a pasted transcript
-        # loses `$?`, and a stack trace defeats that where it is needed most.
+        # Exit 1 exists for exactly this: `_retrying` re-raises once it has
+        # spent 5, 20, 45 and 90 seconds of backoff, and the most common
+        # failure this project documents must not end in a traceback. The exit
+        # codes are printed as the last line precisely because a pasted
+        # transcript loses `$?`, and a stack trace defeats that where it is
+        # needed most.
         #
         # Measured 2026-09-20 against a house over a VPN whose Home Assistant
         # was polling: `read_input_registers(5114, 2): Connection lost before
@@ -1017,26 +1013,6 @@ async def async_main(args: argparse.Namespace, drops: probe.LinkDrops) -> int:
         return 0
     print(f"\nexit {code}: {_means(code, args.dry_run)}", file=sys.stderr)
     return code
-
-
-def _window_leave(args: argparse.Namespace) -> dict[str, bool]:
-    """Return the leave for the newer checks this library can act on.
-
-    The diagnosis runs on the pinned release, whose `Options` may predate the
-    timed windows and the import limit. Asked of a library without them, the
-    leave is dropped with a line saying so -- never a crash halfway into a
-    run that writes.
-    """
-    known = {field.name for field in dataclasses.fields(Options)}
-    leave = {}
-    for name in ("charge_window", "discharge_window", "import_limit"):
-        if not getattr(args, name, False):
-            continue
-        if name in known:
-            leave[name] = True
-        else:
-            print(f"  --{name.replace('_', '-')}: this library cannot run it; skipped")
-    return leave
 
 
 def main(argv: list[str] | None = None) -> int:

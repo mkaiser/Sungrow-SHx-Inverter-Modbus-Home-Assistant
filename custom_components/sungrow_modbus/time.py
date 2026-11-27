@@ -18,7 +18,7 @@ from .coordinator import SungrowConfigEntry
 from .entity import SungrowEntity, SungrowTimeDescription
 from .time_descriptions import TIME_DESCRIPTIONS
 
-# One write at a time: see `switch.py`. A time is two writes, and two of them
+# One write at a time: see `number.py`. A time is two writes, and two of them
 # interleaved would leave each window half moved.
 PARALLEL_UPDATES = 1
 

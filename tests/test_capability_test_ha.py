@@ -1468,3 +1468,25 @@ async def test_auto_repeat_keeps_quiet_after_a_run(
     assert continuous.runs_started == 1
     assert "quiet" in continuous.waiting
     await _auto_repeat(hass, False)
+
+
+def test_each_permission_sets_its_own_field_of_the_run() -> None:
+    """One option per field, the options page's six and no other."""
+    from dataclasses import fields
+
+    from custom_components.sungrow_modbus.const import CAPABILITY_TEST_OPTIONS
+    from custom_components.sungrow_modbus.diagnosis_settings import permissions
+    from sungrow_modbus.capability_test import Options
+
+    names = {field.name for field in fields(Options)}
+    nothing = permissions(dict.fromkeys(CAPABILITY_TEST_OPTIONS, False))
+    assert set(nothing) <= names
+    assert not any(nothing.values())
+    turned_on = set()
+    for key in CAPABILITY_TEST_OPTIONS:
+        allowed = permissions(
+            {**dict.fromkeys(CAPABILITY_TEST_OPTIONS, False), key: True}
+        )
+        (field,) = [name for name, on in allowed.items() if on]
+        turned_on.add(field)
+    assert turned_on == set(nothing)

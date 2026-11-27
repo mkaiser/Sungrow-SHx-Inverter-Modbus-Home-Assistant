@@ -15,14 +15,12 @@ MANUFACTURER = "Sungrow"
 #: because the hardware is still in the field even where the current
 #: specification has stopped describing it.
 #:
-#: **The codes are not allocated in one block per family.** An earlier version
-#: of this project classified families by code range, on the stated assumption
-#: that "new models land inside those blocks". V1.1.12 to V1.1.16 falsified it:
-#: MG and SH*RL interleave inside 0x0D2x -- MG5RL to MG10RL at 0x0D27-0x0D2A,
-#: then SH5RL to SH10RL at 0x0D2B-0x0D2E, then MG12RL again at 0x0D2F. A range
-#: extended over that gap would have called four single-phase inverters
-#: three-phase MG. `family_for` reads the model *name* from this table
-#: instead.
+#: **The codes are not allocated in one block per family**, so a family is
+#: never read off a code range. MG and SH*RL interleave inside 0x0D2x -- MG5RL
+#: to MG10RL at 0x0D27-0x0D2A, then SH5RL to SH10RL at 0x0D2B-0x0D2E, then
+#: MG12RL again at 0x0D2F -- and a range over that gap would call four
+#: single-phase inverters three-phase MG. `family_for` reads the model *name*
+#: from this table instead.
 DEVICE_TYPES: dict[int, str] = {
     0x0D03: "SH5K-V13",
     0x0D06: "SH3K6",

@@ -36,17 +36,8 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import CapabilityTest, Options, Snapshot, document
 from sungrow_modbus.capability_test.ledger import fold_key
 
-from .const import (
-    CAPABILITY_TEST_PERMISSION_DEFAULT,
-    CONF_BATTERY_MAX_POWER,
-    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-    CONF_CAPABILITY_TEST_EXPORT,
-    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-    CONF_CAPABILITY_TEST_PV_CUT,
-    CONF_CAPABILITY_TEST_RESTART,
-    DOMAIN,
-)
+from .const import CONF_BATTERY_MAX_POWER, DOMAIN
+from .diagnosis_settings import permissions
 from .write_owner import async_test_owns_writes, cluster_busy
 
 if TYPE_CHECKING:
@@ -280,39 +271,7 @@ class CapabilityTestRunner:
             # would compute the unconstrained ceiling and could ask the pack
             # for more than its owner has said it should ever be asked for.
             configured_battery_w=options.get(CONF_BATTERY_MAX_POWER) or None,
-            restart=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            enable_export_limit=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_EXPORT, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            cut_pv=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_PV_CUT, CAPABILITY_TEST_PERMISSION_DEFAULT
-                )
-            ),
-            charge_window=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
-            discharge_window=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
-            import_limit=bool(
-                options.get(
-                    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
-                    CAPABILITY_TEST_PERMISSION_DEFAULT,
-                )
-            ),
+            **permissions(options),
         )
 
     @callback
@@ -324,9 +283,9 @@ class CapabilityTestRunner:
         here runs while the event loop and this connection are still alive,
         which a `finally` inside a cancelled task cannot promise.
 
-        Armed the moment before 0xCE goes out and removed as soon as the
-        inverter reports running, so it exists only for the window in which it
-        could be needed.
+        Armed when the snapshot first records the inverter stopped, before
+        0xCE goes out, and removed when the run ends or the hook has started
+        the inverter.
         """
         if self._remove_shutdown_job is not None:
             return

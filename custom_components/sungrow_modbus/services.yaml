@@ -29,9 +29,9 @@ stop_inverter:
         device:
           integration: sungrow_modbus
 
-# Producing a capability diagnosis. Read-only, and the counterpart of the button
-# a diagnostics-only entry gets on its device page -- an ordinary entry has
-# no diagnosis entities, so this is how its owner helps if they choose to.
+# Producing a capability diagnosis. Read-only, and the counterpart of the
+# diagnosis buttons every entry has on its device page, for a script or an
+# automation.
 run_diagnosis:
   fields:
     device_id:

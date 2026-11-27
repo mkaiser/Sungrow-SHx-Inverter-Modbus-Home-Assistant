@@ -58,7 +58,7 @@ async def test_without_leave_it_is_a_dry_run_that_writes_nothing(cli, tmp_path, 
 
 
 async def test_leave_without_standalone_writes_nothing(cli, capsys):
-    """Refused by the script itself: the pinned wheel predates the library's guard."""
+    """Refused by the script itself, before the last question is asked."""
     box = FakeWallbox()
     code = await cli._run(_args(cli, "--leave", "--yes"), box, FakeClock())
 

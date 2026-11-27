@@ -706,9 +706,6 @@ IMPORT_LIMIT = Probe(
     leave="import_limit",
 )
 
-#: Every enumeration the run snapshots, restores and never walks. The import
-#: limit is not one, but it is snapshotted, restored and never walked the same
-#: way.
 #: The registers the write-path checks write (`writepath.py`): each written
 #: only with its own word, or, for the second window, while the schedule is
 #: off; never through the readback walk.
@@ -807,6 +804,9 @@ def bound_check(field: str) -> str:
     return f"upper bound of {field}"
 
 
+#: Every enumeration the run snapshots, restores and never walks. The import
+#: limit is not one, but it is snapshotted, restored and never walked the same
+#: way.
 ENUMERATIONS: tuple[Probe, ...] = (
     EMS_MODE,
     FORCED_CMD,
@@ -1669,6 +1669,8 @@ def export_cap() -> float:
 
 
 MIN_PV_W = 200.0
+"""Below this there is nothing to limit and nothing to divert, so the effect
+phase is measuring noise. The readback phase does not care and still runs."""
 
 #: What the PV cut check needs to start from, and what it writes.
 #:
@@ -1677,8 +1679,6 @@ MIN_PV_W = 200.0
 #: a cloud cannot fake it.
 PV_CUT_MIN_W = 500.0
 PV_CUT_ON = 0xAA
-"""Below this there is nothing to limit and nothing to divert, so the effect
-phase is measuring noise. The readback phase does not care and still runs."""
 
 
 class Sample(NamedTuple):

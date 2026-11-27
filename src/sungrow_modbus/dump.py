@@ -15,9 +15,9 @@ plus the ones that turned out to hold real values anyway.
 **The cost is the whole design problem here.** An unmapped address on a
 Sungrow does not refuse in milliseconds -- it goes quiet, and the read waits
 out its full timeout. A measured SH10RT takes about 300 seconds to read these
-2181 addresses for that reason, not because the bytes are slow. So this is
-bounded by a budget, reports which bands it never reached rather than
-pretending it covered them, and belongs behind a switch that is off.
+bands for that reason, not because the bytes are slow. So this is bounded by
+a budget, reports which bands it never reached rather than pretending it
+covered them, and belongs behind a switch the owner can turn off.
 
 The standalone diagnosis imports these bands, and the wallbox's, from here.
 """
@@ -25,63 +25,84 @@ The standalone diagnosis imports these bands, and the wallbox's, from here.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Iterator, Mapping
 import time
+from typing import TYPE_CHECKING, Any
 
 from modbus_connection import ModbusError, ModbusExceptionError
 
+from .addresses import reg
 from .model import SETTLES_NOTHING, Silent
 
-#: Address bands worth dumping raw, with why each is here. Protocol
-#: addresses, so one below the register number in Sungrow's document.
+if TYPE_CHECKING:
+    from modbus_connection.model import Component
+
+#: Address bands worth dumping raw, with why each is here. Each starts at a
+#: protocol address, written as `reg()` of the register number in Sungrow's
+#: document.
 DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 2580, 80, "the 26xx firmware strings"),
-    ("input", 4949, 210, "identity, firmware, AC and DC basics"),
-    ("input", 5600, 160, "meter and battery"),
-    ("input", 6099, 100, "the block a WiNet-S does not forward"),
-    ("input", 10740, 60, "an SBR's own registers, when it answers here"),
-    ("input", 12999, 110, "the 13xxx measurements"),
-    ("input", 13199, 160, "meter channel 2 and the firmware block"),
-    ("holding", 4999, 60, "holding-side identity"),
-    ("holding", 12999, 110, "the 13xxx settings"),
-    ("holding", 31200, 60, "the active-power-limit block"),
-    ("input", 33000, 200, "undocumented, and known to hold real values"),
+    ("input", reg(2581), 80, "the 26xx firmware strings"),
+    ("input", reg(4950), 210, "identity, firmware, AC and DC basics"),
+    ("input", reg(5601), 160, "meter and battery"),
+    ("input", reg(6100), 100, "the block a WiNet-S does not forward"),
+    ("input", reg(10741), 60, "an SBR's own registers, when it answers here"),
+    ("input", reg(13000), 110, "the 13xxx measurements"),
+    ("input", reg(13200), 160, "meter channel 2 and the firmware block"),
+    ("holding", reg(5000), 60, "holding-side identity"),
+    ("holding", reg(13000), 110, "the 13xxx settings"),
+    ("holding", reg(31201), 60, "the active-power-limit block"),
+    ("input", reg(33001), 200, "undocumented, and known to hold real values"),
     # From 32990, not 33000: 32997 holds a site import power limit and
     # 33207-33218 the forced-charging schedule (#785), which a band ending
     # at 33199 never read.
-    ("holding", 32990, 240, "battery power limits, start thresholds, forced charging"),
+    (
+        "holding",
+        reg(32991),
+        240,
+        "battery power limits, start thresholds, forced charging",
+    ),
     # Three registers V1.1.16 documents that no band reached, read alone
     # rather than by stretching a band over the undocumented addresses
     # between, each of which would cost a timeout.
     (
         "input",
-        5213,
+        reg(5214),
         2,
         "battery power, the wide-range S32 the specification recommends",
     ),
-    ("input", 5241, 1, "grid frequency, the 0.01 Hz one the specification recommends"),
-    ("holding", 33273, 1, "load rated power"),
+    (
+        "input",
+        reg(5242),
+        1,
+        "grid frequency, the 0.01 Hz one the specification recommends",
+    ),
+    ("holding", reg(33274), 1, "load rated power"),
     # Registers 33500-33502, outside Sungrow's document: 33500 is 0xAA on a
     # cluster member and 0x55 on a lone inverter (wiki: register-33500).
-    ("holding", 33499, 3, "cluster mode, role and count"),
+    ("holding", reg(33500), 3, "cluster mode, role and count"),
     # Registers 33538-33550: the EV charger block of a wallbox the inverter
     # manages, outside Sungrow's document, with the two unnamed words below
     # it. Read whole at gerd's over the cable and the WiNet-S alike (wiki:
     # gerd-wallbox-inverter-control-2026-11-14).
-    ("holding", 33537, 13, "the EV charger block of a managed wallbox"),
+    ("holding", reg(33538), 13, "the EV charger block of a managed wallbox"),
     # The rest of the history block, registers 6200-6826: daily, monthly and
     # yearly PV, direct-consumption, export and battery-charge energy. V1.1.16:
     # "WiNet-S/S2 and Logger is not supported", so a dongle refuses every
     # address of it. Last, so that on a slow link it is this band the budget
     # cuts short and not one before it.
-    ("input", 6199, 627, "the energy history, which no communication module forwards"),
+    (
+        "input",
+        reg(6200),
+        627,
+        "the energy history, which no communication module forwards",
+    ),
 )
 
 #: Never published raw, whatever band covers it: the serial number's ten
 #: registers. A document carries a stand-in precisely so the real serial
 #: stays out of it, and a raw dump would hand it over in words instead of
 #: characters. Applied by `masked`, which every caller runs before publishing.
-DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 4989, 10),)
+DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", reg(4990), 10),)
 
 #: A wallbox's own register space, on the unit that answered for it. Sungrow
 #: publishes nothing for its AC wallboxes, so a document that said only "a
@@ -99,12 +120,12 @@ DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 4989, 10),)
 #: while the integration's own read of the field got all of it.
 #: `tests/test_wallbox_registers.py` holds every string field to one block.
 WALLBOX_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 21200, 25, "identity, model, type code, phases"),
-    ("input", 21225, 10, "the firmware string, read whole"),
-    ("input", 21235, 45, "ratings"),
-    ("input", 21296, 44, "the live measurements: state, power, energy"),
-    ("holding", 21200, 50, "settings, as far as they answer"),
-    ("holding", 21297, 32, "the scattered upper settings"),
+    ("input", reg(21201), 25, "identity, model, type code, phases"),
+    ("input", reg(21226), 10, "the firmware string, read whole"),
+    ("input", reg(21236), 45, "ratings"),
+    ("input", reg(21297), 44, "the live measurements: state, power, energy"),
+    ("holding", reg(21201), 50, "settings, as far as they answer"),
+    ("holding", reg(21298), 32, "the scattered upper settings"),
 )
 
 #: The same wallbox read at its **own address**, over TLS (port 516, unit
@@ -115,18 +136,18 @@ WALLBOX_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: registers; all twelve answered on that unit. Holding 21249-21312 answers
 #: here where no read through the dongle reached it.
 WALLBOX_TLS_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 21200, 25, "identity, model, type code, phases"),
-    ("input", 21225, 18, "the firmware string, read whole, and a second version"),
-    ("input", 21243, 32, "ratings and phase mode"),
-    ("input", 21275, 32, "the live measurements, first half"),
-    ("input", 21307, 32, "the live measurements, second half"),
-    ("input", 21339, 30, "above the live block"),
-    ("input", 21369, 9, "the last answering data points"),
-    ("holding", 21200, 32, "settings"),
-    ("holding", 21232, 17, "settings, and the clock"),
-    ("holding", 21249, 32, "the upper settings, first half"),
-    ("holding", 21281, 32, "the upper settings, second half"),
-    ("holding", 21313, 8, "the last answering settings"),
+    ("input", reg(21201), 25, "identity, model, type code, phases"),
+    ("input", reg(21226), 18, "the firmware string, read whole, and a second version"),
+    ("input", reg(21244), 32, "ratings and phase mode"),
+    ("input", reg(21276), 32, "the live measurements, first half"),
+    ("input", reg(21308), 32, "the live measurements, second half"),
+    ("input", reg(21340), 30, "above the live block"),
+    ("input", reg(21370), 9, "the last answering data points"),
+    ("holding", reg(21201), 32, "settings"),
+    ("holding", reg(21233), 17, "settings, and the clock"),
+    ("holding", reg(21250), 32, "the upper settings, first half"),
+    ("holding", reg(21282), 32, "the upper settings, second half"),
+    ("holding", reg(21314), 8, "the last answering settings"),
 )
 
 #: The wallbox's serial, input 21201-21206, first -- `wallbox.SERIAL_*` reads
@@ -143,9 +164,9 @@ WALLBOX_TLS_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: like an identifier -- a charge point or card number -- so it is treated
 #: as one until something says otherwise.
 WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
-    ("input", 21200, 6),
-    ("input", 21210, 4),
-    ("holding", 21249, 10),
+    ("input", reg(21201), 6),
+    ("input", reg(21211), 4),
+    ("holding", reg(21250), 10),
 )
 
 #: An iHomeManager's register space, unit 247. Never measured here, so the
@@ -156,21 +177,21 @@ WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
 #: register would be, a serial included, so `ihomemanager.document` masks
 #: any text found there.
 IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 7999, 7, "identity: type code, protocol, devices"),
-    ("input", 8144, 19, "system totals, battery limits, power flows, level"),
-    ("input", 8175, 4, "grid import and export energy"),
-    ("input", 8317, 15, "the application software version, read whole"),
-    ("input", 8551, 23, "charger status and the two CT channels"),
-    ("input", 8593, 8, "charger power, from a scan elsewhere"),
-    ("input", 4356, 6, "phase voltages, from a reading elsewhere"),
-    ("holding", 8023, 30, "the settings: EMS mode, battery, limits, charger"),
-    ("input", 8006, 138, "undocumented, between identity and the totals"),
-    ("input", 8163, 12, "undocumented, between level and energy"),
-    ("input", 8179, 138, "undocumented, above the energy counters"),
-    ("input", 8332, 219, "undocumented, above the software version"),
-    ("input", 8601, 173, "undocumented, as far as the scan elsewhere went"),
-    ("holding", 7999, 24, "undocumented, below the settings"),
-    ("holding", 8053, 75, "undocumented, above the settings"),
+    ("input", reg(8000), 7, "identity: type code, protocol, devices"),
+    ("input", reg(8145), 19, "system totals, battery limits, power flows, level"),
+    ("input", reg(8176), 4, "grid import and export energy"),
+    ("input", reg(8318), 15, "the application software version, read whole"),
+    ("input", reg(8552), 23, "charger status and the two CT channels"),
+    ("input", reg(8594), 8, "charger power, from a scan elsewhere"),
+    ("input", reg(4357), 6, "phase voltages, from a reading elsewhere"),
+    ("holding", reg(8024), 30, "the settings: EMS mode, battery, limits, charger"),
+    ("input", reg(8007), 138, "undocumented, between identity and the totals"),
+    ("input", reg(8164), 12, "undocumented, between level and energy"),
+    ("input", reg(8180), 138, "undocumented, above the energy counters"),
+    ("input", reg(8333), 219, "undocumented, above the software version"),
+    ("input", reg(8602), 173, "undocumented, as far as the scan elsewhere went"),
+    ("holding", reg(8000), 24, "undocumented, below the settings"),
+    ("holding", reg(8054), 75, "undocumented, above the settings"),
 )
 
 #: A Sungrow Logger's own register space, unit 247, mapped from Sungrow's
@@ -180,15 +201,15 @@ IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: (read with function code 3, never written), and the diagnosis's text guard
 #: masks anything shaped like a serial.
 LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 7999, 7, "identity: type code, protocol, devices"),
-    ("input", 8020, 16, "digital, temperature and analogue inputs"),
-    ("input", 8057, 52, "the array: limits, state, power, yields"),
-    ("holding", 8001, 19, "the plant controls, read only"),
-    ("input", 8006, 14, "undocumented, between identity and inputs"),
-    ("input", 8036, 21, "undocumented, between inputs and the array"),
-    ("input", 8109, 90, "undocumented, above the array"),
-    ("holding", 7999, 2, "undocumented, below the controls"),
-    ("holding", 8020, 179, "undocumented, above the controls"),
+    ("input", reg(8000), 7, "identity: type code, protocol, devices"),
+    ("input", reg(8021), 16, "digital, temperature and analogue inputs"),
+    ("input", reg(8058), 52, "the array: limits, state, power, yields"),
+    ("holding", reg(8002), 19, "the plant controls, read only"),
+    ("input", reg(8007), 14, "undocumented, between identity and inputs"),
+    ("input", reg(8037), 21, "undocumented, between inputs and the array"),
+    ("input", reg(8110), 90, "undocumented, above the array"),
+    ("holding", reg(8000), 2, "undocumented, below the controls"),
+    ("holding", reg(8021), 179, "undocumented, above the controls"),
 )
 
 #: An SG string inverter's register space, unit 1. The map is Sungrow's
@@ -197,10 +218,10 @@ LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: blocks are read whole and the addresses around them raw. The serial at
 #: input 4990-4999 is masked by `DUMP_MASKED`, as on a hybrid.
 SG_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 4949, 210, "identity, firmware, PV, AC, state, meter, trackers"),
-    ("input", 5159, 70, "above the documented block, export and meter power"),
-    ("input", 7012, 20, "the per-string currents"),
-    ("holding", 4999, 50, "clock, start/stop, power limitation, reactive power"),
+    ("input", reg(4950), 210, "identity, firmware, PV, AC, state, meter, trackers"),
+    ("input", reg(5160), 70, "above the documented block, export and meter power"),
+    ("input", reg(7013), 20, "the per-string currents"),
+    ("holding", reg(5000), 50, "clock, start/stop, power limitation, reactive power"),
 )
 
 #: Reads per request. Small, because the point is coverage: a band that fails
@@ -411,26 +432,72 @@ def answered(dump: Mapping[str, object]) -> int:
     )
 
 
-async def _async_read_retrying(
-    read: Read, space: str, address: int, count: int, attempts: int = 2
+def decoded_fields(
+    dump: Mapping[str, Any], components: Mapping[str, type[Component]]
+) -> Iterator[tuple[str, Any, Any]]:
+    """Yield `(name, field, value)` for each declared field a dump holds whole.
+
+    `dump` is `{"input": {"21299": 17805, ...}, "holding": {...}}`, as
+    `async_dump` returns it; `name` drops a `_raw` suffix, as a document
+    publishes it. A field with any word missing is not yielded at all -- a
+    failed read published as 0 would be a claim made up out of nothing --
+    and a masked word is a missing one, so a decoder run on the **masked**
+    dump cannot read a register the document refuses to publish. Each
+    device's document decides what to make of the value, None included.
+    """
+    for component in components.values():
+        values = dump.get(component.register_space)
+        if not isinstance(values, Mapping):
+            continue
+        for name, field in component.declared_fields.items():
+            found = [values.get(str(field.address + i)) for i in range(field.count)]
+            words = [int(word) for word in found if word is not None]
+            if len(words) < field.count:
+                continue
+            yield name.removesuffix("_raw"), field, field.decode(words)
+
+
+async def async_read_retrying(
+    read: Callable[[int, int], Awaitable[list[int]]],
+    address: int,
+    count: int,
+    attempts: int = 3,
+    *,
+    delay: float = 1.5,
 ) -> list[int]:
-    """Read one block, retrying a dropped link before giving up.
+    """Read one block, retrying what the link failed to carry.
 
     A dropped block is not evidence about the registers in it: on a device
     that accepts very few Modbus sessions, another client polling at the same
     moment produces exactly the same failure as a register that is not there.
-    An exception *response* is the device answering, so it is raised at once
-    -- except what `model.SETTLES_NOTHING` names, which settles nothing.
+    An exception *response* is the device answering, so it is raised at once:
+    retried, a refusal followed by a timeout would end as "no answer" in a
+    published probe state. Except what `model.SETTLES_NOTHING` names, which
+    settles nothing.
+
+    The one retry every raw read of a diagnosis goes through, the dump's and
+    the probes' alike (`diagnosis` re-exports it).
     """
     for attempt in range(1, max(1, attempts) + 1):
         try:
-            return list(await read(space, address, count))
+            return list(await read(address, count))
         except ModbusExceptionError as err:
             if not isinstance(err, SETTLES_NOTHING) or attempt >= attempts:
                 raise
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(delay)
         except (ModbusError, TimeoutError, OSError):
             if attempt >= attempts:
                 raise
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(delay)
     raise AssertionError("unreachable")
+
+
+async def _async_read_retrying(
+    read: Read, space: str, address: int, count: int, attempts: int = 2
+) -> list[int]:
+    """`async_read_retrying` on one space of a `Read`, twice by default."""
+
+    async def read_space(start: int, size: int) -> list[int]:
+        return await read(space, start, size)
+
+    return await async_read_retrying(read_space, address, count, attempts)

@@ -5,9 +5,15 @@ address means the same thing on two of them. What they share is how they are
 asked: a set of components on one Modbus unit, each refreshed on its own, a
 value by field name, and raw words for a diagnosis's dump. `Device` is that
 seam, which the entity layer and the diagnosis type against; `MappedDevice` is
-the implementation the SG, the battery and the wallbox are built on. The
-hybrid meets `Device` on its own: its tiers skip what firmware rules out and
-retry a lost connection, which no other device needs.
+the implementation the SG, the battery, the wallbox and the iHomeManager are
+built on. The
+hybrid meets `Device` on its own: its tiers skip what firmware rules out.
+
+**A lost connection** is a component's failure on a sub-device (a pack, a
+wallbox behind an inverter), and the poll's on a device that is its entry's
+own (an SG, an iHomeManager): there it is retried once per component, because
+a session the device closed is not always a dead link, and then raised, as
+the hybrid's tiers do (`MappedDevice.lost_link_fails_the_poll`).
 
 **A component failing costs only itself.** A Sungrow answers a different
 subset of its map by model, firmware and what is wired up, so a refused block
@@ -17,6 +23,7 @@ is normal operation, recorded in the `UpdateReport` and nothing more.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+import logging
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from modbus_connection.model import Component
@@ -28,6 +35,8 @@ if TYPE_CHECKING:
     from modbus_connection import ModbusUnit
 
     from .identity import InverterIdentity
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -83,6 +92,11 @@ class MappedDevice:
     Every component is bound at construction and held as an attribute under
     its key in the map, so a subclass declares them for `mypy --strict`.
     """
+
+    #: Whether a lost connection fails the whole poll, after one retry per
+    #: component, rather than only its component. True where the device is
+    #: its entry's own, so "the link is gone" is told apart from a refusal.
+    lost_link_fails_the_poll = False
 
     def __init__(
         self,
@@ -159,14 +173,29 @@ class MappedDevice:
     async def _async_update_components(
         self, attributes: Iterable[str] | None = None
     ) -> UpdateReport:
-        """Refresh each named component (all by default), each failing alone."""
-        from modbus_connection import ModbusError
+        """Refresh each named component (all by default), each failing alone.
+
+        With `lost_link_fails_the_poll`, a lost connection is retried once and
+        then raised instead of recorded.
+        """
+        from modbus_connection import ModbusConnectionError, ModbusError
 
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}
         for attribute in self._components if attributes is None else attributes:
+            component = self.component(attribute)
             try:
-                await self.component(attribute).async_update()
+                try:
+                    await component.async_update()
+                except ModbusConnectionError as err:
+                    if not self.lost_link_fails_the_poll:
+                        raise
+                    _LOGGER.debug("%s lost the link, retrying: %s", attribute, err)
+                    await component.async_update()
+            except ModbusConnectionError as err:
+                if self.lost_link_fails_the_poll:
+                    raise
+                failed[attribute] = err
             except ModbusError as err:
                 failed[attribute] = err
             else:

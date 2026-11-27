@@ -371,7 +371,11 @@ NEXT
 fi
 
 if [[ "${boot}" == false ]]; then
-    echo "--setup-only: not booting. \`make hacs\` when you want it."
+    if [[ "${marketplace}" == true ]]; then
+        echo "--setup-only: not booting. \`make marketplace\` when you want it."
+    else
+        echo "--setup-only: not booting. \`make hacs\` when you want it."
+    fi
     exit 0
 fi
 

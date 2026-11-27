@@ -67,16 +67,8 @@ _LOGGER = logging.getLogger(__name__)
 SERVICE_START_INVERTER = "start_inverter"
 SERVICE_STOP_INVERTER = "stop_inverter"
 
-#: Running a capability diagnosis without a button to press.
-#:
-#: An ordinary entry has no diagnosis entities -- somebody who installed this for
-#: solar sensors should not carry diagnostic tooling they never asked for --
-#: so this is how they help if they decide to. A diagnostics-only entry has
-#: the button as well, because producing a reading is the whole reason that
-#: kind of entry exists.
-#:
-#: An action rather than an entity leaves nothing behind: no registry row, no
-#: recorded history, nothing to remove afterwards.
+#: Running a capability diagnosis from a script or an automation, which
+#: *Diagnosis: start* on the device page does by hand.
 SERVICE_RUN_DIAGNOSIS = "run_diagnosis"
 
 #: Part A and then part B, which writes to every control and puts it back.
@@ -133,9 +125,8 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_RUN_DIAGNOSIS, _async_run_diagnosis, schema=SCHEMA
     )
     # Authorised the way start and stop are, under its own permission, and for
-    # the same reason: it writes. A diagnostics-only entry also has a button
-    # for it; this is the route an ordinary entry has, and the one a script
-    # can take.
+    # the same reason: it writes. The route a script can take to what the
+    # diagnosis's buttons and mode select start.
     hass.services.async_register(
         DOMAIN,
         SERVICE_RUN_CAPABILITY_TEST,

@@ -105,16 +105,6 @@ def test_a_current_outside_six_amperes_to_the_rating_is_never_written(
         ev.user_current_word(amps, 32.0)
 
 
-def test_the_current_is_written_only_in_user_defined_mode() -> None:
-    """In fast charge the inverter refused every write, with exception 0x04."""
-    assert ev.current_writes(8.0, mode_raw=ev.USER_DEFINED, rating_a=32.0) == [
-        (ev.USER_CURRENT, 80)
-    ]
-    for mode in (ev.FAST, ev.PV_SURPLUS, 0):
-        with pytest.raises(ValueError):
-            ev.current_writes(8.0, mode_raw=mode, rating_a=32.0)
-
-
 def test_a_mode_that_ends_the_session_is_followed_by_charging_on() -> None:
     """User defined to fast charge ended the session; charging on started it again."""
     assert ev.mode_writes(ev.FAST, charge=True) == [
@@ -140,11 +130,6 @@ def test_charging_that_was_off_stays_off_after_user_defined() -> None:
 def test_an_unknown_mode_is_never_written() -> None:
     with pytest.raises(ValueError):
         ev.mode_writes(164, charge=True)
-
-
-def test_start_and_stop_are_the_on_and_off_words() -> None:
-    assert ev.charging_writes(True) == [(ev.CHARGING, 0xAA)]
-    assert ev.charging_writes(False) == [(ev.CHARGING, 0x55)]
 
 
 @pytest.mark.parametrize(

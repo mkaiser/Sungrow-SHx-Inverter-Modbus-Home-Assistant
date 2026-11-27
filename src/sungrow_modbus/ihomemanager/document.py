@@ -18,6 +18,7 @@ from typing import Any
 
 from modbus_connection.model import Component
 
+from ..dump import decoded_fields
 from .registers import CODES, COMPONENTS, CONFIDENCE, UNIT, protocol_version
 
 #: The `document` key of an iHomeManager document. Inverter documents carry
@@ -138,40 +139,30 @@ def readings(
     Run it on the **masked** dump.
     """
     out: dict[str, dict[str, Any]] = {}
-    for component in components.values():
-        values = dump.get(component.register_space)
-        if not isinstance(values, Mapping):
+    for published, field, value in decoded_fields(dump, components):
+        if value is None:
             continue
-        for name, field in component.declared_fields.items():
-            found = [values.get(str(field.address + i)) for i in range(field.count)]
-            words = [int(word) for word in found if word is not None]
-            if len(words) < field.count:
+        entry: dict[str, Any] = {
+            "register": field.address + 1,
+            "held": confidence[published],
+        }
+        if isinstance(value, str):
+            if not value.strip():
                 continue
-            value = field.decode(words)
-            if value is None:
-                continue
-            published = name.removesuffix("_raw")
-            entry: dict[str, Any] = {
-                "register": field.address + 1,
-                "held": confidence[published],
-            }
-            if isinstance(value, str):
-                if not value.strip():
-                    continue
-                entry["value"] = value.strip()
-            elif published == "device_type_code":
-                entry["value"] = f"0x{int(value):04X}"
-            elif published == "protocol_version":
-                entry["value"] = protocol_version(int(value))
-                entry["raw"] = f"0x{int(value):08X}"
-            elif published in codes:
-                entry["value"] = int(value)
-                entry["means"] = codes[published].get(int(value), "unknown code")
-            else:
-                entry["value"] = value
-            if unit := getattr(field, "unit", None):
-                entry["unit"] = unit
-            out[published] = entry
+            entry["value"] = value.strip()
+        elif published == "device_type_code":
+            entry["value"] = f"0x{int(value):04X}"
+        elif published == "protocol_version":
+            entry["value"] = protocol_version(int(value))
+            entry["raw"] = f"0x{int(value):08X}"
+        elif published in codes:
+            entry["value"] = int(value)
+            entry["means"] = codes[published].get(int(value), "unknown code")
+        else:
+            entry["value"] = value
+        if unit := getattr(field, "unit", None):
+            entry["unit"] = unit
+        out[published] = entry
     return out
 
 

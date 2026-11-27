@@ -882,7 +882,8 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     echo("")
     echo("  Starting now, and this is the long part: two registers that say")
     echo("  how the reading reaches the device, then every block read the")
-    echo("  integration makes, then the whole register map, then 2181 raw")
+    raw = sum(count for _space, _start, count, _why in register_dump.DUMP_BANDS)
+    echo(f"  integration makes, then the whole register map, then {raw} raw")
     echo("  addresses. Over a slow link that can take a quarter of an hour, and")
     echo("  it will look stuck more than once. Every step says what it is")
     echo("  waiting for.")
@@ -1485,19 +1486,16 @@ def _worst(codes: list[int]) -> int:
     return max(codes, key=SEVERITY.index) if codes else 1
 
 
-async def _diagnosis_wallbox(found: wallbox_direct.Found, args, echo) -> int:
-    """Ask the three questions a wallbox needs, read it, and say what was written.
+def _ask_consent(host: str, args) -> tuple[str, str, str]:
+    """Ask a device read by its own map the three questions it needs.
 
-    Fewer than an inverter's: transport is measured (it is this address), and
-    a wallbox has no battery, proxy or second inverter to ask about. The
-    address and the reporter are consent, and asked as they are for an
-    inverter -- unless `--address`, `--reporter` and `--comment` answer them.
+    Whether the address tail may be published, who reports it and a comment,
+    each skipped where `--address`, `--reporter` or `--comment` answers it. A
+    wallbox, an iHomeManager, a Logger and an SG have no battery, proxy or
+    second inverter of their own to ask about.
     """
-    echo("-" * 72)
-    echo(f"Wallbox at {found.host}:{wallbox_direct.PORT}, a {found.model}")
-    echo("-" * 72)
     with contextlib.redirect_stdout(sys.stderr):
-        consent = args.address or probe._ask_address(found.host)
+        consent = args.address or probe._ask_address(host)
         reporter = (
             args.reporter
             if args.reporter is not None
@@ -1511,6 +1509,21 @@ async def _diagnosis_wallbox(found: wallbox_direct.Found, args, echo) -> int:
             if args.comment is not None
             else probe._ask("Anything else worth recording (blank to skip)")
         )
+    return consent, reporter, comment
+
+
+async def _diagnosis_wallbox(found: wallbox_direct.Found, args, echo) -> int:
+    """Ask the three questions a wallbox needs, read it, and say what was written.
+
+    Fewer than an inverter's: transport is measured (it is this address), and
+    a wallbox has no battery, proxy or second inverter to ask about. The
+    address and the reporter are consent, and asked as they are for an
+    inverter -- unless `--address`, `--reporter` and `--comment` answer them.
+    """
+    echo("-" * 72)
+    echo(f"Wallbox at {found.host}:{wallbox_direct.PORT}, a {found.model}")
+    echo("-" * 72)
+    consent, reporter, comment = _ask_consent(found.host, args)
     tail = address_tail(found.host, consent == "two_octets")
     answers = argparse.Namespace(
         timeout=args.timeout,
@@ -1577,31 +1590,12 @@ async def _find_loggers_behind(results: list[Outcome], echo) -> None:
 
 
 async def _diagnosis_ihomemanager(found: ihomemanager_direct.Found, args, echo) -> int:
-    """Ask a wallbox's three questions, read the iHomeManager or Logger.
-
-    Address, reporter and comment, asked as for a wallbox -- or answered by
-    `--address`, `--reporter` and `--comment`. It has no battery, proxy or
-    second inverter of its own to ask about.
-    """
+    """Ask the three questions (`_ask_consent`), read the iHomeManager or Logger."""
     echo("-" * 72)
     title = "Logger" if found.kind == "logger" else "iHomeManager"
     echo(f"{title} at {found.host}:{found.port}, unit 247, {found.model}")
     echo("-" * 72)
-    with contextlib.redirect_stdout(sys.stderr):
-        consent = args.address or probe._ask_address(found.host)
-        reporter = (
-            args.reporter
-            if args.reporter is not None
-            else probe._ask(
-                "Who is reporting this, to credit and to ask (blank for anonymous)",
-                "anonymous",
-            )
-        )
-        comment = (
-            args.comment
-            if args.comment is not None
-            else probe._ask("Anything else worth recording (blank to skip)")
-        )
+    consent, reporter, comment = _ask_consent(found.host, args)
     tail = address_tail(found.host, consent == "two_octets")
     # The port goes in: an iHomeManager answers on 502, 503 or 504, and a
     # replay on the default would ask the wrong one.
@@ -1653,31 +1647,15 @@ async def _diagnosis_ihomemanager(found: ihomemanager_direct.Found, args, echo) 
 async def _diagnosis_string_inverter(
     found: string_inverter_direct.Found, args, echo
 ) -> int:
-    """Ask a wallbox's three questions, read the SG by its own map.
+    """Ask the three questions (`_ask_consent`), read the SG by its own map.
 
-    Address, reporter and comment, asked as for a wallbox -- or answered by
-    `--address`, `--reporter` and `--comment`. An SG has no battery, and
-    nothing here writes to it, so no other question applies.
+    Nothing here writes to an SG, so no other question applies.
     """
     echo("-" * 72)
     where = f"{found.host}:{found.port}, unit {found.unit}"
     echo(f"String inverter at {where}, a {found.model}")
     echo("-" * 72)
-    with contextlib.redirect_stdout(sys.stderr):
-        consent = args.address or probe._ask_address(found.host)
-        reporter = (
-            args.reporter
-            if args.reporter is not None
-            else probe._ask(
-                "Who is reporting this, to credit and to ask (blank for anonymous)",
-                "anonymous",
-            )
-        )
-        comment = (
-            args.comment
-            if args.comment is not None
-            else probe._ask("Anything else worth recording (blank to skip)")
-        )
+    consent, reporter, comment = _ask_consent(found.host, args)
     tail = address_tail(found.host, consent == "two_octets")
     asked = argparse.Namespace(
         port=found.port,

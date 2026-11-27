@@ -123,15 +123,11 @@ async def async_setup_entry(
     # Every entry, whatever its mode or kind: how this endpoint is reached.
     async_add_entities([SungrowConnectionSensor(entry)])
 
-    # The diagnosis's own sensors, on every inverter entry whatever its mode.
-    # They were once the whole of a diagnostics entry and nothing of an
-    # ordinary one, on the reasoning that an owner who came for readings did
-    # not come for a progress bar. That left the integration's one way of
-    # measuring what a device answers reachable only from an entry with no
-    # readings -- so the people best placed to contribute were the ones who
-    # could not. They are diagnostic-category entities: Home Assistant files
-    # them under *Diagnostic* on the device page, below what the owner came
-    # for.
+    # The diagnosis's own sensors, on every inverter entry whatever its mode,
+    # so the integration's one way of measuring what a device answers is on
+    # the entry its owner already has. They are diagnostic-category entities:
+    # Home Assistant files them under *Diagnostic* on the device page, below
+    # what the owner came for.
     async_add_entities(
         [
             DiagnosisProgressSensor(runtime_data),
@@ -154,9 +150,8 @@ async def async_setup_entry(
             ]
         )
 
-    # A diagnostics-only entry is the diagnosis and nothing else. No new one
-    # is made -- the mode is not offered any more -- but the ones made while
-    # it was still load.
+    # A diagnostics-only entry is the diagnosis and nothing else. The mode is
+    # not offered to a new entry; the ones that have it load like this.
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         return
 

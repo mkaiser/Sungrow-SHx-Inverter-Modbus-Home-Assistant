@@ -118,6 +118,7 @@ fi
 # Modbus stack to debug; `--debug` adds only the loop mode and
 # `hass.config.debug`. If you want it back for an asyncio bug, add it -- and
 # expect the search to fail while it is on.
+#
 # `SETUP_PORT` covers the **first** boot, which `ha_http_port.py` cannot:
 # there is no `.storage/http` to pin yet, and Home Assistant would create one
 # on :8123 -- straight into the first instance's port, which is how this was

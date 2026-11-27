@@ -80,11 +80,9 @@ from sungrow_modbus.diagnosis_document import (
     OTHER_INVERTER_CLAIMS,
     OUTPUT_TYPES,
     REPORTED_TRANSPORTS as DOCUMENT_TRANSPORTS,
-    SCHEMA,
     TRANSPORT_CLAIMS,
     UNAVAILABLE,
     WIFI_OR_ETHERNET,  # noqa: F401
-    State,  # noqa: F401
     effective_verdict,
     last_two_octets,
     slave_inverter_at,
@@ -196,9 +194,8 @@ async def cmd_sweep(args: argparse.Namespace) -> int:
                 return str(ip)
             return None
 
-    # One rewriting line rather than ten printed ones: the old version put a
-    # percentage into the report every 10%, which is both less informative
-    # than a bar and permanent clutter in a redirected log.
+    # One rewriting line rather than a percentage printed every 10%, which
+    # is both less informative than a bar and clutter in a redirected log.
     bar = _Progress(f"probing {net}", len(hosts))
     hits = 0
 
@@ -268,11 +265,9 @@ async def cmd_units(args: argparse.Namespace) -> int:
                     )
                 except (ModbusError, TimeoutError, OSError) as err:
                     error = err
-                # Every outcome is printed, not just the useful ones. A silent
+                # Every outcome is printed, not just the useful ones: a silent
                 # unit and a unit that refused the address are different
-                # facts, and only saying "ANSWERED" left the difference
-                # invisible -- which is what sent this session off to write
-                # throwaway probes beside the script instead of using it.
+                # facts, and only saying "ANSWERED" would hide the difference.
                 if values is None:
                     print(f"      {label:<32} -- {type(error).__name__}")
                 elif any(v not in (0, 0xFFFF) for v in values):
@@ -419,10 +414,9 @@ def with_link_drops(connection: dict[str, object]) -> dict[str, object]:
     """Add the drops counted so far, when they were counted.
 
     Only where `count_link_drops` is installed, so a document says "none" only
-    when somebody was counting; and only on a library at schema 23, which
-    admits the key.
+    when somebody was counting.
     """
-    if not LINK_DROPS.installed or SCHEMA < 23:
+    if not LINK_DROPS.installed:
         return connection
     return {**connection, "link_drops": LINK_DROPS.count}
 
@@ -442,11 +436,6 @@ def link_drops_sentence(count: int, what: str) -> str:
         "polling it -- stop Home Assistant for a cleaner run. If nothing else "
         "was, the inverter's port drops by itself."
     )
-
-
-#: Keys of the connection block that carry a claim rather than a measurement.
-#: They are moved into `user_inputs`, so the published `connection` holds only
-#: what was read off the wire.
 
 
 #: Whether a Modbus proxy is in the path, as the contributor understands it.
@@ -482,8 +471,7 @@ OTHER_INVERTER_ANSWERS: dict[str, str] = dict(
 class Reading(NamedTuple):
     """Everything one pass over a device produced, for a caller to summarise.
 
-    `cmd_capabilities` used to build all of this and then throw it away behind
-    `return 0`, so anything wanting to report on a run had to read the
+    Returned whole so that nothing reporting on a run has to read the
     registers again. The summary in `sungrow_diagnosis.py` renders from `document`
     specifically: every claim it makes is then a value that was actually
     published, rather than a third source of truth that could drift from both.
@@ -497,22 +485,17 @@ class Reading(NamedTuple):
 
 
 #: This script's own path, as a diagnosis records it. One constant because
-#: it is written into every document and asserted in the tests, and because it
-#: has already moved once: `scripts/discover_probe.py` until 2026-09-08.
+#: it is written into every document and asserted in the tests.
 SCRIPT = "python/probe.py"
 
 
 def _run_command(script: str) -> str:
     """Return a command for a sibling script that will actually work.
 
-    Three ways the obvious version was wrong, all of them found by somebody
-    following it: it named an absolute `/workspaces/...` path, which is this
-    container's and nobody else's; it said `python`, which on most systems is
-    `python3` or nothing at all; and it pointed at a file that was not
-    executable, so the shebang was no help either.
-
-    So: relative to the working directory when the script is underneath it,
-    and `python3`, which is the name that exists everywhere this runs.
+    Relative to the working directory when the script is underneath it, never
+    an absolute path that is only this machine's; and `python3`, which is the
+    name that exists everywhere this runs, where `python` is often missing and
+    the script's executable bit cannot be relied on.
     """
     here = Path(__file__).resolve().parent / script
     try:
@@ -691,12 +674,10 @@ class _Progress:
 async def _async_dump_bands(
     unit,
     block: int = 32,
-    # 600, not 240, now that the budget is enforced per block and can
-    # therefore actually stop a run. Measured: the reference SH10RT's dump
-    # takes about 300 seconds -- it stops answering rather than refusing, so
-    # every unmapped address waits out a timeout -- and it reads 1461 of 1510
-    # addresses in that time. At 240 the newly-effective budget would have
-    # truncated a dump that completes, which is the opposite of the point.
+    # Enforced per block, so it can stop a run. Measured: the reference
+    # SH10RT's dump takes about 300 seconds -- it stops answering rather than
+    # refusing, so every unmapped address waits out a timeout -- and a budget
+    # of 240 would truncate a dump that completes.
     budget: float = 600.0,
     bands: tuple = DUMP_BANDS,
     what: str = "register dump",
@@ -755,7 +736,8 @@ async def _async_battery_readings(connection, unit_id: int) -> dict[str, object]
     A probe says *whether* a pack answered; only a reading says what it
     holds and which blocks a dongle withholds.
 
-    Forty-two registers in three reads, against an inverter dump of 1510. The
+    Forty-two registers in three reads, against an inverter dump of two
+    thousand. The
     wallbox had the same gap and was given its own dump for the same reason:
     a rare device whose registers nobody else has measured is exactly the one
     worth carrying.
@@ -815,11 +797,10 @@ async def _async_connection(unit, firmware: dict) -> dict:
       module if there is one. A direct-LAN inverter has no module and returns
       the specification's UTF-8 unavailable, which decodes to an empty string.
 
-    The first decides. The second was written as its equal, on the reasoning
-    that anything behind a WiNet-S names itself -- and two measured dongles
-    return an empty string for it, which is exactly what an inverter with no
-    module returns. So its silence is no evidence either way, and only its
-    presence adds anything.
+    The first decides. The second does not: two measured dongles return an
+    empty string for it, which is exactly what an inverter with no module
+    returns, so its silence is no evidence either way, and only its presence
+    adds anything.
 
     What neither signal can reach is the **medium**: a WiNet-S answers the
     same wired as it does over WiFi. Nothing in the protocol reports it, so
@@ -836,11 +817,10 @@ async def _async_connection(unit, firmware: dict) -> dict:
     failed components, identical fields filled, identical firmware strings.
     Nothing in the register space moves.
 
-    Round-trip time was measured and published here until 2026-10-09, and
-    removed: it describes the path from whoever reads to the inverter -- a VPN
-    for most documents -- and the same dongle varied more between two nights
-    than a cable and a dongle did within one. So `--transport` carries what only
-    the owner knows, and no code guesses.
+    Round-trip time is not a signal: it describes the path from whoever reads
+    to the inverter -- a VPN for most documents -- and the same dongle varied
+    more between two nights than a cable and a dongle did within one. So
+    `--transport` carries what only the owner knows, and no code guesses.
     """
     # Retried with the long budget: this single read decides the transport
     # verdict, and losing it to a moment's contention once put `winet` in the
@@ -1225,7 +1205,7 @@ class _TerminalSource:
 
     async def battery(self, diagnosis: CapabilityDiagnosis) -> dict | None:
         # The battery's own registers, on whichever unit answered for it.
-        # Seventeen registers, so it is not behind the dump question either.
+        # Forty-two registers, so it is not behind the dump question either.
         states = diagnosis.probe_states
         for unit_id in PACK_UNITS:
             if slave_inverter_at(states, unit_id) and (
@@ -1238,7 +1218,7 @@ class _TerminalSource:
         pack_unit = battery_pack_unit(states)
         if pack_unit is None:
             return None
-        print(f"  {'battery readings':<38}unit {pack_unit}, 17 registers...")
+        print(f"  {'battery readings':<38}unit {pack_unit}, 42 registers...")
         readings = await _async_battery_readings(self.conn, pack_unit)
         got = len(readings.get("values") or {})
         missed = readings.get("components_that_did_not_answer") or []
@@ -1251,7 +1231,8 @@ class _TerminalSource:
     async def wallbox(self, diagnosis: CapabilityDiagnosis) -> dict | None:
         # The wallbox's own register space, whenever one answered. Read
         # unconditionally rather than behind the dump question, because that
-        # question is about the inverter's 1510 addresses and this is 206:
+        # question is about the inverter's two thousand addresses and this
+        # is 206:
         # a wallbox is rare, its registers have no public document at all,
         # and a diagnosis that recorded only "a wallbox answered" was
         # throwing away the whole reason to have found it.
@@ -1351,7 +1332,6 @@ async def capabilities(args: argparse.Namespace) -> Reading:
     if diagnosis.wallbox is not None:
         raw["wallbox"] = diagnosis.wallbox
     if diagnosis.failed:
-        # A library before schema 24 does not publish it, and ignores it.
         raw["steps_lost"] = dict(diagnosis.failed)
 
     # Computed whether or not anything is saved, because a caller wanting to
@@ -1374,7 +1354,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
 
 
 async def cmd_capabilities(args: argparse.Namespace) -> int:
-    """Diagnosis one device, as the `capabilities` subcommand."""
+    """Diagnose one device, as the `capabilities` subcommand."""
     if args.save is None:
         args.save = str(Path.cwd())
     reading = await capabilities(args)
@@ -1676,14 +1656,12 @@ async def _sweep_addresses(network: str, port: int) -> tuple[list[str], float]:
     # case and the one where somebody wonders whether it has hung -- and this
     # sweep is deliberately gentle, 32 at a time with a 4 second timeout.
     bar = _Progress(f"sweeping {network}", len(hosts))
-    settled = 0
     hits = 0
 
     async def check(host: str) -> str | None:
-        nonlocal settled, hits
+        nonlocal hits
         async with semaphore:
             found_here = await _tcp_open(host, port, 4.0)
-        settled += 1
         if found_here:
             hits += 1
         bar.step(f"{hits} found" if hits else "")

@@ -12,17 +12,14 @@ counters and the settings, which an owner or iSolarCloud changes, on
 that read nothing -- refused, or the document's "unavailable" -- gets none,
 rather than one unavailable forever.
 
-**A lost connection is the poll's**, as on an SG: one retry per component,
-then the poll fails as a whole; a refused block costs only its component.
+**A lost connection is the poll's** (`lost_link_fails_the_poll`), as on an
+SG: one retry per component, then the poll fails as a whole; a refused block
+costs only its component.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-import logging
 from typing import TYPE_CHECKING
-
-from modbus_connection import ModbusConnectionError, ModbusError
 
 from ..device import MappedDevice
 from ..model import UpdateReport
@@ -41,8 +38,6 @@ from .registers import (
 
 if TYPE_CHECKING:
     from modbus_connection import ModbusUnit
-
-_LOGGER = logging.getLogger(__name__)
 
 #: Which components each tier polls, keyed as `hybrid_inverter`'s are.
 TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
@@ -65,6 +60,8 @@ class SungrowIHomeManager(MappedDevice):
     phase_voltages: IHomeManagerPhaseVoltages
     settings: IHomeManagerSettings
 
+    lost_link_fails_the_poll = True
+
     def __init__(self, unit: ModbusUnit, unit_id: int = UNIT) -> None:
         """Bind every component to a unit handle."""
         super().__init__(unit, COMPONENTS, unit_id)
@@ -82,29 +79,3 @@ class SungrowIHomeManager(MappedDevice):
     async def async_update_tier(self, tier: str) -> UpdateReport:
         """Poll every component belonging to one tier."""
         return await self._async_update_components(TIER_COMPONENTS[tier])
-
-    async def _async_update_components(
-        self, attributes: Iterable[str] | None = None
-    ) -> UpdateReport:
-        """Refresh each component; a refusal costs it, a lost link the poll.
-
-        One retry on a lost connection first: a session the device closed is
-        not always a dead link, and the retry reconnects.
-        """
-        updated: set[str] = set()
-        failed: dict[str, ModbusError] = {}
-        for attribute in self._components if attributes is None else attributes:
-            component = self.component(attribute)
-            try:
-                try:
-                    await component.async_update()
-                except ModbusConnectionError as err:
-                    _LOGGER.debug("%s lost the link, retrying: %s", attribute, err)
-                    await component.async_update()
-            except ModbusConnectionError:
-                raise
-            except ModbusError as err:
-                failed[attribute] = err
-            else:
-                updated.add(attribute)
-        return UpdateReport(updated=frozenset(updated), failed=failed)

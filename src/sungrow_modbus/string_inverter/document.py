@@ -16,7 +16,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..dump import DUMP_MASKED, masked
+from ..addresses import reg
+from ..dump import DUMP_MASKED, decoded_fields, masked
 from ..model import words_text
 from .registers import COMPONENTS, MODELS, SWITCH, WORK_STATES
 
@@ -43,13 +44,16 @@ OUTPUT_TYPES: dict[int, str] = {
     2: "three phase 3P3L",
 }
 
-#: The serial's words, protocol addresses.
-SERIAL_START = 4989
-SERIAL_COUNT = 10
+#: The serial's words: the band `DUMP_MASKED` blanks, input 4990-4999.
+SERIAL_SPACE, SERIAL_START, SERIAL_COUNT = DUMP_MASKED[0]
 
 #: The ARM and DSP software versions, input 4954 and 4969, 15 words each.
-FIRMWARE: dict[str, int] = {"arm": 4953, "dsp": 4968}
+FIRMWARE: dict[str, int] = {"arm": reg(4954), "dsp": reg(4969)}
 FIRMWARE_COUNT = 15
+
+#: The device type code and the output type, input 5000 and 5002.
+DEVICE_TYPE_CODE = reg(5000)
+OUTPUT_TYPE = reg(5002)
 
 
 def readings(dump: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -60,36 +64,26 @@ def readings(dump: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     answering the protocol's "unavailable", is absent rather than zero.
     """
     out: dict[str, dict[str, Any]] = {}
-    for component in COMPONENTS.values():
-        values = dump.get(component.register_space)
-        if not isinstance(values, Mapping):
+    for published, field, value in decoded_fields(dump, COMPONENTS):
+        if value is None:
             continue
-        for name, field in component.declared_fields.items():
-            found = [values.get(str(field.address + i)) for i in range(field.count)]
-            words = [int(word) for word in found if word is not None]
-            if len(words) < field.count:
-                continue
-            value = field.decode(words)
-            if value is None:
-                continue
-            published = name.removesuffix("_raw")
-            entry: dict[str, Any] = {"register": field.address + 1}
-            if published == "device_type_code":
-                entry["value"] = f"0x{int(value):04X}"
-            elif published in CODES:
-                entry["value"] = int(value)
-                entry["means"] = CODES[published].get(int(value), "unknown code")
-            else:
-                entry["value"] = value
-            if unit := getattr(field, "unit", None):
-                entry["unit"] = unit
-            out[published] = entry
+        entry: dict[str, Any] = {"register": field.address + 1}
+        if published == "device_type_code":
+            entry["value"] = f"0x{int(value):04X}"
+        elif published in CODES:
+            entry["value"] = int(value)
+            entry["means"] = CODES[published].get(int(value), "unknown code")
+        else:
+            entry["value"] = value
+        if unit := getattr(field, "unit", None):
+            entry["unit"] = unit
+        out[published] = entry
     return out
 
 
 def serial_words(dump: Mapping[str, Any]) -> list[int] | None:
     """Return the serial's words from an **unmasked** dump, or None."""
-    values = dump.get("input")
+    values = dump.get(SERIAL_SPACE)
     if not isinstance(values, Mapping):
         return None
     words = [values.get(str(SERIAL_START + i)) for i in range(SERIAL_COUNT)]
@@ -133,8 +127,8 @@ def device_block(dump: Mapping[str, Any], serial: str | None) -> dict[str, Any]:
     from ..diagnosis_document import stand_in
 
     values = dump.get("input") if isinstance(dump.get("input"), Mapping) else {}
-    code = values.get("4999") if isinstance(values, Mapping) else None
-    phases = values.get("5001") if isinstance(values, Mapping) else None
+    code = values.get(str(DEVICE_TYPE_CODE)) if isinstance(values, Mapping) else None
+    phases = values.get(str(OUTPUT_TYPE)) if isinstance(values, Mapping) else None
     return {
         "device_type_code": None if code is None else f"0x{int(code):04X}",
         "device_type": None if code is None else MODELS.get(int(code)),

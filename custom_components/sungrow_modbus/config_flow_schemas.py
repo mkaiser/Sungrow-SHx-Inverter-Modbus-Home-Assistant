@@ -245,8 +245,8 @@ def _testimony_schema(
     """Return the questions a diagnosis needs and no register can answer.
 
     The options page's *Contribute a capability diagnosis* section, and the
-    only place these are asked: setup no longer puts them, because setup no
-    longer knows whether this entry will ever send a reading.
+    only place these are asked: setup does not know whether this entry will
+    ever send a reading.
 
     `suggested_value` rather than `default` on the dropdowns -- a default of
     "" is injected when the field is left alone and "" is not one of the
@@ -338,8 +338,8 @@ def _testimony_schema(
             ): BooleanSelector(),
             # The other raw dump: not the diagnosis's sweep, but every mapped
             # register's raw value added to *Download diagnostics*. Here
-            # because the two are asked about together or not at all -- it sat
-            # under the battery heading until 2026-11-16. Off by default.
+            # because the two are asked about together or not at all. Off by
+            # default.
             probatio.Required(
                 CONF_REGISTER_DUMP,
                 default=options.get(CONF_REGISTER_DUMP, False),

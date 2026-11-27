@@ -46,7 +46,8 @@ ADDRESS_ARGUMENT = {
     "write_registers": 0,
     "async_write_word": 0,
     "async_read_words": 1,
-    "_async_read_retrying": 1,
+    "async_read_retrying": 1,
+    "_async_read_retrying": 2,
 }
 
 

@@ -4,7 +4,7 @@
 #   make            the help screen
 #   make check      everything CI gates on, before you push
 #   make dev        Home Assistant on :8123
-#   make dev-real   a second one on :8125, for real hardware
+#   make dev-real   another on :8125, for real hardware
 #   make sim        the simulator on :5020
 #   make forget     forget the stored inverter, so setup re-detects it
 #
@@ -14,9 +14,10 @@ PY      ?= python3
 ARGS    ?=
 HOST    ?=
 VERSION ?=
+FILE    ?=
 
 # The generators CI checks, under scripts/. `descriptions.py` with no target
-# runs all six of its own, strings last. Adding a generator means adding it
+# runs all eight of its own, `strings` and `german` last. Adding a generator means adding it
 # here and in .github/workflows/validate.yml -- the two lists must agree.
 GENERATORS := generate/descriptions.py generate/generate_compatibility.py \
               generate/generate_firmware_support.py \
@@ -34,7 +35,7 @@ dev: ## Boot Home Assistant on :8123 against config/ (ARGS=--forget to drop the 
 develop: dev
 .PHONY: develop
 
-dev-real: ## Boot a third HA on :8125 against config-real/, for real hardware
+dev-real: ## Boot another HA on :8125 against config-real/, for real hardware
 	SUNGROW_DEV_CONFIG=config-real SUNGROW_DEV_PORT=8125 scripts/dev/develop.sh $(ARGS)
 .PHONY: dev-real
 
@@ -163,7 +164,7 @@ version-check: ## Verify pyproject.toml and manifest.json agree
 
 ##@ Scan
 
-scan: ## Diagnosis an installation and write a document; asks before the capability test (HOST=a.b.c.d optional)
+scan: ## Diagnose an installation and write a document; asks before the capability test (HOST=a.b.c.d optional)
 	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py $(HOST) $(ARGS)
 .PHONY: scan
 

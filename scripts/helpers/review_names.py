@@ -673,11 +673,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.check:
-        # Gated because it drifted. The committed sheet claimed **139
-        # entities, which is everything modern mode creates** long after the
-        # number was 186 -- the wallbox, the pack and the derived values had
-        # arrived and nothing compared the file to the code. A document that
-        # states a wrong number confidently is worse than no document.
+        # Gated, because nothing else compares the two documents with the
+        # code, and a sheet that states a wrong count of entities confidently
+        # is worse than no sheet.
         stale = 0
         for doc, want, flag in (
             (REVIEW_DOC, _render(markdown=True), "--markdown"),

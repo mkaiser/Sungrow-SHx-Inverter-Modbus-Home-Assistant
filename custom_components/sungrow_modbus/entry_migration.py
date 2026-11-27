@@ -54,7 +54,6 @@ from .const import (
     KIND_WALLBOX,
     PERMISSION_CAPABILITY_TEST,
 )
-from .repairs import ISSUE_PREFIX
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -201,9 +200,8 @@ def _async_drop_wallbox_options(hass: HomeAssistant, entry: ConfigEntry) -> None
 async def _async_migrate_names(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Bring minor version 1's names to minor version 2's."""
     await _async_move_snapshot(hass, entry)
+    # The repair under its new id is raised from the moved snapshot at setup.
     ir.async_delete_issue(hass, DOMAIN, f"{OLD_ISSUE_PREFIX}_{entry.entry_id}")
-    # The new issue id is raised from the moved snapshot at setup.
-    assert ISSUE_PREFIX != OLD_ISSUE_PREFIX
 
     @callback
     def _unique_id(entity: er.RegistryEntry) -> dict[str, Any] | None:
