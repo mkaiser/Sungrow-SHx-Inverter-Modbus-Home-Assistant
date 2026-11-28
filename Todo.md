@@ -109,8 +109,7 @@ well, and the wrong name added or a right one left out is worse than the
 aggregate.
 *Needs*: the maintainer's call on who belongs there.
 
-*From the code review and the documents pass (T100)*, grouped by topic; each item's file and line, and the
-fix proposed, are in [the code review](plans/_code-review.md), *Reported*, and in [the documents pass](plans/_improve-doc.md), *Code that looks wrong*.
+*From the code review and the documents pass (T100)*, grouped by topic.
 
 **T101. Restore safety: the capability test's restore can still be cut short** (hard constraint). Both
 `_shielded` helpers (`capability_test/engine.py`, `wallbox/capability_test.py`) give way on a fourth
@@ -145,7 +144,13 @@ and unreadable lines (`sungrow_diagnosis.py`).
 "2181 addresses across sixteen bands" (2197 in eighteen), the capability test permissions' "off by default"
 (all six default on), start and stop's "admin rights are required" (a per-entry option), `wallbox_max_amps`'s
 "an offer below the 6 A minimum", and the unused `{devices_mode}` placeholder and `devices_mode_not_offered`
-abort; then `make gen`, and a test holding the sweep text to `DUMP_BANDS`. Proposed wording in [the code review](plans/_code-review.md), *Reported*.
+abort; then `make gen`, and a test that finds `sum(count)` and `len(DUMP_BANDS)` in the sweep text in both
+languages. Proposed: "sweeps 2197 addresses across eighteen bands" / "2197 Adressen in achtzehn Bereichen";
+`add_devices` ending at "then creates them." and the abort removed; `run_capability_test`: "What it may do --
+the restart, the export limit, the PV cut and the rest -- is set in the integration's options, each allowed
+until it is switched off there."; start and stop: "only an administrator may call this unless the
+integration's options allow every user"; `wallbox_max_amps`'s waiting checks: "an offer above the rating, and
+the silence test".
 *Needs*: the maintainer's leave to edit those keys in `strings.json`, the one place their English lives.
 
 **T107. Tooling fixes**: `screenshot.py` defaults to :8125, `make dev-real`'s port, and its
@@ -196,12 +201,12 @@ enabled, or its history stops (`AGENTS.md`).
 **Entity IDs**, where `migration.stored_legacy_slot` reads an absent key as the unsuffixed slot; the result can
 refuse the way back to legacy ids, or take another slot. Proposed: measure only for a diagnostics entry or a
 stored `None`, and read an absent key on a devices entry as `""`. The wiki's legacy-slot page and the migration
-guide describe that, not the code. [the code review](plans/_code-review.md), *Reported*, area 5.
+guide describe that, not the code.
 
 **T110. Kept capability test runs whose transport is unknown**: `ledger.fold_key` keys a run with
 `direct_connection` None as a dongle run, so on a cable house one such run wipes up to 30 days of kept cable
 runs. Proposed: `async_ledger_add` treats an unsettled run like a dry run, kept only for its own document, at
-the price of auto repeat asking again. [the code review](plans/_code-review.md), *Reported*, areas 3 and 6.
+the price of auto repeat asking again.
 
 **T111. Other owners' addresses in git history**: the ones taken out of fixtures, documents and a skill
 in T100 are still in the history of `tests/`, `doc/` and `.claude/skills/`. Rewriting published history is
