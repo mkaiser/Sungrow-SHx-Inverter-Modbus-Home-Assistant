@@ -36,3 +36,13 @@ Consequences:
   in `layout.py`.
 
 Related: [contention](contention.md), which looks like refusal and is not.
+
+## Where the code still reads a non-answer as an answer
+
+Found by the code review of 2026-11-28, from the source; each is a task in `Todo.md`:
+
+- `src/sungrow_modbus/wallbox/managed_test.py` takes any `ModbusExceptionError` as a refusal, a busy
+  WiNet-S's 0x04 or 0x06 included, and `scripts/dev/managed_wallbox_field.py scan` does the same and stops
+  at its first timeout (T104).
+- `src/sungrow_modbus/battery/discovery.py` reads a timeout on the device type read at unit 2 as "no type
+  code, a pack" (T112, which waits on a read of what a pack at unit 2 answers through a WiNet-S).

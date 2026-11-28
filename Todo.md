@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T113.** Numbers are minted in order, never reused and
+**Next free item number: T115.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -168,6 +168,13 @@ mdns` once the pin has it; share the coordinator's component transition log with
 `config_flow.py` (2,856 lines) only together with one helper for the setup flow's `entity_ids` and the
 options flow's `promote`; move the private helpers 38 test modules import from each other into helper modules
 beside `tests/corpus.py`.
+
+**T113. Measure `config_flow.py`'s coverage**: `quality_scale.yaml`'s `config-flow-test-coverage` says 97 %,
+which the documents pass could not check; a coverage run of the flow suite confirms or corrects it.
+
+**T114. Trace the questions a device at its own address is asked**: the run-diagnosis skill
+(`.claude/skills/run-diagnosis/SKILL.md`) says a wallbox, Logger or iHomeManager is asked only the address,
+reporter and comment; trace that through `sungrow_diagnosis.py`'s question flow and correct whichever is wrong.
 
 # Open decisions
 

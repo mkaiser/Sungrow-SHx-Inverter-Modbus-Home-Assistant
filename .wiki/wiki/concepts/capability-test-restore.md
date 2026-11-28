@@ -82,3 +82,23 @@ exist so that a house is never left changed without anyone knowing.
   `repairs.py`). It is the only record of why somebody's inverter still
   carries a test's values.
 - `--restore <snapshot>` is the way out of a run that died halfway.
+
+## Where the code falls short of these rules
+
+Found by the code review of 2026-11-28, from the source, not on hardware; each is a task in `Todo.md`:
+
+- **A restore can be cut short.** Both `_shielded` helpers (`src/sungrow_modbus/capability_test/engine.py`,
+  `src/sungrow_modbus/wallbox/capability_test.py`) absorb three cancellations, then await the restore
+  unshielded, so a fourth cancels it; `wallbox/managed_test._shielded` loops until done (T101).
+- **A stop whose answer was lost sends no start.** A stop write that comes back `DROPPED` clears
+  `stopped_at` and is reported skipped (`capability_test/restore.py`), so a stop that landed leaves the
+  inverter stopped with no exit 5 (T101).
+- **A failed snapshot flush ends the restore.** The restore writes through `_write`, which flushes the
+  snapshot (`capability_test/base.py`, `_touch`); a flush that raises leaves the fields after it unrestored
+  (T101).
+- **13074's probe lifts feed-in limitation outside its own restore**, and its `_put_back` stops at the
+  first failed read (`hybrid_inverter/export_scale.py`, T102).
+- **The CLI's inverter snapshot is not flushed to disk**: `sungrow_capability_test.py` writes it with
+  `Path.write_text`, without the `fsync` the wallbox scripts' `_save` does (T103).
+- **A wallbox snapshot can outlive a full restore**: a run the owner stops, and a removed wallbox entry,
+  leave it in `.storage/` (T103).

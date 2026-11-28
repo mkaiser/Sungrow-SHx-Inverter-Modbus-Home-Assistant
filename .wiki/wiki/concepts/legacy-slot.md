@@ -45,3 +45,12 @@ Each of these rules, if broken, loses somebody's history:
 Held by `tests/test_legacy_slots.py`: three layouts (plain and 2; 1 and 2; 1, 2 and 3), live, recorded and claimed.
 
 See [adopting the legacy entity ids](legacy-id-adoption.md).
+
+## Where the code disagrees with this page
+
+The code review of 2026-11-28 found that the options flow (`custom_components/sungrow_modbus/config_flow.py`,
+`SungrowOptionsFlow._async_slot`) measures the slot again for an **absent** key too, not only for a stored
+`None`, and writes what it measured when the entry switches **Entity IDs**. That contradicts "an absent key
+is the unsuffixed slot" above: such an entry can be refused the way back to legacy ids (`None`), or be given
+another slot. The rules on this page are the intended behaviour; the fix is the maintainer's call (T109 in
+`Todo.md`).

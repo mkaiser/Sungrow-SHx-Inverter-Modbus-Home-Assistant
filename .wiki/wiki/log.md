@@ -2283,3 +2283,12 @@ switch's handling of a numbered id. legacy-slot says the options flow measures a
 it also measures for an absent key (`custom_components/sungrow_modbus/config_flow.py`, `SungrowOptionsFlow._async_slot`), which is a hard-constraint question for
 the maintainer, so the page was left as it is. Updated telling-a-proxy-from-the-inverter, legacy-id-adoption,
 capability-test.
+
+## [2026-11-28] corrected | code that breaks the concept pages' rules
+
+The code review's open findings (T101-T104, T109, T112 in `Todo.md`) said on the pages whose rules the code
+breaks, as the ingest rule asks for a contradiction: capability-test-restore (a restore cut short by a fourth
+cancel, a lost stop answer, a failed flush; 13074's probe; snapshots not on disk or left behind), legacy-slot
+(an absent key measured again), failed-read-is-not-refusal (busy answers and a unit-2 timeout). Found from the
+source, not on hardware; the pages' rules stand as the intended behaviour.
+
