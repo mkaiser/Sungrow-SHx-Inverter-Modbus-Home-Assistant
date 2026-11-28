@@ -109,9 +109,9 @@ well, and the wrong name added or a right one left out is worse than the
 aggregate.
 *Needs*: the maintainer's call on who belongs there.
 
-**T100. Review and clean up the code, one area a session, then bring the documents into line with it**:
-[the review prompt](plans/_code-review.md), then [the documents prompt](plans/_improve-doc.md).
-*Needs*: nothing; the maintainer decides each finding listed under *Reported*.
+**T100. Decide the findings the code review and the documents pass left open**, listed under *Reported* in
+[the code review](plans/_code-review.md) and under *Code that looks wrong* in [the documents pass](plans/_improve-doc.md).
+*Needs*: the maintainer's decision on each.
 
 # Open decisions
 
