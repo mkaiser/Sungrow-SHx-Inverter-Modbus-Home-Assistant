@@ -55,8 +55,8 @@ Only the dev instance is written to by password: `dev` / `dev` is an open door
 on any instance somebody else can reach, so `dev_instance` refuses a
 non-loopback URL for the same reason `ha_onboard.py` does. A production
 instance is read-only (`doc/development.yaml`, `production_home_assistant_api`),
-and a long-lived token is accepted here only so that reading one is possible,
-never to press something at a house over the network.
+and a long-lived token is accepted here only so that reading one is possible:
+`Watch.press` refuses any instance off loopback, whatever its credential.
 
     ha_watch.py --url http://127.0.0.1:8125 --quiet sensor.…_test_summary
     ha_watch.py --url http://127.0.0.1:8125 --restore 13017-watch.json
@@ -225,6 +225,11 @@ class Instance:
         )
 
 
+def _loopback(url: str) -> bool:
+    """Whether `url` names this machine, and so no house over the network."""
+    return (urllib.parse.urlsplit(url).hostname or "") in LOOPBACK
+
+
 def dev_instance(url: str = "http://127.0.0.1:8125") -> Instance:
     """Return the development instance, logged in as `dev` / `dev`.
 
@@ -232,8 +237,7 @@ def dev_instance(url: str = "http://127.0.0.1:8125") -> Instance:
     exactly why they must never reach a machine somebody else can reach
     (`ha_onboard.py` says it at length).
     """
-    host = urllib.parse.urlsplit(url).hostname or ""
-    if host not in LOOPBACK:
+    if not _loopback(url):
         raise ValueError(f"{url} is not loopback: dev/dev is an open door there")
     return Instance(url, username="dev", password="dev")
 
@@ -285,10 +289,17 @@ class Watch:
     def press(self, entity_id: str, service: str, **data: Any) -> None:
         """Note where the entity is, flush the note, then call the service.
 
-        Refuses before writing anything where the entity's platform cannot be
-        written back, or where its state is not a value: a press whose
-        restore cannot be worked out is a house nobody can put back.
+        Refuses before writing anything where the instance is off loopback
+        (a production instance is read-only, a token or not), where the
+        entity's platform cannot be written back, or where its state is not a
+        value: a press whose restore cannot be worked out is a house nobody
+        can put back.
         """
+        if not _loopback(self.instance.url):
+            raise ValueError(
+                f"{self.instance.url} is not loopback: a watch reads a house "
+                "over the network, it never presses one"
+            )
         domain = entity_id.split(".", 1)[0]
         if domain not in RESTORES:
             raise ValueError(

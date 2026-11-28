@@ -114,3 +114,29 @@ def test_the_makefile_is_reachable_from_the_workflow_path_filter() -> None:
     # PyYAML reads a bare `on:` key as the boolean True.
     triggers = document.get("on", document.get(True))
     assert "Makefile" in triggers["push"]["paths"]
+
+
+def test_the_build_checks_only_what_it_built() -> None:
+    """`python -m build` leaves older versions' files in `dist/` beside the new.
+
+    A glob over `dist/` hands `check_pinned_library.py --wheel` two paths in
+    one argument, which it reports as no such wheel, and `fetch_cards.py
+    --check` an old archive that never carried the cards. The recipe names
+    this version's wheel and sdist instead.
+    """
+    import subprocess
+    import tomllib
+
+    version = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))[
+        "project"
+    ]["version"]
+    recipe = subprocess.run(
+        ["make", "--no-print-directory", "-n", "build"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert "dist/*" not in recipe
+    assert f"dist/sungrow_modbus-{version}-py3-none-any.whl" in recipe
+    assert f"dist/sungrow_modbus-{version}.tar.gz" in recipe

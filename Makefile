@@ -230,9 +230,11 @@ controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-diag
 
 ##@ Release
 
-# The one wheel `wheel` leaves in dist/. Named by the version, so a wheel left
-# behind by an older version is never picked up instead.
-LIBRARY_WHEEL = $(CURDIR)/dist/sungrow_modbus-$(shell sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)-py3-none-any.whl
+# The wheel and sdist this version builds into dist/. Named by the version, so
+# a file left behind by an older version is never picked up instead.
+LIBRARY_VERSION = $(shell sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
+LIBRARY_WHEEL = $(CURDIR)/dist/sungrow_modbus-$(LIBRARY_VERSION)-py3-none-any.whl
+LIBRARY_SDIST = $(CURDIR)/dist/sungrow_modbus-$(LIBRARY_VERSION).tar.gz
 
 wheel: ## Build only the library's wheel into dist/, for SUNGROW_MODBUS_LIBRARY
 	rm -f $(LIBRARY_WHEEL)
@@ -240,12 +242,13 @@ wheel: ## Build only the library's wheel into dist/, for SUNGROW_MODBUS_LIBRARY
 	@echo "SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL)"
 .PHONY: wheel
 
+# Named, not globbed: `python -m build` leaves older versions' files in dist/.
 build: ## Build the sdist and wheel, and check them
 	$(PY) scripts/release/fetch_cards.py
 	$(PY) -m build
-	twine check --strict dist/*
-	$(PY) scripts/release/check_pinned_library.py --wheel "$$(ls dist/*.whl)"
-	$(PY) scripts/release/fetch_cards.py --check dist/*
+	twine check --strict $(LIBRARY_WHEEL) $(LIBRARY_SDIST)
+	$(PY) scripts/release/check_pinned_library.py --wheel $(LIBRARY_WHEEL)
+	$(PY) scripts/release/fetch_cards.py --check $(LIBRARY_WHEEL) $(LIBRARY_SDIST)
 .PHONY: build
 
 pin-check: ## Does the *published* library the manifest pins serve this integration?

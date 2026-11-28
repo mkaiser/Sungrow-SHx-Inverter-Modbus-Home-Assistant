@@ -39,11 +39,7 @@ import sys
 import time
 from typing import Any, NamedTuple
 
-from modbus_connection import (
-    ModbusError,
-    ModbusExceptionError,  # noqa: F401
-    ModbusTcpParams,
-)
+from modbus_connection import ModbusError, ModbusExceptionError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
 
 from sungrow_modbus import (
@@ -98,7 +94,7 @@ from sungrow_modbus.diagnosis_document import (
 )
 from sungrow_modbus.discovery import Identity, async_identify, async_mdns_services
 from sungrow_modbus.dump import DUMP_BANDS, WALLBOX_BANDS
-from sungrow_modbus.model import Silent, words_text
+from sungrow_modbus.model import SETTLES_NOTHING, Silent, words_text
 
 #: Where every file this folder's tools write goes: beside the scripts,
 #: whichever directory they were started from. `.gitignore` covers the names
@@ -260,23 +256,18 @@ async def cmd_units(args: argparse.Namespace) -> int:
             unit = connection.for_unit(unit_id)
             kinds = []
             for space, address, count, label in IDENTITY_PROBES:
-                read = (
-                    unit.read_input_registers
-                    if space == "input"
-                    else unit.read_holding_registers
-                )
                 # Retried, because a device that accepts one Modbus session at
                 # a time drops this one whenever something else is polling it,
                 # and a single timeout would be published as "no such device".
+                # A refusal is an answer and is not retried: asked again, it
+                # could end as a timeout and print as silence.
                 values, error = None, None
-                for attempt in range(1, args.retries + 1):
-                    try:
-                        values = list(await read(address, count))
-                        break
-                    except (ModbusError, TimeoutError, OSError) as err:
-                        error = err
-                        if attempt < args.retries:
-                            await asyncio.sleep(1.0)
+                try:
+                    values = await _async_read_retrying(
+                        _reader(unit, space), address, count, args.retries
+                    )
+                except (ModbusError, TimeoutError, OSError) as err:
+                    error = err
                 # Every outcome is printed, not just the useful ones. A silent
                 # unit and a unit that refused the address are different
                 # facts, and only saying "ANSWERED" left the difference
@@ -1415,7 +1406,8 @@ async def cmd_dump(args: argparse.Namespace) -> int:
     ones we do not: the wallbox's undecoded addresses between its mapped
     fields, or any range a new model might answer. A block that fails is
     retried one register at a time, so one bad address does not hide the
-    fifteen good ones beside it.
+    fifteen good ones beside it. An address the device refused and one that
+    got no answer are kept apart: a timeout says nothing about the register.
     """
     conn = ModbusConnection(
         ModbusTcpParams(host=args.host, port=args.port), timeout=args.timeout
@@ -1429,6 +1421,7 @@ async def cmd_dump(args: argparse.Namespace) -> int:
     found: dict[int, int] = {}
     unavailable: list[int] = []
     refused: list[int] = []
+    no_answer: list[int] = []
 
     print(
         f"{args.host}:{args.port} unit {args.unit}, {args.space} "
@@ -1445,8 +1438,12 @@ async def cmd_dump(args: argparse.Namespace) -> int:
                 for address in range(block_start, block_start + size):
                     try:
                         single = list(await read(address, 1))
+                    except ModbusExceptionError as err:
+                        busy = isinstance(err, SETTLES_NOTHING)
+                        (no_answer if busy else refused).append(address)
+                        continue
                     except (ModbusError, TimeoutError, OSError):
-                        refused.append(address)
+                        no_answer.append(address)
                         continue
                     if single[0] in UNAVAILABLE:
                         unavailable.append(address)
@@ -1466,7 +1463,7 @@ async def cmd_dump(args: argparse.Namespace) -> int:
         print(f"  {address:<8}(reg {address + 1:<8}) 0x{value:04X}  {value}")
     print(
         f"  {len(found)} answered, {len(unavailable)} unavailable, "
-        f"{len(refused)} refused"
+        f"{len(refused)} refused, {len(no_answer)} without an answer"
     )
 
     if args.save:
@@ -1485,6 +1482,7 @@ async def cmd_dump(args: argparse.Namespace) -> int:
                     "values": {str(a): v for a, v in sorted(found.items())},
                     "unavailable": sorted(unavailable),
                     "refused": sorted(refused),
+                    "no_answer": sorted(no_answer),
                 },
                 indent=2,
             )
@@ -1790,12 +1788,14 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
     that is the **brand**, which no register anywhere reports -- an inverter
     with a Pylontech attached looks exactly like one with an unbranded pack of
     the same size. So that is the only thing asked, and only when there is a
-    battery whose module block did not answer.
+    battery whose module block did not answer -- or when its voltage did not
+    read, which leaves the registers unable to say whether one is attached.
     """
     connection = ModbusConnection(ModbusTcpParams(host=host, port=port), timeout=6)
     capacity: float | None = None
     sungrow_pack = False
-    has_battery = False
+    # None until the voltage reads: a read the link lost is not "no battery".
+    has_battery: bool | None = None
     extras: dict[str, float] = {}
     try:
         unit = connection.for_unit(unit_id)
@@ -1859,14 +1859,20 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
             "  capacity matched no model, which the file records as it found it."
         )
         return ""
-    if not has_battery:
+    if has_battery is False:
         print("\n  Battery: none attached, as far as the registers show. Not asking.")
         return ""
 
-    print(
-        "\n  Battery: attached, but its own module block does not answer, so it\n"
-        "  is not a Sungrow pack. What the registers already say:"
-    )
+    if has_battery is None:
+        print(
+            "\n  Battery: its voltage did not read, so the registers cannot say\n"
+            "  whether one is attached. What they do say:"
+        )
+    else:
+        print(
+            "\n  Battery: attached, but its own module block does not answer, so it\n"
+            "  is not a Sungrow pack. What the registers already say:"
+        )
     for label, value, unit_name in (
         ("capacity (5639)", capacity, "kWh"),
         ("max charge power (33047)", extras.get("charge_power"), "W"),

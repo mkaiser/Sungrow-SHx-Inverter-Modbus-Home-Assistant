@@ -205,7 +205,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
 | `screenshot.py` | Retake a documentation screenshot from a scratch instance, on the screenshot venv's Python; see [Screenshots for the docs](#screenshots-for-the-docs) |
-| `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
+| `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; refuses while it runs, or a second time without `--reset`; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
 | `managed_wallbox_field.py` | Watch a wallbox an inverter manages, on this tree's library: its block, energy, a session, a phase switch, a scan of the inverter's 33501-33600; `charge` writes charging on/off and puts it back. Addresses as arguments; see `plans/T003-T004-T020-T039-T040-T059-wallbox.md` |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, `german`, or all eight with no argument (`strings` and `german` last, since they read the others) |
@@ -244,8 +244,7 @@ tree.
   `homeassistant.components.dhcp` passes here and fails in CI (0.1.0a52). Fake such a module
   in `sys.modules`, as `tests/test_network_records.py` does, and import it in the code only
   where Home Assistant has loaded it.
-- **Old wheels in `dist/` break `make build`'s last step** (its glob names every wheel).
-  Run `check_pinned_library.py --wheel` and `fetch_cards.py --check` on the new files.
+
 Each of these is verified in a container or against hardware.
 
 - **No handshake on a tunnel that worked an hour ago** usually means the host took the same config up. Take the
@@ -397,7 +396,7 @@ recorded readings and hourly statistics under the ids it used:
 $ scripts/dev/develop.sh                            # once, to create config/
 # stop it
 $ python scripts/dev/seed_migration_testbed.py
-Registry:   183 entities added (183 in the source)
+Registry:   198 entities added (198 in the source)
 History:    2880 states over 30 days
 Statistics: 2880 hourly rows
 $ scripts/dev/simulate.sh &                         # an inverter to talk to
@@ -405,8 +404,9 @@ $ scripts/dev/develop.sh
 ```
 
 Home Assistant must be **stopped** while it runs: it writes the entity
-registry and the recorder database directly. `--reset` undoes it, so the same
-instance can be used to try the other answer. `--from <snapshot>` uses a
+registry and the recorder database directly, and refuses while the instance's
+run lock names a live process. `--reset` undoes it, so the same instance can
+be used to try the other answer; a second seed without it is refused. `--from <snapshot>` uses a
 registry exported from a real instance instead of `scripts/generate/tables/legacy_entities.py` —
 more faithful, but such a file belongs in `.testdata/`, never in the repo.
 

@@ -188,6 +188,19 @@ def test_what_cannot_be_put_back_is_not_pressed(tmp_path: Path) -> None:
     assert not (tmp_path / "note.json").exists()
 
 
+def test_an_instance_off_loopback_is_never_pressed(tmp_path: Path) -> None:
+    """A long-lived token reads a production instance; it never writes one."""
+    instance = _Fake({"switch.forced_startup": _switch()})
+    instance.url = "http://ha.invalid:8123"
+    watch = watch_module.Watch(instance, tmp_path / "note.json", "x")
+
+    with pytest.raises(ValueError, match="not loopback"):
+        watch.press("switch.forced_startup", "turn_on")
+
+    assert instance.calls == []
+    assert not (tmp_path / "note.json").exists()
+
+
 def test_an_entity_that_reads_unknown_is_not_pressed(tmp_path: Path) -> None:
     """Where it should go back to is not known, so it does not move."""
     instance = _Fake({"switch.forced_startup": _switch("unavailable")})

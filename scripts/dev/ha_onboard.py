@@ -291,7 +291,11 @@ def main(argv: list[str] | None = None) -> int:
                     instance.log_in(args.username, args.password)
                 instance.finish(step)
             print(f"onboarding: {step} done", flush=True)
-    except Exception as error:  # noqa: BLE001 -- one line beats a traceback for a dev script
+    except (OSError, RuntimeError, ValueError) as error:
+        # What a step can fail with: the HTTP and connection errors (all
+        # `OSError`s), a payload it cannot use, an answer that is not JSON.
+        # One line for those; anything else is a bug here, and its traceback
+        # is the useful part.
         print(f"onboarding failed at {step}: {error}", file=sys.stderr)
         print(
             "Finish it in the browser; nothing here is required for the "

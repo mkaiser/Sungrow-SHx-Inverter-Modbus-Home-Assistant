@@ -10,7 +10,8 @@ So this fabricates the starting state: the entity registry entries
 the YAML package leaves behind, and a month of recorded readings
 and hourly statistics under the entity ids it used. Home Assistant must be
 **stopped** while it runs, because it writes the registry and the recorder
-database directly.
+database directly; it refuses while the instance's run lock names a live
+process, and refuses to seed twice (`--reset` first).
 
     scripts/dev/develop.sh                        # once, to create config/
     # stop it
@@ -18,9 +19,8 @@ database directly.
     scripts/dev/simulate.sh &                     # an inverter to talk to
     scripts/dev/develop.sh                        # and now migrate in the UI
 
-The entity id question is asked only in devices mode, which this release
-does not offer (`ONLY_DIAGNOSIS_MODE` in the integration's `const.py`). Set
-it to False locally to review the migration, and do not commit it.
+Setup then asks whether to take over the YAML package's entity ids, because
+there is something to take over.
 
 By default the entities come from `scripts/generate/tables/legacy_entities.py`, the
 record of what the YAML package produces, which carries no personal data.
@@ -41,6 +41,7 @@ import argparse
 from datetime import UTC, datetime, timedelta
 import json
 import math
+import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -90,7 +91,7 @@ def _entities(source: Path | None) -> list[dict]:
     return [
         {
             "entity_id": entity["entity_id"],
-            "platform": "modbus" if entity["layer"] == "modbus" else entity["layer"],
+            "platform": entity["layer"],
             "unique_id": entity["unique_id"],
             "original_name": entity["name"],
             "unit_of_measurement": entity.get("unit_of_measurement"),
@@ -301,6 +302,45 @@ def _seed_statistics(connection: sqlite3.Connection) -> int:
     return written
 
 
+def _running_pid() -> int | None:
+    """Return the pid of a Home Assistant serving `CONFIG`, or None.
+
+    Home Assistant writes its pid into `<config>/.ha_run.lock` and leaves the
+    file behind on exit, so the pid decides, not the file (as in
+    `hacs_testbed.sh`).
+    """
+    try:
+        pid = int(json.loads((CONFIG / ".ha_run.lock").read_text())["pid"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    try:
+        os.kill(pid, 0)  # signal 0 asks whether it is there, and sends nothing
+    except ProcessLookupError:
+        return None
+    except PermissionError:
+        pass  # somebody else's process, so it is running
+    return pid
+
+
+def _already_seeded(connection: sqlite3.Connection) -> bool:
+    """Whether a previous seed's statistics are still in the recorder.
+
+    A second seed would double the history and stop half-way on the
+    statistics table's unique start time, with the registry already written.
+    """
+    marks = ", ".join("?" for _ in SEEDED)
+    try:
+        row = connection.execute(
+            "SELECT COUNT(*) FROM statistics JOIN statistics_meta "
+            "ON statistics.metadata_id = statistics_meta.id "
+            f"WHERE statistics_meta.statistic_id IN ({marks})",
+            tuple(SEEDED),
+        ).fetchone()
+    except sqlite3.OperationalError:
+        return False  # no recorder tables yet: the seed fails on its own
+    return bool(row[0])
+
+
 def _reset() -> None:
     """Remove the seeded registry entries and recorded rows."""
     if REGISTRY.exists():
@@ -337,7 +377,7 @@ def _reset() -> None:
         print(f"Removed recorded rows for {len(SEEDED)} sensors")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Seed the testbed, or reset it."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -347,7 +387,7 @@ def main() -> int:
         help="registry snapshot from a real instance, instead of the legacy entities",
     )
     parser.add_argument("--reset", action="store_true", help="undo a previous seed")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if not CONFIG.exists():
         print(
@@ -363,14 +403,28 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    if (pid := _running_pid()) is not None:
+        print(
+            f"Home Assistant is serving config/ as pid {pid}. Stop it first: "
+            "it holds the registry in memory and would write over this.",
+            file=sys.stderr,
+        )
+        return 1
 
     if args.reset:
         _reset()
         return 0
 
+    connection = sqlite3.connect(DATABASE)
+    if _already_seeded(connection):
+        connection.close()
+        print(
+            "config/ is seeded already. Run with --reset first, then seed again.",
+            file=sys.stderr,
+        )
+        return 1
     entries = _entities(args.source)
     added = _write_registry(entries)
-    connection = sqlite3.connect(DATABASE)
     states = _seed_history(connection)
     statistics = _seed_statistics(connection)
     connection.close()

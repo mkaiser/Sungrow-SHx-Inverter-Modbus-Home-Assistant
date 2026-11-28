@@ -16,6 +16,8 @@ import json
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 REPO = Path(__file__).resolve().parent.parent
 
 
@@ -160,3 +162,32 @@ def test_the_public_credentials_are_refused_off_loopback(capsys):
     """`dev` / `dev` on a machine somebody else can reach is an open door."""
     assert onboard.main(["--url", "http://192.168.1.50:8123"]) == 2
     assert "loopback" in capsys.readouterr().err
+
+
+def _outstanding_account(monkeypatch, failure: Exception) -> None:
+    """Fake an instance that answers with the account step to do, which fails."""
+    monkeypatch.setattr(
+        onboard.Instance,
+        "wait_until_answering",
+        lambda self, seconds: [{"step": "user", "done": False}],
+    )
+
+    def create_user(self, name, username, password):
+        raise failure
+
+    monkeypatch.setattr(onboard.Instance, "create_user", create_user)
+
+
+def test_a_step_the_instance_refuses_is_one_line_and_exit_1(monkeypatch, capsys):
+    _outstanding_account(monkeypatch, RuntimeError("no auth code in {}"))
+
+    assert onboard.main(["--url", "http://127.0.0.1:8123"]) == 1
+    assert "onboarding failed at user: no auth code" in capsys.readouterr().err
+
+
+def test_a_bug_in_the_script_keeps_its_traceback(monkeypatch):
+    """Only what a step can fail with is folded into one line."""
+    _outstanding_account(monkeypatch, KeyError("auth_code"))
+
+    with pytest.raises(KeyError):
+        onboard.main(["--url", "http://127.0.0.1:8123"])

@@ -346,3 +346,161 @@ def test_a_cell_block_a_dongle_zeroes_becomes_nothing_not_module_zero() -> None:
         "max_module_temperature_sensor",
     ):
         assert values[name] is None, f"{name} decoded a zero into a position"
+
+
+class _DumpUnit:
+    """A unit whose blocks all time out, and whose single addresses differ.
+
+    100 answers, 101 refuses (0x02), 102 times out, and 103 answers busy
+    (0x06) -- which settles nothing about the register, as a timeout does not.
+    """
+
+    async def read_input_registers(self, address, count):
+        from modbus_connection import (
+            IllegalDataAddressError,
+            ModbusTimeoutError,
+            ServerDeviceBusyError,
+        )
+
+        if count > 1 or address == 102:
+            raise ModbusTimeoutError("no answer")
+        if address == 101:
+            raise IllegalDataAddressError(2)
+        if address == 103:
+            raise ServerDeviceBusyError(6)
+        return [7]
+
+
+class _DumpConnection:
+    def for_unit(self, _unit_id):
+        return _DumpUnit()
+
+    async def close(self):
+        return None
+
+
+def test_the_raw_dump_files_a_timeout_apart_from_a_refusal(
+    monkeypatch, tmp_path
+) -> None:
+    """A timeout and a busy answer say nothing about the register, so not "refused".
+
+    `probe.py dump --save` records which addresses refused, for exploring a
+    gap nobody has mapped; an address listed there because one read was lost
+    would read as "this register does not exist".
+    """
+    import argparse
+
+    import probe
+
+    monkeypatch.setattr(probe, "ModbusConnection", lambda *_a, **_k: _DumpConnection())
+    args = argparse.Namespace(
+        host="inverter.invalid",
+        port=502,
+        unit=1,
+        space="input",
+        start=100,
+        count=4,
+        block=4,
+        timeout=1.0,
+        save=str(tmp_path),
+        label="gap",
+    )
+
+    assert asyncio.run(probe.cmd_dump(args)) == 0
+
+    saved = json.loads((tmp_path / "gap.dump.json").read_text())
+    assert saved["values"] == {"100": 7}
+    assert saved["refused"] == [101]
+    assert saved["no_answer"] == [102, 103]
+
+
+class _QuietConnection:
+    """A link on which every read times out, at every unit."""
+
+    def for_unit(self, _unit_id):
+        return self
+
+    async def read_input_registers(self, _address, _count):
+        from modbus_connection import ModbusTimeoutError
+
+        raise ModbusTimeoutError("no answer")
+
+    read_holding_registers = read_input_registers
+
+    async def close(self):
+        return None
+
+
+def test_a_battery_read_that_timed_out_is_not_no_battery(monkeypatch) -> None:
+    """A lost read is not an absent battery, so the brand is still asked.
+
+    `_ask_battery` skips the question only for what the registers settle: a
+    Sungrow pack that answered, or a battery voltage that read as none. With
+    no answer at all it cannot tell, and saying "none attached" would publish
+    an unasked question as a reading.
+    """
+    import probe
+
+    async def once(read, address, count, _attempts=1):
+        return list(await read(address, count))
+
+    asked: list[str] = []
+
+    def ask(question, default=""):
+        asked.append(question)
+        return "some brand, 10 kWh"
+
+    monkeypatch.setattr(probe, "ModbusConnection", lambda *_a, **_k: _QuietConnection())
+    monkeypatch.setattr(probe, "_async_read_retrying", once)
+    monkeypatch.setattr(probe, "_ask", ask)
+
+    answer = asyncio.run(probe._ask_battery("inverter.invalid", 502, 1))
+
+    assert asked, "the brand was not asked though nothing answered"
+    assert answer == "some brand, 10 kWh"
+
+
+class _RefusingThenQuiet:
+    """Refuses each read the first time it is asked, then times out."""
+
+    def __init__(self):
+        self.asked: set[tuple[int, int]] = set()
+
+    def for_unit(self, _unit_id):
+        return self
+
+    async def read_input_registers(self, address, count):
+        from modbus_connection import IllegalDataAddressError, ModbusTimeoutError
+
+        if (address, count) in self.asked:
+            raise ModbusTimeoutError("no answer")
+        self.asked.add((address, count))
+        raise IllegalDataAddressError(2)
+
+    read_holding_registers = read_input_registers
+
+    async def close(self):
+        return None
+
+
+def test_the_unit_sweep_prints_a_refusal_as_a_refusal(monkeypatch, capsys) -> None:
+    """An exception response is an answer, so `probe.py units` does not ask again.
+
+    Retried, a refusal followed by a lost answer printed as a timeout -- a
+    unit that answered shown as a silent one.
+    """
+    import argparse
+
+    import probe
+
+    monkeypatch.setattr(probe, "CANDIDATE_UNITS", {1: "inverter (default)"})
+    monkeypatch.setattr(
+        probe, "ModbusConnection", lambda *_a, **_k: _RefusingThenQuiet()
+    )
+    args = argparse.Namespace(host="inverter.invalid", port=502, timeout=1.0, retries=3)
+
+    assert asyncio.run(probe.cmd_units(args)) == 0
+
+    printed = capsys.readouterr().out
+    assert "IllegalDataAddressError" in printed
+    assert "ModbusTimeoutError" not in printed
