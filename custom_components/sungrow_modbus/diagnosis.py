@@ -120,8 +120,9 @@ LEFT_CHANGED = (
     "a run could not put everything back; see Settings -> Repairs, then start again"
 )
 
-#: A run of the wallbox's own checks: after part B in an extended run, or alone
-#: when auto repeat finds one due. Never at the same time as either.
+#: A run of the wallbox's own checks, which only a wallbox entry makes
+#: (`wallbox_capability_test.consented`): after its read in an extended run, or
+#: alone when auto repeat finds one due. Never beside another run.
 PART_WALLBOX = "wallbox capability test"
 
 
@@ -563,10 +564,28 @@ class DiagnosisRunner:
         return True
 
     async def _async_run_wallbox(self) -> None:
-        """Run the wallbox's checks under paused polling, and end in a state."""
+        """Run the wallbox's checks under paused polling, and end in a state.
+
+        The owner's stop reaches this run as a cancellation (`async_stop`),
+        which the wallbox test answers by putting everything back before it
+        propagates; this run then ends stopped, as `_async_run_stoppable` does.
+        """
         try:
             async with self.entry.runtime_data.async_paused():
                 await self._async_wallbox_test()
+        except asyncio.CancelledError:
+            if not self._stop_requested:
+                raise
+            self._set(
+                running=False,
+                step=None,
+                fraction=None,
+                finished=dt_util.now(),
+                error=None,
+                part=None,
+                stopped=True,
+            )
+            return
         except Exception as err:  # a background run must not be able to crash the loop
             _LOGGER.exception("Wallbox capability test failed for %s", self.entry.title)
             self._set(
@@ -764,8 +783,9 @@ class DiagnosisRunner:
         except asyncio.CancelledError:
             if not self._stop_requested:
                 raise
-            # Stopped in part A, which only reads: nothing to put back and
-            # no document worth offering.
+            # Stopped in part A, which only reads, or in a wallbox entry's
+            # test, which puts its settings back before the cancellation
+            # arrives here: no document worth offering.
             self._set(
                 running=False,
                 step=None,
@@ -835,10 +855,6 @@ class DiagnosisRunner:
                     # and folded with the runs before it.
                     attach_capability_test(document, block, self._device())
                     self._folded = await self._async_record(block, document)
-                    if wallbox_consented(self.entry) and self.wallbox_present:
-                        # After the inverter's part B, never beside it: one
-                        # connection, one writer.
-                        await self._async_wallbox_test()
                 if self._folded is not None:
                     attach_capability_test(document, self._folded, self._device())
                 if self._wallbox_folded is not None:

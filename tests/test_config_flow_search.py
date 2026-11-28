@@ -19,7 +19,11 @@ from modbus_connection import ModbusError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from custom_components.sungrow_modbus.config_flow import NOT_LISTED, SWEEP_PORTS
+from custom_components.sungrow_modbus.config_flow import (
+    NOT_LISTED,
+    SWEEP_PORTS,
+    SungrowConfigFlow,
+)
 from custom_components.sungrow_modbus.const import (
     CONF_ENTITY_IDS,
     CONF_NETWORK,
@@ -697,6 +701,29 @@ async def test_the_sweep_reports_progress_while_it_runs(
     assert all(0.0 <= value <= 1.0 for value in updates)
     # It ran to the end and reported honestly, rather than stalling.
     assert result["step_id"] == "nothing_found"
+
+
+async def test_a_stage_shown_after_the_dialog_closed_raises_nothing(
+    hass: HomeAssistant,
+) -> None:
+    """The refresh runs in a task, and the flow may be gone when it does.
+
+    Caught around creating the task, `UnknownFlow` escaped from inside it as
+    a task exception nobody retrieved.
+    """
+    flow = SungrowConfigFlow()
+    flow.hass = hass
+    flow.flow_id = "closed"
+    scheduled = []
+
+    def _keep(coro, *args, **kwargs):
+        scheduled.append(coro)
+
+    with patch.object(hass, "async_create_task", _keep):
+        flow._set_stage("Asked 3 of 254")
+
+    (refresh,) = scheduled
+    await refresh
 
 
 async def _default_network(hass: HomeAssistant, adapters: list[dict]) -> str:

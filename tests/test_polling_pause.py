@@ -118,6 +118,43 @@ async def test_polling_resumes_when_the_run_is_cancelled(
     assert not runtime.polling_paused
 
 
+async def test_the_first_of_two_overlapping_pauses_does_not_resume_polling(
+    hass: HomeAssistant, entry: MockConfigEntry
+) -> None:
+    """Two runs can hold one entry: the first to end leaves the other paused.
+
+    A wallbox entry's managed test pauses the inverter entry it writes
+    through, while that entry's own diagnosis may hold it too. Neither run's
+    end may put the tiers back on the wire under the other.
+    """
+    import asyncio
+
+    runtime = entry.runtime_data
+    first_done = asyncio.Event()
+    release_second = asyncio.Event()
+    seen: list[bool] = []
+
+    async def first() -> None:
+        async with runtime.async_paused():
+            await asyncio.sleep(0)
+        first_done.set()
+
+    async def second() -> None:
+        async with runtime.async_paused():
+            await first_done.wait()
+            seen.append(runtime.polling_paused)
+            await release_second.wait()
+
+    task = asyncio.ensure_future(second())
+    await asyncio.sleep(0)
+    await first()
+    await asyncio.sleep(0)
+    assert seen == [True]
+    release_second.set()
+    await task
+    assert not runtime.polling_paused
+
+
 async def test_every_coordinator_on_the_entry_is_covered(
     hass: HomeAssistant, entry: MockConfigEntry
 ) -> None:

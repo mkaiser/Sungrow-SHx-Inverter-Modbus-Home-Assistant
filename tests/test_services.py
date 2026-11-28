@@ -117,6 +117,40 @@ async def test_starting_writes_the_boot_code(
     assert sungrow_unit.holding[ADDRESS] == START
 
 
+async def test_stopping_works_with_the_realtime_tier_set_to_never(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The running state is read on the realtime tier, which may not be polled.
+
+    An owner may set that tier to never. The write still goes out, through
+    the coordinators that are polled; only the read-back waits for a poll.
+    """
+    from custom_components.sungrow_modbus.const import CONF_INTERVALS, INTERVAL_NEVER
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data=ENTRY_DATA,
+        options={CONF_INTERVALS: {"realtime": INTERVAL_NEVER}},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    assert "realtime_input" not in entry.runtime_data.coordinators
+
+    await hass.services.async_call(
+        DOMAIN,
+        "stop_inverter",
+        {ATTR_DEVICE_ID: _device_id(hass, entry)},
+        blocking=True,
+    )
+    assert sungrow_unit.holding[ADDRESS] == STOP
+
+
 async def test_a_non_admin_cannot_stop_the_inverter(
     hass: HomeAssistant,
     entry: MockConfigEntry,

@@ -30,7 +30,7 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.diagnostics import (
     async_get_config_entry_diagnostics,
 )
-from homeassistant.config_entries import SOURCE_DHCP, SOURCE_ZEROCONF
+from homeassistant.config_entries import SOURCE_DHCP, SOURCE_IGNORE, SOURCE_ZEROCONF
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -115,6 +115,26 @@ async def test_confirming_identifies_over_modbus_and_creates_the_entry(
     assert result["data"][CONF_HOST] == PORT_HOST
     # The serial replaces the sighting's stand-in once Modbus has answered.
     assert result["context"]["unique_id"] == SERIAL
+
+
+async def test_an_inverter_the_owner_ignored_stays_ignored(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Its serial ignored, a sighting of its port neither moves nor adds it."""
+    ignored = MockConfigEntry(
+        domain=DOMAIN, unique_id=SERIAL, source=SOURCE_IGNORE, data={}
+    )
+    ignored.add_to_hass(hass)
+    result = await _discover(hass, _port())
+    with (
+        _probe(sungrow_unit),
+        patch(f"{FLOW}.async_hostname", return_value=None),
+    ):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert hass.config_entries.async_entries(DOMAIN) == [ignored]
+    assert ignored.data == {}
 
 
 async def test_a_port_that_does_not_answer_is_not_added(

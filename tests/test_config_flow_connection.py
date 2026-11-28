@@ -24,7 +24,7 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     MODE_DEVICES,
 )
-from homeassistant.config_entries import SOURCE_USER
+from homeassistant.config_entries import SOURCE_IGNORE, SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -170,6 +170,28 @@ async def test_adding_it_at_the_same_connection_is_still_already_configured(
     result = await _add_by_address(hass, DONGLE)
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_adding_an_ignored_inverter_sets_it_up_instead_of_moving_the_card(
+    hass: HomeAssistant,
+) -> None:
+    """An ignored card has no endpoint and is never set up: nothing to move.
+
+    Offered the move, the owner confirmed it and was left with the card's
+    empty entry and nothing running. The flow goes on and Home Assistant puts
+    the new entry in the ignored one's place.
+    """
+    MockConfigEntry(
+        domain=DOMAIN, unique_id=SERIAL_A, source=SOURCE_IGNORE, data={}
+    ).add_to_hass(hass)
+
+    result = await _add_by_address(hass, CABLE)
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY, result
+    (entry,) = hass.config_entries.async_entries(DOMAIN)
+    assert entry.source == SOURCE_USER
+    assert entry.data[CONF_HOST] == CABLE
 
 
 def test_a_wallbox_read_through_the_dongle_is_warned_about_before_a_cable() -> None:

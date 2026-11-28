@@ -529,6 +529,32 @@ async def test_removing_the_entry_takes_the_snapshot_with_it(
     assert await _store(hass, entry).async_load() is None
 
 
+async def test_removing_the_entry_takes_the_kept_runs_and_checks_with_it(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The ledgers and the readings' checks are files keyed by entry id too."""
+    from custom_components.sungrow_modbus import (
+        capability_test,
+        wallbox_capability_test,
+    )
+
+    entry = await _setup(hass, ready_unit)
+    stores = (
+        capability_test._ledger_store,
+        capability_test.plausibility_store,
+        wallbox_capability_test._ledger_store,
+        wallbox_capability_test.plausibility_store,
+    )
+    for store in stores:
+        await store(hass, entry).async_save({"runs": []})
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+
+    for store in stores:
+        assert await store(hass, entry).async_load() is None, store.__qualname__
+
+
 async def test_the_button_runs_after_dark_where_the_cli_would_refuse(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:

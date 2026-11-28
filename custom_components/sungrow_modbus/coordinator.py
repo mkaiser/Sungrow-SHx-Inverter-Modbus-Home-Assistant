@@ -780,7 +780,7 @@ class SungrowRuntimeData:
     polling_paused: bool = False
     """True while a diagnosis or capability test wants the link to itself.
 
-    **Declared last on purpose**, for the reason `diagnosis` gives.
+    After `diagnosis`, for the reason it gives.
 
     Read by every coordinator on this entry before it polls. Everything here
     shares one serialized connection, so a diagnosis taken while the tiers keep
@@ -809,25 +809,39 @@ class SungrowRuntimeData:
     one (`write_owner.owner_quiet_until`).
     """
 
+    pauses: int = 0
+    """How many runs hold polling off now (`async_paused`).
+
+    After `diagnosis`, for the reason it gives. A count rather than the flag
+    alone, because two runs can hold the same entry at once -- a wallbox
+    entry's managed test pauses the inverter entry it writes through, beside
+    that entry's own diagnosis -- and the first to end must not resume
+    polling under the other.
+    """
+
     @asynccontextmanager
     async def async_paused(self) -> AsyncIterator[None]:
         """Hold every coordinator on this entry off the link for the duration.
 
         Restored in a `finally`, so a diagnosis that raises, times out or is
         cancelled cannot leave an entry that has silently stopped polling --
-        which would look exactly like the integration having died.
+        which would look exactly like the integration having died. Nested or
+        overlapping holds resume polling only when the last of them ends.
 
         What it does **not** do is interrupt a poll already in flight. There is
         no safe way to, and it does not matter: one more read has already been
         paid for, and everything after it waits.
         """
+        self.pauses += 1
         self.polling_paused = True
         _LOGGER.debug("Polling paused: a diagnosis or capability test has the link")
         try:
             yield
         finally:
-            self.polling_paused = False
-            _LOGGER.debug("Polling resumed")
+            self.pauses -= 1
+            if not self.pauses:
+                self.polling_paused = False
+                _LOGGER.debug("Polling resumed")
 
     @property
     def has_wallbox(self) -> bool:

@@ -258,7 +258,7 @@ async def _async_write(call: ServiceCall, value: int, what: str) -> None:
     # A run that holds the controls may itself have stopped the inverter, and
     # its restore starts it again.
     refuse_while_test_writes(entry.runtime_data, entry.title)
-    coordinator = entry.runtime_data.coordinator_for(STATE_COMPONENT)
+    runtime = entry.runtime_data
 
     # Logged at warning, not debug. Somebody working out why their inverter
     # stopped overnight should find this without turning anything on first.
@@ -271,14 +271,18 @@ async def _async_write(call: ServiceCall, value: int, what: str) -> None:
         call.context.user_id or "an automation or script",
     )
     try:
-        await coordinator.device.component(COMPONENT).write(FIELD, value)
+        await runtime.inverter_coordinator.device.component(COMPONENT).write(
+            FIELD, value
+        )
     except ModbusError as err:
         raise HomeAssistantError(
             translation_domain=DOMAIN,
             translation_key="start_failed" if what == "start" else "stop_failed",
             translation_placeholders={"device": entry.title, "error": str(err)},
         ) from err
-    await coordinator.async_refresh()
+    # Only where the realtime tier is polled: an owner may set it to never.
+    if (state := runtime.coordinators.get(STATE_COMPONENT)) is not None:
+        await state.async_refresh()
 
 
 def _refuse_on_string_inverter(entry: SungrowConfigEntry) -> None:

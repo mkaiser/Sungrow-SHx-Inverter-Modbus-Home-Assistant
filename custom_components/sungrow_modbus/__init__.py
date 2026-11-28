@@ -1339,12 +1339,13 @@ async def async_remove_config_entry_device(
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
-    """Clean up what outlives the entry, which is the capability test's snapshot.
+    """Clean up what outlives the entry: the capability test's stores.
 
     Everything else this integration owns is either in the entry or in the
-    registries, and Home Assistant removes those itself. The snapshot is not:
-    it is a `Store`, so it is a file in `.storage/` keyed by entry id, and
-    deleting the entry would otherwise leave it there for good.
+    registries, and Home Assistant removes those itself. The snapshot, the
+    kept runs and the readings' checks are not: each is a `Store`, a file in
+    `.storage/` keyed by entry id, and deleting the entry would otherwise
+    leave them there for good.
 
     Worth being clear about what this does **not** mean. A snapshot present at
     this moment is a house still carrying a run's values, and removing the
@@ -1357,9 +1358,17 @@ async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     # `_async_check_capability_test` above: `check_pinned_library.py` reads this
     # module's `sungrow_modbus` imports, and `capability_test` pulls in the
     # library's own `capability_test`, which only a released wheel provides.
-    from .capability_test import async_forget
+    from .capability_test import async_forget, async_ledger_clear, plausibility_store
+    from .wallbox_capability_test import (
+        async_ledger_clear as async_wallbox_ledger_clear,
+        plausibility_store as wallbox_plausibility_store,
+    )
 
     await async_forget(hass, entry)
+    await async_ledger_clear(hass, entry)
+    await plausibility_store(hass, entry).async_remove()
+    await async_wallbox_ledger_clear(hass, entry)
+    await wallbox_plausibility_store(hass, entry).async_remove()
     if entry.data.get(CONF_KIND) == KIND_WALLBOX and entry.unique_id:
         # The inverter entry that left this wallbox to it reads it again.
         for other in hass.config_entries.async_entries(DOMAIN):

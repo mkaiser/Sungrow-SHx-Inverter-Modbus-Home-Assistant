@@ -16,6 +16,7 @@ from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
     SOURCE_DHCP,
+    SOURCE_IGNORE,
     SOURCE_INTEGRATION_DISCOVERY,
     SOURCE_USER,
     ConfigEntry,
@@ -529,11 +530,20 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         owner's choice which path to use, and moving the entry keeps every
         entity id and all of their history: they belong to the inverter, not
         to the address it was reached through.
+
+        **An ignored card is no entry to move.** It holds no endpoint and is
+        never set up, so moving it would end the flow with nothing running.
+        The owner's own flow goes on and creates the entry, which Home
+        Assistant puts in the ignored one's place; a discovery leaves it
+        ignored.
         """
         await self._async_take_unique_id(serial)
         existing = self.hass.config_entries.async_entry_for_domain_unique_id(
             DOMAIN, serial
         )
+        if existing is not None and existing.source == SOURCE_IGNORE:
+            self._abort_if_unique_id_configured()
+            return None
         if existing is None:
             return None
         if _endpoint(existing.data) == _endpoint(endpoint):
@@ -1261,15 +1271,22 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         on its own while a task runs. So the flow is reconfigured from inside
         the task, which is what HACS's own device-code step does. Without it
         the first text stays on screen for the whole sweep.
+
+        The flow can be gone by the time the task runs -- the owner closed
+        the dialog mid-sweep -- so `UnknownFlow` is caught inside the task,
+        where it is raised.
         """
         if stage == self._stage:
             return
         self._stage = stage
-        with suppress(UnknownFlow):
-            self.hass.async_create_task(
-                self.hass.config_entries.flow.async_configure(flow_id=self.flow_id),
-                eager_start=False,
-            )
+
+        async def _async_show() -> None:
+            with suppress(UnknownFlow):
+                await self.hass.config_entries.flow.async_configure(
+                    flow_id=self.flow_id
+                )
+
+        self.hass.async_create_task(_async_show(), eager_start=False)
 
     async def async_step_nothing_found(
         self, user_input: dict[str, Any] | None = None

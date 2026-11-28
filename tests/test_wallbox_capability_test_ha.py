@@ -15,6 +15,8 @@ judged: only that every register is back where it was.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 from datetime import timedelta
 from typing import Any, ClassVar
 from unittest.mock import patch
@@ -215,6 +217,43 @@ async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
     assert runner._wallbox_folded["runs"] == 1
     # A static wallbox cannot be judged, but the ledger knows what ran.
     assert "output current" in runner._wallbox_folded["checks"]
+
+
+@pytest.mark.usefixtures("standalone")
+async def test_a_wallbox_run_the_owner_stops_ends_stopped_with_everything_back(
+    hass: HomeAssistant,
+) -> None:
+    """Auto repeat's wallbox run, stopped mid-write: no run left showing as running."""
+    box = _wallbox(charging=True)
+    entry = await _setup(
+        hass,
+        box,
+        **{CONF_CAPABILITY_TEST_WALLBOX: True, CONF_WALLBOX_MAX_AMPS: 10},
+    )
+    original = dict(box.holding)
+    runner = entry.runtime_data.diagnosis
+    writing = asyncio.Event()
+    real_write = box.write_register
+
+    async def first_write_hangs(address: int, value: int) -> Any:
+        if not writing.is_set():
+            writing.set()
+            await asyncio.Event().wait()
+        return await real_write(address, value)
+
+    with patch.object(box, "write_register", first_write_hangs):
+        assert runner.async_start_wallbox()
+        await writing.wait()
+        runner.async_stop()
+        assert runner._task is not None
+        with contextlib.suppress(asyncio.CancelledError):
+            await runner._task
+        await hass.async_block_till_done()
+
+    assert not runner.state.running
+    assert runner.state.stopped
+    assert runner.state.error is None
+    assert {k: box.holding[k] for k in original} == original
 
 
 @pytest.mark.usefixtures("standalone")
