@@ -6,7 +6,7 @@ plan under [`plans/`](plans/), and how items are numbered:
 (`/todo-housekeeping`). It has more than one writer: read it from disk and
 change only your part (`AGENTS.md`).
 
-**Next free item number: T101.** Numbers are minted in order, never reused and
+**Next free item number: T113.** Numbers are minted in order, never reused and
 never renumbered; a removed item retires its number.
 
 Sections: **Incoming items by maintainer** (a holding area, taken in when
@@ -109,9 +109,60 @@ well, and the wrong name added or a right one left out is worse than the
 aggregate.
 *Needs*: the maintainer's call on who belongs there.
 
-**T100. Decide the findings the code review and the documents pass left open**, listed under *Reported* in
-[the code review](plans/_code-review.md) and under *Code that looks wrong* in [the documents pass](plans/_improve-doc.md).
-*Needs*: the maintainer's decision on each.
+*From the code review and the documents pass (T100)*, grouped by topic; each item's file and line, and the
+fix proposed, are in [the code review](plans/_code-review.md), *Reported*, and in [the documents pass](plans/_improve-doc.md), *Code that looks wrong*.
+
+**T101. Restore safety: the capability test's restore can still be cut short** (hard constraint). Both
+`_shielded` helpers (`capability_test/engine.py`, `wallbox/capability_test.py`) give way on a fourth
+cancellation, where `wallbox/managed_test._shielded` loops until done; a stop write that comes back `DROPPED`
+sends no start and ends without exit 5 (`capability_test/restore.py`, beside T079); a snapshot flush that raises
+inside the restore (`base._touch`) leaves the fields after it unrestored.
+*Needs*: the maintainer's review of each change, since it touches the restore and exit 5's meaning.
+
+**T102. Restore safety: 13074's probe** (hard constraint). The write that lifts feed-in limitation sits
+outside the `try` that restores 13087, and `_put_back` stops at its first failed read
+(`hybrid_inverter/export_scale.py`); `readback._measure_export_scale` catches only `ModbusError`, so a timeout
+ends the run as code 1.
+*Needs*: the maintainer's review, as T101.
+
+**T103. Snapshots left behind or not on disk**: a wallbox run the owner stops keeps its snapshot although
+everything was restored (`wallbox_capability_test.py`); removing a wallbox entry leaves its snapshot in
+`.storage/` (`__init__.py`); the inverter script's snapshot is not `fsync`ed before the first write
+(`sungrow_capability_test.py`, where the wallbox scripts' `_save` is); a two-word owner write whose second word
+fails never records the first, so a leftover snapshot's repair writes it back (`entity.py`).
+
+**T104. A busy dongle's answer read as a refusal**: any `ModbusExceptionError` confirms "5 A refused" or
+stops the user-current check in `wallbox/managed_test.py`, and `scripts/dev/managed_wallbox_field.py scan`
+files a WiNet-S's 0x04/0x06 as refused and stops at its first timeout; both should ask a
+`SETTLES_NOTHING` answer again, as `export_scale._ask` does.
+
+**T105. Addresses kept out of what is published**: a guard test that every IPv4 literal in a tracked file is a
+listed stand-in (the allow-list wants the maintainer's review before it gates, as the wiki and `doc/` carry
+addresses too); the diagnosis summary, which says it is safe to paste, prints the real host in its run-later
+and unreadable lines (`sungrow_diagnosis.py`).
+
+**T106. User-visible texts that the code contradicts**, in `strings.json` and `german_texts.json`: the sweep's
+"2181 addresses across sixteen bands" (2197 in eighteen), the capability test permissions' "off by default"
+(all six default on), start and stop's "admin rights are required" (a per-entry option), `wallbox_max_amps`'s
+"an offer below the 6 A minimum", and the unused `{devices_mode}` placeholder and `devices_mode_not_offered`
+abort; then `make gen`, and a test holding the sweep text to `DUMP_BANDS`. Proposed wording in [the code review](plans/_code-review.md), *Reported*.
+*Needs*: the maintainer's leave to edit those keys in `strings.json`, the one place their English lives.
+
+**T107. Tooling fixes**: `screenshot.py` defaults to :8125, `make dev-real`'s port, and its
+`diagnosis-running` shot starts an extended run that writes (a port of its own, and refuse unless the host is
+the simulator), and it waits for a setup step that no longer exists; `sync_version.py --set` writes
+`pyproject.toml` before it knows the rest can be written, and ignores `--expect` without `--check`;
+`generate_devices_wanted.py` points at the wanted list's "item 7" by number; `generate_simulator_registers.py`'s
+keys are literal addresses rather than `reg()`; `ihomemanager_direct._destination` overwrites the last
+candidate where `probe._destination` falls back to a timestamped name; the managed wallbox test script
+cannot target a slave inverter (`--unit`) or try a wallbox at unit 2 or 4.
+
+**T108. Structure, no behaviour change**: fold the two mDNS browses into `network_names` and move `probe.py
+mdns` once the pin has it; share the coordinator's component transition log with the iHomeManager's, so
+`log-when-unavailable` holds there too; read `DeviceInfo` by attribute in `__init__.py`; split
+`config_flow.py` (2,856 lines) only together with one helper for the setup flow's `entity_ids` and the
+options flow's `promote`; move the private helpers 38 test modules import from each other into helper modules
+beside `tests/corpus.py`.
 
 # Open decisions
 
@@ -139,6 +190,22 @@ could do it in one click, at the price of writing to the user's statistics
 `entity-disabled-by-default` asks for the rarely used ones to start off. Only
 entities the YAML package never had can qualify: a ported one must stay
 enabled, or its history stops (`AGENTS.md`).
+
+**T109. Legacy slot: an entry with no stored slot** (hard constraint). `SungrowOptionsFlow._async_slot`
+(`config_flow.py`) measures an absent `CONF_LEGACY_SLOT` and writes the result when the entry switches
+**Entity IDs**, where `migration.stored_legacy_slot` reads an absent key as the unsuffixed slot; the result can
+refuse the way back to legacy ids, or take another slot. Proposed: measure only for a diagnostics entry or a
+stored `None`, and read an absent key on a devices entry as `""`. The wiki's legacy-slot page and the migration
+guide describe that, not the code. [the code review](plans/_code-review.md), *Reported*, area 5.
+
+**T110. Kept capability test runs whose transport is unknown**: `ledger.fold_key` keys a run with
+`direct_connection` None as a dongle run, so on a cable house one such run wipes up to 30 days of kept cable
+runs. Proposed: `async_ledger_add` treats an unsettled run like a dry run, kept only for its own document, at
+the price of auto repeat asking again. [the code review](plans/_code-review.md), *Reported*, areas 3 and 6.
+
+**T111. Other owners' addresses in git history**: the ones taken out of fixtures, documents and a skill
+in T100 are still in the history of `tests/`, `doc/` and `.claude/skills/`. Rewriting published history is
+the maintainer's call, as it was for the serial fragment.
 
 # Planned tests
 
@@ -243,6 +310,12 @@ not enforce it (1010 W stored at the maintainer's on P020).
 *Unblocked by*: a watched hour at a house setting a threshold above the
 battery's maximum charging power, where a charge should then never start --
 the behaviour `scripts/generate/tables/writes.py` already predicts.
+
+**T112. A lost answer at unit 2 is filed as a battery pack**: `battery/discovery.py` reads a timeout on the
+device type read as "no type code, a pack", so a slave inverter whose answer was lost may be granted
+`SUNGROW_BATTERY`, which moves write bounds. The fix counts only a refusal outside `SETTLES_NOTHING` as a pack,
+once it is known what a pack at unit 2 answers to 5000 through a WiNet-S.
+*Unblocked by*: that read, through a WiNet-S with a pack (a diagnosis that records it).
 
 ## Wallbox
 
