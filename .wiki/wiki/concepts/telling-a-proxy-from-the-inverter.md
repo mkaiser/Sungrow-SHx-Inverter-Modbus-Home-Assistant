@@ -92,6 +92,6 @@ prefix and an empty mDNS browse to be read as findings about the device.
 Read where it is available: `network_names.async_mac_prefix` (`/proc/net/arp`
 on Linux, `arp -a` elsewhere), `wifi_module.is_locally_administered`, and the
 picker's labels in `config_flow_schemas.py`. The diagnosis publishes the
-prefix it found as `network_names.mac_vendor_prefix`, never the whole address:
+prefix it found as `mac_vendor_prefix` (`src/sungrow_modbus/network_names.py`), never the whole address:
 the last three octets identify one unit
 ([serial anonymization](serial-anonymization.md)).

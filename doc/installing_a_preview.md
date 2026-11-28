@@ -64,15 +64,14 @@ a network problem, not a bug.
 
 ![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](images/HACS-add-integration-sungrow-modbus.png)
 
-Choose **Perform the device diagnosis**.
-
-![The first screen, offering Perform the device diagnosis](images/HA-settings-configure-integration.png)
-
-**Search my network** probes the range you confirm and identifies what
-answers; or type the address (behind a WiNet-S, the dongle's). Where more than
+The first screen asks *Where is the inverter?*. **Search my network for it**
+probes the range you confirm and identifies what answers; **I know the
+address** takes the address (behind a WiNet-S, the dongle's). Where more than
 one device answers, it lists them with each inverter's part in a cluster.
-Last come a few questions no register can answer, all optional and editable
-later under **Configure** ([every option](integration_options.md)).
+Where the search finds more than one inverter it asks what to call this one,
+and only where the YAML package's ids are there to take over, which entity
+ids to use. The diagnosis's questions
+are under **Configure** ([every option](integration_options.md)).
 
 Typing the address asks for three things:
 
@@ -136,6 +135,7 @@ when it has finished, and **Download diagnostics** then carries the document.
 Please do not restart Home Assistant while a run is going.
 
 - *Read-only* reads and never writes. The sensors beside it show progress.
+  It is the only mode on an SG string inverter.
 - *Extended test (single run)* adds the capability test, which writes
   settings and puts every one back, checked by reading it again. Read
   [what it does, and how to opt out](../device-diagnosis/README.md#two-modes-read-only-or-with-capability-tests)

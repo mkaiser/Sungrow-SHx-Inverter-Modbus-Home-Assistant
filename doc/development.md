@@ -16,8 +16,8 @@ Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.11 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
 `scripts/dev/setup.sh`, and forwards ports 8123 (Home Assistant), 5020 (the
-simulator), 8126 (the Marketplace testbed) and 8124 (the HACS testbed, for
-the upgrade only).
+simulator), 8125 (`make dev-real`, the same tree against real hardware), 8126
+(the Marketplace testbed) and 8124 (the HACS testbed, for the upgrade only).
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
@@ -67,7 +67,7 @@ Paste:
 
 ```text
 Follow .claude/skills/run-diagnosis/SKILL.md: run the device diagnosis on my
-inverter at 192.168.178.50, read-only. Ingest what it finds and tell me
+inverter at 192.168.x.y, read-only. Ingest what it finds and tell me
 whether it is news.
 ```
 
@@ -96,6 +96,7 @@ The preview mirror's sync, for one, is then
 | `scripts/dev/setup.sh` (`make setup`) | Install Home Assistant, the device library (editable) and tooling |
 | `scripts/dev/develop.sh` (`make dev`) | Boot Home Assistant on <http://localhost:8123> against `config/`, onboarded as `dev` / `dev` |
 | `scripts/dev/simulate.sh` (`make sim`) | Regenerate the register seed and serve it on port 5020 |
+| `make dev-real` | Another instance on :8125 against `config-real/`, so a day on real hardware leaves the simulator's history and entity ids alone |
 | `make dev-bg`, `make sim-bg`, `make stop` | The same two in the background, logging to `/tmp/ha.log` and `/tmp/sim.log`, and stopping them |
 | `make forget` | Drop the stored Sungrow config entry, so the next boot starts at *Add integration* |
 | `scripts/dev/fetch_references.sh` (`make refs`) | Clone upstream sources into `.reference/` for reading, hassfest included |
@@ -172,11 +173,16 @@ to the diagnosis.
 ```
 custom_components/sungrow_modbus/   Home Assistant integration
 src/sungrow_modbus/                 device library (no Home Assistant imports)
-  inverter/, battery/, wallbox/       one subpackage per device: registers, device
-  ihomemanager/, logger/              registers and document only: read by the diagnosis
-  addresses, discovery, diagnosis_document,  what spans devices
-  diagnosis, features, block_test,
-  capability_test, dump
+  hybrid_inverter/, string_inverter/, one subpackage per device: registers, device
+  battery/, wallbox/, ihomemanager/
+  logger/                             registers and document only: read by the diagnosis
+  capability_test/                    the capability test's engine
+  cards/                              the dashboard's card bundles, fetched at release
+  addresses, device, identity, model, what spans devices
+  discovery, network_names, dump,
+  diagnosis_document, diagnosis,
+  features, block_test, raw_client,
+  energy_integral
 tests/                              library and integration tests
 scripts/dev/                        dev loop: setup, boot, simulator, Marketplace testbed
 scripts/generate/                   everything that writes a committed file
@@ -202,6 +208,8 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `hacs_testbed.sh` | Boot a **second** HA: with `--marketplace` (`make marketplace`) 2026.11 on :8126 against `config-marketplace/`, the install a user gets; without it, on :8124 against `config-hacs/` with HACS installed, the upgrade from HACS only; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
 | `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant reads it (since 2026.9), the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
 | `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
+| `simulator.py` | Serve a seed over Modbus TCP, each run of registers as one dense block; `--port`, `--unit-id` and `--seed` pick the device, which is how `make sim-ihm-bg`, `sim-logger-bg` and `sim-sg-bg` serve the other seeds |
+| `hassfest.sh` | Run hassfest the way CI does (`make hassfest`), in the 2026.11 venv `.venv-marketplace/`, with core's hassfest from the `make refs` clone |
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
 | `screenshot.py` | Retake a documentation screenshot from a scratch instance, on the screenshot venv's Python; see [Screenshots for the docs](#screenshots-for-the-docs) |
@@ -304,12 +312,11 @@ Each of these is verified in a container or against hardware.
 - **A clone made on Windows and opened in the devcontainer** has CRLF line
   endings: Git for Windows' `core.autocrlf=true` writes them on checkout.
   In the container every file then shows as modified, a shell script's first
-  line breaks and a test comparing bytes fails (`test_diagnosis_dependencies`
-  did). `.gitattributes` now asks for LF everywhere (`* text=auto eol=lf`),
+  line breaks and a test comparing bytes fails. `.gitattributes` asks for LF everywhere (`* text=auto eol=lf`),
   which a fresh checkout honours; `setup.sh` repairs an older one, and
   `python3 scripts/dev/check_line_endings.py --fix` does it by hand. The raw
   diagnoses in `device-diagnosis/results/` are kept byte for byte (`-text`),
-  four of them with CRLF.
+  some of them with CRLF.
 - **Python lives in `/usr/local/python/current`**, not `/usr/local/bin`, in
   the devcontainer image (`mcr.microsoft.com/devcontainers/python:3.14-bookworm`).
   Its `bin/` comes first on the image's `PATH`, ahead of the image's own pipx
@@ -487,8 +494,8 @@ may point at real hardware, and a screenshot session clicks through flows.
    Playwright in a venv of its own (`~/.local/share/sungrow-screenshots`, so
    its dependencies never meet Home Assistant's pins) and Chromium's headless
    shell, whose system libraries `playwright install --with-deps` takes from
-   apt. Its Python is `~/.local/share/sungrow-screenshots/bin/python`. In a
-   container built before that step, run the last four lines of `setup.sh`.
+   apt. Its Python is `~/.local/share/sungrow-screenshots/bin/python`. Where
+   that venv is missing, run the `SCREENSHOT_VENV` lines of `setup.sh`.
 2. **A scratch instance on :8125.** Copy `config/configuration.yaml` into a
    new directory outside the repository and symlink `custom_components` into
    it as `develop.sh` does. Boot `hass --config <dir>` once and stop it;
@@ -547,7 +554,7 @@ library over the editable install.
 a description placeholder missing on a step's first showing renders as
 `Translation [formatjs Error: MISSING_VALUE]`, and a section's description is
 plain text, so markdown in it arrives as literal asterisks and pipes. Both
-are now tests (`tests/test_config_flow_connection.py`,
+are tests (`tests/test_config_flow_connection.py`,
 `tests/test_polling_options.py`).
 
 ## The diagnosis on the device page
@@ -564,12 +571,13 @@ device page, with the diagnostic sensors beside them, every name starting *Diagn
 | `button.<name>_diagnosis_start` | Starts the chosen mode and posts a notice saying what to expect. Unavailable while a run is in flight or auto repeat is on; the runner refuses a second run anyway |
 | `button.<name>_diagnosis_stop` | Ends auto repeat and the run in flight. Part A is cancelled; part B ends at its next check (`CapabilityTest.request_stop`), keeps what it measured, restores in full and starts no restart |
 | `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
-| `sensor.<name>_diagnosis_current_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
+| `sensor.<name>_diagnosis_current_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 78 band reads when a dump was asked for (`dump.block_count`) — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_diagnosis_last_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
 | `sensor.<name>_diagnosis_next_attempt` | When auto repeat may start its next run, where the clock decides (`continuous.next_start`): 5 minutes after a run that settled something, 30 then 60 after one that did not, and the earlier start a newly possible check allows while it is due; unknown while a run is in progress or the house decides, which is looked at every minute, with `waiting_for` |
 | `sensor.<name>_diagnosis_test_runs` | How many capability test runs are kept, with `runs_started` (auto repeat's, since *Diagnosis: start*) |
 | `sensor.<name>_diagnosis_test_summary` | The capability test runs kept for this firmware, folded: `running 12 min · 41/58 established · 3 runs · waiting for: …`. The time counts from the press of an extended run and moves on every minute (`running_since` as an attribute) |
 | `sensor.<name>_diagnosis_tests_passed`, `_failed`, `_not_supported`, `_inconclusive`, `_not_run_yet` | The summary's checks by outcome (`ledger.BUCKETS`), each `n/total`; the five add up to the total, which differs by model and firmware. `checks` names them |
+| `binary_sensor.<name>_diagnosis_controls_held_by_test` | On every entry with controls: on while a capability test holds them, from before its snapshot until its restore is checked, with `held_by` and `since`; an owner's write is refused meanwhile (`write_owner.py`) |
 | `button.<name>_diagnosis_tests_clear_history` | Forgets the kept runs. They are kept with no cap, so a long collection grows the store and the diagnostics download (19 runs were 265 kB): press it between collections |
 | `button.<name>_diagnosis_readings_clear_history` | Forgets what the plausibility checks gathered, which takes days to get back |
 | `switch.<name>_diagnosis_skip_completed_tests` | On (the default), a single extended run and the action leave out the checks the kept runs established (`ledger.established`, the restart included) and write only for what is missing; a check two runs contradict is never left out. Off, the full test. Auto repeat always leaves them out, and switches it on. A check whose `CHECK_REVISIONS` number rose since the run that established it is not established. Kept over a restart: it narrows writes, it grants none |
@@ -631,7 +639,7 @@ obvious simplification and would break exactly that.
 
 Two options are called a register dump: `CONF_REGISTER_DUMP` re-reads the
 mapped addresses into diagnostics, in seconds; `CONF_DIAGNOSIS_DUMP` sweeps
-`sungrow_modbus.dump.DUMP_BANDS` (2181 addresses) into the diagnosis, in about
+`sungrow_modbus.dump.DUMP_BANDS` (2197 addresses) into the diagnosis, in about
 five minutes, and only it can discover a register.
 
 To see any of this against a real run, the recorder is the fastest way in —

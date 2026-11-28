@@ -2273,3 +2273,13 @@ managed-wallbox-phases, device-wallbox, cross-reference-evcc.
 six. 13002 follows the integral of 5017 within 0.4 % at mkaiser's, so it counts DC, and it equals the sum of its three PV
 splits; the shortfall is in V x I against 5017, not in the polling. Updated device-sh-rt, installation-mkaiser,
 installation-gerd and the 2026-11-21 source, whose DC-or-AC question this settles.
+
+## [2026-11-28] corrected | concept pages against the code
+
+The concept pages that name modules, functions and files, checked against them (T100, the documents pass). A diagnosis
+publishes the MAC prefix as the document's `mac_vendor_prefix` field; there is no `network_names.mac_vendor_prefix`. The
+dated "since" phrasing went from the readings check's revision, the tracker rule, the midnight check's clocks and the
+switch's handling of a numbered id. legacy-slot says the options flow measures again only for a slot stored as `None`;
+it also measures for an absent key (`custom_components/sungrow_modbus/config_flow.py`, `SungrowOptionsFlow._async_slot`), which is a hard-constraint question for
+the maintainer, so the page was left as it is. Updated telling-a-proxy-from-the-inverter, legacy-id-adoption,
+capability-test.

@@ -59,14 +59,18 @@ grid. **Solar production energy** takes *Total PV generation*; with a meter,
 
 ## The battery
 
-An SBR battery's own sensors (cell voltages, modules) are diagnostics. The
-dashboard's battery is the inverter's: the two *Total battery …* sensors above.
+A battery pack's own sensors (SBR or SBH) sit on its own device: its cells
+and modules are diagnostics, and its *Total pack charge energy* and *Total
+pack discharge energy* count at the pack. The dashboard's battery is the
+inverter's: the two *Total battery …* sensors above.
 
 ## A wallbox
 
 Under **Individual devices**, add the wallbox's *Total charged energy* (the
-lifetime counter, in Wh), so the dashboard can show what the car used. It is
-read only: this integration reports the wallbox, it does not control it.
+lifetime counter, in Wh), so the dashboard can show what the car used. The
+wallbox's own sensors only read it; a wallbox an inverter manages is set
+through the inverter's controls
+([integration_help.md](integration_help.md#known-limitations)).
 
 ## Several inverters
 

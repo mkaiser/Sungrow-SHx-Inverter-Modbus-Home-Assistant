@@ -46,17 +46,20 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
 
 **What it does:**
 
-- All 135 read entities of the YAML package, held to it by tests, with the
-  unit and state class of every entry they replace; created **only where the
-  hardware has them**.
-- **Writes**, each read back at once: the state-of-charge limits, charge and
-  discharge maxima, the export power limit, three mode flags, three
-  selects, and the forced-charging schedule (two windows as times, with a
-  target SoC each). Start and stop are **actions**, with who may call them yours to
+- All 180 read entities of the YAML package (166 sensors, 14 binary
+  sensors), held to it by tests, with the unit and state class of every entry
+  they replace; created **only where the hardware has them**.
+- **Writes**, each read back at once: the battery's state-of-charge limits and
+  charge and discharge power, the export power limit, the EMS mode, forced
+  charge or discharge, load adjustment, backup mode, and the forced-charging
+  schedule (two windows as times, with a target SoC each). The grid import
+  limit, the PV cut, the discharge windows, low-SoC standby and the EV charger
+  an inverter manages are offered only on firmware where a write has been
+  watched. Start and stop are **actions**, with who may call them yours to
   choose (administrators by default).
-- **The SBR battery** and **the wallbox** (AC011E-01 / AC22E-01, read-only)
-  as devices of their own, behind a WiNet-S or, for the wallbox, at its own
-  address over TLS.
+- **The battery pack** (SBR or SBH) and **the wallbox** (AC011E-01 /
+  AC22E-01, read-only) as devices of their own, behind a WiNet-S or, for the
+  wallbox, at its own address over TLS.
 - **One shared connection per inverter**, so no external Modbus proxy.
 - **Discovered by Home Assistant** behind a WiNet-S, and a wallbox at its
   own address; otherwise set up by **searching the network**. Model, unit id
@@ -74,11 +77,12 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
   ([device-diagnosis/README.md](device-diagnosis/README.md)).
 
 An **iHomeManager** found by the network search gets an entry of its own,
-read only: the site's flows, its grid meter and its settings as set.
+read only: the site's flows, its grid meter and its settings as set. A
+**Sungrow Logger** gets one with its diagnosis and nothing else.
 
-**Not yet:** the Sungrow Logger (never measured; see
-[devices-wanted.md](device-diagnosis/devices-wanted.md)), SBH batteries, the
-SBR's per-module entities, and writing to the wallbox.
+**Not yet:** the Logger's readings (never measured; see
+[devices-wanted.md](device-diagnosis/devices-wanted.md)) and writing to the
+wallbox's own settings.
 
 [doc/dashboard.md](doc/dashboard.md) is the integration's own dashboard,
 with the controls behind a hold-to-unlock lock,
@@ -104,8 +108,9 @@ scripts/dev/develop.sh     # Home Assistant on :8123
 Or `make setup`, `make sim-bg`, `make dev`. `make` on its own lists every
 shortcut, and `make check` runs everything CI gates on.
 
-Then *Settings → Devices & Services → Add integration → Sungrow Modbus*, and
-point it at `127.0.0.1:5020`, unit id `1`.
+Then *Settings → Devices & Services → Add integration → Sungrow Modbus
+(preview) → I know the address*: host `127.0.0.1`, port `5020`, device
+address `1`.
 
 [doc/development.yaml](doc/development.yaml) is the copy-paste runbook:
 commands, the dev login, talking to real hardware, and getting the web UI onto

@@ -26,9 +26,8 @@ Three ways to run it:
 
    <img src="../doc/images/HACS-add-integration-sungrow-modbus.png" width="400" alt="Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)">
 
-3. Choose **Perform the device diagnosis**.
-
-   <img src="../doc/images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
+3. Choose **Search my network for it**, or **I know the address** (behind a
+   WiNet-S, the dongle's).
 
 4. Add the Sungrow dashboard (*Settings → Dashboards → Add dashboard →
    Sungrow Modbus*) and open its **Diagnosis** tab
@@ -120,8 +119,8 @@ follows is
 
    ```text
    Follow .claude/skills/run-diagnosis/SKILL.md to run the device diagnosis
-   on my Sungrow inverter. My home network is 192.168.178.0/24 (or: my
-   inverter is at 192.168.178.50). Read-only, please, unless I say otherwise.
+   on my Sungrow inverter. My home network is 192.168.1.0/24 (or: my
+   inverter is at 192.168.1.50). Read-only, please, unless I say otherwise.
    ```
 
    Put in your own network or address; leave that line out and the agent
@@ -150,9 +149,13 @@ checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:
 
 * forces the battery to charge and to discharge, for less than a minute;
-* switches feed-in limitation on for about a minute, where it is off;
+* switches feed-in limitation on briefly, where it is off;
 * cuts PV generation for about half a minute, where the inverter has the
   register for it (31211), and lets it run again;
+* sets a forced-charging window around now, and moves the discharge windows
+  away from now, each for a minute or two, where the inverter has them;
+* caps grid import for about two minutes during a forced charge, where the
+  inverter has the site import limit;
 * stops the inverter and starts it again: 3 to 4 minutes without PV
   production in daylight, over 6 at night, and anything on the backup output
   loses power.
@@ -168,13 +171,14 @@ scripts/diagnosis.sh tests 192.168.1.50 --restore <the file it names>
 
 #### In Home Assistant, opt out of what you do not want
 
-The button is your yes. The restart, the feed-in limitation, the PV cut and
-the two timed windows are each **on unless you switch them off**, under *Allowed
+The button is your yes. The restart, the feed-in limitation, the PV cut,
+the two timed windows and the import limit are each **on unless you switch
+them off**, under *Allowed
 tests* on the dashboard's Diagnosis tab, or under *Settings → Devices &
 services → Sungrow Modbus (preview) → Configure → What the capability test
 may do* ([every option there](../doc/integration_options.md)). Switch them
 off **before** pressing the button; what you switch off stays off. With all
-five off, the test still forces the battery and checks every setting's
+six off, the test still forces the battery and checks every setting's
 scale, and the document records which checks it skipped because you said
 no.
 
@@ -183,7 +187,8 @@ gets the **Cut PV generation** switch (it needs 500 W of PV, so it skips
 itself at night), the restart puts your model's recovery time on record, and
 the timed windows show whether your firmware obeys a forced-charging window
 and the discharge schedules (they need the battery able to charge, or
-discharging, so they too skip themselves when there is nothing to watch).
+discharging, so they too skip themselves when there is nothing to watch), and
+the import limit whether it holds a grid charge to the cap.
 
 #### In a terminal, the default is no
 
@@ -223,8 +228,9 @@ both by name.
 | `sungrow-scan-<date>-<time>.log` — **keep this one** | The transcript: everything the run printed, including the **real** serial and addresses. Useful to send *privately* if something went wrong. Never published |
 
 A wallbox at its own address adds a third, `<model>-<reporter>-<stand-in>-wallbox-tls.json`,
-to send as well. A capability test that could not put everything back leaves a
-fourth, `<time>-snapshot.json`, which `--restore` takes and removes.
+to send as well, and an iHomeManager, a Logger or an SG string inverter one of
+its own each. A capability test that could not put everything back leaves a
+`<time>-snapshot.json`, which `--restore` takes and removes.
 
 No un-redacted copy of the document is written, so `--save
 device-diagnosis` cannot put a real serial here whatever it is asked.
@@ -265,7 +271,7 @@ with the real host on screen, and with `<host>` and `--address-tail` in the
 document's `command_line`:
 
 ```
-python/sungrow_diagnosis.py <host> --address-tail 178.035 --unit 1 --pollers no
+python/sungrow_diagnosis.py <host> --address-tail 001.050 --unit 1 --pollers no
   --transport direct_lan --proxy no --other-inverter no --address two_octets
   --reporter mkaiser --comment '' --battery 'Pylontech Force H1, 14.4 kWh'
   --capability-test no
@@ -290,7 +296,7 @@ the reading but not the block read test.
 | `python/sungrow_diagnosis.py` | the diagnosis, start to finish. Its PEP 723 header names the library version it runs on |
 | `python/sungrow_capability_test.py` | the inverter's capability test, which writes. The diagnosis runs it only with your yes; `diagnosis.sh tests ...` runs it on its own |
 | `python/sungrow_wallbox_capability_test.py` | the wallbox's capability test, the other file here that writes: a wallbox at its own address, over TLS on port 516. Without `--leave` it is a dry run, and `--leave` writes only with `--standalone`: a wallbox a hybrid inverter manages ignores writes to its own registers (the inverter drives them) |
-| `python/sungrow_managed_wallbox_test.py` | the capability test of a wallbox a hybrid inverter manages: it writes the **inverter's** EV charger settings (mode, user current, charging on/off) and judges each by what the car draws; the wallbox is only read. Without `--leave` it is a dry run; it needs a car charging and a library newer than the pin |
+| `python/sungrow_managed_wallbox_test.py` | the capability test of a wallbox a hybrid inverter manages: it writes the **inverter's** EV charger settings (mode, user current, charging on/off) and judges each by what the car draws; the wallbox is only read. Without `--leave` it is a dry run, and with it nothing is written until a car charges |
 | `python/probe.py` | the individual steps — `mdns`, `sweep`, `units`, `capabilities`, `dump` |
 | `python/blocks.py` | the block read test from a terminal: which grouped read a device fails. `--client raw` uses the library's strict raw socket, which names the count a padded frame needs |
 | `python/wallbox_direct.py` | finds and reads a wallbox at its own address, over TLS on port 516 |

@@ -3,8 +3,11 @@
 Six layers, and the interesting thing about them is where the boundaries are
 rather than what is in each one. Two of the boundaries are load-bearing:
 
-- **The library owns register knowledge and nothing else.** It never opens a
-  socket, never imports Home Assistant, and is testable without either.
+- **The library owns register knowledge and nothing else.** It never imports
+  Home Assistant and is testable without it. It opens connections of its own
+  only to find and identify devices (`discovery`, `network_names`) and for the
+  terminal tools (`raw_client`); an entry's entities poll only through Home
+  Assistant's shared connection.
 - **Home Assistant's own `modbus` integration owns the connection.** One per
   host and port, shared, serialized — which matters because a Sungrow accepts
   very few Modbus sessions at once.
@@ -20,18 +23,18 @@ flowchart TD
         direction TB
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         diagnosis["diagnosis &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B capability_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
-        coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll<br/><br/>an SG string inverter: the same four tiers,<br/>its own coordinator class"]
-        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>diagnosis_entities: on every entry,<br/>the diagnosis's mode select, buttons,<br/>skip switch and progress sensors"]
+        coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll<br/><br/>an SG string inverter: the same four tiers,<br/>its own coordinator class<br/><br/>an iHomeManager entry: one per tier,<br/>read only"]
+        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor,<br/>button and select for the diagnosis only<br/><br/>diagnosis_entities: on every entry,<br/>the diagnosis's buttons and progress sensors,<br/>and where the entry has those platforms<br/>its mode select and skip switch"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_capability_test: audience set per entry,<br/>admins only by default<br/>run_diagnosis: anyone"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor_descriptions.py: source, edited by hand<br/>derived/number/switch/select/time/button: generated from<br/>the library's derived module and scripts/generate/tables"]
-        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>string_inverter_descriptions.py, external_descriptions.py<br/>source: none of them is in the legacy record"]
+        gen["sensor_descriptions.py, history_descriptions.py:<br/>source, edited by hand<br/>derived/number/switch/select/time/button: generated from<br/>the library's derived module and scripts/generate/tables"]
+        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>string_inverter_descriptions.py, external_descriptions.py,<br/>ihomemanager_descriptions.py<br/>source: none of them is in the legacy record"]
         ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
         links["links<br/>the wallbox's own address:<br/>Modbus inside TLS, unverified"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived, smoothing, daily_cycle, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, capability_test<br/>ihomemanager/, logger/: unit 247, identified and diagnosed,<br/>no entities &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, diagnosis_document, diagnosis,<br/>features, block_test with raw_client"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived, smoothing, daily_cycle, export_scale,<br/>ev_charger (the managed wallbox's controls)<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, management, capability_test, managed_test<br/>ihomemanager/: unit 247 &mdash; device, registers, document<br/>logger/: unit 247, diagnosed only &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore, ledger, plausibility, coverage<br/>cards/: the dashboard's card bundles<br/>top level: device and identity (the seams every device shares),<br/>addresses, model, discovery (identify, LAN sweep, reverse DNS),<br/>network_names (mDNS, MAC prefix), energy_integral, dump,<br/>diagnosis_document, diagnosis, features,<br/>block_test with raw_client"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -39,7 +42,7 @@ flowchart TD
         oldpath["modbus.py<br/>pymodbus<br/><br/>the legacy YAML platform's path,<br/>which modbus_sungrow.yaml still uses"]
     end
 
-    device["the inverter's endpoint, port 502<br/>inverter on unit 1, or 2 for a cluster slave<br/>SBR on 200 direct, 2 through a WiNet-S<br/>wallbox on 3, through a WiNet-S only<br/><br/>a WiNet-S forwards less than a cable"]
+    device["the inverter's endpoint, port 502<br/>inverter on unit 1, or 2 for a cluster slave<br/>SBR on 200 direct, 2 through a WiNet-S<br/>wallbox on 3 through a WiNet-S,<br/>2 and 4 tried there too, 248 last<br/><br/>a WiNet-S forwards less than a cable"]
     wbdev["the wallbox's own address, port 516<br/>Modbus inside TLS, unit 248<br/>an entry of its own, found by the search"]
 
     user <--> core
@@ -92,8 +95,9 @@ Everything on one endpoint is serialized behind one connection, so two writes
 issued at once queue, and the second one's timeout starts while it is still
 waiting. And these registers **interlock**: `battery_min_soc` and
 `battery_max_soc` are refused if they cross, so their order matters. `sensor`
-and `binary_sensor` are 0 because the coordinator polls; `button` is 0
-because a press schedules the run and the runner refuses a second.
+and `binary_sensor` are 0 because the coordinator polls. `button` is 1: the
+command buttons write, and a diagnosis button only schedules its run, which
+the runner refuses a second time, so the limit costs it nothing.
 
 **A capability test and the owner's controls never write at once**
 (`write_owner.py`). The serialized connection keeps their requests from
@@ -112,7 +116,7 @@ entry in a leftover snapshot (decided 2026-11-15): the inverter's drops the
 field, a managed wallbox's takes the owner's word.
 
 **And `async_setup_entry` reads as a list of steps.** Connect and identify
-(`_async_connect`); build and first-refresh the tier coordinators
+(`_async_connect`), then read the firmware (`_async_read_firmware`); build and first-refresh the tier coordinators
 (`_async_tier_coordinators`); resolve capabilities from that first poll; probe
 for a pack (`_async_battery`) and a wallbox (`_async_wallbox`); register the
 inverter's device so a sub-device can hang off it
@@ -121,15 +125,18 @@ drop correction entities the options no longer ask for; claim the legacy ids
 (`_async_take_over_legacy_ids`); raise a repair if a capability test left
 registers changed (`_async_check_capability_test`, and for a wallbox entry
 `_async_check_wallbox_capability_test`); and forward the platforms --
-all five for an ordinary entry; button, select, sensor and switch for a
-diagnostics-only one.
+all seven for an ordinary entry (`PLATFORMS`); button, select, sensor and
+switch for a diagnostics-only one. An SG, wallbox, iHomeManager or Logger
+entry takes a setup of its own and forwards its own list (`_platforms`).
 Each step is a named function that can be read on its own, which is the only
 way a setup path stays reviewable as it grows.
 
 Every option is read during setup, so the update listener reloads the entry on
-any change -- except one setup never reads: the export limit's measured write
-scale, which the entity stores in `data` mid-write. `_built_from` is what tells
-the two apart.
+any change -- except what setup never reads: the export limit's measured write
+scale, which the entity stores in `data` mid-write; the linked WiFi module,
+kept in step by `wifi_module.py`; and the diagnosis's run options
+(`diagnosis_settings.RUN_OPTIONS`), read when a run starts. `_built_from` is
+what tells them apart.
 
 ## Three devices, and why the unit ids are not settings
 
@@ -140,7 +147,7 @@ on moves with the transport**, so none of them is asked for:
 | --- | --- | --- |
 | Inverter | **1**, or **2** for a cluster slave on its own LAN port | `identify()` sweeping 1 to 5. A dongle presents whatever is behind it as unit 1 regardless, so the address is only the role on a direct path |
 | SBR pack | **200** direct, **2** through a WiNet-S | `battery.probe_units`, discriminating against a slave inverter — which also sits at 2 and answers a device type code where a pack does not |
-| Wallbox | **3** through a WiNet-S | `wallbox.probe_units`, reading the model *name* rather than the code or the serial. Left out when a wallbox entry of its own has the same serial (below) |
+| Wallbox | **3** through a WiNet-S; 2 and 4 are tried once the endpoint has answered, 248 last | `wallbox.probe_units`, reading the model *name* rather than the code or the serial. Left out when a wallbox entry of its own has the same serial (below) |
 
 Each extra device gets its **own device registry entry**, hung off the
 inverter with `via_device`, identified by the *inverter's* serial plus a
@@ -184,9 +191,9 @@ is the inverter's `DiagnosisRunner` with only what assumes an inverter replaced
 (the read is `device_diagnosis.wallbox_builder`; `inverter_tests` is False, so
 auto repeat waits only for the wallbox's checks), so the wallbox's port,
 snapshot, ledger and plausibility are the same code the inverter's runner
-uses. An inverter entry's `wallbox_host` option, which once read a wallbox's
-own address from inside the inverter's entry, is gone: minor version 3 of the
-entry drops it with the sub-device it made (`entry_migration.py`).
+uses. An inverter entry has no option for a wallbox's own address: minor
+version 3 of the entry removes a `wallbox_host` option, and the sub-device it
+made, from an entry that carries one (`entry_migration.py`).
 
 The sweep also asks **unit 247** on every open port 502-505, and over TLS on
 516 where no wallbox answered there: an iHomeManager (type code 0x072A) or a
@@ -199,8 +206,8 @@ read only (`ihomemanager_descriptions.py` says which, and which not); its
 port takes one connection, held while the entry is loaded. A Logger's is
 only its diagnosis. Neither documents a serial, so the entry's unique id is
 kind, host and port. `DeviceDiagnosisRunner` is the read-only runner
-these three entries share; the inverter's `DiagnosisRunner` is not used for
-them. Sub-devices are probed
+these two kinds of entry share; the inverter's `DiagnosisRunner` is not used
+for them. Sub-devices are probed
 again whenever the entry's endpoint changes, so a move from a dongle to a
 cable keeps the pack and loses a dongle-carried wallbox; the move step says
 so before it happens, and names the wallbox's own entry as the way to keep
@@ -229,13 +236,12 @@ diagnosis and capability test beside them on the same device page.
 **Diagnostics only** connects, identifies and polls, but creates only the
 diagnosis's own entities and never asks the entity-id question.
 
-The flow used to open by asking which one, behind a release flag that allowed
-only the second answer. Both are gone: a devices entry carries the diagnosis
-too, so the lighter entry did nothing the ordinary one cannot, while costing a
-contributor their entities and everybody a dialog. `MODE_DIAGNOSTICS` remains
-because entries made while it was offered are still out there; they load as
-before, and `add_devices` on their options page promotes them, which is where
-the entity-id question is finally put.
+The config flow does not ask which: a devices entry carries the diagnosis
+too, so the lighter entry would do nothing the ordinary one cannot, while
+costing a contributor their entities and everybody a dialog.
+`MODE_DIAGNOSTICS` exists for entries that carry it; they load as described,
+and `add_devices` on their options page promotes them, which is where the
+entity-id question is put.
 
 ## At build time
 
@@ -263,7 +269,7 @@ flowchart LR
 
     subgraph generated["generated, committed, --check in CI"]
         direction TB
-        descs["derived, number, switch,<br/>select and time descriptions"]
+        descs["derived, number, switch,<br/>select, time and button descriptions"]
         strings["strings.json<br/>translations/en.json, de.json"]
     end
 
@@ -318,8 +324,12 @@ reads it (`device`) and whatever only that device needs: how it is found on a
 unit, its capabilities, its derived values. What spans devices sits at the
 top: `device` (the seam every device offers, and `MappedDevice`, the base
 most are built on), `identity` (the block both inverters answer, and which
-map a type code calls for), `addresses`, `discovery`, `dump`, the diagnosis (`diagnosis_document`, `diagnosis`, `features`)
-and the two tests (`block_test`, `capability_test`). A change that concerns one
+map a type code calls for), `addresses`, `model` (the result types of an
+update), `discovery` and `network_names` (finding a device, and what it calls
+itself on the network), `dump`, the diagnosis (`diagnosis_document`,
+`diagnosis`, `features`), the two tests (`block_test`, `capability_test`) with
+`raw_client`, the terminal's own connection, and `cards`, the dashboard's
+card bundles, shipped in the wheel. A change that concerns one
 device belongs in its subpackage; a second device that needs it is the cue to
 move it up.
 
@@ -407,7 +417,7 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 - **The fault and alarm words are counted, not split** (`hybrid_inverter.faults`,
   from V1.1.11's Appendix 4). One diagnostic sensor per word reports how
   many named flags are set and names them in an `active` attribute; `Fault
-  reported` and `Alarm reported` are the problem binary sensors to automate
+  reported` and `Any alarm` are the problem binary sensors to automate
   on. Reserved bits are never reported.
 - **The diagnostics download carries the block read test, never runs it.**
   The diagnosis button's last measurement goes in with its time; running one
@@ -421,8 +431,10 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   (`scripts/generate/tables/naming.py`).
 - **Start and stop are actions, not buttons**, with an audience set per entry
   (admins only by default); the capability test has an audience of its own, and
-  its restart, export limit and PV cut are each granted until the owner
-  switches them off. The YAML's danger-mode toggle and automations are not
+  its permissions -- the restart, the export limit, the PV cut, the charge and
+  discharge windows and the import limit -- are each granted until the owner
+  switches them off (`CAPABILITY_TEST_PERMISSION_DEFAULT`); the wallbox's is
+  off until switched on. The YAML's danger-mode toggle and automations are not
   ported; the dashboard's lock replaces the toggle (below).
 - **The dashboard is a strategy the integration serves**
   (`dashboard.py`, `frontend/`): built in the browser from the entities a
@@ -452,7 +464,7 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   checks have gathered are two buttons, because a run can be asked for again
   this evening and the readings are fed every minute for days. A wrong
   verdict is not what either is for: a check whose rule changes raises its
-  revision (`capability_test.plausibility.CHECK_REVISIONS`,
+  revision (`CHECK_REVISIONS` in `capability_test.plausibility` and
   `capability_test.coverage`), which drops that check's evidence at every
   house on update with nothing for anyone to press.
 - **A write entity's bound comes from the device wherever the device states

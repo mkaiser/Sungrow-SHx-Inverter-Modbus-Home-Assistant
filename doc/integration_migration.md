@@ -80,8 +80,8 @@ after the inverter. The dongle announces itself on the network, and
 network connection is offered the same way. An inverter on its own LAN cable
 announces nothing, so for it, and whenever no card appears:
 
-Settings → Devices & Services → **Add integration** → *Sungrow Modbus* →
-*Set up my inverter*. Either let it search your network, or choose *I know the
+Settings → Devices & Services → **Add integration** → *Sungrow Modbus
+(preview)*. Either choose *Search my network for it*, or choose *I know the
 address* and enter what your `secrets.yaml` already has:
 
 - `sungrow_modbus_host_ip` → IP address or hostname
@@ -216,8 +216,8 @@ untouched, which is why it is not the tool for this.
 
 ## What the entities look like now
 
-Whichever answer you gave, names are consistent and translatable (only
-English ships), identity and raw values sit under **Diagnostic**, and
+Whichever answer you gave, names are consistent and translatable (English
+and German ship), identity and raw values sit under **Diagnostic**, and
 entities your hardware does not have are **not created**. Only the ID is
 inherited, with one difference: the raw register codes (`Running state raw` and friends) exist
 only with the YAML package's IDs, for the dashboards that read them. With
@@ -225,10 +225,11 @@ device-scoped IDs the decoded value stands in their place — a binary sensor
 for an on/off mode, a ratio with its unit.
 
 **The day's consumed energy has a `last_reset`.** `sensor.daily_consumed_energy`
-and its filtered twin still are a `total`, but now say when the inverter's day
-began, so a statistics card shows the day's consumption, where the YAML package
-booked the reset as minus the whole day. It starts with the first reset after
-the update; what was recorded before stays as it is.
+and its filtered twin are a `total`, as in the YAML package, and say when the
+inverter's day began, so a statistics card shows the day's consumption where
+the YAML package booked the reset as minus the whole day. The first
+`last_reset` comes with the first reset the integration sees; what the YAML
+package recorded stays as it is.
 
 **Consumed energy never reads below zero.** `sensor.daily_consumed_energy` and
 `sensor.total_consumed_energy` are the same sum of the same five registers, held at zero as a
@@ -261,7 +262,7 @@ with the action: the register written is the same.
 
 **The danger-mode switch guarded the YAML's own dashboard**, not the device,
 so it does not come across. The integration's [own dashboard](dashboard.md)
-locks its controls instead: a section opens when held for two seconds and
+locks its controls instead: a section opens when held for 1.5 seconds and
 locks again by itself, and the lock card can wrap the controls on your own
 dashboards too. To keep using the YAML's dashboard as it is, copy its
 `Sungrow dashboard enable danger mode` template switch and its auto-reset
@@ -286,9 +287,12 @@ device-scoped ones although you meant to migrate -- such as
   history continues that history, which is what choosing these IDs is for.
   What was recorded under the device-scoped ID stays under that ID. An ID
   with no old history simply takes the device-scoped history across.
-- **Older history already sitting on a target ID** -- from an earlier move the
-  other way -- is renamed aside to `<id>_archive` first, never merged and
-  never deleted.
+- **Older history already sitting on a device-scoped target ID** -- from an
+  earlier move the other way -- is renamed aside to `<id>_archive` first,
+  never merged and never deleted.
+- **The raw register codes** (`Running state raw` and friends), which exist
+  only with the YAML package's IDs, are removed on the way to device-scoped
+  IDs; their history stays under their IDs.
 
 The YAML package must not be running when you move to its IDs: its live
 entities hold them, and the options page says so rather than handing out

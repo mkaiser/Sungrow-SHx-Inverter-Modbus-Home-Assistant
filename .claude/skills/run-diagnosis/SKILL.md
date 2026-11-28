@@ -40,7 +40,7 @@ sees.
 The container cannot find them by itself: multicast (mDNS) does not cross the
 Docker bridge, and the script's default network is the container's own
 `172.17.x`. So ask: *I know the address* (take it), or
-*Search my network* (ask for the range, e.g. `192.168.178.0/24`: the first three
+*Search my network* (ask for the range, e.g. `192.168.1.0/24`: the first three
 parts of their PC's or router's address, then `.0/24`).
 
 To search, sweep each port, in the background, one after another (about a minute
@@ -73,7 +73,7 @@ them in two or three short rounds, then the capability test on its own.
 | How the inverter is connected | `--transport` | `direct_lan` (its own LAN port), `winet_lan`, `winet_wlan`, `winet` (medium unknown), `logger`, `unsure`. **No default.** "Not sure" is a good answer; never guess one for them |
 | A Modbus proxy in the path (modbus-proxy, evcc's, an HA add-on)? | `--proxy yes\|no\|unknown` | |
 | A non-Sungrow inverter on the same meter? | `--other-inverter`, `--other-inverter-detail` | the detail is make and size, only after a yes |
-| May the document carry the last two octets of the address? | `--address two_octets\|hidden` | show the octets themselves (`178.105`), not a description. Default is hidden |
+| May the document carry the last two octets of the address? | `--address two_octets\|hidden` | show the octets themselves (`1.50`), not a description. Default is hidden |
 | Who to credit (a GitHub name, or anonymous) | `--reporter` | `anonymous` stays unnamed everywhere |
 | Anything else worth recording | `--comment` | free text; no serials. `''` for none |
 | The battery's brand, only if it is **not** a Sungrow pack | `--battery` | `''` when it is a Sungrow, or there is none: the registers settle those |

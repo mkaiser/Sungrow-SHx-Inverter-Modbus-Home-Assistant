@@ -38,7 +38,8 @@ hour; it commits only once CI on the commit is green and the pin is on
 PyPI, so it is safe to run early, and a run with nothing new commits nothing.
 
 `.github/workflows/release.yml` then checks the tag against the files, runs
-ruff, pytest, hassfest and the HACS check, publishes the GitHub release
+`make ci` (the whole gate, the build and the wheel gate), hassfest and the
+HACS check, publishes the GitHub release
 (marked pre-release by PEP 440's rule) and uploads the library to PyPI through
 Trusted Publishing -- the `pypi` environment and a publisher configured on
 PyPI for this repository and workflow, so **no API token is stored in
@@ -48,7 +49,8 @@ GitHub's own generator would list every commit since 2022.
 Before tagging:
 
 - `make ci` runs what CI runs, including the build and the gate that the
-  built wheel provides every import the integration and the diagnosis make.
+  built wheel provides every import the integration and the diagnosis
+  scripts make.
 - Run hassfest locally: `make refs`, then `make hassfest`
   (`scripts/dev/hassfest.sh`). Current core's hassfest needs the Home Assistant
   of the same month, so it runs in `.venv-marketplace/` (2026.11, created on
@@ -96,7 +98,7 @@ The host is genuinely better for two things:
   host's routing already.
 
 [device-diagnosis/scripts/diagnosis.sh](../device-diagnosis/scripts/diagnosis.sh)
-(`diagnosis.cmd` on Windows) is built for this: it runs the diagnosis through `uv`,
+(`diagnosis.cmd` or `diagnosis.ps1` on Windows) is built for this: it runs the diagnosis through `uv`,
 which fetches Python and the pinned library itself, so it runs on the host
 with nothing set up. It writes its document and transcript beside itself, in
 `device-diagnosis/`; when the workspace is a bind mount from the host
@@ -139,8 +141,9 @@ make scan-local HOST=<host>    # the same on this tree's library
 
 What the diagnosis does and writes is in
 [device-diagnosis/README.md](../device-diagnosis/README.md). To publish a
-document, move it into `device-diagnosis/results/inverter/` (or `wallbox/`),
-run `make gen` for `doc/compatibility.md`, and ingest it into the wiki
+document, move it into `device-diagnosis/results/inverter/` (or
+`string_inverter/`, `wallbox/`, `ihomemanager/`), run `make gen` for the
+generated pages that read the diagnoses, and ingest it into the wiki
 (`.wiki/AGENTS.md`). Never the `sungrow-scan-*.log` transcript: it carries
 the real serial and addresses. **Ask an owner before publishing their
 readings**; a stand-in serial is not consent.
@@ -154,8 +157,8 @@ needs is an address.
 
 Two things to check:
 
-- **Overlapping subnets.** If two sites are both on `192.168.178.0/24` — the
-  FRITZ!Box default — they cannot both be reachable at once, and worse, a
+- **Overlapping subnets.** If two sites are both on the FRITZ!Box default
+  range, they cannot both be reachable at once, and worse, a
   probe would silently reach the wrong inverter. Give each site a distinct
   subnet, or make one reachable at a time and say which is live.
 - **The Docker bridge is `172.17.0.0/16`**, so a site on that range would
@@ -238,7 +241,7 @@ Two routes that do not help:
   (`_async_take_over_catalog_entry`), but two repositories cannot be merged
   into one, so no rename moves the mirror's users.
 
-Which route to take at the release is open, in `Todo.md` (Release, item 6).
+Which route to take at the release is open, in `Todo.md` (T052).
 
 ## 6. Keeping data out of the cloud
 
@@ -284,8 +287,7 @@ print it.
 
 The default store is the Marketplace's catalog from 2026.11. It is still the
 `hacs/default` repository, run by the HACS team: the route is a pull request
-there, as before (the guide has moved to
-contributors.home-assistant.io/marketplace). What stands in the way, and what
+there (the guide is at contributors.home-assistant.io/marketplace). What stands in the way, and what
 is open, is in `Todo.md`.
 
 Needed before submitting to `hacs/default`, and free to do now: a repository

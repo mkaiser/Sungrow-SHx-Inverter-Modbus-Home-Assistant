@@ -103,11 +103,11 @@ running:
 
   hacs_testbed:
     why: >-
-      A second Home Assistant that installs this integration the way a user
-      does -- through HACS, from the preview channel -- so the install itself
-      can be tested rather than assumed. It is where you find out that a
-      manifest pin cannot be resolved, or that HACS shows a commit hash where
-      you expected a version.
+      A second Home Assistant with the separate HACS installed, for one
+      question only: the upgrade of somebody who installed the preview
+      through HACS before 2026.11, which the Marketplace adopts on its first
+      start (marketplace_testbed's --adopt-hacs). Nobody installs through HACS
+      on 2026.11, the minimum.
     command: scripts/dev/hacs_testbed.sh      # make hacs; --update, --setup-only, --reset
     listens: 0.0.0.0:8124
     config: config-hacs/                  # gitignored entirely
@@ -203,7 +203,7 @@ real_hardware:
     Works against the real LAN too, but the range is prefilled from the
     container's own adapter, which is the Docker bridge -- searching
     172.17.0.0/24 finds nothing because the inverter is not on it. Type the
-    LAN's range instead, e.g. 192.168.178.0/24.
+    LAN's range instead, e.g. 192.168.x.0/24.
 
   warnings:
     - >-
@@ -234,16 +234,16 @@ real_hardware:
       household readings. It belongs in .testdata/, which is gitignored, never
       in doc/ or tests/.
     - >-
-      Overlapping subnets bite silently: if two sites are both on
-      192.168.178.0/24 (the FRITZ!Box default) a probe can reach the wrong
+      Overlapping subnets bite silently: if two sites are both on the
+      FRITZ!Box default /24 a probe can reach the wrong
       inverter without any error. See doc/maintainer_setup.md section 4.
 
   one_off_watches: |
     A script that writes to a real house for an hour -- a plan's hardware run,
     not the shipped capability test -- presses through scripts/dev/ha_watch.py
     rather than its own finally block. It mints the credential at the moment of
-    restoring (a held token expired mid-watch on 2026-11-17 and left register
-    13017 on for 50 minutes), writes its note to disk before the first press,
+    restoring, because a token held for the watch can expire before the
+    restore and leave a register changed; it writes its note to disk before the first press,
     reads every restore back, and exits 5 where the house is left changed. It
     also waits for a diagnosis run in flight instead of interrupting one.
 
@@ -285,7 +285,7 @@ real_hardware:
       Yes: --network=host shares the host's interfaces and multicast with it.
     what_it_changes:
       - >-
-        Ports: -p and --publish are ignored. Home Assistant (8123, 8124, 8126)
+        Ports: -p and --publish are ignored. Home Assistant (8123, 8124, 8125, 8126)
         and the simulator (5020) bind on the host itself, so they collide with
         anything there already on those ports. VS Code's forwardPorts still
         works.
@@ -359,12 +359,15 @@ capability_test:
     when nothing is actually wrong.
 
   from_home_assistant: >-
-    The button on the device page runs the same engine with one difference:
+    Diagnosis: start on the device page, in an extended mode, runs the same engine with one difference:
     allow_dark is always on. A CLI user chose the moment and can pass
     --allow-dark; somebody on Home Assistant OS has no terminal, so a run
     refused for want of sun is a run they can never make. The behavioural half
-    still self-skips and says why. The restart and export-limit permissions
-    stay the owner's, in the entry's options, and both default to off.
+    still self-skips and says why. The restart, export limit, PV cut, charge
+    and discharge windows and import limit are the owner's permissions, in
+    the entry's options: each is granted until switched off
+    (CAPABILITY_TEST_PERMISSION_DEFAULT), and pressing Diagnosis: start in
+    an extended mode is the leave.
 
     A run started there also holds this entry's own coordinators off the
     inverter for its duration, and a leftover snapshot on the next setup
@@ -430,9 +433,10 @@ capability_test:
 
   what_it_measures: >-
     Register 13074, the export power limit, READS in watts, and its WRITE scale
-    is per device: most measured firmware multiplies the written word by ten
-    before the range check (bar12, gerd, the reference SH10RT), and fwitten's
-    SH10RT-V112 pair stores it as handed. Only while feed-in limitation is on:
+    is per device: every B001 firmware measured multiplies the written word by
+    ten before the range check, and 01011.95.03 and the measured SH-RS and
+    SH-T firmware store it as handed (the wiki's register-13074 page has the
+    table). Only while feed-in limitation is on:
     with 13087 off the register ignores writes entirely -- no exception, no
     change -- which is what UNCHANGED is in the verdict vocabulary for.
 
@@ -462,7 +466,7 @@ web_gui:
 
   to_your_desktop:
     how: >-
-      Automatic. devcontainer.json declares forwardPorts [8123, 5020, 8124, 8126], so VS
+      Automatic. devcontainer.json declares forwardPorts [8123, 5020, 8124, 8125, 8126], so VS
       Code forwards 8123 to the host's localhost as soon as something listens.
     url: http://localhost:8123
     if_it_does_not_appear: >-
@@ -532,7 +536,7 @@ reviewing_the_migration:
     - make dev-bg
   then: >-
     Settings -> Devices & Services -> Add integration -> Sungrow Modbus ->
-    Set up my inverter -> I know the address. Host 127.0.0.1, port 5020,
+    I know the address. Host 127.0.0.1, port 5020,
     device address 1. A later screen asks whether to take over the existing
     entity ids.
   afterwards: >-
@@ -614,7 +618,7 @@ packaging:
   release: >-
     make version VERSION=X.Y.Z, commit, then an annotated tag vX.Y.Z and
     git push --follow-tags. release.yml checks the tag against the files,
-    runs ruff, pytest, hassfest and HACS, publishes the GitHub release with
+    runs make ci (the whole gate and the built wheel), hassfest and HACS, publishes the GitHub release with
     the tag message as its notes, and uploads the library to PyPI over OIDC.
   published_pin: >-
     make pin-check asks PyPI whether the version the manifest pins serves this
@@ -627,8 +631,8 @@ packaging:
     make build                     # build, twine check, the wheel gate
     make wheel                     # just the wheel, for SUNGROW_MODBUS_LIBRARY
   sdist_is_deliberately_small: >-
-    pyproject.toml pins the sdist contents to the library, its two portable
-    tests, the README, the licence and pyproject.toml itself. The patterns are
+    pyproject.toml pins the sdist contents to the library, the portable
+    tests/test_device.py with its conftest.py, the README, the licence and pyproject.toml itself. The patterns are
     anchored with a leading slash: hatchling reads them gitignore-style, so a
     bare "README.md" matches at every depth and sweeps every other README
     into the package. Without any include list at all it sweeps

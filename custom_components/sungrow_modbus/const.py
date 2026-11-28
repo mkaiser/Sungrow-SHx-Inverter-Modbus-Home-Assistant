@@ -203,8 +203,8 @@ DEFAULT_CAPABILITY_TEST_WALLBOX = False
 
 #: The highest current the wallbox test may offer, in amperes. Never above the
 #: wallbox's own rating. Left unset it is `DEFAULT_WALLBOX_MAX_AMPS`, and the
-#: checks that go beyond that (below the minimum, above the rating, the
-#: fallback) wait until the owner has set it.
+#: checks that go beyond that (above the rating, the fallback) wait until the
+#: owner has set it.
 CONF_WALLBOX_MAX_AMPS = "wallbox_max_amps"
 DEFAULT_WALLBOX_MAX_AMPS = 10.0
 

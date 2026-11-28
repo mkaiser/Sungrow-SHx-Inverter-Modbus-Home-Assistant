@@ -86,9 +86,11 @@ Every mapped field starts on one, so the list is also **the wallbox's own
 field layout**, undecoded registers included. The integration polls in
 reads that each begin on a field, so the same components serve both paths
 (protocol addresses): identity input 21215 x20, ratings input 21261 x12,
-live input 21299 x23, settings holding 21202 x10 and 21231 x1. The live read
-runs on every fast poll; the other three every 30th, five minutes on the
-default ten-second interval. Nothing writes to the wallbox.
+live input 21299 x23, settings holding 21202 x10 and 21231 x1, app settings
+holding 21297 x16. The live read runs on every fast poll; the other four
+every 30th, five minutes on the default ten-second interval. Only the
+capability test writes to a wallbox, at its own address and with the owner's
+leave ([the options](integration_options.md#a-wallboxs-own-entry)).
 
 **The direct path reads what the dongle zeroes.** Where both answer, the
 dongle returns 0 for input registers 21211-21214 (a short code, masked like
@@ -172,8 +174,12 @@ and its echo, holding 21312, and what start mode 3 means.
 
 ## Holding registers
 
-Every one is a **setting**. This project reads them; the diagnosis writes nothing,
-and no file in `device-diagnosis/` implements a Modbus write function.
+Every one is a **setting**. The integration's polls and the read-only
+diagnosis only read them. The wallbox capability test, in Home Assistant or
+`device-diagnosis/scripts/python/sungrow_wallbox_capability_test.py`, writes
+21203, 21204 and 21212 with the owner's leave and puts each back; it never
+writes 21211, because a disable ended a charge the enable written back did
+not resume.
 
 | Register | Type | Scale | Meaning | Read here | Confidence |
 | --- | --- | --- | --- | --- | --- |
@@ -445,7 +451,8 @@ by its users and not measured here:
   words in both readings but **shifted by one address**. A record that moves
   is not a set of registers, and nothing here should be decoded from it.
 - Holding **21250-21313 answers at the wallbox's own address**, where no
-  read through the dongle reached it; nothing decodes it yet. The holding
+  read through the dongle reached it; only 21298, 21299 and 21313 are
+  decoded. The holding
   21316-21329 shift above may be the dongle's own block reads landing off a
   data point's start -- the direct path's map of starts is the place to
   check it.
@@ -453,7 +460,7 @@ by its users and not measured here:
   Whether it differs between units is unknown, so the dump masks it like the
   serial until a second wallbox is read.
 - What only the direct path shows -- the second version string, 21267,
-  21332-21336, 21360, 21363-21365 and the upper holding registers -- is
-  undecoded.
+  21332-21336, 21360, 21363-21365 and the upper holding registers other than
+  21298, 21299 and 21313 -- is undecoded.
 - Everything here is one unit, one firmware, read through a dongle and at
   its own address. A second AC22E would settle most of the remaining marks.

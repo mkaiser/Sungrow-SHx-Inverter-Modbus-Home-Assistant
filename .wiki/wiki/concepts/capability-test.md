@@ -276,7 +276,7 @@ day's kWh figure, and the row took one more every night
 ([the second night](../sources/mkaiser-midnight-reset-night-2-2026-11-18-summary.md)). Only the
 revision below cleared it, which is the point of carrying one.
 
-**A readings check carries a revision of its own**, since 2026-11-19 and the clock fix.
+**A readings check carries a revision of its own**.
 `CHECK_REVISIONS` in `src/sungrow_modbus/capability_test/plausibility.py` -- not the table of the
 same name in `coverage.py`, which is the write paths' and which a readings row never passes
 through. `as_dict` stores a revision per check and `from_dict` drops the state of a check whose
@@ -304,7 +304,7 @@ the failures and reported behind the verdict whichever way the verdict goes
 (`EventCheck.notes`, `_detail`, `src/sungrow_modbus/capability_test/plausibility.py`). The
 midnight check uses it: its sentence names **every** daily counter that fell in that one poll,
 with before and after, and every counter still standing. It arrives whichever way the verdict
-goes, which is what it is for -- and at a house whose clocks differ it now also names both
+goes, which is what it is for -- and at a house whose clocks differ it also names both
 clocks, in a pass.
 
 What it measures is not this integration's arithmetic but the **device's**: whether an inverter
@@ -332,7 +332,7 @@ tracker on this model drifts past that. The current is the discriminator and it 
 same block -- a reading of 0.0 A, not an absent register, so
 [zero means absent](zero-means-absent.md) does not shield it.
 
-**Settled, in the code since 2026-11-19**: the check asks for a current of at least
+**Settled in the code**: the check asks for a current of at least
 `TRACKER_LIVE_A`, one count of a 0.1 A register, beside the voltage. A voltage with less says
 there is nothing on the input, after `minimum` daylight polls of it; one poll carrying current
 says *matched* whatever came before, so a shaded string is not written off. Where a model reports

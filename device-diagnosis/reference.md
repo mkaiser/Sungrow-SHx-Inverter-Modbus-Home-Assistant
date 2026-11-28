@@ -47,8 +47,8 @@ the header and holds them to each other.
 The diagnosis can use only what the pinned wheel has. The pin is the version
 `pyproject.toml` declares, moved by `scripts/release/sync_version.py`, so
 between releases the PyPI wheel lags the tree.
-`scripts/release/check_pinned_library.py` reads the diagnosis's and the capability
-test's imports beside the integration's, so `--wheel` gates a release and the
+`scripts/release/check_pinned_library.py` reads the imports of every script in
+`device-diagnosis/scripts/python/` beside the integration's, so `--wheel` gates a release and the
 no-argument form says what PyPI lacks. The capability test has no launcher of
 its own: the diagnosis imports it, and `diagnosis.sh tests ...` starts it.
 
@@ -76,7 +76,7 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **27**; the comment beside
+The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **29**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
@@ -155,19 +155,20 @@ shape of a serial.
 ### How much of the address
 
 `ip_address_last_two_octets` carries the tail of the address the reading came
-from — `178.105`, each octet zero-filled to three digits — and only when its
+from — `001.050`, each octet zero-filled to three digits — and only when its
 owner said it could. Otherwise it reads `xxx.xxx`.
 
 It buys one thing: several readings from one house can be told apart. A
 master, a slave and two dongles produce four documents whose readings look
-alike, and `178.114` against `178.105` is the difference between a set that
+alike, and `001.051` against `001.050` is the difference between a set that
 can be reasoned about and four files in a heap. **Two octets rather than one,
-because the third is the useful half** — several installations on record sit
-on `192.168.178` and others on `192.168.176`, which one octet cannot show.
-That is also the more revealing half, which is why the diagnosis asks instead of
-taking it: run interactively it shows the value it would publish and waits for
-a yes, `--address two_octets` says yes up front, and the default is to
-withhold.
+because the third is the useful half** — installations on record differ in
+the third octet as well as the fourth, which one octet cannot show. That is
+also the more revealing half, which is why the diagnosis asks instead of
+taking it: run interactively it shows the value it would publish, with yes as
+the answer Enter gives; `--address two_octets` says yes up front and
+`--address hidden` no. Home Assistant's *Publish the last two octets of the
+address* is on until its owner switches it off.
 
 ### What the connection section means
 
@@ -517,6 +518,20 @@ blanked as on a hybrid. The map is unmeasured, so the dump is the evidence.
 Its name is `<model>-<1p|3p>-<reporter>-<stand-in>`. Nothing writes to an SG:
 no capability test, no block read test, no capability probes.
 
+### iHomeManager and Logger documents
+
+Both answer at unit 247, over Modbus TCP on ports 502 to 504 or inside TLS on
+516, and `sungrow_diagnosis.py` reads them with `ihomemanager_direct.py`. An
+iHomeManager's document says `"document": "ihomemanager"`, a Logger's
+`"document": "logger"`, and everything is under the key of that name: the
+unit, the port, every documented field decoded, and the raw words, the gaps
+between documented registers included. Neither documents a serial, so any
+text in those gaps is masked out of the dump and recorded only as where it
+was, how long, and a stand-in (`masked_text`). The names are
+`ihomemanager-<software>-<reporter>-port<n>` and
+`<model>-<reporter>-port<n>`; an iHomeManager's is committed to
+`device-diagnosis/results/ihomemanager/`.
+
 ## The filename
 
 Derived from the document alone, and from nothing anybody typed except the
@@ -569,7 +584,7 @@ means `anonymous`. `probe.py capabilities --label` overrides the whole name;
 the diagnosis has no such flag.
 
 A name already taken by a reading from a *different* address gets the
-address tail appended — `-178-041` — or, where the tail is withheld, a number,
+address tail appended — `-001-050` — or, where the tail is withheld, a number,
 so two paths that derive the same name cannot silently replace each other.
 
 ### The phase word

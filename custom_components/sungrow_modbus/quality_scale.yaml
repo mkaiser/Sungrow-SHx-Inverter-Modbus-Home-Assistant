@@ -16,7 +16,7 @@ rules:
     comment: coordinator.py and entity.py.
   config-flow-test-coverage:
     status: todo
-    comment: config_flow.py is covered 96 %; what remains is the alpha gate's fallbacks and the search's progress text. Every flow path is the rule.
+    comment: config_flow.py is covered 97 %; what remains is the probes' failed-read fallbacks and the options page's prose about a loaded entry's readings. Every flow path is the rule.
   config-flow: done
   dependency-transparency:
     status: done
@@ -73,7 +73,7 @@ rules:
     comment: Modbus TCP has no credentials that can expire.
   test-coverage:
     status: todo
-    comment: 93.5 % across library and integration, held as a floor in CI (pyproject.toml); 95 % is the rule. Most of what is left is the optional mDNS browser and identification of devices never measured.
+    comment: Library and integration together are held at 93.9 % as a floor in CI (pyproject.toml); 95 % is the rule. Most of what is left is the optional mDNS browser and identification of devices never measured.
 
   # Gold
   devices: done
@@ -98,7 +98,7 @@ rules:
     comment: doc/compatibility.md.
   docs-supported-functions:
     status: done
-    comment: README, "What it does".
+    comment: README, "What this is".
   docs-troubleshooting:
     status: done
     comment: doc/integration_help.md.

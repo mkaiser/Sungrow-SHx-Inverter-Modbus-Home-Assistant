@@ -25,21 +25,27 @@ does not work.
 ## Actions
 
 Under **Developer tools → Actions**, or in an automation. Each takes the
-Sungrow device to act on.
+Sungrow inverter to act on (`device_id`); a wallbox, iHomeManager or Logger
+entry has only its own diagnosis buttons.
 
 | Action | What it does |
 | --- | --- |
 | `sungrow_modbus.start_inverter` | Boots an inverter that has been shut down |
 | `sungrow_modbus.stop_inverter` | Shuts it down: no generation, no charging, no discharging, until started again |
 | `sungrow_modbus.run_diagnosis` | Reads the installation and produces the diagnosis document; writes nothing. Same as **Diagnosis: start** in mode *Read-only* |
-| `sungrow_modbus.run_capability_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as **Diagnosis: start** in mode *Extended test (single run)*. Read [what it does](../device-diagnosis/README.md#two-modes-read-only-or-with-capability-tests) first |
+| `sungrow_modbus.run_capability_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as **Diagnosis: start** in mode *Extended test (single run)*. Read [what it does](../device-diagnosis/README.md#two-modes-read-only-or-with-capability-tests) first. With *Forced startup only* (`forced_startup: true`) it tests only forced startup, on an inverter in low-SoC standby, and is refused in any other state |
 
 Start and stop are actions rather than buttons on purpose: a button has no
 confirmation dialog. Who may call them, and who may run the capability test, is
 under **Configure → Permissions**; both default to administrators.
 
 An action that cannot be carried out says why: the device is not loaded, a
-diagnosis is already running, or the inverter did not take the write.
+diagnosis is already running, the inverter did not take the write, or a
+capability test holds the controls. Start, stop and the capability test are
+refused on an SG string inverter. The capability test also waits until three
+of the diagnosis's questions under **Configure** are answered (see
+[the options](integration_options.md#contribute-a-capability-diagnosis)), and
+while another inverter of the same master/slave cluster is being tested.
 
 An automation that stops the inverter when the price of export goes negative,
 and starts it again when it recovers:
@@ -88,10 +94,10 @@ automation:
   diagnosis asks you.
 - **A *Battery min SoC* above the battery's charge buys electricity.** The
   inverter then charges the battery from the grid at its full charge limit
-  (*Battery max charge power*) until it reaches the new minimum, and reports
+  (*Battery max charging power*) until it reaches the new minimum, and reports
   *Stop* while it does: measured on an SH10RT (P020), 4.5 kW from the grid with
   the minimum raised from 25 % to 50 % at 28 %. Raise it in small steps, or
-  lower *Battery max charge power* first. Lowering it again stops the charge
+  lower *Battery max charging power* first. Lowering it again stops the charge
   within a minute, but an inverter already in low-SoC standby stays there until
   PV returns; turning *Low-SoC standby* off wakes it.
 - **On a three-wire grid (3P3L, no neutral)** the inverter reports the
@@ -102,8 +108,8 @@ automation:
   phase name and powers about 1.7 times too high. The phase currents are
   created as usual. No 3P3L inverter has been diagnosed yet.
 - **Not supported yet:** the Sungrow Logger (its entry runs only the
-  diagnosis), SBH batteries, writing to a wallbox's own settings, and writing
-  to an SG string inverter.
+  diagnosis), writing to a wallbox's own settings, and writing to an SG string
+  inverter.
 - **A wallbox the inverter manages** (set up as its EV charger in
   iSolarCloud) is controlled through the inverter: its entry offers *Wallbox
   charge*, *Wallbox charge mode*, *Wallbox user-defined current* (taken only
